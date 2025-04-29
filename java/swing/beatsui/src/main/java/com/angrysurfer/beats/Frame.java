@@ -41,6 +41,8 @@ public class Frame extends JFrame implements AutoCloseable {
     // private BackgroundPanel backgroundPanel;
     private MainPanel mainPanel;
 
+    private final RedisService redisService = RedisService.getInstance();
+
     public Frame() {
         super("Beats");
         this.keyNoteMap = setupKeyMap();
@@ -59,36 +61,24 @@ public class Frame extends JFrame implements AutoCloseable {
     }
 
     public void loadFrameState() {
-        logger.info("Loading frame state for window");
-        FrameState state = RedisService.getInstance().loadFrameState(Constants.APPLICATION_FRAME);
-        logger.info("Frame state loaded: " + (state != null));
+        try {
+            FrameState state = redisService.loadFrameState(Constants.APPLICATION_FRAME);
 
-        if (state != null) {
+            // Apply window positioning and size
             setSize(state.getFrameSizeX(), state.getFrameSizeY());
             setLocation(state.getFramePosX(), state.getFramePosY());
-            
-            try {
-                setSelectedTab(state.getSelectedTab());
-            }  
-            catch (Exception e) {
-                logger.warn("Error setting selected tab: " + e.getMessage());
-            }
-
-            // Restore window state
             if (state.isMaximized()) {
                 setExtendedState(JFrame.MAXIMIZED_BOTH);
-            } else if (state.isMinimized()) {
-                setExtendedState(JFrame.ICONIFIED);
-            } else {
-                setExtendedState(JFrame.NORMAL);
             }
 
-            logger.info("Applied frame state: " +
-                    "size=" + state.getFrameSizeX() + "x" + state.getFrameSizeY() +
-                    ", pos=" + state.getFramePosX() + "," + state.getFramePosY() +
-                    ", tab=" + state.getSelectedTab() +
-                    ", maximized=" + state.isMaximized() +
-                    ", minimized=" + state.isMinimized());
+            // Apply tabbed pane selections
+            MainPanel mainPanel = (MainPanel) getContentPane();
+            mainPanel.restoreTabStates(state);
+
+            logger.info("Frame state loaded. Selected tab: {}, Drums tab: {}, Melodic tab: {}",
+                    state.getSelectedTab(), state.getSelectedDrumsTab(), state.getSelectedMelodicTab());
+        } catch (Exception e) {
+            logger.error("Error loading frame state", e);
         }
 
         // Add window listener for saving state on close
@@ -102,37 +92,26 @@ public class Frame extends JFrame implements AutoCloseable {
 
     public void saveFrameState() {
         try {
-            FrameState currentState = new FrameState();
-            currentState.setSelectedTab(getSelectedTab());
-
-            // Save normal window bounds even when maximized
-            if (getExtendedState() == JFrame.MAXIMIZED_BOTH || getExtendedState() == JFrame.ICONIFIED) {
-                currentState.setFrameSizeX((int) getPreferredSize().getWidth());
-                currentState.setFrameSizeY((int) getPreferredSize().getHeight());
-                // currentState.setFramePosX(getX());
-                // currentState.setFramePosY(getY());
-            } else {
-                currentState.setFrameSizeX(getWidth());
-                currentState.setFrameSizeY(getHeight());
-                currentState.setFramePosX(getX());
-                currentState.setFramePosY(getY());
-            }
+            FrameState state = new FrameState();
 
             // Save window state
-            currentState.setMaximized(getExtendedState() == JFrame.MAXIMIZED_BOTH);
-            currentState.setMinimized(getExtendedState() == JFrame.ICONIFIED);
-            currentState.setLookAndFeelClassName(UIManager.getLookAndFeel().getClass().getName());
+            state.setFrameSizeX(getWidth());
+            state.setFrameSizeY(getHeight());
+            state.setFramePosX(getX());
+            state.setFramePosY(getY());
+            state.setMaximized(getExtendedState() == JFrame.MAXIMIZED_BOTH);
+            state.setLookAndFeelClassName(UIManager.getLookAndFeel().getClass().getName());
 
-            logger.info("Saving frame state: " +
-                    "size=" + getWidth() + "x" + getHeight() +
-                    ", pos=" + getX() + "," + getY() +
-                    ", tab=" + getSelectedTab() +
-                    ", maximized=" + currentState.isMaximized() +
-                    ", minimized=" + currentState.isMinimized());
+            // Get tab selections from mainPanel
+            MainPanel mainPanel = (MainPanel) getContentPane();
+            mainPanel.saveTabStates(state);
 
-            RedisService.getInstance().saveFrameState(currentState, Constants.APPLICATION_FRAME);
+            // Save state
+            redisService.saveFrameState(state, Constants.APPLICATION_FRAME);
+            logger.info("Frame state saved. Selected tab: {}, Drums tab: {}, Melodic tab: {}",
+                    state.getSelectedTab(), state.getSelectedDrumsTab(), state.getSelectedMelodicTab());
         } catch (Exception e) {
-            logger.error("Error saving frame state: " + e.getMessage());
+            logger.error("Error saving frame state", e);
         }
     }
 

@@ -32,7 +32,7 @@ import javax.swing.border.EmptyBorder;
 import com.angrysurfer.beats.UIUtils;
 import com.angrysurfer.beats.panel.MainPanel;
 import com.angrysurfer.beats.panel.player.SoundParametersPanel;
-import com.angrysurfer.beats.panel.sequencer.MuteSequencerPanel;
+import com.angrysurfer.beats.panel.sequencer.MuteSequencerPanelAttempt;
 import com.angrysurfer.beats.widget.Dial;
 import com.angrysurfer.beats.widget.DrumButton;
 import com.angrysurfer.beats.widget.TriggerButton;
@@ -247,7 +247,7 @@ public class DrumEffectsSequencerPanel extends JPanel implements IBusListener {
         drumSection.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5)); 
         
         
-        drumSection.add(new MuteSequencerPanel(sequencer), BorderLayout.SOUTH);
+        drumSection.add(new MuteSequencerPanelAttempt(sequencer), BorderLayout.SOUTH);
         drumPadPanel = new DrumButtonsPanel(sequencer, this::handleDrumPadSelected);
         drumSection.add(drumPadPanel, BorderLayout.CENTER);
 

@@ -22,6 +22,7 @@ import static com.angrysurfer.core.util.update.PlayerUpdateType.SWING;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 
 import javax.sound.midi.InvalidMidiDataException;
 import javax.sound.midi.MidiUnavailableException;
@@ -36,6 +37,8 @@ import com.angrysurfer.core.api.Commands;
 import com.angrysurfer.core.api.IBusListener;
 import com.angrysurfer.core.model.InstrumentWrapper;
 import com.angrysurfer.core.model.Player;
+import com.angrysurfer.core.model.Rule;
+import com.angrysurfer.core.model.Session;
 import com.angrysurfer.core.redis.RedisService;
 
 import lombok.Getter;
@@ -405,5 +408,45 @@ public class PlayerManager implements IBusListener {
         }
         
         logger.info("Channel consistency check completed");
+    }
+
+    public Rule addRule(Player player, int beat, int equals, double d, int i) {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'addRule'");
+    }
+
+    public void removeRule(Player player, Long ruleId) {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'removeRule'");
+    }
+
+    public Player updatePlayer(Session session, Long playerId, int updateType, int updateValue) {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'updatePlayer'");
+    }
+
+    public Player mutePlayer(Session session, Long playerId) {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'mutePlayer'");
+    }
+
+    public Set<Player> removePlayer(Session session, Long playerId) {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'removePlayer'");
+    }
+
+    public void clearPlayers(Session session) {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'clearPlayers'");
+    }
+
+    public void clearPlayersWithNoRules(Session session) {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'clearPlayersWithNoRules'");
+    }
+
+    public void removeAllPlayers(Session session) {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'removeAllPlayers'");
     }
 }

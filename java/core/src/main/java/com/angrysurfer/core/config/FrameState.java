@@ -22,6 +22,10 @@ public class FrameState {
     private int framePosY = 100;
     private String lookAndFeelClassName;
     private List<String> columnOrder;
+    
+    // Add these new fields for nested tabbed panes
+    private int selectedDrumsTab = 0;
+    private int selectedMelodicTab = 0;
 
     // Default constructor uses default values
     public FrameState() {

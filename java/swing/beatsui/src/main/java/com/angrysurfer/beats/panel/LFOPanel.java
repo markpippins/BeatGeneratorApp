@@ -1,27 +1,39 @@
 package com.angrysurfer.beats.panel;
 
-import java.awt.*;
-import java.awt.event.*;
+import java.awt.BasicStroke;
+import java.awt.BorderLayout;
+import java.awt.Color;
+import java.awt.Component;
+import java.awt.Dimension;
+import java.awt.FlowLayout;
+import java.awt.Font;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
+import java.awt.GridBagLayout;
+import java.awt.GridLayout;
+import java.awt.RenderingHints;
 import java.awt.geom.Path2D;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 
-import javax.swing.*;
-import javax.swing.border.EmptyBorder;
-import javax.swing.border.TitledBorder;
-import javax.swing.event.ChangeEvent;
-import javax.swing.event.ChangeListener;
+import javax.swing.BorderFactory;
+import javax.swing.Box;
+import javax.swing.JComboBox;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.JSlider;
+import javax.swing.JToggleButton;
+import javax.swing.SwingConstants;
+import javax.swing.SwingUtilities;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.angrysurfer.beats.widget.Dial;
 import com.angrysurfer.beats.widget.DoubleDial;
-import com.angrysurfer.core.api.CommandBus;
 import com.angrysurfer.core.api.Commands;
-import com.angrysurfer.core.api.IBusListener;
+import com.angrysurfer.core.api.ModulationBus;
 
 /**
  * A panel that implements a Low Frequency Oscillator with various waveform
@@ -405,10 +417,10 @@ public class LFOPanel extends JPanel implements AutoCloseable {
                     }
 
                     // Publish to command bus
-                    CommandBus.getInstance().publish(
-                            Commands.LFO_VALUE_CHANGED,
-                            this,
-                            newValue[0]);
+                    // ModulationBus.getInstance().publish(
+                    //         Commands.LFO_VALUE_CHANGED,
+                    //         this,
+                    //         newValue[0]);
                 });
             }
         }, 0, 16, TimeUnit.MILLISECONDS); // ~60 Hz update rate

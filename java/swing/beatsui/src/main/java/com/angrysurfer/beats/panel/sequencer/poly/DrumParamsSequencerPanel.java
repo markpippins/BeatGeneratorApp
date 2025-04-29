@@ -24,7 +24,7 @@ import javax.swing.border.EmptyBorder;
 import com.angrysurfer.beats.UIUtils;
 import com.angrysurfer.beats.panel.MainPanel;
 import com.angrysurfer.beats.panel.player.SoundParametersPanel;
-import com.angrysurfer.beats.panel.sequencer.MuteSequencerPanel;
+import com.angrysurfer.beats.panel.sequencer.MuteSequencerPanelAttempt;
 import com.angrysurfer.beats.widget.Dial;
 import com.angrysurfer.beats.widget.TriggerButton;
 import com.angrysurfer.core.api.Command;
@@ -241,7 +241,7 @@ public class DrumParamsSequencerPanel extends JPanel implements IBusListener {
 
         // Create a panel for the drum section (drum buttons only)
         JPanel drumSection = new JPanel(new BorderLayout(2, 2));
-        drumSection.add(new MuteSequencerPanel(sequencer), BorderLayout.SOUTH);
+        drumSection.add(new MuteSequencerPanelAttempt(sequencer), BorderLayout.SOUTH);
         drumSection.add(drumPadPanel, BorderLayout.CENTER);
 
         // Add the drum section to the SOUTH of the centerPanel

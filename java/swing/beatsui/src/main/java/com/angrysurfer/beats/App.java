@@ -14,6 +14,8 @@ import com.angrysurfer.core.api.Command;
 import com.angrysurfer.core.api.CommandBus;
 import com.angrysurfer.core.api.Commands;
 import com.angrysurfer.core.api.IBusListener;
+import com.angrysurfer.core.api.ModulationBus;
+import com.angrysurfer.core.api.TimingBus;
 import com.angrysurfer.core.config.FrameState;
 import com.angrysurfer.core.model.InstrumentWrapper;
 import com.angrysurfer.core.redis.InstrumentHelper;
@@ -21,18 +23,21 @@ import com.angrysurfer.core.redis.RedisService;
 import com.angrysurfer.core.service.DeviceManager;
 import com.angrysurfer.core.service.InstrumentManager;
 import com.angrysurfer.core.service.InternalSynthManager;
-import com.angrysurfer.core.service.SessionManager;
 import com.angrysurfer.core.service.PlayerManager;
+import com.angrysurfer.core.service.SessionManager;
 import com.formdev.flatlaf.FlatLightLaf;
 
 public class App implements IBusListener {
 
     private static final Logger logger = LoggerFactory.getLogger(App.class.getName());
 
-    private static final CommandBus commandBus = CommandBus.getInstance();
+    private CommandBus commandBus = CommandBus.getInstance();
+    private ModulationBus modulationBus = com.angrysurfer.core.api.ModulationBus.getInstance();
+    private TimingBus timingBus = com.angrysurfer.core.api.TimingBus.getInstance();
+    
     private static final RedisService redisService = RedisService.getInstance();
 
-    private static final boolean showSplash = false;
+    private static final boolean showSplash = true;
 
     private Frame frame;
     private static SplashScreen splash;

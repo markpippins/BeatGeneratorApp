@@ -1,6 +1,16 @@
 package com.angrysurfer.beats.panel;
 
-import java.awt.*;
+import java.awt.BorderLayout;
+import java.awt.Color;
+import java.awt.Component;
+import java.awt.Container;
+import java.awt.Dialog;
+import java.awt.Dimension;
+import java.awt.FlowLayout;
+import java.awt.Font;
+import java.awt.GridLayout;
+import java.awt.Insets;
+import java.awt.Point;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.WindowAdapter;
@@ -25,12 +35,13 @@ import javax.swing.SwingConstants;
 import javax.swing.SwingUtilities;
 import javax.swing.border.EmptyBorder;
 
-import com.angrysurfer.beats.panel.instrument.InstrumentsPanel;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.angrysurfer.beats.Frame;
 import com.angrysurfer.beats.StatusBar;
 import com.angrysurfer.beats.Symbols;
+import com.angrysurfer.beats.panel.instrument.InstrumentsPanel;
 import com.angrysurfer.beats.panel.internalsynth.InternalSynthControlPanel;
 import com.angrysurfer.beats.panel.sample.SampleBrowserPanel;
 import com.angrysurfer.beats.panel.sequencer.MuteButtonsPanel;
@@ -44,6 +55,8 @@ import com.angrysurfer.core.api.Command;
 import com.angrysurfer.core.api.CommandBus;
 import com.angrysurfer.core.api.Commands;
 import com.angrysurfer.core.api.IBusListener;
+import com.angrysurfer.core.config.FrameState;
+import com.angrysurfer.core.model.Player;
 import com.angrysurfer.core.sequencer.DrumSequencer;
 import com.angrysurfer.core.sequencer.MelodicSequencer;
 import com.angrysurfer.core.sequencer.StepUpdateEvent;
@@ -51,7 +64,6 @@ import com.angrysurfer.core.service.ChannelManager;
 import com.angrysurfer.core.service.InternalSynthManager;
 import com.angrysurfer.core.service.PlayerManager;
 import com.angrysurfer.core.service.SessionManager;
-import com.angrysurfer.core.model.Player;
 
 public class MainPanel extends JPanel implements AutoCloseable, IBusListener {
     private static final Logger logger = LoggerFactory.getLogger(MainPanel.class.getName());
@@ -61,7 +73,15 @@ public class MainPanel extends JPanel implements AutoCloseable, IBusListener {
         System.setProperty("org.slf4j.simpleLogger.log.com.angrysurfer.core.api.CommandBus", "debug");
     }
 
-    private JTabbedPane tabbedPane;
+    // Check that this constant is defined and has the same value wherever it's used
+    public static final String APPLICATION_FRAME = "application_frame";
+
+    private JTabbedPane mainTabbedPane;
+    private JTabbedPane drumsTabbedPane;
+    private JTabbedPane melodicTabbedPane;
+
+    private MuteButtonsPanel muteButtonsPanel;
+
     private final List<Dial> velocityDials = new ArrayList<>();
     private final List<Dial> gateDials = new ArrayList<>();
 
@@ -77,13 +97,6 @@ public class MainPanel extends JPanel implements AutoCloseable, IBusListener {
     private InternalSynthControlPanel internalSynthControlPanel;
     private MelodicSequencerPanel[] melodicPanels = new MelodicSequencerPanel[8];
 
-    private MuteButtonsPanel muteButtonsPanel;
-
-    private JTabbedPane drumsTabbedPane;
-
-    private JTabbedPane melodicTabbedPane;
-
-
     private Point dragStartPoint;
 
     public MainPanel(StatusBar statusBar) {
@@ -93,34 +106,42 @@ public class MainPanel extends JPanel implements AutoCloseable, IBusListener {
         CommandBus.getInstance().register(this);
 
         setupTabbedPane(statusBar);
-        add(tabbedPane, BorderLayout.CENTER);
+        add(mainTabbedPane, BorderLayout.CENTER);
+        // Add after initializing all tabbed panes
+        // SwingUtilities.invokeLater(() -> {
+        // Frame frame = (Frame) SwingUtilities.getWindowAncestor(this);
+        // if (frame != null) {
+        // frame.saveFrameState();
+        // logger.debug("Forced initial state save after UI initialization");
+        // }
+        // });
     }
 
     private void setupTabbedPane(StatusBar statusBar) {
-        tabbedPane = new JTabbedPane();
+        mainTabbedPane = new JTabbedPane();
 
         internalSynthControlPanel = new InternalSynthControlPanel();
-        tabbedPane.addTab("Multi", createDrumSequencersPanel());
+        mainTabbedPane.addTab("Multi", createDrumSequencersPanel());
 
-        tabbedPane.addTab("Melo", createMelodicSequencersPanel());
+        mainTabbedPane.addTab("Melo", createMelodicSequencersPanel());
 
-        tabbedPane.addTab("Song", createSongPanel());
-        tabbedPane.addTab("Synth", internalSynthControlPanel);
-        tabbedPane.addTab("Matrix", createModulationMatrixPanel());
-        tabbedPane.addTab("Mixer", createMixerPanel());
+        mainTabbedPane.addTab("Song", createSongPanel());
+        mainTabbedPane.addTab("Synth", internalSynthControlPanel);
+        mainTabbedPane.addTab("Matrix", createModulationMatrixPanel());
+        mainTabbedPane.addTab("Mixer", createMixerPanel());
 
-        tabbedPane.addTab("Players", new SessionPanel());
+        mainTabbedPane.addTab("Players", new SessionPanel());
 
         // Create combined panel for Instruments + Systems
-        tabbedPane.addTab("Instruments", createCombinedInstrumentsSystemPanel());
+        mainTabbedPane.addTab("Instruments", createCombinedInstrumentsSystemPanel());
 
-        tabbedPane.addTab("Launch", new LaunchPanel());
+        mainTabbedPane.addTab("Launch", new LaunchPanel());
         // Remove the separate Systems tab
         // tabbedPane.addTab("System", new SystemsPanel());
         // Add new Sample Browser tab
-        tabbedPane.addTab("Samples", createSampleBrowserPanel());
+        mainTabbedPane.addTab("Samples", createSampleBrowserPanel());
 
-        tabbedPane.setBorder(BorderFactory.createEmptyBorder(0, 8, 0, 8));
+        mainTabbedPane.setBorder(BorderFactory.createEmptyBorder(0, 8, 0, 8));
 
         JPanel tabToolbar = new JPanel();
         tabToolbar.setLayout(new BoxLayout(tabToolbar, BoxLayout.X_AXIS));
@@ -152,10 +173,10 @@ public class MainPanel extends JPanel implements AutoCloseable, IBusListener {
         tabToolbar.add(buttonPanel);
         tabToolbar.add(Box.createVerticalGlue());
 
-        tabbedPane.putClientProperty("JTabbedPane.trailingComponent", tabToolbar);
+        mainTabbedPane.putClientProperty("JTabbedPane.trailingComponent", tabToolbar);
 
         // Add mouse motion listener for drag-and-drop functionality
-        tabbedPane.addMouseMotionListener(new MouseAdapter() {
+        mainTabbedPane.addMouseMotionListener(new MouseAdapter() {
             @Override
             public void mousePressed(MouseEvent e) {
                 // Store the drag start point
@@ -164,27 +185,27 @@ public class MainPanel extends JPanel implements AutoCloseable, IBusListener {
 
             @Override
             public void mouseDragged(MouseEvent e) {
-                int tabIndex = tabbedPane.indexAtLocation(e.getX(), e.getY());
+                int tabIndex = mainTabbedPane.indexAtLocation(e.getX(), e.getY());
                 if (tabIndex >= 0) {
-                    JComponent comp = (JComponent) tabbedPane.getComponentAt(tabIndex);
+                    JComponent comp = (JComponent) mainTabbedPane.getComponentAt(tabIndex);
 
                     Point p = e.getLocationOnScreen();
                     // Check if dragged far enough from original position
                     if (isDraggedFarEnough(p, dragStartPoint)) {
                         // Create new frame containing component from this tab
-                        String title = tabbedPane.getTitleAt(tabIndex);
+                        String title = mainTabbedPane.getTitleAt(tabIndex);
                         createDetachedWindow(comp, title, p);
 
                         // Remove the tab from original pane
-                        tabbedPane.remove(tabIndex);
+                        mainTabbedPane.remove(tabIndex);
                     }
                 }
             }
         });
 
         // Add change listener to handle tab selection events
-        tabbedPane.addChangeListener(e -> {
-            Component selectedComponent = tabbedPane.getSelectedComponent();
+        mainTabbedPane.addChangeListener(e -> {
+            Component selectedComponent = mainTabbedPane.getSelectedComponent();
 
             // Request focus on the newly selected tab component
             if (selectedComponent != null) {
@@ -206,63 +227,101 @@ public class MainPanel extends JPanel implements AutoCloseable, IBusListener {
         melodicTabbedPane.addChangeListener(e -> {
             // Get the selected component
             Component selectedComponent = melodicTabbedPane.getSelectedComponent();
-            
+
             // Find the MelodicSequencerPanel within the selected tab
             MelodicSequencerPanel melodicPanel = findMelodicSequencerPanel(selectedComponent);
-            
+
             if (melodicPanel != null && melodicPanel.getSequencer() != null) {
                 // Get the player from the sequencer
                 Player player = melodicPanel.getSequencer().getPlayer();
-                
+
                 // Set as active player if available
                 if (player != null) {
                     PlayerManager.getInstance().setActivePlayer(player);
-                    
+
                     // Also publish a PLAYER_SELECTED event
                     CommandBus.getInstance().publish(
-                        Commands.PLAYER_SELECTED,
-                        this,
-                        player
-                    );
-                    
-                    logger.debug("Tab selected - set melodic player '{}' (ID: {}) as active player", 
-                        player.getName(), player.getId());
+                            Commands.PLAYER_SELECTED,
+                            this,
+                            player);
+
+                    logger.debug("Tab selected - set melodic player '{}' (ID: {}) as active player",
+                            player.getName(), player.getId());
                 }
             }
         });
 
-        tabbedPane.addChangeListener(e -> {
+        mainTabbedPane.addChangeListener(e -> {
             // Get the selected component
-            Component selectedComponent = tabbedPane.getSelectedComponent();
-            
+            Component selectedComponent = mainTabbedPane.getSelectedComponent();
+
             // If selected component is the melodic tab pane
             if (selectedComponent == melodicTabbedPane) {
                 // Get the currently selected melodic tab
                 Component selectedMelodicTab = melodicTabbedPane.getSelectedComponent();
-                
+
                 // Find the MelodicSequencerPanel within the selected tab
                 MelodicSequencerPanel melodicPanel = findMelodicSequencerPanel(selectedMelodicTab);
-                
+
                 if (melodicPanel != null && melodicPanel.getSequencer() != null) {
                     // Set the player as active
                     Player player = melodicPanel.getSequencer().getPlayer();
                     if (player != null) {
                         PlayerManager.getInstance().setActivePlayer(player);
-                        
+
                         CommandBus.getInstance().publish(
-                            Commands.PLAYER_SELECTED,
-                            this,
-                            player
-                        );
-                        
+                                Commands.PLAYER_SELECTED,
+                                this,
+                                player);
+
                         logger.debug("Main tab switched to melodic - set player '{}' as active", player.getName());
                     }
                 }
             }
         });
 
+        // Add a change listener to save state on tab selection change
+        mainTabbedPane.addChangeListener(e -> {
+            // Get parent Frame
+            Frame parentFrame = (Frame) SwingUtilities.getWindowAncestor(this);
+            if (parentFrame != null) {
+                parentFrame.saveFrameState();
+            }
+        });
+
+        drumsTabbedPane.addChangeListener(e -> {
+            // Get parent Frame
+            Frame parentFrame = (Frame) SwingUtilities.getWindowAncestor(this);
+            if (parentFrame != null) {
+                parentFrame.saveFrameState();
+            }
+        });
+
+        melodicTabbedPane.addChangeListener(e -> {
+            // Get parent Frame
+            Frame parentFrame = (Frame) SwingUtilities.getWindowAncestor(this);
+            if (parentFrame != null) {
+                parentFrame.saveFrameState();
+            }
+        });
+
         // At the end of the method, update the mute buttons with sequencers
         updateMuteButtonSequencers();
+
+        // Add this check after initializing the tabbed panes
+        checkTabbedPanes();
+    }
+
+    private void checkTabbedPanes() {
+        if (mainTabbedPane == null) {
+            logger.error("mainTabbedPane is null - tab state cannot be saved");
+        }
+        if (drumsTabbedPane == null) {
+            logger.error("drumsTabbedPane is null - tab state cannot be saved");
+        }
+        if (melodicTabbedPane == null) {
+            logger.error("melodicTabbedPane is null - tab state cannot be saved");
+        }
     }
 
     private JTabbedPane createDrumSequencersPanel() {
@@ -284,10 +343,10 @@ public class MainPanel extends JPanel implements AutoCloseable, IBusListener {
         for (int i = 0; i < melodicPanels.length; i++) {
             // Get channel from ChannelManager based on sequencer index
             int channel = ChannelManager.getInstance().getChannelForSequencerIndex(i);
-            
+
             // Create panel with proper channel assignment
             melodicPanels[i] = createMelodicSequencerPanel(i, channel);
-            
+
             // Use channel number (1-based for display) in tab title
             melodicTabbedPane.addTab("Mono " + (channel + 1), melodicPanels[i]);
         }
@@ -324,10 +383,10 @@ public class MainPanel extends JPanel implements AutoCloseable, IBusListener {
                 detachedWindow.setContentPane(new JPanel());
 
                 // Add the component back to the tabbed pane
-                tabbedPane.addTab(title, comp);
+                mainTabbedPane.addTab(title, comp);
 
                 // Select the newly added tab
-                tabbedPane.setSelectedIndex(tabbedPane.getTabCount() - 1);
+                mainTabbedPane.setSelectedIndex(mainTabbedPane.getTabCount() - 1);
             }
         });
 
@@ -843,22 +902,120 @@ public class MainPanel extends JPanel implements AutoCloseable, IBusListener {
         return mixButton;
     }
 
-    public int getSelectedTab() {
-        return tabbedPane.getSelectedIndex();
-    }
-
-    public void setSelectedTab(int index) {
-        tabbedPane.setSelectedIndex(index);
-    }
-
+    /**
+     * Returns the currently active tabbed pane
+     * @return The currently active tabbed pane based on user selection
+     */
     public Component getSelectedComponent() {
-        return tabbedPane.getSelectedComponent();
+        if (mainTabbedPane == null) {
+            logger.error("mainTabbedPane is null when getSelectedComponent was called");
+            return null;
+        }
+
+        int selectedIndex = mainTabbedPane.getSelectedIndex();
+        Component selectedComponent = mainTabbedPane.getComponentAt(selectedIndex);
+
+        // Check which tab is selected in the main pane
+        if (selectedComponent == drumsTabbedPane) {
+            return drumsTabbedPane;
+        } else if (selectedComponent == melodicTabbedPane) {
+            return melodicTabbedPane;
+        }
+
+        // Default to returning the main tabbed pane
+        return mainTabbedPane;
+    }
+
+    /**
+     * Get the currently selected tab index from mainTabbedPane
+     */
+    public int getSelectedTab() {
+        return mainTabbedPane != null ? mainTabbedPane.getSelectedIndex() : 0;
+    }
+
+    /**
+     * Set the selected tab in mainTabbedPane
+     */
+    public void setSelectedTab(int index) {
+        if (mainTabbedPane != null && index >= 0 && index < mainTabbedPane.getTabCount()) {
+            mainTabbedPane.setSelectedIndex(index);
+        }
+    }
+
+    /**
+     * Get the selected index of the drums tabbed pane
+     */
+    public int getSelectedDrumsTab() {
+        return drumsTabbedPane != null ? drumsTabbedPane.getSelectedIndex() : 0;
+    }
+
+    /**
+     * Set the selected index of the drums tabbed pane
+     */
+    public void setSelectedDrumsTab(int index) {
+        if (drumsTabbedPane != null && index >= 0 && index < drumsTabbedPane.getTabCount()) {
+            drumsTabbedPane.setSelectedIndex(index);
+        }
+    }
+
+    /**
+     * Get the selected index of the melodic tabbed pane
+     */
+    public int getSelectedMelodicTab() {
+        return melodicTabbedPane != null ? melodicTabbedPane.getSelectedIndex() : 0;
+    }
+
+    /**
+     * Set the selected index of the melodic tabbed pane
+     */
+    public void setSelectedMelodicTab(int index) {
+        if (melodicTabbedPane != null && index >= 0 && index < melodicTabbedPane.getTabCount()) {
+            melodicTabbedPane.setSelectedIndex(index);
+        }
+    }
+
+    /**
+     * Save all tab states to the given FrameState object
+     */
+    public void saveTabStates(FrameState state) {
+        if (state == null)
+            return;
+
+        // Store main tab index
+        state.setSelectedTab(getSelectedTab());
+
+        // Store nested tab indices if available
+        state.setSelectedDrumsTab(getSelectedDrumsTab());
+        state.setSelectedMelodicTab(getSelectedMelodicTab());
+
+        logger.debug("Saved tab states: main={}, drums={}, melodic={}",
+                getSelectedTab(), getSelectedDrumsTab(), getSelectedMelodicTab());
+    }
+
+    /**
+     * Restore all tab states from the given FrameState object
+     */
+    public void restoreTabStates(FrameState state) {
+        if (state == null)
+            return;
+
+        // Apply main tab index
+        setSelectedTab(state.getSelectedTab());
+
+        // Apply nested tab indices with slight delay to ensure UI is ready
+        SwingUtilities.invokeLater(() -> {
+            setSelectedDrumsTab(state.getSelectedDrumsTab());
+            setSelectedMelodicTab(state.getSelectedMelodicTab());
+
+            logger.debug("Restored tab states: main={}, drums={}, melodic={}",
+                    state.getSelectedTab(), state.getSelectedDrumsTab(), state.getSelectedMelodicTab());
+        });
     }
 
     @Override
     public void close() throws Exception {
-        if (tabbedPane != null) {
-            for (Component comp : tabbedPane.getComponents()) {
+        if (mainTabbedPane != null) {
+            for (Component comp : mainTabbedPane.getComponents()) {
                 if (comp instanceof AutoCloseable) {
                     try {
                         ((AutoCloseable) comp).close();
@@ -868,7 +1025,7 @@ public class MainPanel extends JPanel implements AutoCloseable, IBusListener {
                 }
             }
         }
-        
+
         // Release channels used by melodic panels
         for (MelodicSequencerPanel panel : melodicPanels) {
             if (panel != null && panel.getSequencer() != null) {
@@ -897,4 +1054,6 @@ public class MainPanel extends JPanel implements AutoCloseable, IBusListener {
         }
         return null;
     }
+
+    
 }

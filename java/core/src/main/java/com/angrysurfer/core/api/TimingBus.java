@@ -25,6 +25,8 @@ public class TimingBus extends AbstractBus {
     // Diagnostic counter for timing events
     private int eventCount = 0;
 
+    private boolean diagnostic = false; // Set to true for diagnostic output
+
     // Constructor must be after field initialization
     private TimingBus() {
         // We'll handle registration ourselves instead of relying on parent
@@ -34,23 +36,24 @@ public class TimingBus extends AbstractBus {
         System.out.println("TimingBus initialized with " + timingListeners.size() + " listeners");
 
         // Start a diagnostic thread to monitor timing events
-        new Thread(() -> {
-            long lastReport = System.currentTimeMillis();
-            int eventCount = 0;
+        if (diagnostic)
+            new Thread(() -> {
+                long lastReport = System.currentTimeMillis();
+                int eventCount = 0;
 
-            while (true) {
-                try {
-                    Thread.sleep(5000); // Check every 5 seconds
-                    long now = System.currentTimeMillis();
-                    System.out.println("TimingBus health: " + eventCount + " events in " +
-                                       ((now - lastReport)/1000) + " seconds");
-                    lastReport = now;
-                    eventCount = 0;
-                } catch (Exception e) {
-                    // Ignore
+                while (true) {
+                    try {
+                        Thread.sleep(5000); // Check every 5 seconds
+                        long now = System.currentTimeMillis();
+                        System.out.println("TimingBus health: " + eventCount + " events in " +
+                                ((now - lastReport) / 1000) + " seconds");
+                        lastReport = now;
+                        eventCount = 0;
+                    } catch (Exception e) {
+                        // Ignore
+                    }
                 }
-            }
-        }, "TimingBus-Monitor").start();
+            }, "TimingBus-Monitor").start();
     }
 
     public static TimingBus getInstance() {
@@ -63,12 +66,14 @@ public class TimingBus extends AbstractBus {
     @Override
     public void publish(String commandName, Object source, Object data) {
         // Add immediate diagnostic output
-        // System.out.println("TimingBus: Publishing " + commandName + ", listeners: " + timingListeners.size());
-        
+        // System.out.println("TimingBus: Publishing " + commandName + ", listeners: " +
+        // timingListeners.size());
+
         if (Commands.TIMING_UPDATE.equals(commandName)) {
-            // DON'T reuse the shared command for timing - create a new one for thread safety
+            // DON'T reuse the shared command for timing - create a new one for thread
+            // safety
             Command cmd = new Command(commandName, source, data);
-            
+
             // Fast path for timing updates
             for (IBusListener listener : timingListeners) {
                 try {
@@ -80,12 +85,12 @@ public class TimingBus extends AbstractBus {
                     e.printStackTrace();
                 }
             }
-            
+
             // Increment diagnostic counter
             eventCount++;
             return;
         }
-        
+
         // For non-timing events, use parent implementation
         super.publish(commandName, source, data);
     }
@@ -108,7 +113,7 @@ public class TimingBus extends AbstractBus {
         Command command = new Command(Commands.TIMING_UPDATE, this, update);
         for (IBusListener listener : timingListeners) {
             try {
-                ((Player)listener).onTick(update);  // Direct call to avoid command overhead
+                ((Player) listener).onTick(update); // Direct call to avoid command overhead
             } catch (ClassCastException e) {
                 // Fall back to standard method if not a Player
                 listener.onAction(command);

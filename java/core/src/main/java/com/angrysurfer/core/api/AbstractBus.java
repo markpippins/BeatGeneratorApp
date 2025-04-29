@@ -75,13 +75,17 @@ public abstract class AbstractBus implements IBusListener {
     }
 
     public void publish(String command, Object sender, Object data) {
-        // System.out.println("AbstractBus: Publishing command " + command + " to " +
-        // listeners.size() + " listeners");
+        System.out.println("AbstractBus: Publishing command " + command + " to " + listeners.size() + " listeners");
         Command cmd = new Command(command, sender, data);
         for (IBusListener listener : listeners) {
-            // System.out.println("AbstractBus: Sending " + command + " to " +
-            // listener.getClass().getName());
-            listener.onAction(cmd);
+            // Avoid sending to self
+            if (listener != sender) {
+                System.out.println("AbstractBus: Sending " + command + " to " + listener.getClass().getName());
+                listener.onAction(cmd);
+            } 
+            else {
+                System.out.println("AbstractBus: Skipping self " + listener.getClass().getName());
+            }
         }
     }
 
