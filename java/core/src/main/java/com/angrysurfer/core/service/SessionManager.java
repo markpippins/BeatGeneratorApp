@@ -156,7 +156,7 @@ public class SessionManager implements IBusListener {
                         // Also stop recording when transport stops
                         if (isRecording()) {
                             setRecording(false);
-                            CommandBus.getInstance().publish(Commands.RECORDING_STOPPED, this);
+                            CommandBus.getInstance().publish(Commands.TRANSPORT_STOP, this);
                         }
                     }
                     case Commands.TRANSPORT_RECORD -> {
@@ -175,16 +175,16 @@ public class SessionManager implements IBusListener {
                         }
                     }
                     // Handle recording commands
-                    case Commands.TRANSPORT_RECORD_START -> {
-                        setRecording(true);
-                        // Optionally notify UI or start recording-specific behaviors
-                        CommandBus.getInstance().publish(Commands.RECORDING_STARTED, this);
-                    }
-                    case Commands.TRANSPORT_RECORD_STOP -> {
-                        setRecording(false);
-                        // Optionally finalize recording or perform cleanup
-                        CommandBus.getInstance().publish(Commands.RECORDING_STOPPED, this);
-                    }
+//                        case Commands.TRANSPORT_RECORD -> {
+//                        setRecording(true);
+//                        // Optionally notify UI or start recording-specific behaviors
+//                        CommandBus.getInstance().publish(Commands.TRANSPORT_RECORD_STATE_CHANGED, this);
+//                    }
+//                    case Commands.TRANSPORT_STOP -> {
+//                        setRecording(false);
+//                        // Optionally finalize recording or perform cleanup
+//                        CommandBus.getInstance().publish(Commands.TRANSPORT_RECORD_STATE_CHANGED, this);
+//                    }
                     case Commands.TRANSPOSE_UP -> {
                         if (getActiveSession() != null) {
                             Integer currentOffset = getActiveSession().getNoteOffset();

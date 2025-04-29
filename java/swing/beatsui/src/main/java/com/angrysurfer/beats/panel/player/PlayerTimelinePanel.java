@@ -751,7 +751,7 @@ public class PlayerTimelinePanel extends JPanel implements IBusListener {
                 case Commands.NEW_VALUE_NOTE, Commands.PRESET_UP, Commands.PRESET_DOWN, Commands.PLAYER_ROW_REFRESH ->
                     updateNameLabel();
 
-                case Commands.SESSION_CHANGED -> {
+                case Commands.SESSION_UPDATED -> {
                     if (player != null) {
                         updateTimelineWithFixedRowHeights();
                     } else {

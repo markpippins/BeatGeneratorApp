@@ -365,7 +365,7 @@ public class MelodicSequencerPanel extends JPanel implements IBusListener {
         }
 
         Player player = sequencer.getPlayer();
-        String playerName = player.getName();
+        String playerName = player.getName() + " - " + player.getId();
         String instrumentName = "No Instrument";
         String channelInfo = "";
 

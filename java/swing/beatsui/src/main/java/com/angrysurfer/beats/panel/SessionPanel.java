@@ -143,7 +143,6 @@ public class SessionPanel extends JPanel implements IBusListener {
             break;
         // Add handlers for session changes
         case Commands.SESSION_UPDATED:
-        case Commands.SESSION_CHANGED:
         case Commands.SESSION_SELECTED:
             if (action.getData() instanceof Session session) {
                 // Add throttling check

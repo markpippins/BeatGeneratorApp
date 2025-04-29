@@ -430,7 +430,7 @@ public class ScrollingSequencerVisualization extends LockHandler implements IVis
             }
             
             // Listen for timing parameter changes
-            case Commands.UPDATE_TEMPO, Commands.TIMING_PARAMETERS_CHANGED, Commands.SESSION_CHANGED -> {
+            case Commands.UPDATE_TEMPO, Commands.TIMING_PARAMETERS_CHANGED -> {
                 Session activeSession = SessionManager.getInstance().getActiveSession();
                 if (activeSession != null) {
                     updateTimingParameters(activeSession);

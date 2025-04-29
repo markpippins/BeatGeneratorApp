@@ -269,7 +269,7 @@ public class PlayersPanel extends JPanel {
                         // case Commands.TIMING_TICK:
                         case Commands.PLAYER_TABLE_REFRESH_REQUEST:
                         case Commands.SESSION_SELECTED:
-                        case Commands.SESSION_CHANGED:
+                        case Commands.SESSION_UPDATED:
                         case Commands.SESSION_LOADED: {
                             SwingUtilities.invokeLater(() -> {
                                 if (action.getData() instanceof Session) {

@@ -91,7 +91,7 @@ public class MuteSequencerPanel extends JPanel implements IBusListener {
     }
     
     private void initialize() {
-        setLayout(new BorderLayout(2, 2));
+        setLayout(new BorderLayout());
         setBorder(BorderFactory.createTitledBorder(
             BorderFactory.createLineBorder(Color.GRAY),
             "Mute Sequence",

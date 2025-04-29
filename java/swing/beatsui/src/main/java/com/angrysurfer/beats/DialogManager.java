@@ -193,7 +193,7 @@ public class DialogManager implements IBusListener {
                     // Create panel with the player
                     PlayerEditPanel panel = new PlayerEditPanel(player);
                     Dialog<Player> dialog = frame.createDialog(player, panel);
-                    dialog.setTitle("Edit Player: " + player.getName());
+                    dialog.setTitle("Edit Player: " + player.getName() + " (ID: " + player.getId() + ")");
 
                     boolean result = dialog.showDialog();
 

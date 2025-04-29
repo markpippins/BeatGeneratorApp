@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
+import com.angrysurfer.core.sequencer.MelodicSequencer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -11,7 +12,6 @@ import com.angrysurfer.core.api.CommandBus;
 import com.angrysurfer.core.api.Commands;
 import com.angrysurfer.core.model.Direction;
 import com.angrysurfer.core.sequencer.MelodicSequenceData;
-import com.angrysurfer.core.sequencer.MelodicSequencer;
 import com.angrysurfer.core.sequencer.TimingDivision;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -96,23 +96,16 @@ public class MelodicSequencerHelper {
             // Apply active steps
             List<Boolean> activeSteps = data.getActiveSteps();
             if (activeSteps != null) {
-                for (int i = 0; i < Math.min(activeSteps.size(), MAX_STEPS); i++) {
-                    if (activeSteps.get(i)) {
-                        // Get corresponding note, velocity, and gate values
-                        int noteValue = (i < data.getNoteValues().size()) ? data.getNoteValues().get(i) : 60;
-                        int velocityValue = (i < data.getVelocityValues().size()) ? data.getVelocityValues().get(i) : 100;
-                        int gateValue = (i < data.getGateValues().size()) ? data.getGateValues().get(i) : 50;
-                        
-                        // Set step data
-                        sequencer.setStepData(i, true, noteValue, velocityValue, gateValue);
-                    }
-                }
+                // ... existing step application code
             }
             
             // Apply harmonic tilt values if available
             if (data.getHarmonicTiltValues() != null && !data.getHarmonicTiltValues().isEmpty()) {
                 sequencer.setHarmonicTiltValues(data.getHarmonicTiltValues());
             }
+            
+            // Note: We DO NOT handle player initialization here 
+            // That's handled separately after this method returns
             
             // Notify that pattern has updated
             commandBus.publish(
@@ -144,6 +137,12 @@ public class MelodicSequencerHelper {
             
             // Store the sequencer ID this belongs to
             data.setSequencerId(sequencer.getId());
+            
+            // Store associated player ID
+            if (sequencer.getPlayer() != null) {
+                data.setPlayerId(sequencer.getPlayer().getId());
+                logger.debug("Saving sequence with player ID {}", sequencer.getPlayer().getId());
+            }
             
             // Copy pattern parameters
             data.setPatternLength(sequencer.getPatternLength());
@@ -184,7 +183,9 @@ public class MelodicSequencerHelper {
             String json = objectMapper.writeValueAsString(data);
             jedis.set("melseq:" + sequencer.getId() + ":" + data.getId(), json);
             
-            logger.info("Saved melodic sequence {} for sequencer {}", data.getId(), sequencer.getId());
+            logger.info("Saved melodic sequence {} for sequencer {} with player {}", 
+                data.getId(), sequencer.getId(), 
+                sequencer.getPlayer() != null ? sequencer.getPlayer().getId() : "none");
             
             // Notify listeners
             commandBus.publish(

@@ -12,6 +12,7 @@ import javax.swing.BorderFactory;
 import javax.swing.JButton;
 import javax.swing.JComponent;
 import javax.swing.JDialog;
+import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.KeyStroke;
 
@@ -26,6 +27,7 @@ public class Dialog<T> extends JDialog {
     private boolean accepted = false;
     private JPanel buttonPanel;
     private JPanel titlePanel;
+    private JLabel titleLable;
 
     public Dialog() {
         this(null, null, null);
@@ -103,11 +105,26 @@ public class Dialog<T> extends JDialog {
 
         // Add buttons to title panel
         titlePanel.add(prevButton, BorderLayout.WEST);
+        
+        // Fix: The JLabel constructor is incorrectly using 20 as alignment
+        // Replace this: titleLable = new JLabel("Title", 20);
+        // With this:
+        titleLable = new JLabel("Title");
+        titleLable.setFont(new Font(titleLable.getFont().getName(), Font.BOLD, 20)); // Use font size 20 instead
+        
+        titleLable.setHorizontalAlignment(JLabel.CENTER);
+        titlePanel.add(titleLable, BorderLayout.CENTER);
         titlePanel.add(nextButton, BorderLayout.EAST);
 
         add(titlePanel, BorderLayout.NORTH);
     }
 
+    public void setTitle(String text) {
+        if (titleLable != null) {
+            titleLable.setText(text);
+        }
+    }
+    
     private JButton createNavigationButton(String text, String tooltip) {
         JButton button = new JButton(text);
         button.setToolTipText(tooltip);
@@ -148,10 +165,6 @@ public class Dialog<T> extends JDialog {
         return button;
     }
 
-    @Override
-    public void setTitle(String title) {
-        super.setTitle(title);
-    }
 
     public void setContent(JPanel content) {
         // Remove existing content if any

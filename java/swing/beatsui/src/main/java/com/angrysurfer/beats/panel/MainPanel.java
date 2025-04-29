@@ -83,7 +83,6 @@ public class MainPanel extends JPanel implements AutoCloseable, IBusListener {
 
     private JTabbedPane melodicTabbedPane;
 
-
     private Point dragStartPoint;
 
     public MainPanel(StatusBar statusBar) {
@@ -199,6 +198,31 @@ public class MainPanel extends JPanel implements AutoCloseable, IBusListener {
                     if (selectedComponent instanceof DrumEffectsSequencerPanel) {
                         ((DrumEffectsSequencerPanel) selectedComponent).requestFocusInWindow();
                     }
+
+                    // If selected component is the melodic tab pane
+                    if (selectedComponent == melodicTabbedPane) {
+                        // Get the currently selected melodic tab
+                        Component selectedMelodicTab = melodicTabbedPane.getSelectedComponent();
+
+                        // Find the MelodicSequencerPanel within the selected tab
+                        MelodicSequencerPanel melodicPanel = findMelodicSequencerPanel(selectedMelodicTab);
+
+                        if (melodicPanel != null && melodicPanel.getSequencer() != null) {
+                            // Set the player as active
+                            Player player = melodicPanel.getSequencer().getPlayer();
+                            if (player != null) {
+                                PlayerManager.getInstance().setActivePlayer(player);
+
+                                CommandBus.getInstance().publish(
+                                        Commands.PLAYER_SELECTED,
+                                        this,
+                                        player);
+
+                                logger.debug("Main tab switched to melodic - set player '{}' as active",
+                                        player.getName());
+                            }
+                        }
+                    }
                 });
             }
         });
@@ -206,27 +230,26 @@ public class MainPanel extends JPanel implements AutoCloseable, IBusListener {
         melodicTabbedPane.addChangeListener(e -> {
             // Get the selected component
             Component selectedComponent = melodicTabbedPane.getSelectedComponent();
-            
+
             // Find the MelodicSequencerPanel within the selected tab
             MelodicSequencerPanel melodicPanel = findMelodicSequencerPanel(selectedComponent);
-            
+
             if (melodicPanel != null && melodicPanel.getSequencer() != null) {
                 // Get the player from the sequencer
                 Player player = melodicPanel.getSequencer().getPlayer();
-                
+
                 // Set as active player if available
                 if (player != null) {
                     PlayerManager.getInstance().setActivePlayer(player);
-                    
+
                     // Also publish a PLAYER_SELECTED event
                     CommandBus.getInstance().publish(
-                        Commands.PLAYER_SELECTED,
-                        this,
-                        player
-                    );
-                    
-                    logger.debug("Tab selected - set melodic player '{}' (ID: {}) as active player", 
-                        player.getName(), player.getId());
+                            Commands.PLAYER_SELECTED,
+                            this,
+                            player);
+
+                    logger.debug("Tab selected - set melodic player '{}' (ID: {}) as active player",
+                            player.getName(), player.getId());
                 }
             }
         });
@@ -234,27 +257,26 @@ public class MainPanel extends JPanel implements AutoCloseable, IBusListener {
         tabbedPane.addChangeListener(e -> {
             // Get the selected component
             Component selectedComponent = tabbedPane.getSelectedComponent();
-            
+
             // If selected component is the melodic tab pane
             if (selectedComponent == melodicTabbedPane) {
                 // Get the currently selected melodic tab
                 Component selectedMelodicTab = melodicTabbedPane.getSelectedComponent();
-                
+
                 // Find the MelodicSequencerPanel within the selected tab
                 MelodicSequencerPanel melodicPanel = findMelodicSequencerPanel(selectedMelodicTab);
-                
+
                 if (melodicPanel != null && melodicPanel.getSequencer() != null) {
                     // Set the player as active
                     Player player = melodicPanel.getSequencer().getPlayer();
                     if (player != null) {
                         PlayerManager.getInstance().setActivePlayer(player);
-                        
+
                         CommandBus.getInstance().publish(
-                            Commands.PLAYER_SELECTED,
-                            this,
-                            player
-                        );
-                        
+                                Commands.PLAYER_SELECTED,
+                                this,
+                                player);
+
                         logger.debug("Main tab switched to melodic - set player '{}' as active", player.getName());
                     }
                 }
@@ -268,7 +290,7 @@ public class MainPanel extends JPanel implements AutoCloseable, IBusListener {
     private JTabbedPane createDrumSequencersPanel() {
 
         drumsTabbedPane = new JTabbedPane();
-        drumsTabbedPane.setTabPlacement(JTabbedPane.BOTTOM);
+        // drumsTabbedPane.setTabPlacement(JTabbedPane.BOTTOM);
         drumsTabbedPane.addTab("Sequencer", createDrumPanel());
         drumsTabbedPane.addTab("Parameters", createDrumParamsPanel());
         drumsTabbedPane.addTab("Mix", createDrumEffectsPanel());
@@ -278,16 +300,16 @@ public class MainPanel extends JPanel implements AutoCloseable, IBusListener {
 
     private JTabbedPane createMelodicSequencersPanel() {
         melodicTabbedPane = new JTabbedPane();
-        melodicTabbedPane.setTabPlacement(JTabbedPane.BOTTOM);
+        // melodicTabbedPane.setTabPlacement(JTabbedPane.BOTTOM);
 
         // Initialize all melodic sequencer panels with proper channel distribution
         for (int i = 0; i < melodicPanels.length; i++) {
             // Get channel from ChannelManager based on sequencer index
             int channel = ChannelManager.getInstance().getChannelForSequencerIndex(i);
-            
+
             // Create panel with proper channel assignment
             melodicPanels[i] = createMelodicSequencerPanel(i, channel);
-            
+
             // Use channel number (1-based for display) in tab title
             melodicTabbedPane.addTab("Mono " + (channel + 1), melodicPanels[i]);
         }
@@ -868,7 +890,7 @@ public class MainPanel extends JPanel implements AutoCloseable, IBusListener {
                 }
             }
         }
-        
+
         // Release channels used by melodic panels
         for (MelodicSequencerPanel panel : melodicPanels) {
             if (panel != null && panel.getSequencer() != null) {

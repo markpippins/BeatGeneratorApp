@@ -228,9 +228,9 @@ public class TransportPanel extends JPanel {
 
         // Publish the appropriate command
         if (isRecording) {
-            commandBus.publish(Commands.TRANSPORT_RECORD_START, this);
+            commandBus.publish(Commands.TRANSPORT_RECORD_STATE_CHANGED, this, Boolean.valueOf(isRecording));
         } else {
-            commandBus.publish(Commands.TRANSPORT_RECORD_STOP, this);
+            commandBus.publish(Commands.TRANSPORT_RECORD_STATE_CHANGED, this, Boolean.valueOf(isRecording));
         }
     }
 
@@ -316,7 +316,7 @@ public class TransportPanel extends JPanel {
                             if (!isRecording) {
                                 isRecording = true;
                                 updateRecordButtonAppearance();
-                                commandBus.publish(Commands.TRANSPORT_RECORD_START, TransportPanel.this);
+                                commandBus.publish(Commands.TRANSPORT_RECORD_STATE_CHANGED, TransportPanel.this);
                             }
                         }
                     }
@@ -343,14 +343,14 @@ public class TransportPanel extends JPanel {
                             isPlaying = false;
                             updateRecordButtonAppearance();
                             break;
-                        case Commands.TRANSPORT_RECORD_START:
-                            isRecording = true;
+                        case Commands.TRANSPORT_RECORD:
+                            isRecording = !isRecording;
                             updateRecordButtonAppearance();
                             break;
-                        case Commands.TRANSPORT_RECORD_STOP:
-                            isRecording = false;
-                            updateRecordButtonAppearance();
-                            break;
+//                        case Commands.TRANSPORT_RECORD_STOP:
+//                            isRecording = false;
+//                            updateRecordButtonAppearance();
+//                            break;
                         case Commands.SESSION_CREATED:
                         case Commands.SESSION_SELECTED:
                         case Commands.SESSION_LOADED:

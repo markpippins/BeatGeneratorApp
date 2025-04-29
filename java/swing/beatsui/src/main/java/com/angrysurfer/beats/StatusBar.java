@@ -36,6 +36,7 @@ public class StatusBar extends JPanel implements IBusListener {
     private static final int FIELD_HEIGHT = 20;
     private static final int SMALL_FIELD_WIDTH = 50;
     private static final int MEDIUM_FIELD_WIDTH = 100;
+    private static final int TINY_FIELD_WIDTH = SMALL_FIELD_WIDTH / 2; // 25 pixels
     private static final Color SECTION_BORDER_COLOR = new Color(180, 180, 180);
     private static final SimpleDateFormat TIME_FORMAT = new SimpleDateFormat("HH:mm:ss");
 
@@ -61,6 +62,7 @@ public class StatusBar extends JPanel implements IBusListener {
     private JTextField channelField;
     private JLabel instrumentLabel;
     private JTextField instrumentField;
+    private JTextField playerIdField;
     
     // Performance monitors
     private JLabel cpuLabel;
@@ -161,7 +163,7 @@ public class StatusBar extends JPanel implements IBusListener {
         sessionIdField = createStatusField(SMALL_FIELD_WIDTH);
         panel.add(sessionIdField, gbc);
         
-        // BPM
+        // BPM - MODIFIED: using TINY_FIELD_WIDTH
         gbc.gridx = 2;
         gbc.weightx = 0;
         gbc.fill = GridBagConstraints.NONE;
@@ -173,11 +175,11 @@ public class StatusBar extends JPanel implements IBusListener {
         gbc.weightx = 1.0;
         gbc.fill = GridBagConstraints.HORIZONTAL;
         gbc.insets = new Insets(0, 2, 0, 8);
-        bpmField = createStatusField(SMALL_FIELD_WIDTH);
+        bpmField = createStatusField(TINY_FIELD_WIDTH);
         bpmField.setText("120");
         panel.add(bpmField, gbc);
         
-        // Player count
+        // Player count - MODIFIED: using TINY_FIELD_WIDTH
         gbc.gridx = 4;
         gbc.weightx = 0;
         gbc.fill = GridBagConstraints.NONE;
@@ -189,7 +191,7 @@ public class StatusBar extends JPanel implements IBusListener {
         gbc.weightx = 1.0;
         gbc.fill = GridBagConstraints.HORIZONTAL;
         gbc.insets = new Insets(0, 2, 0, 0);
-        playerCountField = createStatusField(SMALL_FIELD_WIDTH);
+        playerCountField = createStatusField(TINY_FIELD_WIDTH);
         panel.add(playerCountField, gbc);
         
         return panel;
@@ -235,6 +237,14 @@ public class StatusBar extends JPanel implements IBusListener {
     private JPanel createPlayerSection() {
         JPanel panel = createSectionPanel("Active Player");
         panel.setLayout(new FlowLayout(FlowLayout.LEFT, 5, 0));
+        
+        // Player ID
+        JLabel playerIdLabel = new JLabel("ID:");
+        panel.add(playerIdLabel);
+        
+        // Store as a class field instead of trying to locate it later
+        playerIdField = createStatusField(SMALL_FIELD_WIDTH);
+        panel.add(playerIdField);
         
         // Player name
         playerLabel = new JLabel("Name:");
@@ -560,56 +570,65 @@ public class StatusBar extends JPanel implements IBusListener {
     private void updatePlayerInfo(Player player) {
         if (player != null) {
             currentPlayer = player;
-            playerNameField.setText(player.getName());
-            channelField.setText(player.getChannel() != null ? String.valueOf(player.getChannel()) : "");
+            
+            // Use the field directly instead of component lookup
+            if (playerIdField != null) {
+                playerIdField.setText(player.getId().toString());
+            }
+            
+            if (playerNameField != null) {
+                playerNameField.setText(player.getName());
+            }
+            
+            if (channelField != null && player.getChannel() != null) {
+                channelField.setText(String.valueOf(player.getChannel()));
+            } else if (channelField != null) {
+                channelField.setText("");
+            }
             
             if (player.getInstrument() != null) {
                 updateInstrumentInfo(player.getInstrument());
-            } else {
+            } else if (instrumentField != null) {
                 instrumentField.setText("None");
             }
         } else {
             clearPlayerInfo();
         }
     }
+
+    private void clearPlayerInfo() {
+        currentPlayer = null;
+        
+        // Use the field directly instead of component lookup
+        if (playerIdField != null) {
+            playerIdField.setText("");
+        }
+        
+        if (playerNameField != null) {
+            playerNameField.setText("");
+        }
+        
+        if (channelField != null) {
+            channelField.setText("");
+        }
+        
+        if (instrumentField != null) {
+            instrumentField.setText("");
+        }
+    }
     
     private void updateInstrumentInfo(InstrumentWrapper instrument) {
         if (instrument != null) {
-            String instName = instrument.getName();
-            
-            // If available, add preset information
-            if (instrument.getCurrentPreset() != null) {
-                instName += " (" + instrument.getCurrentPreset() + ")";
-            }
-            
-            instrumentField.setText(instName);
+            instrumentField.setText(instrument.getName());
         } else {
             instrumentField.setText("None");
         }
     }
-    
-    private void updateTransportState(String state) {
-        transportStateField.setText(state);
-        
-        // Update LED indicators
-        playingLed.setOn(isPlaying);
-        recordingLed.setOn(isRecording);
-        
-        // Additional visual feedback
-        transportStateField.setForeground(isRecording ? Color.RED : (isPlaying ? new Color(0, 150, 0) : Color.BLACK));
-    }
 
     private void clearSessionInfo() {
         sessionIdField.setText("");
+        bpmField.setText("");
         playerCountField.setText("");
-        bpmField.setText("120");
-    }
-
-    private void clearPlayerInfo() {
-        currentPlayer = null;
-        playerNameField.setText("");
-        channelField.setText("");
-        instrumentField.setText("");
     }
 
     private void resetTimingCounters() {
@@ -621,20 +640,12 @@ public class StatusBar extends JPanel implements IBusListener {
     }
 
     private void updateTimeDisplay() {
-        String formattedTime = String.format("%02d:%02d:%02d:%02d", partCount, barCount, beatCount, tickCount);
-        positionField.setText(formattedTime);
+        positionField.setText(String.format("Bar %d, Beat %d, Tick %d", barCount, beatCount, tickCount));
     }
 
-    public void setMessage(String text) {
-        messageField.setText(text);
-    }
-    
-    /**
-     * Must be called when application is closing to prevent memory leaks
-     */
-    public void cleanup() {
-        if (performanceMonitorTimer != null) {
-            performanceMonitorTimer.stop();
-        }
+    private void updateTransportState(String state) {
+        transportStateField.setText(state);
+        playingLed.setOn(isPlaying);
+        recordingLed.setOn(isRecording);
     }
 }

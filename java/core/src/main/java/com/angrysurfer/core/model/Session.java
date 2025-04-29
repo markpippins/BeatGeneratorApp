@@ -834,7 +834,7 @@ public class Session implements Serializable, IBusListener {
         if (isRunning()) {
             syncToSequencer();
         }
-        CommandBus.getInstance().publish(Commands.SESSION_CHANGED, this, this);
+        CommandBus.getInstance().publish(Commands.SESSION_UPDATED, this, this);
     }
 
     public void setTicksPerBeat(int ticksPerBeat) {
@@ -845,7 +845,7 @@ public class Session implements Serializable, IBusListener {
         if (isRunning()) {
             syncToSequencer();
         }
-        CommandBus.getInstance().publish(Commands.SESSION_CHANGED, this, this);
+        CommandBus.getInstance().publish(Commands.SESSION_UPDATED, this, this);
     }
 
     public void setBeatsPerBar(int beatsPerBar) {
@@ -854,7 +854,7 @@ public class Session implements Serializable, IBusListener {
         if (isRunning()) {
             syncToSequencer();
         }
-        CommandBus.getInstance().publish(Commands.SESSION_CHANGED, this, this);
+        CommandBus.getInstance().publish(Commands.SESSION_UPDATED, this, this);
     }
 
     public void setBars(int bars) {
@@ -863,7 +863,7 @@ public class Session implements Serializable, IBusListener {
         if (isRunning()) {
             syncToSequencer();
         }
-        CommandBus.getInstance().publish(Commands.SESSION_CHANGED, this, this);
+        CommandBus.getInstance().publish(Commands.SESSION_UPDATED, this, this);
     }
 
     public void setParts(int parts) {
@@ -872,7 +872,7 @@ public class Session implements Serializable, IBusListener {
         if (isRunning()) {
             syncToSequencer();
         }
-        CommandBus.getInstance().publish(Commands.SESSION_CHANGED, this, this);
+        CommandBus.getInstance().publish(Commands.SESSION_UPDATED, this, this);
     }
 
     public void updatePlayer(Player updatedPlayer) {
@@ -896,7 +896,7 @@ public class Session implements Serializable, IBusListener {
             unregisterTickListener(updatedPlayer);
         }
 
-        CommandBus.getInstance().publish(Commands.SESSION_CHANGED, this, this);
+        CommandBus.getInstance().publish(Commands.SESSION_UPDATED, this, this);
     }
 
     /**

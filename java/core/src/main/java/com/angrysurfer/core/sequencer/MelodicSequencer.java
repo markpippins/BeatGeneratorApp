@@ -31,6 +31,7 @@ import lombok.Setter;
 
 import javax.sound.midi.MidiDevice;
 import javax.sound.midi.MidiUnavailableException;
+import javax.swing.JOptionPane;
 
 @Getter
 @Setter
@@ -136,6 +137,84 @@ public class MelodicSequencer implements IBusListener {
             lastNoteTriggeredTime = now;
         } else {
             // Queue or skip if too many notes trigger at once
+        }
+    }
+
+    /**
+     * Initialize or get player for this sequence
+     * 
+     * @param playerId The ID of the player to retrieve, or null to create a new one
+     */
+    public void initializePlayerForSequence(Long playerId) {
+        Player sequencePlayer = null;
+        
+        // Try to get existing player by ID
+        if (playerId != null) {
+            sequencePlayer = PlayerManager.getInstance().getPlayerById(playerId);
+            logger.debug("Looking for player with ID {}: {}", playerId, 
+                (sequencePlayer != null ? "found" : "not found"));
+        }
+        
+        // If player not found, create a new one
+        if (sequencePlayer == null) {
+            // Create new player using RedisService
+            sequencePlayer = RedisService.getInstance().newNote();
+            
+            // Set name based on sequencer
+            sequencePlayer.setName("Melody " + this.id);
+            
+            // Set channel
+            if (this.channel > -1) {
+                sequencePlayer.setChannel(this.channel);
+            }
+            
+            // Add to session
+            Session activeSession = SessionManager.getInstance().getActiveSession();
+            if (activeSession != null) {
+                activeSession.addPlayer(sequencePlayer);
+                RedisService.getInstance().saveSession(activeSession);
+            }
+            
+            // Save the player
+            PlayerManager.getInstance().savePlayerProperties(sequencePlayer);
+            
+            logger.info("Created new player ID {} for sequencer {}", 
+                sequencePlayer.getId(), this.id);
+            
+            // Update sequence data with new player ID
+            if (this.melodicSequenceId != null && this.melodicSequenceId > 0) {
+                updateSequenceWithPlayer(sequencePlayer.getId());
+            }
+        }
+        
+        // Set player as owner of sequencer and vice versa
+        sequencePlayer.setOwner(this);
+        this.player = sequencePlayer;
+        
+        // Ensure player has instrument
+        if (sequencePlayer.getInstrument() == null) {
+            initializeInstrument();
+        }
+        
+        logger.debug("Initialized player {} for sequencer {}", sequencePlayer.getId(), this.id);
+    }
+
+    /**
+     * Update the current sequence with the player ID
+     */
+    private void updateSequenceWithPlayer(Long playerId) {
+        try {
+            MelodicSequenceData data = RedisService.getInstance().findMelodicSequenceById(
+                this.melodicSequenceId, this.id);
+            
+            if (data != null) {
+                data.setPlayerId(playerId);
+                RedisService.getInstance().saveMelodicSequence(this);
+                logger.debug("Updated sequence {} with player ID {}", 
+                    this.melodicSequenceId, playerId);
+            }
+        } catch (Exception e) {
+            logger.error("Failed to update sequence with player ID: {}", e.getMessage(), e);
         }
     }
 
@@ -1417,6 +1496,13 @@ public class MelodicSequencer implements IBusListener {
         }
 
         switch (action.getCommand()) {
+            case Commands.PLAYER_UPDATED -> {
+                JOptionPane.showMessageDialog(null, "Player updated: " + action.getData());
+                if (action.getData() instanceof Player player) {
+                    this.player = player;
+                    logger.info("Player updated: {}", player.getName());
+                }
+            }
             case Commands.TIMING_UPDATE -> {
                 if (isPlaying && action.getData() instanceof TimingUpdate update) {
                     if (update.tick() != null) {
@@ -2163,5 +2249,46 @@ public class MelodicSequencer implements IBusListener {
         }
         
         logger.info("Set channel {} for melodic sequencer {}", channel, id);
+    }
+
+    /**
+     * Loads a sequence into this sequencer
+     * 
+     * @param sequenceId The ID of the sequence to load
+     * @return true if loaded successfully
+     */
+    public boolean loadSequence(Long sequenceId) {
+        try {
+            if (sequenceId == null) {
+                logger.warn("Cannot load null sequence ID");
+                return false;
+            }
+            
+            // Load sequence data
+            MelodicSequenceData data = RedisService.getInstance().findMelodicSequenceById(
+                sequenceId, this.id);
+            
+            if (data == null) {
+                logger.warn("Sequence {} not found for sequencer {}", sequenceId, this.id);
+                return false;
+            }
+            
+            // Apply sequence data
+            RedisService.getInstance().applyMelodicSequenceToSequencer(data, this);
+            
+            // Initialize player for this sequence
+            initializePlayerForSequence(data.getPlayerId());
+            
+            // Update melodic sequence ID
+            this.melodicSequenceId = sequenceId;
+            
+            logger.info("Loaded melodic sequence {} with player {}", 
+                sequenceId, (player != null ? player.getId() : "null"));
+            
+            return true;
+        } catch (Exception e) {
+            logger.error("Error loading sequence {}: {}", sequenceId, e.getMessage(), e);
+            return false;
+        }
     }
 }

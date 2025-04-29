@@ -16,6 +16,7 @@ import lombok.Setter;
 public class MelodicSequenceData implements Serializable {
     private Long id;
     private Integer sequencerId;
+    private Long playerId;  // New field to store associated player ID
     
     // Sequence parameters
     private int patternLength;
@@ -36,8 +37,6 @@ public class MelodicSequenceData implements Serializable {
     private List<Integer> gateValues;
     private List<Integer> probabilityValues;
     private List<Integer> nudgeValues;
-    
-    // Tilt panel data - store the harmonic tilt values for each bar
     private List<Integer> harmonicTiltValues;
     
     // Constructor
