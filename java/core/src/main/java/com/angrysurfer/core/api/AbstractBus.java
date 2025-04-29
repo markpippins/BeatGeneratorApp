@@ -51,7 +51,7 @@ public abstract class AbstractBus implements IBusListener {
         }
 
         // Register self to handle logging commands
-        register(this);
+        // register(this);
     }
 
     public void register(IBusListener listener) {
@@ -81,7 +81,8 @@ public abstract class AbstractBus implements IBusListener {
         for (IBusListener listener : listeners) {
             // System.out.println("AbstractBus: Sending " + command + " to " +
             // listener.getClass().getName());
-            listener.onAction(cmd);
+            if (listener != sender)
+                listener.onAction(cmd);
         }
     }
 
@@ -98,12 +99,12 @@ public abstract class AbstractBus implements IBusListener {
             return;
         }
 
-        String sender = action.getSender() != null ? action.getSender().getClass().getSimpleName() : "unknown";
-        String dataType = action.getData() != null ? action.getData().getClass().getSimpleName() : "null";
+        // String sender = action.getSender() != null ? action.getSender().getClass().getSimpleName() : "unknown";
+        // String dataType = action.getData() != null ? action.getData().getClass().getSimpleName() : "null";
 
-        logManager.debug("CommandBus",
-                String.format("Publishing command: %s from: %s data: %s",
-                        action.getCommand(), sender, dataType));
+        // logManager.debug("CommandBus",
+        //         String.format("Publishing command: %s from: %s data: %s",
+        //                 action.getCommand(), sender, dataType));
 
         // Use executor service if running async, otherwise process in current thread
         if (asyncProcessing && commandExecutor != null) {

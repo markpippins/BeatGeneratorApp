@@ -68,7 +68,7 @@ public class MelodicSequencerHelper {
         
         try {
             // Set basic sequence ID
-            sequencer.setMelodicSequenceId(data.getId());
+//            sequencer.setId(data.getId());
             
             // Apply pattern length
             sequencer.setPatternLength(data.getPatternLength());
@@ -87,7 +87,7 @@ public class MelodicSequencerHelper {
             
             // Apply quantization settings
             sequencer.setQuantizeEnabled(data.isQuantizeEnabled());
-            sequencer.setRootNote(data.getRootNote());
+//            sequencer.setRootNote(data.getRootNote());
             sequencer.setScale(data.getScale());
             
             // Apply steps data
@@ -118,7 +118,7 @@ public class MelodicSequencerHelper {
             commandBus.publish(
                 Commands.MELODIC_SEQUENCE_LOADED, 
                 this, 
-                new MelodicSequencerEvent(sequencer.getId(), sequencer.getMelodicSequenceId())
+                new MelodicSequencerEvent(sequencer.getId(), data.getId())
             );
             
         } catch (Exception e) {
@@ -135,11 +135,11 @@ public class MelodicSequencerHelper {
             MelodicSequenceData data = new MelodicSequenceData();
             
             // Set or generate ID
-            if (sequencer.getMelodicSequenceId() == 0) {
+            if (sequencer.getId() == 0) {
                 data.setId(jedis.incr("seq:melsequence:" + sequencer.getId()));
-                sequencer.setMelodicSequenceId(data.getId());
+//                sequencer.setId(data.getId());
             } else {
-                data.setId(sequencer.getMelodicSequenceId());
+                data.setSequencerId(sequencer.getId());
             }
             
             // Store the sequencer ID this belongs to
@@ -156,7 +156,7 @@ public class MelodicSequencerHelper {
             data.setQuantizeEnabled(sequencer.isQuantizeEnabled());
             
             // Convert Integer root note to String representation
-            data.setRootNote(sequencer.getRootNote().toString());
+//            data.setRootNote(sequencer.getRootNote().toString());
             
             // Copy scale
             // data.setScale(sequencer.getScale());
@@ -190,7 +190,7 @@ public class MelodicSequencerHelper {
             commandBus.publish(
                 Commands.MELODIC_SEQUENCE_SAVED, 
                 this, 
-                new MelodicSequencerEvent(sequencer.getId(), sequencer.getMelodicSequenceId())
+                new MelodicSequencerEvent(sequencer.getId(), sequencer.getSequenceData().getId())
             );
             
         } catch (Exception e) {

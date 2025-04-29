@@ -348,4 +348,7 @@ public class Commands {
     public static final String TEMPO_CHANGE = "TEMPO_CHANGE";
     public static final String TIME_SIGNATURE_CHANGE = "TIME_SIGNATURE_CHANGE";
     public static final String ACTIVE_PLAYER_REQUEST = "ACTIVE_PLAYER_REQUEST";
+
+    // Add this if it doesn't exist
+    public static final String MELODIC_PATTERN_UPDATED = "MELODIC_PATTERN_UPDATED";
 }

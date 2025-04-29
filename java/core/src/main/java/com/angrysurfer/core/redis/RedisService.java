@@ -3,6 +3,7 @@ package com.angrysurfer.core.redis;
 import java.util.List;
 import java.util.Set;
 
+import com.angrysurfer.core.sequencer.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -21,10 +22,6 @@ import com.angrysurfer.core.model.Session;
 import com.angrysurfer.core.model.SessionDeserializer;
 import com.angrysurfer.core.model.Song;
 import com.angrysurfer.core.model.Step;
-import com.angrysurfer.core.sequencer.DrumSequenceData;
-import com.angrysurfer.core.sequencer.DrumSequencer;
-import com.angrysurfer.core.sequencer.MelodicSequenceData;
-import com.angrysurfer.core.sequencer.MelodicSequencer;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
@@ -560,63 +557,57 @@ public class RedisService implements IBusListener {
 
     // Melodic sequence methods
     public MelodicSequenceData newMelodicSequence() {
-        // Default to sequencer ID 1 when no ID is specified
-        return melodicSequencerHelper.newMelodicSequence(1);
+        // Default to sequencer ID 0 when no ID is specified
+        return melodicSequencerHelper.newMelodicSequence(0);
     }
 
     /**
-     * Apply melodic sequence data to sequencer
+     * Apply a melodic sequence to a sequencer
+     * 
+     * @param data The melodic sequence data to apply
+     * @param sequencer The sequencer to apply the data to
      */
     public void applyMelodicSequenceToSequencer(MelodicSequenceData data, MelodicSequencer sequencer) {
         if (data == null || sequencer == null) {
-            logger.warn("Cannot apply null melodic sequence data or sequencer");
+            logger.error("Cannot apply null sequence or sequencer");
             return;
         }
         
         try {
-            // Update sequence ID and parameters
-            sequencer.setMelodicSequenceId(data.getId());
+            // Store current playback and step state before applying new data
+            boolean wasPlaying = sequencer.isPlaying();
+            int currentStep = sequencer.getCurrentStep();
             
-            // Apply other parameters (direction, timing, etc)
-            // ...existing code...
+            // Simply set the data reference - no need to copy properties individually
+            sequencer.setSequenceData(data);
             
-            // Apply step patterns
-            sequencer.setActiveSteps(data.getActiveSteps());
-            sequencer.setNoteValues(data.getNoteValues());
-            sequencer.setVelocityValues(data.getVelocityValues());
-            sequencer.setGateValues(data.getGateValues());
+            // Update sequencer state based on the new data
+            sequencer.updateQuantizer();
             
-            // Apply the probability values if available
-            if (data.getProbabilityValues() != null && !data.getProbabilityValues().isEmpty()) {
-                sequencer.setProbabilityValues(data.getProbabilityValues());
+            // Restore runtime state if needed
+            if (wasPlaying) {
+                sequencer.setPlaying(true);
             }
+            sequencer.setCurrentStep(Math.min(currentStep, data.getPatternLength() - 1));
             
-            // Apply the nudge values if available
-            if (data.getNudgeValues() != null && !data.getNudgeValues().isEmpty()) {
-                sequencer.setNudgeValues(data.getNudgeValues());
-            }
-            
-            // Apply harmonic tilt values if available - IMPORTANT FIX HERE
-            if (data.getHarmonicTiltValues() != null && !data.getHarmonicTiltValues().isEmpty()) {
-                logger.info("Applying {} tilt values to sequencer {}", 
-                    data.getHarmonicTiltValues().size(), sequencer.getId());
-                sequencer.setHarmonicTiltValues(data.getHarmonicTiltValues());
-            } else {
-                // Initialize with default values
-                logger.info("No tilt values found, initializing with defaults for sequencer {}", 
-                    sequencer.getId());
-                sequencer.initializeHarmonicTiltValues();
-            }
-            
-            logger.info("Applied melodic sequence {} to sequencer {}", data.getId(), sequencer.getId());
+            // Log successful application
+            logger.info("Applied melodic sequence ID {} to sequencer {}",
+                data.getId(), sequencer.getId());
+                
+            // Publish event so UI components can update
+            CommandBus.getInstance().publish(
+                Commands.MELODIC_PATTERN_SWITCHED,
+                this,
+                new PatternSwitchEvent(null, data.getId()));
+                
         } catch (Exception e) {
-            logger.error("Error applying melodic sequence data: {}", e.getMessage(), e);
+            logger.error("Error applying melodic sequence: {}", e.getMessage(), e);
         }
     }
 
     public MelodicSequenceData findMelodicSequenceById(Long id) {
-        // Default to sequencer ID 1 when no sequencer ID is specified
-        return melodicSequencerHelper.findMelodicSequenceById(id, 1);
+        // Default to sequencer ID 0 when no ID is specified
+        return melodicSequencerHelper.findMelodicSequenceById(id, 0);
     }
 
     public MelodicSequenceData findMelodicSequenceById(Long id, Integer sequencerId) {

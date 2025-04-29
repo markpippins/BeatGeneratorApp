@@ -181,7 +181,7 @@ public class DrumParamsSequencerPanel extends JPanel implements IBusListener {
         // REDUCED: from 5,5 to 2,2
         setLayout(new BorderLayout(2, 2));
         // REDUCED: from 5,5,5,5 to 2,2,2,2
-        setBorder(BorderFactory.createEmptyBorder(2, 2, 2, 2));
+        // setBorder(BorderFactory.createEmptyBorder(2, 2, 2, 2));
 
         // Create west panel to hold navigation
         JPanel westPanel = new JPanel(new BorderLayout(2, 2));

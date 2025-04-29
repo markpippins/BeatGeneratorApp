@@ -528,7 +528,7 @@ public class Scale {
      * @param scaleName The name of the scale
      * @return The scale pattern as an array of integers, or null if not found
      */
-    private static int[] getScalePattern(String scaleName) {
+    static int[] getScalePattern(String scaleName) {
         return SCALE_PATTERNS.get(scaleName);
     }
 }

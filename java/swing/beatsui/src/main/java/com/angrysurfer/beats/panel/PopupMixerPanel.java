@@ -184,7 +184,7 @@ public class PopupMixerPanel extends JPanel {
             for (int i = 0; i < melodicSequencers.size(); i++) {
                 melodicMuteButtons[i].setSelected(true);
                 melodicMuteStates[i] = true;
-                melodicSequencers.get(i).setLevel(0);
+                melodicSequencers.get(i).getPlayer().setLevel(0);
             }
             updateMelodicChannelStates();
         });
@@ -295,7 +295,7 @@ public class PopupMixerPanel extends JPanel {
         MelodicSequencer sequencer = melodicSequencers.get(sequencerIndex);
         
         // Add sequencer name label
-        String seqName = sequencer.getName();
+        String seqName = sequencer.getPlayer().getName();
         if (seqName == null || seqName.isEmpty()) {
             seqName = "Melodic " + (sequencerIndex + 1);
         }
@@ -313,7 +313,7 @@ public class PopupMixerPanel extends JPanel {
         panel.add(Box.createVerticalStrut(5));
         
         // Add volume slider
-        int currentLevel = sequencer.getLevel().intValue();
+        int currentLevel = sequencer.getPlayer().getLevel().intValue();
         JSlider volumeSlider = new JSlider(JSlider.VERTICAL, 0, 127, currentLevel);
         melodicVolumeSliders[sequencerIndex] = volumeSlider;
         volumeSlider.setPreferredSize(new Dimension(40, 150));
@@ -324,7 +324,7 @@ public class PopupMixerPanel extends JPanel {
         // Add change listener to update volume
         volumeSlider.addChangeListener(e -> {
             if (!volumeSlider.getValueIsAdjusting()) {
-                sequencer.setLevel(volumeSlider.getValue());
+                sequencer.getPlayer().setLevel(volumeSlider.getValue());
             }
         });
         
@@ -451,14 +451,14 @@ public class PopupMixerPanel extends JPanel {
         MelodicSequencer sequencer = melodicSequencers.get(sequencerIndex);
         
         JToggleButton muteButton = new JToggleButton("🔇");
-        muteButton.setToolTipText("Mute " + sequencer.getName());
+        muteButton.setToolTipText("Mute " + sequencer.getPlayer().getName());
         muteButton.setPreferredSize(new Dimension(30, 30));
         muteButton.setMargin(new Insets(2, 2, 2, 2));
         muteButton.setBackground(UIUtils.charcoalGray);
         muteButton.setForeground(Color.WHITE);
         
         // Store the original level to restore it when unmuting
-        final int[] originalLevel = {sequencer.getLevel().intValue()};
+        final int[] originalLevel = {sequencer.getPlayer().getLevel().intValue()};
         
         muteButton.addActionListener(e -> {
             boolean muted = muteButton.isSelected();
@@ -466,17 +466,17 @@ public class PopupMixerPanel extends JPanel {
             
             if (muted) {
                 // Save current level before muting
-                originalLevel[0] = sequencer.getLevel().intValue();
-                sequencer.setLevel(0);
+                originalLevel[0] = sequencer.getPlayer().getLevel().intValue();
+                sequencer.getPlayer().setLevel(0);
                 muteButton.setBackground(UIUtils.mutedRed);
             } else {
                 // Restore original level
-                sequencer.setLevel(originalLevel[0]);
+                sequencer.getPlayer().setLevel(originalLevel[0]);
                 muteButton.setBackground(UIUtils.charcoalGray);
             }
             
             // Update the slider to match
-            melodicVolumeSliders[sequencerIndex].setValue(sequencer.getLevel().intValue());
+            melodicVolumeSliders[sequencerIndex].setValue(sequencer.getPlayer().getLevel().intValue());
             
             // Update channel states
             updateMelodicChannelStates();
@@ -489,7 +489,7 @@ public class PopupMixerPanel extends JPanel {
         MelodicSequencer sequencer = melodicSequencers.get(sequencerIndex);
         
         JToggleButton soloButton = new JToggleButton("🎙️");
-        soloButton.setToolTipText("Solo " + sequencer.getName());
+        soloButton.setToolTipText("Solo " + sequencer.getPlayer().getName());
         soloButton.setPreferredSize(new Dimension(30, 30));
         soloButton.setMargin(new Insets(2, 2, 2, 2));
         soloButton.setBackground(UIUtils.charcoalGray);
@@ -506,7 +506,7 @@ public class PopupMixerPanel extends JPanel {
                 // First time a solo is activated, save all levels
                 if (!melodicSoloActive) {
                     for (int i = 0; i < melodicSequencers.size(); i++) {
-                        originalLevels[0][i] = melodicSequencers.get(i).getLevel().intValue();
+                        originalLevels[0][i] = melodicSequencers.get(i).getPlayer().getLevel().intValue();
                     }
                     melodicSoloActive = true;
                 }
@@ -586,16 +586,16 @@ public class PopupMixerPanel extends JPanel {
                     // Solo trumps mute
                     if (!melodicMuteStates[i]) {
                         // Sequencer is soloed and not muted - ensure it's at previous level
-                        int currentLevel = sequencer.getLevel().intValue();
+                        int currentLevel = sequencer.getPlayer().getLevel().intValue();
                         if (currentLevel == 0) {
                             // If it was at 0, set to default value
-                            sequencer.setLevel(100);
+                            sequencer.getPlayer().setLevel(100);
                             melodicVolumeSliders[i].setValue(100);
                         }
                     }
                 } else {
                     // Sequencer not soloed - should be silent
-                    sequencer.setLevel(0);
+                    sequencer.getPlayer().setLevel(0);
                     // Don't update slider position - we're temporarily silencing
                 }
             }
@@ -606,10 +606,10 @@ public class PopupMixerPanel extends JPanel {
                 
                 if (melodicMuteStates[i]) {
                     // Muted - should be silent
-                    sequencer.setLevel(0);
+                    sequencer.getPlayer().setLevel(0);
                 } else {
                     // Not muted - restore to slider position
-                    sequencer.setLevel(melodicVolumeSliders[i].getValue());
+                    sequencer.getPlayer().setLevel(melodicVolumeSliders[i].getValue());
                 }
             }
         }

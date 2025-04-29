@@ -813,23 +813,22 @@ public class InternalSynthPresetPanel extends JPanel {
             }
             
             // If direct access failed, use the instrument API
-            instrument.controlChange(channel, 0, 0);  // Bank MSB
-            instrument.controlChange(channel, 32, bank); // Bank LSB
-            instrument.programChange(channel, program, 0);
+            instrument.controlChange(0, 0);  // Bank MSB
+            instrument.controlChange(32, bank); // Bank LSB
+            instrument.programChange(program, 0);
             
             // Play notes
             for (int note : notes) {
-                instrument.noteOn(channel, note, 100);
+                instrument.noteOn(note, 100);
             }
             
             // Schedule note off
-            final int finalChannel = channel;
             final int[] finalNotes = notes;
             new Thread(() -> {
                 try {
                     Thread.sleep(500);
                     for (int note : finalNotes) {
-                        instrument.noteOff(finalChannel, note, 0);
+                        instrument.noteOff(note, 0);
                     }
                 } catch (Exception e) {
                     // Ignore

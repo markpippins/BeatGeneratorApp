@@ -321,7 +321,7 @@ public abstract class Player implements Callable<Boolean>, Serializable, IBusLis
         try {
             // Use synchronized block to prevent concurrent modification of the reusable message
             synchronized (messageLock) {
-                reuseableMessage.setMessage(ShortMessage.NOTE_ON, channel, note, velocity);
+                reuseableMessage.setMessage(ShortMessage.NOTE_ON, note, velocity);
                 // Replace sendMessage with sendToDevice
                 instrument.sendToDevice(reuseableMessage);
             }
@@ -348,7 +348,7 @@ public abstract class Player implements Callable<Boolean>, Serializable, IBusLis
             // Delegate to instrument wrapper
             if (instrument != null) {
                 synchronized (messageLock) {
-                    reuseableMessage.setMessage(ShortMessage.NOTE_ON, channel, note, velocity);
+                    reuseableMessage.setMessage(ShortMessage.NOTE_ON, note, velocity);
                     instrument.sendToDevice(reuseableMessage);  // Changed from sendMessage to sendToDevice
                 }
             }
@@ -374,7 +374,7 @@ public abstract class Player implements Callable<Boolean>, Serializable, IBusLis
         try {
             // Delegate to instrument wrapper
             if (instrument != null) {
-                instrument.playMidiNote(channel, note, velocity, decay);
+                instrument.playMidiNote(note, velocity, decay);
             }
         } catch (Exception e) {
             logger.error("Error in noteOn with decay: {}", e.getMessage(), e);
@@ -402,7 +402,7 @@ public abstract class Player implements Callable<Boolean>, Serializable, IBusLis
 //            // Delegate to instrument wrapper
 //            if (instrument != null) {
 //                synchronized (messageLock) {
-//                    reuseableMessage.setMessage(ShortMessage.NOTE_ON, channel, note, velocity);
+//                    reuseableMessage.setMessage(ShortMessage.NOTE_ON, note, velocity);
 //                    instrument.sendToDevice(reuseableMessage);
 //                }
 //            }
@@ -421,7 +421,7 @@ public abstract class Player implements Callable<Boolean>, Serializable, IBusLis
         try {
             // Delegate to instrument wrapper
             if (instrument != null) {
-                instrument.noteOff(channel, note, velocity);
+                instrument.noteOff(note, velocity);
             }
 
             // Update player state
@@ -482,14 +482,7 @@ public abstract class Player implements Callable<Boolean>, Serializable, IBusLis
     /**
      * Determines whether this player should play at the given position
      *
-     * @param tickPosition        Current position within beat (1-based)
-     * @param timingUpdate.beat() Current position within bar (1-based)
-     * @param timingUpdate.bar()  Current position within pattern (1-based)
-     * @param partPosition        Current position within arrangement (1-based)
-     * @param tickCount           Global tick counter (continuously increasing)
-     * @param beatCount           Global beat counter (continuously increasing)
-     * @param barCount            Global bar counter (continuously increasing)
-     * @param partCount           Global part counter (continuously increasing)
+     * @param timingUpdate        Current TIMING_UPDATE
      */
     public boolean shouldPlay(TimingUpdate timingUpdate) {
         // Quick checks first
@@ -497,9 +490,9 @@ public abstract class Player implements Callable<Boolean>, Serializable, IBusLis
             return false;
         }
 
-        // For sequencers (which don't use rules) return true immediately
-        if (rules == null || rules.isEmpty()) {
-            return true; // CRITICAL CHANGE: Let sequencers play without rule checks
+        // CRITICAL CHANGE: Let sequencers play without rule checks
+        if (isMelodicPlayer() || isDrumPlayer()) {
+            return true;
         }
 
         // Rest of the method remains the same for players with rules

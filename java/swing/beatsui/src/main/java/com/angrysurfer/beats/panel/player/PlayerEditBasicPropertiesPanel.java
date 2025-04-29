@@ -451,7 +451,7 @@ public class PlayerEditBasicPropertiesPanel extends JPanel {
             
             DrumItem item = (DrumItem) drumCombo.getSelectedItem();
 
-            // For drum channel, store note in rootNote
+            // For drum store note in rootNote
             player.setRootNote(Integer.valueOf(item.getNoteNumber()));
 
             // Preview the drum sound
@@ -659,8 +659,7 @@ public class PlayerEditBasicPropertiesPanel extends JPanel {
         initializing.set(true);
         
         try {
-            logger.debug("Updating preset controls - isDrumChannel: {}, isInternalSynth: {}", 
-                         isDrumChannel, isInternalSynth);
+            logger.debug("Updating preset controls - isDrumChannel: {}, isInternalSynth: {}", isInternalSynth);
                 
             // Clear preset control panel
             presetControlPanel.removeAll();
@@ -673,7 +672,7 @@ public class PlayerEditBasicPropertiesPanel extends JPanel {
             deleteSoundbankButton.setEnabled(showSoundbankControls);
     
             if (isDrumChannel) {
-                // For drum channel, use drum kit selector
+                // For drum use drum kit selector
                 presetControlPanel.add(drumCombo, BorderLayout.CENTER);
     
                 // Populate with drum sounds
@@ -751,9 +750,9 @@ public class PlayerEditBasicPropertiesPanel extends JPanel {
                     // Apply the drum selection immediately
                     if (player.getInstrument() != null) {
                         // Set standard drum kit
-                        player.getInstrument().controlChange(9, 0, 0);   // Bank MSB
-                        player.getInstrument().controlChange(9, 32, 0);  // Bank LSB
-                        player.getInstrument().programChange(9, 0, 0);  // Standard kit
+                        player.getInstrument().controlChange(0, 0);   // Bank MSB
+                        player.getInstrument().controlChange(32, 0);  // Bank LSB
+                        player.getInstrument().programChange(0, 0);  // Standard kit
                     }
                 }
             }
@@ -1129,7 +1128,7 @@ public class PlayerEditBasicPropertiesPanel extends JPanel {
     private void playPreviewNote() {
         try {
             if (isDrumChannel) {
-                // For drum channel, play selected drum sound
+                // For drum play selected drum sound
                 if (drumCombo.getSelectedItem() instanceof DrumItem) {
                     DrumItem item = (DrumItem) drumCombo.getSelectedItem();
                     playDrumPreview(item.getNoteNumber());
@@ -1148,19 +1147,19 @@ public class PlayerEditBasicPropertiesPanel extends JPanel {
             int channel = player.getChannel();
             try {
                 // Play C major chord
-                instrument.noteOn(channel, 60, 100); // C4
+                instrument.noteOn(60, 100); // C4
                 Thread.sleep(50); // Small delay between notes
-                instrument.noteOn(channel, 64, 100); // E4
+                instrument.noteOn(64, 100); // E4
                 Thread.sleep(50);
-                instrument.noteOn(channel, 67, 100); // G4
+                instrument.noteOn(67, 100); // G4
                 
                 // Schedule note off after specified duration
                 new Thread(() -> {
                     try {
                         Thread.sleep(PREVIEW_DURATION_MS);
-                        instrument.noteOff(channel, 60, 0);
-                        instrument.noteOff(channel, 64, 0);
-                        instrument.noteOff(channel, 67, 0);
+                        instrument.noteOff(60, 0);
+                        instrument.noteOff(64, 0);
+                        instrument.noteOff(67, 0);
                     } catch (Exception e) {
                         // Ignore interruption
                     }
@@ -1189,12 +1188,12 @@ public class PlayerEditBasicPropertiesPanel extends JPanel {
             // Apply standard drum kit
             try {
                 // Apply bank and program changes for drum channel
-                instrument.controlChange(drumChannel, 0, 0);  // Bank MSB
-                instrument.controlChange(drumChannel, 32, 0); // Bank LSB
-                instrument.programChange(drumChannel, 0, 0);  // Standard kit
+                instrument.controlChange(0, 0);  // Bank MSB
+                instrument.controlChange(32, 0); // Bank LSB
+                instrument.programChange(0, 0);  // Standard kit
 
                 // Play the drum note
-                instrument.noteOn(drumChannel, noteNumber, 100);
+                instrument.noteOn(noteNumber, 100);
                 // No need for note off with percussion sounds
             } catch (Exception e) {
                 logger.error("Error sending MIDI commands for drum preview: {}", e.getMessage());
@@ -1222,7 +1221,7 @@ public class PlayerEditBasicPropertiesPanel extends JPanel {
             Integer preset = null;
             
             if (isDrumChannel) {
-                // For drum channel, always use bank 0, program 0
+                // For drum always use bank 0, program 0
                 bank = 0;
                 preset = 0;
             } else if (isInternalSynth) {
@@ -1241,9 +1240,9 @@ public class PlayerEditBasicPropertiesPanel extends JPanel {
                 int bankMSB = (bank >> 7) & 0x7F;
                 int bankLSB = bank & 0x7F;
                 
-                instrument.controlChange(channel, 0, bankMSB);
-                instrument.controlChange(channel, 32, bankLSB);
-                instrument.programChange(channel, preset, 0);
+                instrument.controlChange(0, bankMSB);
+                instrument.controlChange(32, bankLSB);
+                instrument.programChange(preset, 0);
                 
                 // Update instrument object
                 instrument.setBankIndex(bank);
@@ -1254,7 +1253,7 @@ public class PlayerEditBasicPropertiesPanel extends JPanel {
                 instrumentManager.updateInstrument(instrument);
                 
                 logger.debug("Applied preset change: channel={}, bank={}, preset={}",
-                        channel, bank, preset);
+                        bank, preset);
             }
         } catch (Exception e) {
             logger.error("Error applying preset change: {}", e.getMessage());
@@ -1541,9 +1540,9 @@ public class PlayerEditBasicPropertiesPanel extends JPanel {
             // Apply bank and program changes
             int bankMSB = (bankIndex >> 7) & 0x7F;
             int bankLSB = bankIndex & 0x7F;
-            player.getInstrument().controlChange(channel, 0, bankMSB);
-            player.getInstrument().controlChange(channel, 32, bankLSB);
-            player.getInstrument().programChange(channel, presetIndex, 0);
+            player.getInstrument().controlChange(0, bankMSB);
+            player.getInstrument().controlChange(32, bankLSB);
+            player.getInstrument().programChange(presetIndex, 0);
             
             logger.info("Applied instrument settings: soundbank={}, bank={}, preset={}, channel={}",
                 soundbank, bankIndex, presetIndex, channel);

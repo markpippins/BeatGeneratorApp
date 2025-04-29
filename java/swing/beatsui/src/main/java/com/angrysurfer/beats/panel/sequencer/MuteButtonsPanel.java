@@ -523,7 +523,7 @@ public class MuteButtonsPanel extends JPanel implements IBusListener {
         if (melodicSequencers != null && seqIndex < melodicSequencers.size()) {
             MelodicSequencer sequencer = melodicSequencers.get(seqIndex);
             if (sequencer != null) {
-                sequencer.setLevel(muted ? 0 : 100);
+                sequencer.getPlayer().setLevel(muted ? 0 : 100);
             }
         }
     }

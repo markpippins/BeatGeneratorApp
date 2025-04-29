@@ -404,7 +404,7 @@ public class InstrumentsPanel extends JPanel {
             }
 
             // Send control change message
-            selectedInstrument.controlChange(channel, controlNumber, value);
+            selectedInstrument.controlChange(controlNumber, value);
             
             // Log and update status
             CommandBus.getInstance().publish(
@@ -450,7 +450,7 @@ public class InstrumentsPanel extends JPanel {
             }
 
             // Send program change message
-            selectedInstrument.programChange(channel, programNumber, 0);
+            selectedInstrument.programChange(programNumber, 0);
             
             // Log and update status
             CommandBus.getInstance().publish(

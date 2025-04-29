@@ -79,7 +79,7 @@ public class SongEngine {
         try {
             pattern.setPreset(updateValue);
             if (pattern.getInstrument() != null) {
-                pattern.getInstrument().programChange(pattern.getChannel(), updateValue, 0);
+                pattern.getInstrument().programChange(updateValue, 0);
             }
         } catch (InvalidMidiDataException | MidiUnavailableException e) {
             logger.error("Error changing preset: {}", e.getMessage(), e);

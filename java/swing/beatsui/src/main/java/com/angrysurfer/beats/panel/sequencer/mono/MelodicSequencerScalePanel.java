@@ -96,7 +96,7 @@ public class MelodicSequencerScalePanel extends JPanel {
         rootNoteCombo.addItemListener(e -> {
             if (e.getStateChange() == ItemEvent.SELECTED && !updatingUI) {
                 String rootNote = (String) e.getItem();
-                sequencer.setRootNote(rootNote);
+                sequencer.getSequenceData().setRootNote(rootNote);
 
                 // Publish event for other listeners
                 CommandBus.getInstance().publish(

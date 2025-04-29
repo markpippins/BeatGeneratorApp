@@ -216,12 +216,12 @@ public final class InstrumentWrapper implements Serializable {
         return assignments.getOrDefault(cc, "NONE");
     }
 
-    public void channelPressure(int channel, int data1, int data2)
+    public void channelPressure(int data1, int data2)
             throws MidiUnavailableException, InvalidMidiDataException {
         sendToDevice(new ShortMessage(ShortMessage.CHANNEL_PRESSURE, channel, (int) data1, (int) data2));
     }
 
-    public void controlChange(int channel, int controller, int value) {
+    public void controlChange(int controller, int value) {
         if (device == null) {
             logger.warn("Cannot send control change - device is null");
             return;
@@ -239,26 +239,26 @@ public final class InstrumentWrapper implements Serializable {
         }
     }
 
-    public void noteOn(int channel, int note, int velocity) throws InvalidMidiDataException, MidiUnavailableException {
+    public void noteOn(int note, int velocity) throws InvalidMidiDataException, MidiUnavailableException {
         synchronized (cachedNoteOn) {
             cachedNoteOn.setMessage(ShortMessage.NOTE_ON, channel, note, velocity);
             sendToDevice(cachedNoteOn);
         }
     }
 
-    public void noteOff(int channel, int note, int velocity) throws InvalidMidiDataException, MidiUnavailableException {
+    public void noteOff(int note, int velocity) throws InvalidMidiDataException, MidiUnavailableException {
         synchronized (cachedNoteOff) {
             cachedNoteOff.setMessage(ShortMessage.NOTE_OFF, channel, note, velocity);
             sendToDevice(cachedNoteOff);
         }
     }
 
-    public void polyPressure(int channel, int data1, int data2)
+    public void polyPressure(int data1, int data2)
             throws MidiUnavailableException, InvalidMidiDataException {
         sendToDevice(new ShortMessage(ShortMessage.POLY_PRESSURE, channel, (int) data1, (int) data2));
     }
 
-    public void programChange(int channel, int data1, int data2)
+    public void programChange(int data1, int data2)
             throws InvalidMidiDataException, MidiUnavailableException {
         sendToDevice(new ShortMessage(ShortMessage.PROGRAM_CHANGE, channel, (int) data1, (int) data2));
     }
@@ -341,12 +341,12 @@ public final class InstrumentWrapper implements Serializable {
 
             // Apply bank if specified
             if (instrument.getBankIndex() != null && instrument.getBankIndex() > 0) {
-                instrument.controlChange(channel, 0, 0); // Bank MSB
-                instrument.controlChange(channel, 32, instrument.getBankIndex()); // Bank LSB
+                instrument.controlChange( 0, 0); // Bank MSB
+                instrument.controlChange( 32, instrument.getBankIndex()); // Bank LSB
             }
 
             // Apply program change
-            instrument.programChange(channel, preset, 0);
+            instrument.programChange( preset, 0);
             logger.debug("Initialized instrument {} with preset {}",
                     instrument.getName(), preset);
         } catch (Exception e) {
@@ -357,7 +357,7 @@ public final class InstrumentWrapper implements Serializable {
     /**
      * Play a note with specified decay time, using optimized path when possible
      */
-    public void playMidiNote(int channel, int note, int velocity, int decay) {
+    public void playMidiNote(int note, int velocity, int decay) {
         // Try internal synth optimization first
         if ("Gervill".equals(deviceName)) {
             // Use optimized internal synth path
@@ -367,9 +367,9 @@ public final class InstrumentWrapper implements Serializable {
 
         // Fall back to standard MIDI path for external devices
         try {
-            noteOn(channel, note, velocity);
+            noteOn( note, velocity);
             // Schedule note off
-            scheduleNoteOff(channel, note, velocity, decay);
+            scheduleNoteOff( note, velocity, decay);
         } catch (InvalidMidiDataException e) {
             throw new RuntimeException(e);
         } catch (MidiUnavailableException e) {
@@ -381,12 +381,11 @@ public final class InstrumentWrapper implements Serializable {
     /**
      * Schedule a noteOff command after specified delay
      * 
-     * @param channel  MIDI channel
      * @param note     Note number to turn off
      * @param velocity Release velocity (usually 0)
      * @param delayMs  Delay in milliseconds before sending note off
      */
-    private void scheduleNoteOff(int channel, int note, int velocity, int delayMs) {
+    private void scheduleNoteOff(int note, int velocity, int delayMs) {
         // Use a shared scheduled executor service for better performance than
         // individual timers
         if (NOTE_OFF_SCHEDULER == null) {
@@ -401,7 +400,7 @@ public final class InstrumentWrapper implements Serializable {
         NOTE_OFF_SCHEDULER.schedule(() -> {
             try {
                 // Send note-off message using existing method
-                noteOff(channel, note, 0); // Usually 0 velocity for note off
+                noteOff( note, 0); // Usually 0 velocity for note off
 
                 // Debug logging if needed (uncomment for debugging)
                 // logger.debug("Note off sent for note {} on channel {}", note, channel);
@@ -595,14 +594,14 @@ public final class InstrumentWrapper implements Serializable {
     public void applyBankAndProgram(int channel) throws InvalidMidiDataException, MidiUnavailableException {
         if (bankIndex != null) {
             // Send bank select MSB (CC 0)
-            controlChange(channel, 0, 0);
+            controlChange(0, 0);
 
             // Send bank select LSB (CC 32)
-            controlChange(channel, 32, bankIndex);
+            controlChange(32, bankIndex);
 
             // Send program change if we have a preset set
             if (currentPreset != null) {
-                programChange(channel, currentPreset, 0);
+                programChange(currentPreset, 0);
                 logger.info("Applied bank={}, program={} to channel={}", bankIndex, currentPreset, channel);
             }
         }
@@ -618,7 +617,7 @@ public final class InstrumentWrapper implements Serializable {
     /**
      * Send multiple MIDI CC messages efficiently in bulk
      */
-    public void sendBulkCC(int channel, int[] controllers, int[] values) throws MidiUnavailableException {
+    public void sendBulkCC(int[] controllers, int[] values) throws MidiUnavailableException {
         if (controllers.length != values.length) {
             throw new IllegalArgumentException("Controller and value arrays must be same length");
         }

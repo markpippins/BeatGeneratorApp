@@ -475,7 +475,7 @@ public class Session implements Serializable, IBusListener {
             getPlayers().forEach(p -> {
                 try {
                     if (p.getInstrument() != null) {
-                        p.getInstrument().noteOff(p.getChannel(), note, 0);
+                        p.getInstrument().noteOff(note, 0);
                     }
                 } catch (Exception e) {
                     logger.error("Error stopping note {} on channel {}: {}", note, p.getChannel(), e.getMessage(), e);
@@ -590,7 +590,7 @@ public class Session implements Serializable, IBusListener {
     /**
      * Initialize a player's MIDI device connection
      * @param player The player to initialize
-     * @param availableDevices List of available MIDI output devices
+     * @param devices List of available MIDI output devices
      */
     private void initializePlayerDevice(Player player, List<MidiDevice> devices) {
         logger.info("Initializing device for player {}", player.getName());
@@ -719,14 +719,14 @@ public class Session implements Serializable, IBusListener {
             if (preset != null) {
                 // Apply bank select if needed
                 if (instrument.getBankMSB() != 0 || instrument.getBankLSB() != 0) {
-                    instrument.controlChange(channel, 0, instrument.getBankMSB());
-                    instrument.controlChange(channel, 32, instrument.getBankLSB());
+                    instrument.controlChange(0, instrument.getBankMSB());
+                    instrument.controlChange(32, instrument.getBankLSB());
                     logger.debug("Sent bank select MSB: {}, LSB: {} for player {}",
                         instrument.getBankMSB(), instrument.getBankLSB(), player.getId());
                 }
 
                 // Send program change
-                instrument.programChange(channel, preset, 0);
+                instrument.programChange(preset, 0);
                 logger.info("Initialized player {} with instrument {} preset {} on channel {}",
                     player.getId(), instrument.getName(), preset, channel);
             }

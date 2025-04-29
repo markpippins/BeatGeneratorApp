@@ -272,9 +272,9 @@ public class PlayerManager implements IBusListener {
             // Apply bank and program changes
             int bankMSB = (bankIndex >> 7) & 0x7F;
             int bankLSB = bankIndex & 0x7F;
-            instrument.controlChange(channel, 0, bankMSB);
-            instrument.controlChange(channel, 32, bankLSB);
-            instrument.programChange(channel, presetIndex, 0);
+            instrument.controlChange(0, bankMSB);
+            instrument.controlChange(32, bankLSB);
+            instrument.programChange(presetIndex, 0);
             
             logger.debug("Applied MIDI changes for player: {} (preset: {})", 
                 player.getName(), presetIndex);

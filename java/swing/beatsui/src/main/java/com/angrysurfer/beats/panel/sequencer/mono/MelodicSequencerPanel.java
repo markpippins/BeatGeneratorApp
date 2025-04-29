@@ -107,7 +107,7 @@ public class MelodicSequencerPanel extends JPanel implements IBusListener {
     /**
      * Constructor for MelodicSequencerPanel
      */
-    public MelodicSequencerPanel(Integer index, Integer channel, Consumer<NoteEvent> noteEventConsumer) {
+    public MelodicSequencerPanel(int index, Integer channel, Consumer<NoteEvent> noteEventConsumer) {
         super(new BorderLayout());
 
         // Create the sequencer with properly assigned channel
@@ -195,9 +195,9 @@ public class MelodicSequencerPanel extends JPanel implements IBusListener {
                                 // Apply bank and program changes
                                 int bankMSB = (bankIndex >> 7) & 0x7F;
                                 int bankLSB = bankIndex & 0x7F;
-                                player.getInstrument().controlChange(channel, 0, bankMSB);
-                                player.getInstrument().controlChange(channel, 32, bankLSB);
-                                player.getInstrument().programChange(channel, presetIndex, 0);
+                                player.getInstrument().controlChange(0, bankMSB);
+                                player.getInstrument().controlChange(32, bankLSB);
+                                player.getInstrument().programChange(presetIndex, 0);
 
                                 logger.info("Applied instrument settings during sequence load: soundbank={}, bank={}, preset={}", 
                                     player.getInstrument().getSoundbankName(), bankIndex, presetIndex);
@@ -226,7 +226,7 @@ public class MelodicSequencerPanel extends JPanel implements IBusListener {
                         this,
                         new MelodicSequencerHelper.MelodicSequencerEvent(
                                 sequencer.getId(),
-                                sequencer.getMelodicSequenceId()));
+                                sequencer.getSequenceData().getId()));
 
                 // If we have a navigation panel, update its display
                 if (navigationPanel != null) {
@@ -482,7 +482,7 @@ public class MelodicSequencerPanel extends JPanel implements IBusListener {
                     dial.addChangeListener(e -> {
                         if (!listenersEnabled)
                             return;
-                        sequencer.setProbabilityValue(index, dial.getValue());
+                        sequencer.getSequenceData().setProbabilityValue(index, dial.getValue());
                     });
                     // probabilityDial[0] = dial;
                     probabilityDials.add(dial);
@@ -495,7 +495,7 @@ public class MelodicSequencerPanel extends JPanel implements IBusListener {
                     dial.addChangeListener(e -> {
                         if (!listenersEnabled)
                             return;
-                        sequencer.setNudgeValue(index, dial.getValue());
+                        sequencer.getSequenceData().setNudgeValue(index, dial.getValue());
                     });
                     // nudgeDial[0] = dial;
                     nudgeDials.add(dial);

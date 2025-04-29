@@ -101,7 +101,7 @@ public class TiltSequencerPanel extends JPanel implements IBusListener {
 
             // Store the tilt value in the sequencer
             if (sequencer != null) {
-                sequencer.setTiltValueForBar(index, tiltValue);
+                sequencer.getSequenceData().setHarmonicTiltValue(index, tiltValue);
             }
 
             // If this is the current active bar, apply the tilt immediately

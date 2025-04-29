@@ -1328,7 +1328,7 @@ public class DrumSequencer implements IBusListener {
     /**
      * Generate a simple pattern for the specified drum
      *
-     * @param drumIndex The index of the drum pad to generate a pattern for
+     * @param density The index of the drum pad to generate a pattern for
      */
     public void generatePattern(int density) {
         // Generate pattern for selected drum pad
@@ -1830,7 +1830,7 @@ public class DrumSequencer implements IBusListener {
                 int[] controllers = Arrays.copyOf(effectControllers, effectCount);
                 int[] values = Arrays.copyOf(effectValues, effectCount);
                 
-                player.getInstrument().sendBulkCC(channel, controllers, values);
+                player.getInstrument().sendBulkCC(controllers, values);
             }
         } catch (Exception e) {
             // Just ignore errors to avoid performance impact

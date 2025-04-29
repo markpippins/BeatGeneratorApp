@@ -50,7 +50,7 @@ public class StatusBar extends JPanel implements IBusListener {
     // Transport section
     private LEDIndicator playingLed;
     private LEDIndicator recordingLed;
-    private JTextField transportStateField;
+    // private JTextField transportStateField;
     private JLabel timeSignatureLabel;
     private JTextField timeSignatureField;
 
@@ -202,15 +202,17 @@ public class StatusBar extends JPanel implements IBusListener {
         // Transport state indicator
         JPanel ledPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 3, 0));
         playingLed = new LEDIndicator(Color.GREEN, "PLAY");
+        playingLed.setOffColor(Color.RED);
         recordingLed = new LEDIndicator(Color.RED, "REC");
+        recordingLed.setOffColor(Color.RED);
         ledPanel.add(playingLed);
         ledPanel.add(recordingLed);
         panel.add(ledPanel);
         
         // Transport state text
-        transportStateField = createStatusField(SMALL_FIELD_WIDTH);
-        transportStateField.setText("Stopped");
-        panel.add(transportStateField);
+        // transportStateField = createStatusField(SMALL_FIELD_WIDTH);
+        // transportStateField.setText("Stopped");
+        // panel.add(transportStateField);
         
         // Time signature
         timeSignatureLabel = new JLabel("Time:");
@@ -411,7 +413,7 @@ public class StatusBar extends JPanel implements IBusListener {
         try {
             com.sun.management.OperatingSystemMXBean osBean = 
                 (com.sun.management.OperatingSystemMXBean) java.lang.management.ManagementFactory.getOperatingSystemMXBean();
-            return Math.round(osBean.getSystemCpuLoad() * 100.0);
+            return Math.round(osBean.getCpuLoad() * 100.0);
         } catch (Exception e) {
             // Fallback to random values if the above doesn't work
             return isPlaying ? Math.min(90, 30 + random.nextInt(20)) : 10 + random.nextInt(10);
@@ -589,14 +591,14 @@ public class StatusBar extends JPanel implements IBusListener {
     }
     
     private void updateTransportState(String state) {
-        transportStateField.setText(state);
+        // transportStateField.setText(state);
         
         // Update LED indicators
         playingLed.setOn(isPlaying);
         recordingLed.setOn(isRecording);
         
         // Additional visual feedback
-        transportStateField.setForeground(isRecording ? Color.RED : (isPlaying ? new Color(0, 150, 0) : Color.BLACK));
+        // transportStateField.setForeground(isRecording ? Color.RED : (isPlaying ? new Color(0, 150, 0) : Color.BLACK));
     }
 
     private void clearSessionInfo() {

@@ -405,10 +405,10 @@ public class LFOPanel extends JPanel implements AutoCloseable {
                     }
 
                     // Publish to command bus
-                    CommandBus.getInstance().publish(
-                            Commands.LFO_VALUE_CHANGED,
-                            this,
-                            newValue[0]);
+                    // CommandBus.getInstance().publish(
+                    //         Commands.LFO_VALUE_CHANGED,
+                    //         this,
+                    //         newValue[0]);
                 });
             }
         }, 0, 16, TimeUnit.MILLISECONDS); // ~60 Hz update rate

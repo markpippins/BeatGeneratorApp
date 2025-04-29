@@ -180,7 +180,7 @@ public class DrumEffectsSequencerPanel extends JPanel implements IBusListener {
         // REDUCED: from 5,5 to 2,2
         setLayout(new BorderLayout(2, 2));
         // REDUCED: from 5,5,5,5 to 2,2,2,2
-        setBorder(BorderFactory.createEmptyBorder(2, 2, 2, 2));
+        // setBorder(BorderFactory.createEmptyBorder(2, 2, 2, 2));
 
         // Create west panel to hold navigation
         // REDUCED: from 5,5 to 2,2
@@ -244,7 +244,7 @@ public class DrumEffectsSequencerPanel extends JPanel implements IBusListener {
 
         // Create drum pad panel with callback
         JPanel drumSection = new JPanel(new BorderLayout());
-        drumSection.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5)); 
+        // drumSection.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5)); 
         
         
         drumSection.add(new MuteSequencerPanel(sequencer), BorderLayout.SOUTH);

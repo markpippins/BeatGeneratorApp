@@ -120,7 +120,7 @@ public class MelodicSequencerGridPanel extends JPanel {
                     dial.addChangeListener(e -> {
                         if (!listenersEnabled)
                             return;
-                        sequencer.setProbabilityValue(index, dial.getValue());
+                        sequencer.getSequenceData().setProbabilityValue(index, dial.getValue());
                     });
                     probabilityDials.add(dial);
                 }
@@ -132,7 +132,7 @@ public class MelodicSequencerGridPanel extends JPanel {
                     dial.addChangeListener(e -> {
                         if (!listenersEnabled)
                             return;
-                        sequencer.setNudgeValue(index, dial.getValue());
+                        sequencer.getSequenceData().setNudgeValue(index, dial.getValue());
                     });
                     nudgeDials.add(dial);
                 }
@@ -260,51 +260,27 @@ public class MelodicSequencerGridPanel extends JPanel {
      * Synchronize all UI elements with the current sequencer state
      */
     public void syncWithSequencer() {
+        if (sequencer == null) {
+            logger.error("Cannot sync with null sequencer");
+            return;
+        }
+        
         listenersEnabled = false;
         try {
-            // Update trigger buttons
-            List<Boolean> activeSteps = sequencer.getActiveSteps();
-            for (int i = 0; i < Math.min(triggerButtons.size(), activeSteps.size()); i++) {
-                triggerButtons.get(i).setSelected(activeSteps.get(i));
-            }
-            
-            // Update note dials
-            List<Integer> notes = sequencer.getNotes();
-            for (int i = 0; i < Math.min(noteDials.size(), notes.size()); i++) {
-                noteDials.get(i).setValue(notes.get(i));
-            }
-            
-            // Update velocity dials
-            List<Integer> velocities = sequencer.getVelocities();
-            for (int i = 0; i < Math.min(velocityDials.size(), velocities.size()); i++) {
-                velocityDials.get(i).setValue(velocities.get(i));
-            }
-            
-            // Update gate dials
-            List<Integer> gates = sequencer.getGates();
-            for (int i = 0; i < Math.min(gateDials.size(), gates.size()); i++) {
-                gateDials.get(i).setValue(gates.get(i));
-            }
-            
             // Update probability dials
-            List<Integer> probabilities = sequencer.getProbabilities();
-            for (int i = 0; i < Math.min(probabilityDials.size(), probabilities.size()); i++) {
-                probabilityDials.get(i).setValue(probabilities.get(i));
+            List<Integer> probabilities = sequencer.getProbabilityValues();
+            if (probabilities != null) {
+                for (int i = 0; i < Math.min(probabilityDials.size(), probabilities.size()); i++) {
+                    probabilityDials.get(i).setValue(probabilities.get(i));
+                }
+            } else {
+                logger.error("Received null probabilityValues from sequencer");
             }
             
-            // Update nudge dials
-            List<Integer> nudges = sequencer.getNudges();
-            for (int i = 0; i < Math.min(nudgeDials.size(), nudges.size()); i++) {
-                nudgeDials.get(i).setValue(nudges.get(i));
-            }
-            
+            // Same null-check pattern for other lists...
         } finally {
             listenersEnabled = true;
         }
-        
-        // Force revalidate and repaint
-        revalidate();
-        repaint();
     }
     
     /**

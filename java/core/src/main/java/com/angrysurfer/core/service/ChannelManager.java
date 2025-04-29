@@ -53,7 +53,7 @@ public class ChannelManager {
      * @param sequencerIndex The index of the sequencer (0-7)
      * @return Channel assigned to this sequencer (avoiding channel 9)
      */
-    public synchronized int getChannelForSequencerIndex(int sequencerIndex) {
+    public synchronized int getChannelForSequencerIndex(Integer sequencerIndex) {
         // Map sequencer indices 0-7 to channels 0-8,10-15
         int channel = sequencerIndex;
         if (channel >= 9) {

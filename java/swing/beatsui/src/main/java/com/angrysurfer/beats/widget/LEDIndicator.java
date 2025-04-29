@@ -1,15 +1,21 @@
 package com.angrysurfer.beats.widget;
 
 import javax.swing.*;
+
 import java.awt.*;
+
+import lombok.Getter;
+import lombok.Setter;
 
 /**
  * A simple LED indicator that can be turned on/off and display a label
  */
+@Getter
+@Setter
 public class LEDIndicator extends JPanel {
     private boolean isOn = false;
-    private final Color onColor;
-    private final Color offColor = new Color(50, 50, 50);
+    private Color onColor = new Color(0, 255, 0); // Default to green
+    private Color offColor = new Color(50, 50, 50);
     private final String label;
     
     public LEDIndicator(Color onColor, String label) {

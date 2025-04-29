@@ -124,7 +124,7 @@ public class MelodicSequenceNavigationPanel extends JPanel {
 
     private String getFormattedIdText() {
         return "Seq: " + 
-            (sequencer.getMelodicSequenceId() == 0 ? "New" : sequencer.getMelodicSequenceId());
+            (sequencer.getSequenceData().getId() == 0 ? "New" : sequencer.getSequenceData().getId());
     }
 
     /**
@@ -136,7 +136,7 @@ public class MelodicSequenceNavigationPanel extends JPanel {
             return;
         }
         
-        long currentId = sequencer.getMelodicSequenceId();
+        long currentId = sequencer.getSequenceData().getId();
         boolean hasSequences = manager.hasSequences(sequencer.getId());
         
         // Get first/last sequence IDs
@@ -175,7 +175,7 @@ public class MelodicSequenceNavigationPanel extends JPanel {
                 sequencer.getId(), 0L); // Use 0 to indicate new sequence
             
             // Reset the sequencer and clear pattern
-            sequencer.setMelodicSequenceId(0L); // Set to 0 to indicate new unsaved sequence
+            sequencer.setId(0); // Set to 0 to indicate new unsaved sequence
             sequencer.reset();
             sequencer.clearPattern();
 
@@ -215,7 +215,7 @@ public class MelodicSequenceNavigationPanel extends JPanel {
             updateSequenceIdDisplay();
             
             // Reset the sequencer to ensure proper step indicator state
-            sequencer.reset();
+            sequencer. reset();
             
             // Notify that a pattern was loaded
             CommandBus.getInstance().publish(
@@ -223,7 +223,7 @@ public class MelodicSequenceNavigationPanel extends JPanel {
                 this,
                 new MelodicSequencerHelper.MelodicSequencerEvent(
                     sequencer.getId(), 
-                    sequencer.getMelodicSequenceId()
+                    sequencer.getSequenceData().getId()
                 )
             );
             
@@ -251,7 +251,7 @@ public class MelodicSequenceNavigationPanel extends JPanel {
         
         Long prevId = manager.getPreviousSequenceId(
             sequencer.getId(), 
-            sequencer.getMelodicSequenceId()
+            sequencer.getSequenceData().getId()
         );
         
         if (prevId != null) {
@@ -266,8 +266,8 @@ public class MelodicSequenceNavigationPanel extends JPanel {
         }
         
         Long nextId = manager.getNextSequenceId(
-            sequencer.getId(), 
-            sequencer.getMelodicSequenceId()
+            sequencer.getId(),
+                sequencer.getSequenceData().getId()
         );
 
         if (nextId != null) {
@@ -305,12 +305,12 @@ public class MelodicSequenceNavigationPanel extends JPanel {
             this,
             new MelodicSequencerHelper.MelodicSequencerEvent(
                 sequencer.getId(), 
-                sequencer.getMelodicSequenceId()
+                sequencer.getSequenceData().getId()
             )
         );
         
         logger.info("Saved melodic sequence: {} for sequencer {}", 
-                   sequencer.getMelodicSequenceId(), sequencer.getId());
+                   sequencer.getSequenceData().getId(), sequencer.getId());
     }
 
     // Modify the navigateToSequence method to use parentPanel instead of sequencerPanel

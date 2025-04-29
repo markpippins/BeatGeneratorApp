@@ -230,7 +230,7 @@ public class MiniLaunchPanel extends JPanel implements IBusListener {
                     try {
                         logger.debug("Sending program change: channel={}, preset={}",
                                 channel, currentPreset);
-                        instrument.programChange(channel, currentPreset, 0);
+                        instrument.programChange(currentPreset, 0);
 
                         // Remember this preset for this channel
                         lastSentPresets.put(channel, currentPreset);
@@ -248,7 +248,7 @@ public class MiniLaunchPanel extends JPanel implements IBusListener {
 
             // Send the note to the device
             logger.debug("Sending note: note={}, channel={}, velocity={}", midiNote, channel, velocity);
-            instrument.noteOn(channel, midiNote, velocity);
+            instrument.noteOn(midiNote, velocity);
 
             // Schedule note-off after a reasonable duration
             long duration = 250; // milliseconds
@@ -257,7 +257,7 @@ public class MiniLaunchPanel extends JPanel implements IBusListener {
                         @Override
                         public void run() {
                             try {
-                                instrument.noteOff(channel, midiNote, 0);
+                                instrument.noteOff(midiNote, 0);
                             } catch (Exception e) {
                                 logger.debug("Error sending note-off: {}", e.getMessage());
                             }

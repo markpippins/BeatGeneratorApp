@@ -66,16 +66,16 @@ public class MelodicSequencerManager {
      * @param channel The MIDI channel to use
      * @return A new MelodicSequencer instance
      */
-    public MelodicSequencer newSequencer(Integer id, Integer channel) {
+    public MelodicSequencer newSequencer(int id, Integer channel) {
         // Create a new sequencer with the specified ID and channel
-        MelodicSequencer sequencer = new MelodicSequencer(id);
-        
+        MelodicSequencer sequencer = new MelodicSequencer();
+        sequencer.setSequenceData(new MelodicSequenceData());
         // Set id and channel after creation
         sequencer.setId(id);
         sequencer.setChannel(channel);
         // Register with the manager
         sequencers.add(sequencer);
-
+        
         CommandBus.getInstance().publish(Commands.MELODIC_SEQUENCER_ADDED, this, sequencer);
 
         logger.info("Created new melodic sequencer with ID {} on channel {}", id, channel);
@@ -88,10 +88,10 @@ public class MelodicSequencerManager {
      * @param id The sequencer ID
      * @return A new MelodicSequencer instance
      */
-    public MelodicSequencer newSequencer(int id) {
+    public MelodicSequencer newSequencer(Integer id) {
         // Use the new method, with a default channel based on ID
         // Avoid channel 9 (drums)
-        int channel = id % 16;
+        int channel =  id.intValue() % 16;
         if (channel == 9) channel = 15;
         
         return newSequencer(id, channel);
@@ -293,8 +293,8 @@ public class MelodicSequencerManager {
             
             RedisService.getInstance().saveMelodicSequence(sequencer);
             logger.info("Saved melodic sequence with ID: {} for sequencer {}", 
-                sequencer.getMelodicSequenceId(), sequencer.getId());
-            return sequencer.getMelodicSequenceId();
+                sequencer.getSequenceData().getId(), sequencer.getId());
+            return sequencer.getSequenceData().getId();
         } catch (Exception e) {
             logger.error("Error saving melodic sequence: " + e.getMessage(), e);
             return null;
