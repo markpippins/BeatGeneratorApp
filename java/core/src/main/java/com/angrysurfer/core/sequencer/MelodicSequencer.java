@@ -1,10 +1,12 @@
 package com.angrysurfer.core.sequencer;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
+import java.util.stream.Collectors;
 
 import javax.sound.midi.MidiDevice;
 import javax.sound.midi.MidiUnavailableException;
@@ -17,6 +19,8 @@ import com.angrysurfer.core.api.CommandBus;
 import com.angrysurfer.core.api.Commands;
 import com.angrysurfer.core.api.IBusListener;
 import com.angrysurfer.core.api.TimingBus;
+import com.angrysurfer.core.event.PatternSwitchEvent;
+import com.angrysurfer.core.event.StepUpdateEvent;
 import com.angrysurfer.core.model.Direction;
 import com.angrysurfer.core.model.InstrumentWrapper;
 import com.angrysurfer.core.model.Note;
@@ -382,22 +386,13 @@ public class MelodicSequencer implements IBusListener {
             return;
         }
 
-        // Make sure player has instrument before starting
-        // ensurePlayerHasInstrument();
-        // applyInstrumentPreset();
-
-        // Then initialize MIDI instrument
-        // initializeInstrument();
-
-        isPlaying = true;
-
         // Reset position if needed
         if (currentStep >= getSequenceData().getPatternLength()) {
             reset();
         }
 
+        isPlaying = true;
         logger.info("Melodic sequencer {} started playback", id);
-
         // Notify listeners
         CommandBus.getInstance().publish(Commands.SEQUENCER_STATE_CHANGED, this,
                 Map.of("sequencerId", id, "state", "started"));
@@ -639,95 +634,6 @@ public class MelodicSequencer implements IBusListener {
         logger.info("Sequencer reset");
     }
 
-    /**
-     * Initialize the instrument for this sequencer
-     * Called by PlayerManager during setup
-     */
-    public void initializeInstrument() {
-        // If we don't have a player yet, exit
-        if (player == null) {
-            logger.warn("Cannot initialize instrument - no player assigned to sequencer");
-            return;
-        }
-
-        try {
-            // Get the instrument from the player
-            if (player.getInstrument() == null) {
-                // No instrument assigned, try to create a default one
-                // First try to find an existing instrument for this channel
-                int channel = sequenceData.getChannel();
-                player.setInstrument(InstrumentManager.getInstance()
-                        .getOrCreateInternalSynthInstrument(channel));
-
-                logger.info("Created default instrument for sequencer on channel {}", channel);
-            }
-
-            // Ensure proper channel alignment
-            if (player.getInstrument() != null) {
-                player.getInstrument().setChannel(player.getChannel());
-
-                // Apply the instrument preset
-                applyInstrumentPreset();
-
-                logger.info("Initialized instrument {} for player {} on channel {}",
-                        player.getInstrument().getName(),
-                        player.getName(),
-                        player.getChannel());
-            }
-        } catch (Exception e) {
-            logger.error("Error initializing instrument: {}", e.getMessage(), e);
-        }
-    }
-
-    /**
-     * Apply the current instrument preset
-     * Sends the appropriate program change MIDI message to set the instrument sound
-     */
-    public void applyInstrumentPreset() {
-        if (player == null || player.getInstrument() == null) {
-            logger.debug("Cannot apply preset - player or instrument is null");
-            return;
-        }
-
-        // Get channel and preset
-        Integer channel = player.getChannel();
-        Integer preset = player.getPreset();
-
-        if (channel == null || preset == null) {
-            logger.debug("Cannot apply preset - missing channel or preset value");
-            return;
-        }
-
-        try {
-            // Get the instrument from the player
-            InstrumentWrapper instrument = player.getInstrument();
-
-            // Get bank index from instrument if available
-            Integer bankIndex = instrument.getBankIndex();
-
-            if (bankIndex != null && bankIndex > 0) {
-                // Calculate MSB and LSB from bankIndex
-                int bankMSB = (bankIndex >> 7) & 0x7F; // Controller 0
-                int bankLSB = bankIndex & 0x7F; // Controller 32
-
-                // Send bank select messages
-                instrument.controlChange(0, bankMSB); // Bank MSB
-                instrument.controlChange(32, bankLSB); // Bank LSB
-
-                logger.debug("Sent bank select MSB={}, LSB={} for bank={}",
-                        bankMSB, bankLSB, bankIndex);
-            }
-
-            // Send program change with correct parameters (second param should be 0)
-            instrument.programChange(preset, 0); // Fixed: added second parameter
-
-            logger.info("Applied program change {} on channel {} for player {}",
-                    preset, channel, player.getName());
-
-        } catch (Exception e) {
-            logger.error("Failed to apply instrument preset: {}", e.getMessage(), e);
-        }
-    }
 
     /**
      * Trigger a note for the specified step
@@ -764,8 +670,11 @@ public class MelodicSequencer implements IBusListener {
         int noteValue = sequenceData.getNoteValue(stepIndex);
         int velocity = sequenceData.getVelocityValue(stepIndex);
         int gate = sequenceData.getGateValue(stepIndex);
-        int harmonicTilt = sequenceData.getHarmonicTiltValue(stepIndex);
-
+        int harmonicTilt = 0;
+        if (stepIndex < sequenceData.getHarmonicTiltValuesRaw().length)
+            harmonicTilt = sequenceData.getHarmonicTiltValuesRaw()[stepIndex];
+        else
+            logger.error("EMPTY TILT VALUES");
         // Apply quantization if enabled
         if (sequenceData.isQuantizeEnabled()) {
             noteValue = quantizeNote(noteValue);
@@ -773,8 +682,20 @@ public class MelodicSequencer implements IBusListener {
 
         // Apply harmonic tilt
         if (harmonicTilt != 0) {
+            // Store original note for logging
+            int beforeTilt = noteValue;
+
+            // Apply tilt with enhanced effect (adjust multiplier as needed)
+            // int tiltEffect = harmonicTilt * 2; // Multiply effect for more dramatic shift
             noteValue += harmonicTilt;
-            noteValue = Math.max(0, Math.min(127, noteValue)); // Clamp to MIDI range
+
+            // Ensure note stays in MIDI range
+            noteValue = Math.max(0, Math.min(127, noteValue));
+
+            // Log detailed info about the tilt application
+            // logger.debug("Tilt applied: note before={}, tilt={}, scaled effect={}, note
+            // after={}",
+            // beforeTilt, harmonicTilt, tiltEffect, noteValue);
         }
 
         try {
@@ -942,7 +863,7 @@ public class MelodicSequencer implements IBusListener {
         }
     }
 
-    private void initializeInternalInstrument(Player player) {
+    public void initializeInternalInstrument(Player player) {
         if (player == null) {
             logger.warn("Cannot initialize internal instrument for null player");
             return;
@@ -1011,7 +932,8 @@ public class MelodicSequencer implements IBusListener {
             logger.info("Player {} initialized with internal instrument", player.getId());
 
             // Send program change to actually set the instrument sound
-            initializeInstrument();
+            PlayerManager.getInstance().initializeInstrument(player);
+            // PlayerManager.getInstance().applyInstrumentPreset(player);
 
         } catch (Exception e) {
             logger.error("Failed to initialize internal instrument: {}", e.getMessage(), e);
@@ -1045,27 +967,26 @@ public class MelodicSequencer implements IBusListener {
     }
 
     /**
-     * Get a default instrument for melodic sequencing
+     * Set harmonic tilt values from a list
      */
-    private InstrumentWrapper getDefaultInstrument() {
-        // Create with null device (indicates internal synth)
-        InstrumentWrapper internalInstrument = new InstrumentWrapper(
-                "Internal Synth",
-                null, // Explicitly pass null for device
-                getChannel());
+    public void setHarmonicTiltValues(List<Integer> tiltValues) {
+        if (tiltValues == null || tiltValues.isEmpty()) {
+            logger.warn("Attempted to set null or empty tilt values");
+            return;
+        }
 
-        // Configure as internal instrument
-        internalInstrument.setInternal(true);
-        internalInstrument.setDeviceName("Gervill");
-        internalInstrument.setSoundbankName("Default");
-        internalInstrument.setBankIndex(0);
-        internalInstrument.setCurrentPreset(0); // Default to piano
-        internalInstrument.setId(9985L + getSequenceData().getChannel());
+        // Create an array of the right size
+        int[] tiltArray = new int[Math.max(sequenceData.getPatternLength(), tiltValues.size())];
 
-        // Register with manager
-        InstrumentManager.getInstance().updateInstrument(internalInstrument);
+        // Copy values from list to array
+        for (int i = 0; i < tiltValues.size(); i++) {
+            tiltArray[i] = tiltValues.get(i);
+        }
 
-        return internalInstrument;
+        // Set on sequence data
+        sequenceData.setHarmonicTiltValues(tiltArray);
+
+        logger.info("Set {} harmonic tilt values in sequencer", tiltValues.size());
     }
 
     /**
@@ -1101,5 +1022,27 @@ public class MelodicSequencer implements IBusListener {
 
             // Handle other commands as needed
         }
+    }
+
+    public List<Integer> getHarmonicTiltValues() {
+        // Add more detailed logging
+
+        if (sequenceData == null) {
+            logger.error("sequenceData is null in getHarmonicTiltValues()");
+            return new ArrayList<>();
+        }
+
+        int[] rawValues = sequenceData.getHarmonicTiltValuesRaw();
+        if (rawValues == null) {
+            logger.error("Raw harmonic tilt values array is null in sequencer");
+            return new ArrayList<>();
+        }
+
+        // Convert using Arrays.stream for better performance
+        List<Integer> result = Arrays.stream(rawValues).boxed().collect(Collectors.toList());
+        logger.debug("getHarmonicTiltValues(): returning {} values from raw array of length {}",
+                result.size(), rawValues.length);
+
+        return result;
     }
 }

@@ -1,4 +1,4 @@
-package com.angrysurfer.core.sequencer;
+package com.angrysurfer.core.util;
 
 import java.util.Objects;
 import java.util.logging.Logger;

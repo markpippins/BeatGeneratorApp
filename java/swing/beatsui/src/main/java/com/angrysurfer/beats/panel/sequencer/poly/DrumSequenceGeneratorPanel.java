@@ -42,15 +42,20 @@ public class DrumSequenceGeneratorPanel extends JPanel {
         this.sequencer = sequencer;
 
         // Use compact titled border
-        setBorder(BorderFactory.createTitledBorder(
-            BorderFactory.createLineBorder(Color.GRAY),
-            "Generate",
-            TitledBorder.DEFAULT_JUSTIFICATION,
-            TitledBorder.DEFAULT_POSITION,
-            null, 
-            null
-        ));
-        
+        // setBorder(BorderFactory.createTitledBorder(
+        // BorderFactory.createLineBorder(Color.GRAY),
+        // "Generate",
+        // TitledBorder.DEFAULT_JUSTIFICATION,
+        // TitledBorder.DEFAULT_POSITION,
+        // null,
+        // null
+        // ));
+        // In DrumSequenceGeneratorPanel's constructor
+
+        setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createTitledBorder("Generate"),
+                BorderFactory.createEmptyBorder(1, 2, 1, 2)));
+
         // REDUCED: from 5,2 to 2,1
         setLayout(new FlowLayout(FlowLayout.LEFT, 2, 1));
 
@@ -65,7 +70,7 @@ public class DrumSequenceGeneratorPanel extends JPanel {
         String[] densityOptions = { "25%", "50%", "75%", "100%" };
         densityCombo = new JComboBox<>(densityOptions);
         densityCombo.setSelectedIndex(1); // Default to 50%
-        
+
         // REDUCED: from LARGE_CONTROL_WIDTH to MEDIUM_CONTROL_WIDTH + 10
         densityCombo.setPreferredSize(new Dimension(UIUtils.MEDIUM_CONTROL_WIDTH + 10, UIUtils.CONTROL_HEIGHT));
         densityCombo.setToolTipText("Set pattern density");

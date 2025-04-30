@@ -1,4 +1,4 @@
-package com.angrysurfer.core.sequencer;
+package com.angrysurfer.core.event;
 
 /**
  * Event class for pattern switching notifications

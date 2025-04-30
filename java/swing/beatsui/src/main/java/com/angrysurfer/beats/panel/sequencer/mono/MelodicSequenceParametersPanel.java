@@ -28,13 +28,13 @@ public class MelodicSequenceParametersPanel extends JPanel {
     private JComboBox<TimingDivision> timingCombo;
     private JToggleButton loopToggleButton;
     private JSpinner lastStepSpinner;
-    
+
     // Reference to sequencer
     private MelodicSequencer sequencer;
-    
+
     // Flag to prevent event loops
     private boolean updatingUI = false;
-    
+
     /**
      * Create a new sequence parameters panel
      * 
@@ -44,52 +44,56 @@ public class MelodicSequenceParametersPanel extends JPanel {
         this.sequencer = sequencer;
         initialize();
     }
-    
+
     /**
      * Initialize the panel with all controls
      */
     private void initialize() {
         // Use a more compact titled border with smaller insets
-        setBorder(BorderFactory.createTitledBorder(
-            BorderFactory.createLineBorder(Color.GRAY), 
-            "Sequence Parameters",
-            TitledBorder.DEFAULT_JUSTIFICATION, 
-            TitledBorder.DEFAULT_POSITION,
-            null,
-            null
-        ));
-        
+        // setBorder(BorderFactory.createTitledBorder(
+        // BorderFactory.createLineBorder(Color.GRAY),
+        // "Sequence Parameters",
+        // TitledBorder.DEFAULT_JUSTIFICATION,
+        // TitledBorder.DEFAULT_POSITION,
+        // null,
+        // null
+        // ));
+
+        setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createTitledBorder("Sequence Parameters"),
+                BorderFactory.createEmptyBorder(1, 2, 1, 2)));
+
         // Use BorderLayout for the main panel instead of FlowLayout
         setLayout(new BorderLayout(0, 0));
-        
+
         // Reduce spacing in the controls panel
         JPanel controlsPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 1, 0));
-        
+
         // Add all controls to the left panel EXCEPT those now in the scale panel
         createLastStepControls(controlsPanel);
         createDirectionControls(controlsPanel);
         createTimingControls(controlsPanel);
         createLoopButton(controlsPanel);
         createRotationControls(controlsPanel);
-        
+
         // Remove these calls as they're now in MelodicSequencerScalePanel:
-        // createRootNoteControls(controlsPanel); 
+        // createRootNoteControls(controlsPanel);
         // createQuantizeControls(controlsPanel);
         // createScaleControls(controlsPanel);
         // createOctaveControls(controlsPanel);
-        
+
         // Add the controls panel to the CENTER of the BorderLayout
         add(controlsPanel, BorderLayout.CENTER);
-        
+
         // Reduce spacing in the clear button panel
         JPanel clearPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 1, 0));
         JButton clearButton = createClearButton();
         clearPanel.add(clearButton);
-        
+
         // Add the clear panel to the EAST position
         add(clearPanel, BorderLayout.EAST);
     }
-    
+
     /**
      * Create last step spinner control
      */
@@ -100,7 +104,8 @@ public class MelodicSequenceParametersPanel extends JPanel {
         // Create spinner model with range 1-16, default 16
         SpinnerNumberModel lastStepModel = new SpinnerNumberModel(16, 1, 64, 1);
         lastStepSpinner = new JSpinner(lastStepModel);
-        lastStepSpinner.setPreferredSize(new Dimension(UIUtils.MEDIUM_CONTROL_WIDTH - 5, UIUtils.CONTROL_HEIGHT)); // Reduced width
+        lastStepSpinner.setPreferredSize(new Dimension(UIUtils.MEDIUM_CONTROL_WIDTH - 5, UIUtils.CONTROL_HEIGHT)); // Reduced
+                                                                                                                   // width
         lastStepSpinner.setToolTipText("Set the last step for the pattern (1-16)");
         lastStepSpinner.addChangeListener(e -> {
             if (!updatingUI) {
@@ -109,10 +114,10 @@ public class MelodicSequenceParametersPanel extends JPanel {
             }
         });
         lastStepPanel.add(lastStepSpinner);
-        
+
         parentPanel.add(lastStepPanel);
     }
-    
+
     /**
      * Create direction combo control
      */
@@ -136,10 +141,10 @@ public class MelodicSequenceParametersPanel extends JPanel {
             }
         });
         directionPanel.add(directionCombo);
-        
+
         parentPanel.add(directionPanel);
     }
-    
+
     /**
      * Create timing division combo control
      */
@@ -159,10 +164,10 @@ public class MelodicSequenceParametersPanel extends JPanel {
             }
         });
         timingPanel.add(timingCombo);
-        
+
         parentPanel.add(timingPanel);
     }
-    
+
     /**
      * Create loop toggle button
      */
@@ -176,10 +181,10 @@ public class MelodicSequenceParametersPanel extends JPanel {
                 sequencer.setLooping(loopToggleButton.isSelected());
             }
         });
-        
+
         parentPanel.add(loopToggleButton);
     }
-    
+
     /**
      * Create rotation controls
      */
@@ -196,10 +201,9 @@ public class MelodicSequenceParametersPanel extends JPanel {
             updateUI(sequencer);
             // Notify that the pattern was updated
             CommandBus.getInstance().publish(
-                Commands.PATTERN_UPDATED,
-                sequencer,
-                null
-            );
+                    Commands.PATTERN_UPDATED,
+                    sequencer,
+                    null);
         });
 
         // Rotate Right button
@@ -212,21 +216,21 @@ public class MelodicSequenceParametersPanel extends JPanel {
             updateUI(sequencer);
             // Notify that the pattern was updated
             CommandBus.getInstance().publish(
-                Commands.PATTERN_UPDATED,
-                sequencer,
-                null
-            );
+                    Commands.PATTERN_UPDATED,
+                    sequencer,
+                    null);
         });
 
         // Add buttons to rotation panel
         rotationPanel.add(rotateLeftButton);
         rotationPanel.add(rotateRightButton);
-        
+
         parentPanel.add(rotationPanel);
     }
-    
+
     /**
      * Create clear button
+     * 
      * @return The created button
      */
     private JButton createClearButton() {
@@ -239,15 +243,14 @@ public class MelodicSequenceParametersPanel extends JPanel {
             updateUI(sequencer);
             // Notify that the pattern was updated
             CommandBus.getInstance().publish(
-                Commands.PATTERN_UPDATED,
-                sequencer,
-                null
-            );
+                    Commands.PATTERN_UPDATED,
+                    sequencer,
+                    null);
         });
-        
+
         return clearButton;
     }
-    
+
     /**
      * Update the panel UI to reflect sequencer state
      * 
@@ -257,20 +260,20 @@ public class MelodicSequenceParametersPanel extends JPanel {
         if (sequencer == null) {
             return;
         }
-        
+
         // Store the current sequencer reference
         this.sequencer = sequencer;
-        
+
         // Set flag to prevent event loops
         updatingUI = true;
-        
+
         try {
             // Update timing division
             TimingDivision timingDivision = sequencer.getTimingDivision();
             if (timingDivision != null) {
                 timingCombo.setSelectedItem(timingDivision);
             }
-            
+
             // Update direction
             Direction direction = sequencer.getDirection();
             if (direction != null) {
@@ -281,10 +284,10 @@ public class MelodicSequenceParametersPanel extends JPanel {
                     case RANDOM -> directionCombo.setSelectedIndex(3);
                 }
             }
-            
+
             // Update loop state
             loopToggleButton.setSelected(sequencer.isLooping());
-            
+
             // Update last step
             lastStepSpinner.setValue(sequencer.getPatternLength());
 

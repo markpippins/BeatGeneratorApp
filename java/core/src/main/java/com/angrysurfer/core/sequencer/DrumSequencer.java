@@ -15,6 +15,8 @@ import com.angrysurfer.core.api.CommandBus;
 import com.angrysurfer.core.api.Commands;
 import com.angrysurfer.core.api.IBusListener;
 import com.angrysurfer.core.api.TimingBus;
+import com.angrysurfer.core.event.DrumStepUpdateEvent;
+import com.angrysurfer.core.event.PatternSwitchEvent;
 import com.angrysurfer.core.model.Direction;
 import com.angrysurfer.core.model.InstrumentWrapper;
 import com.angrysurfer.core.model.Player;

@@ -44,9 +44,9 @@ import com.angrysurfer.core.api.Command;
 import com.angrysurfer.core.api.CommandBus;
 import com.angrysurfer.core.api.Commands;
 import com.angrysurfer.core.api.IBusListener;
+import com.angrysurfer.core.event.StepUpdateEvent;
 import com.angrysurfer.core.sequencer.DrumSequencer;
 import com.angrysurfer.core.sequencer.MelodicSequencer;
-import com.angrysurfer.core.sequencer.StepUpdateEvent;
 import com.angrysurfer.core.service.ChannelManager;
 import com.angrysurfer.core.service.InternalSynthManager;
 import com.angrysurfer.core.service.PlayerManager;
@@ -133,6 +133,7 @@ public class MainPanel extends JPanel implements AutoCloseable, IBusListener {
         buttonPanel.setBorder(BorderFactory.createEmptyBorder(2, 8, 2, 8));
 
         // Add mix button first
+        // buttonPanel.add(new TransportIndicatorPanel());
         buttonPanel.add(createMixButton());
 
         // Add existing control buttons
@@ -458,10 +459,10 @@ public class MainPanel extends JPanel implements AutoCloseable, IBusListener {
         mainPanel.add(lfoBankPanel, BorderLayout.CENTER);
 
         // Add a title header
-        JLabel titleLabel = new JLabel("Modulation Matrix", SwingConstants.CENTER);
-        titleLabel.setFont(new Font("Dialog", Font.BOLD, 16));
-        titleLabel.setBorder(BorderFactory.createEmptyBorder(0, 0, 10, 0));
-        mainPanel.add(titleLabel, BorderLayout.NORTH);
+        // JLabel titleLabel = new JLabel("Modulation Matrix", SwingConstants.CENTER);
+        // titleLabel.setFont(new Font("Dialog", Font.BOLD, 16));
+        // titleLabel.setBorder(BorderFactory.createEmptyBorder(0, 0, 10, 0));
+        // mainPanel.add(titleLabel, BorderLayout.NORTH);
 
         return mainPanel;
     }

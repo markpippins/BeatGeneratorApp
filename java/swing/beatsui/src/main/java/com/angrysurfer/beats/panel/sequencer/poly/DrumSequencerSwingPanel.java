@@ -41,15 +41,18 @@ public class DrumSequencerSwingPanel extends JPanel {
         setLayout(new FlowLayout(FlowLayout.LEFT, 2, 1));
         
         // Use compact titled border
-        setBorder(BorderFactory.createTitledBorder(
-            BorderFactory.createLineBorder(Color.GRAY),
-            "Swing",
-            TitledBorder.DEFAULT_JUSTIFICATION,
-            TitledBorder.DEFAULT_POSITION,
-            null, 
-            null
-        ));
-
+        // setBorder(BorderFactory.createTitledBorder(
+        //     BorderFactory.createLineBorder(Color.GRAY),
+        //     "Swing",
+        //     TitledBorder.DEFAULT_JUSTIFICATION,
+        //     TitledBorder.DEFAULT_POSITION,
+        //     null, 
+        //     null
+        // ));
+        setBorder(BorderFactory.createCompoundBorder(
+            BorderFactory.createTitledBorder("Swing"),
+            BorderFactory.createEmptyBorder(1, 2, 1, 2)));
+            
         // Use compact toggle button
         swingToggle = new JToggleButton("On", sequencer.isSwingEnabled());
         // ALREADY OPTIMIZED: using 45,22

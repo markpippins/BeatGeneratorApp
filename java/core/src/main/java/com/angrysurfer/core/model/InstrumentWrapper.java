@@ -10,8 +10,6 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Random;
 import java.util.Set;
-import java.util.Timer;
-import java.util.TimerTask;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -24,15 +22,10 @@ import javax.sound.midi.MidiUnavailableException;
 import javax.sound.midi.Receiver;
 import javax.sound.midi.ShortMessage;
 
-import com.angrysurfer.core.service.InternalSynthManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.angrysurfer.core.api.CommandBus;
-import com.angrysurfer.core.api.Commands;
-import com.angrysurfer.core.api.StatusUpdate;
 import com.angrysurfer.core.model.feature.Pad;
-import com.angrysurfer.core.service.DeviceManager;
 import com.angrysurfer.core.service.ReceiverManager;
 import com.angrysurfer.core.util.IntegerArrayConverter;
 import com.fasterxml.jackson.annotation.JsonIgnore;

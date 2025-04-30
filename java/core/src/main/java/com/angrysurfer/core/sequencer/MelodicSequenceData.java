@@ -1,6 +1,5 @@
 package com.angrysurfer.core.sequencer;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -53,6 +52,10 @@ public class MelodicSequenceData {
     private Integer sequencerId;
     private String name = "Unnamed Pattern";
 
+    private String soundbankName;
+    private Integer bankIndex;
+    private Integer currentPreset;
+    
     /**
      * Default constructor
      */
@@ -72,7 +75,7 @@ public class MelodicSequenceData {
         probabilityValues = new int[patternLength];
         nudgeValues = new int[patternLength];
         harmonicTiltValues = new int[patternLength];
-    
+
         // Fill with default values
         for (int i = 0; i < patternLength; i++) {
             activeSteps[i] = false; // All steps off by default
@@ -156,24 +159,57 @@ public class MelodicSequenceData {
         }
     }
 
+    public int[] getHarmonicTiltValuesRaw() {
+        return harmonicTiltValues;
+    }
+    
     /**
-     * Get the harmonic tilt value for a specific step
+     * Get harmonic tilt values as a list with safety checks
      */
-    public int getHarmonicTiltValue(int stepIndex) {
-        if (stepIndex >= 0 && stepIndex < harmonicTiltValues.length) {
-            return harmonicTiltValues[stepIndex];
+    public List<Integer> getHarmonicTiltValues() {
+        // Add null check to prevent NullPointerException
+        if (harmonicTiltValues == null) {
+            logger.warn("harmonicTiltValues array is null, initializing with defaults for pattern length {}", patternLength);
+            harmonicTiltValues = new int[patternLength];
         }
-        return 0; // Default tilt value
+        
+        List<Integer> result = Arrays.stream(harmonicTiltValues).boxed().collect(Collectors.toList());
+        logger.debug("MelodicSequenceData.getHarmonicTiltValues() returning list of size {}", result.size());
+        
+        return result;
+    }
+
+    // Add a setter for arrays if not already present
+    public void setHarmonicTiltValues(int[] values) {
+        if (values == null) {
+            logger.warn("Attempt to set null harmonicTiltValues, ignoring");
+            return;
+        }
+
+        harmonicTiltValues = new int[values.length];
+        System.arraycopy(values, 0, harmonicTiltValues, 0, values.length);
+        logger.debug("Set {} harmonic tilt values", values.length);
     }
 
     /**
-     * Set the harmonic tilt value for a specific step
+     * Set a single harmonic tilt value with safety checks
      */
-    public void setHarmonicTiltValue(int stepIndex, int tiltValue) {
-        if (stepIndex >= 0) {
-            ensureArraySize(stepIndex + 1);
-            harmonicTiltValues[stepIndex] = tiltValue;
+    public void setHarmonicTiltValue(int index, int value) {
+        // Ensure the array exists
+        if (harmonicTiltValues == null) {
+            logger.info("Creating new harmonicTiltValues array with length {}", patternLength);
+            harmonicTiltValues = new int[patternLength];
         }
+        
+        // Resize if needed
+        if (index >= harmonicTiltValues.length) {
+            int[] newArray = new int[Math.max(patternLength, index + 1)];
+            System.arraycopy(harmonicTiltValues, 0, newArray, 0, harmonicTiltValues.length);
+            harmonicTiltValues = newArray;
+        }
+        
+        // Set the value
+        harmonicTiltValues[index] = value;
     }
 
     /**
@@ -460,18 +496,6 @@ public class MelodicSequenceData {
         return Arrays.stream(nudgeValues).boxed().collect(Collectors.toList());
     }
 
-    /**
-     * Get harmonic tilt values as a List<Integer>
-     */
-    public List<Integer> getHarmonicTiltValues() {
-        // Add null check to prevent NullPointerException
-        if (harmonicTiltValues == null) {
-            logger.warn("harmonicTiltValues array is null, initializing with defaults");
-            harmonicTiltValues = new int[patternLength];
-            // All zeros by default
-        }
-        return Arrays.stream(harmonicTiltValues).boxed().collect(Collectors.toList());
-    }
 
     /**
      * Get active steps as a List<Boolean>

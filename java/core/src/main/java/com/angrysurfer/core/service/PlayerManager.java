@@ -24,6 +24,7 @@ import java.util.Map;
 import java.util.Objects;
 
 import javax.sound.midi.InvalidMidiDataException;
+import javax.sound.midi.MidiDevice;
 import javax.sound.midi.MidiUnavailableException;
 
 import com.angrysurfer.core.api.Command;
@@ -281,7 +282,7 @@ public class PlayerManager implements IBusListener {
                 
             // Also update sequencer if player belongs to one
             if (player.getOwner() instanceof MelodicSequencer sequencer) {
-                sequencer.initializeInstrument();
+                PlayerManager.getInstance().initializeInstrument(player);
             }
         } catch (Exception e) {
             logger.error("Error applying player preset: {}", e.getMessage(), e);
@@ -297,7 +298,7 @@ public class PlayerManager implements IBusListener {
         try {
             // If player belongs to a sequencer, refresh its instrument
             if (player.getOwner() instanceof MelodicSequencer sequencer) {
-                sequencer.initializeInstrument();
+                PlayerManager.getInstance().initializeInstrument(player);
             }
             
             // Also apply the preset
@@ -406,4 +407,171 @@ public class PlayerManager implements IBusListener {
         
         logger.info("Channel consistency check completed");
     }
+
+    public void initializeInternalInstrument(Player player) {
+        if (player == null) {
+            logger.warn("Cannot initialize internal instrument for null player");
+            return;
+        }
+
+        try {
+            // Try to get an internal instrument from the manager
+            InstrumentManager manager = InstrumentManager.getInstance();
+            InstrumentWrapper internalInstrument = null;
+
+            // First try to find an existing internal instrument for this channel
+            for (InstrumentWrapper instrument : manager.getCachedInstruments()) {
+                if (Boolean.TRUE.equals(instrument.getInternal()) &&
+                        instrument.getChannel() != null &&
+                        instrument.getChannel() == player.getChannel()) {
+                    internalInstrument = instrument;
+                    logger.info("Found existing internal instrument for channel {}", player.getChannel());
+                    break;
+                }
+            }
+
+            // If no instrument found, create a new one
+            if (internalInstrument == null) {
+                // Get a reference to the internal synthesizer device
+                MidiDevice internalSynthDevice;
+                try {
+                    internalSynthDevice = InternalSynthManager.getInstance().getInternalSynthDevice();
+                } catch (MidiUnavailableException e) {
+                    logger.error("Failed to get internal synth device: {}", e.getMessage());
+                    return;
+                }
+
+                // Generate a numeric ID for the instrument
+                long numericId = 9985L + player.getChannel();
+
+                // Create the instrument with proper constructor parameters
+                internalInstrument = new InstrumentWrapper(
+                        "Internal Synth " + player.getChannel(), // Name
+                        internalSynthDevice, // Device (not a String)
+                        player.getChannel() // Channel
+                );
+
+                // Set the rest of the properties
+                internalInstrument.setInternal(true);
+                internalInstrument.setDeviceName("Gervill");
+                internalInstrument.setSoundbankName("Default");
+                internalInstrument.setBankIndex(0);
+                internalInstrument.setId(numericId); // Set ID separately
+                internalInstrument.setChannel(player.getChannel());
+                internalInstrument
+                        .setCurrentPreset(player.getPreset() != null ? player.getPreset() : player.getChannel());
+
+                // Register with instrument manager
+                manager.updateInstrument(internalInstrument);
+                logger.info("Created new internal instrument for channel {}", player.getChannel());
+            }
+
+            // Assign instrument to player
+            player.setInstrument(internalInstrument);
+            player.setUsingInternalSynth(true);
+            player.setPreset(0); // Piano
+
+            // Save the player
+            savePlayerProperties(player);
+
+            logger.info("Player {} initialized with internal instrument", player.getId());
+
+            // Send program change to actually set the instrument sound
+            initializeInstrument(player);
+
+        } catch (Exception e) {
+            logger.error("Failed to initialize internal instrument: {}", e.getMessage(), e);
+        }
+    }
+
+        /**
+     * Initialize the instrument for this sequencer
+     * Called by PlayerManager during setup
+     */
+    public void initializeInstrument(Player player) {
+        // If we don't have a player yet, exit
+        if (player == null) {
+            logger.warn("Cannot initialize instrument - no player assigned to sequencer");
+            return;
+        }
+
+        try {
+            // Get the instrument from the player
+            if (player.getInstrument() == null) {
+                // No instrument assigned, try to create a default one
+                // First try to find an existing instrument for this channel
+                int channel = player.getChannel();
+                player.setInstrument(InstrumentManager.getInstance()
+                        .getOrCreateInternalSynthInstrument(channel));
+
+                logger.info("Created default instrument for sequencer on channel {}", channel);
+            }
+
+            // Ensure proper channel alignment
+            if (player.getInstrument() != null) {
+                player.getInstrument().setChannel(player.getChannel());
+
+                // Apply the instrument preset
+               applyInstrumentPreset(player);
+
+                logger.info("Initialized instrument {} for player {} on channel {}",
+                        player.getInstrument().getName(),
+                        player.getName(),
+                        player.getChannel());
+            }
+        } catch (Exception e) {
+            logger.error("Error initializing instrument: {}", e.getMessage(), e);
+        }
+    }
+
+        /**
+     * Apply the current instrument preset
+     * Sends the appropriate program change MIDI message to set the instrument sound
+     */
+    public void applyInstrumentPreset(Player player) {
+        if (player == null || player.getInstrument() == null) {
+            logger.debug("Cannot apply preset - player or instrument is null");
+            return;
+        }
+
+        // Get channel and preset
+        Integer channel = player.getChannel();
+        Integer preset = player.getPreset();
+
+        if (channel == null || preset == null) {
+            logger.debug("Cannot apply preset - missing channel or preset value");
+            return;
+        }
+
+        try {
+            // Get the instrument from the player
+            InstrumentWrapper instrument = player.getInstrument();
+
+            // Get bank index from instrument if available
+            Integer bankIndex = instrument.getBankIndex();
+
+            if (bankIndex != null && bankIndex > 0) {
+                // Calculate MSB and LSB from bankIndex
+                int bankMSB = (bankIndex >> 7) & 0x7F; // Controller 0
+                int bankLSB = bankIndex & 0x7F; // Controller 32
+
+                // Send bank select messages
+                instrument.controlChange(0, bankMSB); // Bank MSB
+                instrument.controlChange(32, bankLSB); // Bank LSB
+
+                logger.debug("Sent bank select MSB={}, LSB={} for bank={}",
+                        bankMSB, bankLSB, bankIndex);
+            }
+
+            // Send program change with correct parameters (second param should be 0)
+            instrument.programChange(preset, 0); // Fixed: added second parameter
+
+            logger.info("Applied program change {} on channel {} for player {}",
+                    preset, channel, player.getName());
+
+        } catch (Exception e) {
+            logger.error("Failed to apply instrument preset: {}", e.getMessage(), e);
+        }
+    }
+
 }

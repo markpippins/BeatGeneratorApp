@@ -1,4 +1,4 @@
-package com.angrysurfer.core.redis;
+package com.angrysurfer.core.event;
 
 /**
  * Class to hold sequencer ID and sequence ID for events

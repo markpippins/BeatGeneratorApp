@@ -27,7 +27,7 @@ public class MelodicSequencerHelper {
     private final JedisPool jedisPool;
     private final ObjectMapper objectMapper;
     private final CommandBus commandBus = CommandBus.getInstance();
-    
+
     // Constants
     private static final int MAX_STEPS = 16;
 
@@ -38,7 +38,8 @@ public class MelodicSequencerHelper {
 
     /**
      * Find a melodic sequence by ID and sequencer ID
-     * @param id The sequence ID
+     * 
+     * @param id          The sequence ID
      * @param sequencerId The sequencer instance ID
      * @return The melodic sequence data
      */
@@ -56,7 +57,7 @@ public class MelodicSequencerHelper {
             throw new RuntimeException("Failed to find melodic sequence", e);
         }
     }
-    
+
     /**
      * Apply loaded data to a MelodicSequencer
      */
@@ -65,34 +66,34 @@ public class MelodicSequencerHelper {
             logger.warn("Cannot apply null data or sequencer");
             return;
         }
-        
+
         try {
             // Set basic sequence ID
-//            sequencer.setId(data.getId());
-            
+            // sequencer.setId(data.getId());
+
             // Apply pattern length
             sequencer.setPatternLength(data.getPatternLength());
-            
+
             // Apply direction
             sequencer.setDirection(data.getDirection());
-            
+
             // Apply timing division
             sequencer.setTimingDivision(data.getTimingDivision());
-            
+
             // Apply looping flag
             sequencer.setLooping(data.isLooping());
-            
+
             // Apply octave shift
             sequencer.setOctaveShift(data.getOctaveShift());
-            
+
             // Apply quantization settings
             sequencer.setQuantizeEnabled(data.isQuantizeEnabled());
-//            sequencer.setRootNote(data.getRootNote());
+            // sequencer.setRootNote(data.getRootNote());
             sequencer.setScale(data.getScale());
-            
+
             // Apply steps data
             sequencer.clearPattern();
-            
+
             // Apply active steps
             List<Boolean> activeSteps = data.getActiveSteps();
             if (activeSteps != null) {
@@ -100,29 +101,38 @@ public class MelodicSequencerHelper {
                     if (activeSteps.get(i)) {
                         // Get corresponding note, velocity, and gate values
                         int noteValue = (i < data.getNoteValues().size()) ? data.getNoteValues().get(i) : 60;
-                        int velocityValue = (i < data.getVelocityValues().size()) ? data.getVelocityValues().get(i) : 100;
+                        int velocityValue = (i < data.getVelocityValues().size()) ? data.getVelocityValues().get(i)
+                                : 100;
                         int gateValue = (i < data.getGateValues().size()) ? data.getGateValues().get(i) : 50;
-                        
+
                         // Set step data
                         sequencer.setStepData(i, true, noteValue, velocityValue, gateValue);
                     }
                 }
             }
-            
-            // Apply harmonic tilt values if available
-            if (data.getHarmonicTiltValues() != null && !data.getHarmonicTiltValues().isEmpty()) {
-                sequencer.setHarmonicTiltValues(data.getHarmonicTiltValues());
+
+            // Apply harmonic tilt values
+            List<Integer> tiltValues = data.getHarmonicTiltValues();
+            if (tiltValues != null && !tiltValues.isEmpty()) {
+                logger.info("Applying {} harmonic tilt values: {}", tiltValues.size(), tiltValues);
+                sequencer.setHarmonicTiltValues(tiltValues);
+            } else {
+                logger.warn("No harmonic tilt values found in sequence data");
+                
+                // Initialize with defaults if missing
+                int[] defaultTiltValues = new int[sequencer.getSequenceData().getPatternLength()];
+                sequencer.getSequenceData().setHarmonicTiltValues(defaultTiltValues);
+                logger.info("Initialized default tilt values");
             }
-            
+
             // Notify that pattern has updated
             commandBus.publish(
-                Commands.MELODIC_SEQUENCE_LOADED, 
-                this, 
-                new MelodicSequencerEvent(sequencer.getId(), data.getId())
-            );
-            
+                    Commands.MELODIC_SEQUENCE_LOADED,
+                    this,
+                    new MelodicSequencerEvent(sequencer.getId(), data.getId()));
+
         } catch (Exception e) {
-            logger.error("Error applying melodic sequence data to sequencer: " + e.getMessage(), e);
+            logger.error("Error applying sequence data: " + e.getMessage(), e);
         }
     }
 
@@ -133,28 +143,28 @@ public class MelodicSequencerHelper {
         try (Jedis jedis = jedisPool.getResource()) {
             // Create a data transfer object
             MelodicSequenceData data = new MelodicSequenceData();
-            
+
             // Set or generate ID
             if (sequencer.getId() == 0) {
                 data.setId(jedis.incr("seq:melsequence:" + sequencer.getId()));
             } else {
                 data.setSequencerId(sequencer.getId());
             }
-            
+
             // Store the sequencer ID this belongs to
             data.setSequencerId(sequencer.getId());
-            
+
             // Copy pattern parameters
             data.setPatternLength(sequencer.getPatternLength());
             data.setDirection(sequencer.getDirection());
             data.setTimingDivision(sequencer.getTimingDivision());
             data.setLooping(sequencer.isLooping());
             data.setOctaveShift(sequencer.getOctaveShift());
-            
+
             // Copy quantization settings
             data.setQuantizeEnabled(sequencer.isQuantizeEnabled());
             data.setScale(sequencer.getScale());
-            
+
             // Copy pattern data (steps, notes, velocities, gates)
             // Convert List<Boolean> to boolean[]
             List<Boolean> activeStepsList = sequencer.getActiveSteps();
@@ -163,7 +173,7 @@ public class MelodicSequencerHelper {
                 activeStepsArray[i] = activeStepsList.get(i);
             }
             data.setActiveSteps(activeStepsArray);
-            
+
             // Convert List<Integer> to int[]
             List<Integer> noteValuesList = sequencer.getNoteValues();
             int[] noteValuesArray = new int[noteValuesList.size()];
@@ -171,7 +181,7 @@ public class MelodicSequencerHelper {
                 noteValuesArray[i] = noteValuesList.get(i);
             }
             data.setNoteValues(noteValuesArray);
-            
+
             // Convert List<Integer> to int[]
             List<Integer> velocityValuesList = sequencer.getVelocityValues();
             int[] velocityValuesArray = new int[velocityValuesList.size()];
@@ -179,7 +189,7 @@ public class MelodicSequencerHelper {
                 velocityValuesArray[i] = velocityValuesList.get(i);
             }
             data.setVelocityValues(velocityValuesArray);
-            
+
             // Convert List<Integer> to int[]
             List<Integer> gateValuesList = sequencer.getGateValues();
             int[] gateValuesArray = new int[gateValuesList.size()];
@@ -187,7 +197,7 @@ public class MelodicSequencerHelper {
                 gateValuesArray[i] = gateValuesList.get(i);
             }
             data.setGateValues(gateValuesArray);
-            
+
             // Copy probability and nudge values if available
             if (sequencer.getProbabilityValues() != null) {
                 List<Integer> probValuesList = sequencer.getProbabilityValues();
@@ -197,7 +207,7 @@ public class MelodicSequencerHelper {
                 }
                 data.setProbabilityValues(probValuesArray);
             }
-            
+
             if (sequencer.getNudgeValues() != null) {
                 List<Integer> nudgeValuesList = sequencer.getNudgeValues();
                 int[] nudgeValuesArray = new int[nudgeValuesList.size()];
@@ -206,7 +216,7 @@ public class MelodicSequencerHelper {
                 }
                 data.setNudgeValues(nudgeValuesArray);
             }
-            
+
             // Copy harmonic tilt values
             if (sequencer.getHarmonicTiltValues() != null) {
                 List<Integer> tiltValuesList = sequencer.getHarmonicTiltValues();
@@ -216,20 +226,19 @@ public class MelodicSequencerHelper {
                 }
                 data.setHarmonicTiltValues(tiltValuesArray);
             }
-            
+
             // Save to Redis
             String json = objectMapper.writeValueAsString(data);
             jedis.set("melseq:" + sequencer.getId() + ":" + data.getId(), json);
-            
+
             logger.info("Saved melodic sequence {} for sequencer {}", data.getId(), sequencer.getId());
-            
+
             // Notify listeners
             commandBus.publish(
-                Commands.MELODIC_SEQUENCE_SAVED, 
-                this, 
-                new MelodicSequencerEvent(sequencer.getId(), sequencer.getSequenceData().getId())
-            );
-            
+                    Commands.MELODIC_SEQUENCE_SAVED,
+                    this,
+                    new MelodicSequencerEvent(sequencer.getId(), sequencer.getSequenceData().getId()));
+
         } catch (Exception e) {
             logger.error("Error saving melodic sequence: " + e.getMessage(), e);
             throw new RuntimeException("Failed to save melodic sequence", e);
@@ -287,13 +296,12 @@ public class MelodicSequencerHelper {
         try (Jedis jedis = jedisPool.getResource()) {
             jedis.del("melseq:" + sequencerId + ":" + melSequenceId);
             logger.info("Deleted melodic sequence {} for sequencer {}", melSequenceId, sequencerId);
-            
+
             // Notify listeners
             commandBus.publish(
-                Commands.MELODIC_SEQUENCE_REMOVED, 
-                this, 
-                new MelodicSequencerEvent(sequencerId, melSequenceId)
-            );
+                    Commands.MELODIC_SEQUENCE_REMOVED,
+                    this,
+                    new MelodicSequencerEvent(sequencerId, melSequenceId));
         } catch (Exception e) {
             logger.error("Error deleting melodic sequence {}: {}", melSequenceId, e.getMessage());
             throw new RuntimeException("Failed to delete melodic sequence", e);
@@ -309,44 +317,46 @@ public class MelodicSequencerHelper {
             MelodicSequenceData data = new MelodicSequenceData();
             data.setId(jedis.incr("seq:melsequence:" + sequencerId));
             data.setSequencerId(sequencerId);
-            
+
             // Set default values
             data.setPatternLength(16);
             data.setDirection(Direction.FORWARD);
             data.setTimingDivision(TimingDivision.NORMAL);
             data.setLooping(true);
             data.setOctaveShift(0);
-            
+
             // Default quantization settings
             data.setQuantizeEnabled(true);
             data.setRootNote("C");
             data.setScale("Major");
-            
-            // Initialize pattern data with arrays
+
+            // Initialize pattern data with arrays and SET THEM on the data object
             boolean[] activeSteps = new boolean[16];
             int[] noteValues = new int[16];
             int[] velocityValues = new int[16];
             int[] gateValues = new int[16];
-            int[] harmonicTiltValues = new int[16];
+            int[] harmonicTiltValues = new int[16]; // Create tilt values array
             
+            // Initialize values
             for (int i = 0; i < 16; i++) {
                 activeSteps[i] = false;
-                noteValues[i] = 60 + (i % 12); // Default to chromatic scale starting at middle C
+                noteValues[i] = 60 + (i % 12);
                 velocityValues[i] = 100;
-                gateValues[i] = 50; // 50% gate time
-                harmonicTiltValues[i] = 0; // Default tilt value of 0
+                gateValues[i] = 50;
+                harmonicTiltValues[i] = 0; // Default to no tilt
             }
             
+            // SET ALL arrays on the data object
             data.setActiveSteps(activeSteps);
             data.setNoteValues(noteValues);
             data.setVelocityValues(velocityValues);
             data.setGateValues(gateValues);
-            data.setHarmonicTiltValues(harmonicTiltValues);
-            
+            data.setHarmonicTiltValues(harmonicTiltValues); // Don't forget this line!
+
             // Save to Redis
             String json = objectMapper.writeValueAsString(data);
             jedis.set("melseq:" + sequencerId + ":" + data.getId(), json);
-            
+
             logger.info("Created new melodic sequence with ID: {} for sequencer {}", data.getId(), sequencerId);
             return data;
         } catch (Exception e) {
@@ -382,23 +392,23 @@ public class MelodicSequencerHelper {
                     .orElse(null);
         }
     }
-    
+
     /**
      * Class to hold sequencer ID and sequence ID for events
      */
     public static class MelodicSequencerEvent {
         private final Integer sequencerId;
         private final Long sequenceId;
-        
+
         public MelodicSequencerEvent(Integer sequencerId, Long sequenceId) {
             this.sequencerId = sequencerId;
             this.sequenceId = sequenceId;
         }
-        
+
         public Integer getSequencerId() {
             return sequencerId;
         }
-        
+
         public Long getSequenceId() {
             return sequenceId;
         }

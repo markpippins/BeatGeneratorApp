@@ -22,6 +22,7 @@ import com.angrysurfer.core.api.IBusListener;
 import com.angrysurfer.core.api.TimingBus;
 import com.angrysurfer.core.sequencer.MelodicSequencer;
 import com.angrysurfer.core.sequencer.TimingUpdate;
+import com.angrysurfer.core.service.MelodicSequencerManager;
 
 /**
  * A panel with 16 tilt dials that respond to bar changes via TimingBus
@@ -101,7 +102,8 @@ public class TiltSequencerPanel extends JPanel implements IBusListener {
 
             // Store the tilt value in the sequencer
             if (sequencer != null) {
-                sequencer.getSequenceData().setHarmonicTiltValue(index, tiltValue);
+                sequencer.getSequenceData().getHarmonicTiltValuesRaw()[index] = tiltValue;
+                MelodicSequencerManager.getInstance().saveSequence(sequencer);
             }
 
             // If this is the current active bar, apply the tilt immediately
@@ -198,41 +200,34 @@ public class TiltSequencerPanel extends JPanel implements IBusListener {
             logger.warn("Cannot sync TiltSequencerPanel - sequencer is null");
             return;
         }
-
+        
         logger.debug("Syncing tilt panel with sequencer values");
-
-        // Get values directly from sequencer
+        
+        // Use more direct access to harmonic tilt values for debugging
         List<Integer> tiltValues = sequencer.getHarmonicTiltValues();
-        if (tiltValues != null && !tiltValues.isEmpty()) {
-            logger.info("Received {} tilt values from sequencer", tiltValues.size());
-
+        
+        // Log details about what we got
+        if (tiltValues != null) {
+            logger.info("Received {} tilt values from sequencer: {}", 
+                        tiltValues.size(), tiltValues);
+            
             // Loop through and update dial values
             for (int i = 0; i < Math.min(tiltDials.size(), tiltValues.size()); i++) {
                 int tiltValue = tiltValues.get(i);
-                logger.debug("Setting dial {} to value {}", i, tiltValue);
-
+                
                 // Ensure the value is in range
                 int safeValue = Math.max(MIN_VALUE, Math.min(MAX_VALUE, tiltValue));
-                if (safeValue != tiltValue) {
-                    logger.warn("Tilt value {} out of range, clamping to {}", tiltValue, safeValue);
-                    tiltValue = safeValue;
-                }
-
+                
                 // Set the value without triggering change listeners
-                tiltDials.get(i).setValue(tiltValue, false);
+                tiltDials.get(i).setValue(safeValue, false);
+                
+                // Force immediate repaint of this dial
+                tiltDials.get(i).repaint();
             }
         } else {
             logger.warn("No harmonic tilt values available from sequencer");
         }
-
-        // Highlight the current bar
-        highlightCurrentBar();
-
-        // Force repaint to ensure visual updates
-        for (Dial dial : tiltDials) {
-            dial.repaint();
-        }
-
+        
         // Force complete panel repaint
         revalidate();
         repaint();

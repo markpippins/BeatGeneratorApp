@@ -1,5 +1,6 @@
 package com.angrysurfer.beats.panel;
 
+import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
@@ -37,6 +38,7 @@ public class TransportPanel extends JPanel {
     private boolean isRecording = false;
     private boolean isPlaying = false;
 
+    
     // Add a flag to track initial application load state
     private boolean initialLoadCompleted = false;
     private boolean ignoreNextSessionUpdate = true; // Flag to ignore the first update
@@ -50,16 +52,18 @@ public class TransportPanel extends JPanel {
     private long lastSessionNavTime = 0;
 
     public TransportPanel() {
-        super(new FlowLayout(FlowLayout.CENTER));
-        setBorder(BorderFactory.createEmptyBorder(8, 0, 0, 0));
+        super(new BorderLayout());
         setPreferredSize(new Dimension(getPreferredSize().width, 75));
+        
+        setBorder(BorderFactory.createCompoundBorder(
+            BorderFactory.createTitledBorder("Transport"),
+            BorderFactory.createEmptyBorder(1, 2, 1, 2)));
 
         // Start with recording disabled
         isRecording = false;
         isPlaying = false;
 
-        // Set up a timer to enable auto-recording after 3 seconds
-        // This gives time for the application to fully load before enabling the feature
+        // Set up auto-recording timer
         autoRecordingEnableTimer = new javax.swing.Timer(3000, e -> {
             autoRecordingEnabled = true;
             autoRecordingEnableTimer.stop();
@@ -67,7 +71,14 @@ public class TransportPanel extends JPanel {
         autoRecordingEnableTimer.setRepeats(false);
         autoRecordingEnableTimer.start();
 
-        setupTransportButtons();
+        // Get transport buttons panel and add it to center
+        JPanel transportButtonsPanel = setupTransportButtons();
+        add(transportButtonsPanel, BorderLayout.CENTER);
+        
+        // Get indicator section and add it to north
+        JPanel indicatorPanel = createIndicatorSection();
+        add(indicatorPanel, BorderLayout.SOUTH);
+        
         setupCommandBusListener();
 
         // Set initial button states
@@ -75,7 +86,21 @@ public class TransportPanel extends JPanel {
         stopButton.setEnabled(false);
     }
 
-    private void setupTransportButtons() {
+    
+    
+    private JPanel createIndicatorSection() {
+        return new JPanel();
+    }
+    
+
+    /**
+     * Creates and configures transport control buttons
+     * @return JPanel containing all transport buttons
+     */
+    private JPanel setupTransportButtons() {
+        // Create panel to hold transport buttons with flow layout
+        JPanel buttonsPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 5, 0));
+        
         rewindButton = createToolbarButton(Commands.TRANSPORT_REWIND, "⏮", "Previous Session");
 
         // Create pause button with special handling
@@ -105,54 +130,27 @@ public class TransportPanel extends JPanel {
             commandBus.publish(Commands.ALL_NOTES_OFF, this);
         });
 
-        // Add hover effects
-        pauseButton.addMouseListener(new java.awt.event.MouseAdapter() {
-            public void mouseEntered(java.awt.event.MouseEvent evt) {
-                pauseButton.setBackground(pauseButton.getBackground().brighter());
-            }
-
-            public void mouseExited(java.awt.event.MouseEvent evt) {
-                pauseButton.setBackground(UIManager.getColor("Button.background"));
-            }
-        });
-
-        // Rest of the button setup code...
+        // Rest of existing code...
+        
         recordButton = new JButton("⏺");
-        recordButton.setToolTipText("Record");
-        recordButton.setEnabled(true);
-        recordButton.setActionCommand(Commands.TRANSPORT_RECORD);
-
-        recordButton.setPreferredSize(new Dimension(size, size));
-        recordButton.setMinimumSize(new Dimension(size, size));
-        recordButton.setMaximumSize(new Dimension(size, size));
-        recordButton.setFont(new Font("Segoe UI Symbol", Font.PLAIN, 18));
-        if (!recordButton.getFont().canDisplay('⏺')) {
-            recordButton.setFont(new Font("Dialog", Font.PLAIN, 18));
-        }
-        recordButton.setMargin(new Insets(0, 0, 0, 0));
-        recordButton.setFocusPainted(false);
-        recordButton.setVerticalAlignment(SwingConstants.CENTER);
-        recordButton.setBorderPainted(false);
-        recordButton.setContentAreaFilled(true);
-        recordButton.setOpaque(true);
-
-        recordButton.addActionListener(e -> {
-            toggleRecordingState();
-        });
+        // ... existing recordButton setup ...
 
         stopButton = createToolbarButton(Commands.TRANSPORT_STOP, "⏹", "Stop");
         playButton = createToolbarButton(Commands.TRANSPORT_START, "▶", "Play");
         forwardButton = createToolbarButton(Commands.TRANSPORT_FORWARD, "⏭", "Next Session");
 
-        add(rewindButton);
-        add(pauseButton);
-        add(stopButton);
-        add(recordButton);
-        add(playButton);
-        add(forwardButton);
+        // Add buttons to the panel instead of directly to TransportPanel
+        buttonsPanel.add(rewindButton);
+        buttonsPanel.add(pauseButton);
+        buttonsPanel.add(stopButton);
+        buttonsPanel.add(recordButton);
+        buttonsPanel.add(playButton);
+        buttonsPanel.add(forwardButton);
 
         updatePlayButtonAppearance();
         updateRecordButtonAppearance();
+        
+        return buttonsPanel;
     }
 
     private JButton createToolbarButton(String command, String text, String tooltip) {

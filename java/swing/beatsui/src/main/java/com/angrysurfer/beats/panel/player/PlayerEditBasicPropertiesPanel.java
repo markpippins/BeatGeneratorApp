@@ -1484,8 +1484,8 @@ public void applyAllChanges() {
     
     // Force sequencer update if player is owned by one
     if (player.getOwner() instanceof MelodicSequencer sequencer) {
-        sequencer.initializeInstrument();
-        sequencer.applyInstrumentPreset();
+        sequencer.initializeInstrument(player);
+        PlayerManager.getInstance().applyInstrumentPreset(player);
     }
     
     // Apply changes to MIDI device if available
@@ -1577,7 +1577,7 @@ public void applyAllChanges() {
             
             // Apply the instrument preset immediately if player has a sequencer
             if (player.getOwner() instanceof MelodicSequencer sequencer) {
-                sequencer.applyInstrumentPreset();
+                PlayerManager.getInstance().applyInstrumentPreset(player);
             }
             
             // Save player to persist changes

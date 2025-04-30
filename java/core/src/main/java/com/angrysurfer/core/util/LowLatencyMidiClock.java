@@ -1,4 +1,4 @@
-package com.angrysurfer.core.sequencer;
+package com.angrysurfer.core.util;
 
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;

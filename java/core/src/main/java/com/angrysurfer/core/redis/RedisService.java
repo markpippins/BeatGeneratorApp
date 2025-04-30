@@ -2,6 +2,7 @@ package com.angrysurfer.core.redis;
 
 import java.util.List;
 import java.util.Set;
+import java.util.Arrays;
 
 import com.angrysurfer.core.sequencer.*;
 import org.slf4j.Logger;
@@ -14,6 +15,7 @@ import com.angrysurfer.core.api.IBusListener;
 import com.angrysurfer.core.config.FrameState;
 import com.angrysurfer.core.config.TableState;
 import com.angrysurfer.core.config.UserConfig;
+import com.angrysurfer.core.event.PatternSwitchEvent;
 import com.angrysurfer.core.model.InstrumentWrapper;
 import com.angrysurfer.core.model.Pattern;
 import com.angrysurfer.core.model.Player;
@@ -599,6 +601,25 @@ public class RedisService implements IBusListener {
                 Commands.MELODIC_PATTERN_SWITCHED,
                 this,
                 new PatternSwitchEvent(null, data.getId()));
+                
+            // Add explicit debug about harmonic tilt values
+            if (data.getHarmonicTiltValuesRaw() != null) {
+                logger.info("Source data has {} harmonic tilt values", 
+                           data.getHarmonicTiltValuesRaw().length);
+                           
+                // Make a copy of the harmonic tilt values array
+                int[] tiltArrayCopy = Arrays.copyOf(data.getHarmonicTiltValuesRaw(), 
+                                                   data.getHarmonicTiltValuesRaw().length);
+                                                   
+                // Set explicitly on sequencer's data
+                sequencer.getSequenceData().setHarmonicTiltValues(tiltArrayCopy);
+                
+                // Verify
+                logger.info("After setting, sequencer has {} harmonic tilt values", 
+                           sequencer.getSequenceData().getHarmonicTiltValuesRaw().length);
+            } else {
+                logger.warn("Source data has NULL harmonic tilt values array");
+            }
                 
         } catch (Exception e) {
             logger.error("Error applying melodic sequence: {}", e.getMessage(), e);

@@ -68,7 +68,7 @@ public class MelodicSequencerPanel extends JPanel implements IBusListener {
     private JComboBox<String> rangeCombo;
     private JComboBox<TimingDivision> timingCombo;
     private JToggleButton latchToggleButton;
-    
+
     private MelodicSequenceNavigationPanel navigationPanel;
 
     private MelodicSequencerSwingPanel swingPanel;
@@ -103,7 +103,7 @@ public class MelodicSequencerPanel extends JPanel implements IBusListener {
         });
 
         // Apply instrument preset immediately to ensure correct sound
-        sequencer.applyInstrumentPreset();
+        PlayerManager.getInstance().applyInstrumentPreset(player);
 
         // Initialize the UI
         initialize();
@@ -138,15 +138,24 @@ public class MelodicSequencerPanel extends JPanel implements IBusListener {
                 MelodicSequenceData data = RedisService.getInstance().findMelodicSequenceById(firstId,
                         sequencer.getId());
 
-                // Log what we're loading
-                if (data.getHarmonicTiltValues() != null) {
-                    logger.info("Loaded sequence has {} tilt values", data.getHarmonicTiltValues().size());
-                } else {
-                    logger.warn("Loaded sequence has no tilt values");
-                }
-
                 // Apply the sequence data
                 RedisService.getInstance().applyMelodicSequenceToSequencer(data, sequencer);
+
+                // Ensure tilt values are present
+                List<Integer> tiltValues = sequencer.getHarmonicTiltValues();
+                logger.info("Loaded sequence with {} tilt values: {}",
+                        tiltValues.size(), tiltValues);
+
+                // Force UI update
+                SwingUtilities.invokeLater(() -> {
+                    // Be sure to update tilt panel
+                    if (tiltSequencerPanel != null) {
+                        tiltSequencerPanel.syncWithSequencer();
+                    }
+
+                    // Regular UI sync
+                    syncUIWithSequencer();
+                });
 
                 // Make sure player settings are properly applied
                 Player player = sequencer.getPlayer();
@@ -190,18 +199,19 @@ public class MelodicSequencerPanel extends JPanel implements IBusListener {
                     }
                 }
 
-                // Reset the sequencer to ensure proper step indicator state
-                sequencer.reset();
-
                 // Update the UI to reflect loaded sequence
                 syncUIWithSequencer();
+                if (tiltSequencerPanel != null) {
+                    tiltSequencerPanel.syncWithSequencer();
+                    logger.info("Synced tilt panel after loading sequence");
+                }
 
-                // EXPLICIT CALL to update tilt panel
                 if (tiltSequencerPanel != null) {
                     logger.info("Explicitly updating tilt panel after sequence load");
                     tiltSequencerPanel.syncWithSequencer();
                 }
 
+                // Reset the sequencer to ensure proper step indicator state
                 sequencer.reset();
 
                 // Notify that a pattern was loaded
@@ -325,7 +335,6 @@ public class MelodicSequencerPanel extends JPanel implements IBusListener {
         // Add the right panel to the bottom panel's EAST region
         bottomPanel.add(rightPanel, BorderLayout.EAST);
 
-
         // Add the bottom panel to the SOUTH region of the main panel
         add(bottomPanel, BorderLayout.SOUTH);
 
@@ -354,7 +363,7 @@ public class MelodicSequencerPanel extends JPanel implements IBusListener {
             channelInfo = " (Ch " + (channel + 1) + ")";
         }
 
-        instrumentInfoLabel.setText(playerName + " - " + instrumentName +  " - " + channelInfo);
+        instrumentInfoLabel.setText(playerName + " - " + instrumentName + " - " + channelInfo);
     }
 
     /**
@@ -453,6 +462,8 @@ public class MelodicSequencerPanel extends JPanel implements IBusListener {
 
             // Update tilt sequencer panel - THIS WAS MISSING
             if (tiltSequencerPanel != null) {
+                logger.debug("Syncing tilt panel with sequencer values: {}",
+                        sequencer.getHarmonicTiltValues().size());
                 tiltSequencerPanel.syncWithSequencer();
             }
 
@@ -470,9 +481,9 @@ public class MelodicSequencerPanel extends JPanel implements IBusListener {
             updateInstrumentInfoLabel();
 
             // Check and update latch toggle button if needed - THIS WAS MISSING
-            if (latchToggleButton != null) {
+            if (latchToggleButton != null)
                 latchToggleButton.setSelected(sequencer.isLatchEnabled());
-            }
+
         } finally {
             updatingUI = false;
         }

@@ -17,6 +17,9 @@ import javax.sound.midi.MidiUnavailableException;
 
 import com.angrysurfer.core.service.InstrumentManager;
 import com.angrysurfer.core.service.PlayerManager;
+import com.angrysurfer.core.util.LowLatencyMidiClock;
+import com.angrysurfer.core.util.MidiClockSource;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -26,8 +29,6 @@ import com.angrysurfer.core.api.CommandBus;
 import com.angrysurfer.core.api.Commands;
 import com.angrysurfer.core.api.IBusListener;
 import com.angrysurfer.core.api.TimingBus;
-import com.angrysurfer.core.sequencer.LowLatencyMidiClock;
-import com.angrysurfer.core.sequencer.MidiClockSource;
 import com.angrysurfer.core.sequencer.Scale;
 import com.angrysurfer.core.sequencer.TimingUpdate;
 import com.angrysurfer.core.service.DeviceManager;

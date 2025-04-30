@@ -149,4 +149,14 @@ public class UIUtils {
     public static boolean addSafely(Container container, Component component) {
         return addSafely(container, component, null);
     }
+
+    public static JPanel createSectionPanel(String title) {
+        JPanel panel = new JPanel();
+        panel.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createTitledBorder(title),
+                BorderFactory.createEmptyBorder(1, 2, 1, 2)));
+
+        return panel;
+    }
+    
 }

@@ -1,4 +1,4 @@
-package com.angrysurfer.core.sequencer;
+package com.angrysurfer.core.event;
 
 import lombok.Getter;
 import lombok.Setter;
