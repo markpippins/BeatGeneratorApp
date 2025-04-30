@@ -137,7 +137,6 @@ public class MelodicSequencerHelper {
             // Set or generate ID
             if (sequencer.getId() == 0) {
                 data.setId(jedis.incr("seq:melsequence:" + sequencer.getId()));
-//                sequencer.setId(data.getId());
             } else {
                 data.setSequencerId(sequencer.getId());
             }
@@ -154,30 +153,68 @@ public class MelodicSequencerHelper {
             
             // Copy quantization settings
             data.setQuantizeEnabled(sequencer.isQuantizeEnabled());
-            
-            // Convert Integer root note to String representation
-//            data.setRootNote(sequencer.getRootNote().toString());
-            
-            // Copy scale
-            // data.setScale(sequencer.getScale());
+            data.setScale(sequencer.getScale());
             
             // Copy pattern data (steps, notes, velocities, gates)
-            data.setActiveSteps(sequencer.getActiveSteps());
-            data.setNoteValues(sequencer.getNoteValues());
-            data.setVelocityValues(sequencer.getVelocityValues());
-            data.setGateValues(sequencer.getGateValues());
+            // Convert List<Boolean> to boolean[]
+            List<Boolean> activeStepsList = sequencer.getActiveSteps();
+            boolean[] activeStepsArray = new boolean[activeStepsList.size()];
+            for (int i = 0; i < activeStepsList.size(); i++) {
+                activeStepsArray[i] = activeStepsList.get(i);
+            }
+            data.setActiveSteps(activeStepsArray);
+            
+            // Convert List<Integer> to int[]
+            List<Integer> noteValuesList = sequencer.getNoteValues();
+            int[] noteValuesArray = new int[noteValuesList.size()];
+            for (int i = 0; i < noteValuesList.size(); i++) {
+                noteValuesArray[i] = noteValuesList.get(i);
+            }
+            data.setNoteValues(noteValuesArray);
+            
+            // Convert List<Integer> to int[]
+            List<Integer> velocityValuesList = sequencer.getVelocityValues();
+            int[] velocityValuesArray = new int[velocityValuesList.size()];
+            for (int i = 0; i < velocityValuesList.size(); i++) {
+                velocityValuesArray[i] = velocityValuesList.get(i);
+            }
+            data.setVelocityValues(velocityValuesArray);
+            
+            // Convert List<Integer> to int[]
+            List<Integer> gateValuesList = sequencer.getGateValues();
+            int[] gateValuesArray = new int[gateValuesList.size()];
+            for (int i = 0; i < gateValuesList.size(); i++) {
+                gateValuesArray[i] = gateValuesList.get(i);
+            }
+            data.setGateValues(gateValuesArray);
             
             // Copy probability and nudge values if available
             if (sequencer.getProbabilityValues() != null) {
-                data.setProbabilityValues(sequencer.getProbabilityValues());
+                List<Integer> probValuesList = sequencer.getProbabilityValues();
+                int[] probValuesArray = new int[probValuesList.size()];
+                for (int i = 0; i < probValuesList.size(); i++) {
+                    probValuesArray[i] = probValuesList.get(i);
+                }
+                data.setProbabilityValues(probValuesArray);
             }
+            
             if (sequencer.getNudgeValues() != null) {
-                data.setNudgeValues(sequencer.getNudgeValues());
+                List<Integer> nudgeValuesList = sequencer.getNudgeValues();
+                int[] nudgeValuesArray = new int[nudgeValuesList.size()];
+                for (int i = 0; i < nudgeValuesList.size(); i++) {
+                    nudgeValuesArray[i] = nudgeValuesList.get(i);
+                }
+                data.setNudgeValues(nudgeValuesArray);
             }
             
             // Copy harmonic tilt values
             if (sequencer.getHarmonicTiltValues() != null) {
-                data.setHarmonicTiltValues(sequencer.getHarmonicTiltValues());
+                List<Integer> tiltValuesList = sequencer.getHarmonicTiltValues();
+                int[] tiltValuesArray = new int[tiltValuesList.size()];
+                for (int i = 0; i < tiltValuesList.size(); i++) {
+                    tiltValuesArray[i] = tiltValuesList.get(i);
+                }
+                data.setHarmonicTiltValues(tiltValuesArray);
             }
             
             // Save to Redis
@@ -285,19 +322,19 @@ public class MelodicSequencerHelper {
             data.setRootNote("C");
             data.setScale("Major");
             
-            // Initialize pattern data
-            List<Boolean> activeSteps = new ArrayList<>();
-            List<Integer> noteValues = new ArrayList<>();
-            List<Integer> velocityValues = new ArrayList<>();
-            List<Integer> gateValues = new ArrayList<>();
-            List<Integer> harmonicTiltValues = new ArrayList<>();
+            // Initialize pattern data with arrays
+            boolean[] activeSteps = new boolean[16];
+            int[] noteValues = new int[16];
+            int[] velocityValues = new int[16];
+            int[] gateValues = new int[16];
+            int[] harmonicTiltValues = new int[16];
             
             for (int i = 0; i < 16; i++) {
-                activeSteps.add(false);
-                noteValues.add(60 + (i % 12)); // Default to chromatic scale starting at middle C
-                velocityValues.add(100);
-                gateValues.add(50); // 50% gate time
-                harmonicTiltValues.add(0); // Default tilt value of 0
+                activeSteps[i] = false;
+                noteValues[i] = 60 + (i % 12); // Default to chromatic scale starting at middle C
+                velocityValues[i] = 100;
+                gateValues[i] = 50; // 50% gate time
+                harmonicTiltValues[i] = 0; // Default tilt value of 0
             }
             
             data.setActiveSteps(activeSteps);
