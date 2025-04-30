@@ -147,7 +147,7 @@ public class PlayerEditPanel extends JPanel implements IBusListener {
     /**
      * Apply all changes from UI components to player model
      */
-    private void applyAllChanges() {
+    public void applyAllChanges() {
         // First apply changes in each panel
         basicPropertiesPanel.applyAllChanges();
         detailPanel.applyChanges();

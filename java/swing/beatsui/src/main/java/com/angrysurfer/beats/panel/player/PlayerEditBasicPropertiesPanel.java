@@ -1425,31 +1425,104 @@ public class PlayerEditBasicPropertiesPanel extends JPanel {
     /**
      * Apply all changes to player and ensure they propagate
      */
-    public void applyAllChanges() {
-        // Apply UI values to player
-        if (nameField != null && player != null) {
-            player.setName(nameField.getText());
-        }
-        
-        // Apply other UI component values...
-        
-        // CRITICAL: Save to PlayerManager to ensure changes persist
-        PlayerManager.getInstance().savePlayerProperties(player);
-        
-        // Force sequencer update if player is owned by one
-        if (player.getOwner() instanceof MelodicSequencer sequencer) {
-            sequencer.initializeInstrument();
-            sequencer.applyInstrumentPreset();
-        }
-        
-        // Publish events to update other components
-        CommandBus.getInstance().publish(Commands.PLAYER_UPDATED, this, player);
-        if (player.getInstrument() != null) {
-            CommandBus.getInstance().publish(Commands.INSTRUMENT_UPDATED, this, player.getInstrument());
-        }
-        
-        logger.info("Applied and propagated changes to player: {}", player.getName());
+    /**
+ * Apply all changes to player and ensure they propagate
+ */
+public void applyAllChanges() {
+    // Apply UI values to player
+    if (nameField != null && player != null) {
+        player.setName(nameField.getText());
     }
+    
+    // Apply instrument selection
+    InstrumentWrapper selectedInstrument = (InstrumentWrapper) instrumentCombo.getSelectedItem();
+    // Apply channel setting
+    if (channelSpinner != null) {
+        player.setChannel(((Number) channelSpinner.getValue()).intValue());
+    }
+
+    if (selectedInstrument != null) {
+        player.setInstrument(selectedInstrument);
+        player.setInstrumentId(selectedInstrument.getId());
+        player.getInstrument().setChannel(player.getChannel());
+    }
+    
+    
+    // Apply soundbank, bank and preset based on instrument type
+    if (player.getInstrument() != null) {
+        // Apply soundbank setting for internal instruments
+        if (isInternalSynth && soundbankCombo != null && soundbankCombo.getSelectedItem() != null) {
+            String selectedSoundbank = (String) soundbankCombo.getSelectedItem();
+            player.getInstrument().setSoundbankName(selectedSoundbank);
+        }
+        
+        // Apply bank setting for internal instruments
+        if (isInternalSynth && bankCombo != null && bankCombo.getSelectedItem() != null) {
+            Integer selectedBank = (Integer) bankCombo.getSelectedItem();
+            player.getInstrument().setBankIndex(selectedBank);
+        }
+        
+        // Apply preset setting based on instrument type
+        if (isDrumChannel && drumCombo != null && drumCombo.getSelectedItem() instanceof DrumItem) {
+            // For drum channel, store drum note in rootNote
+            DrumItem selectedDrum = (DrumItem) drumCombo.getSelectedItem();
+            player.setRootNote(selectedDrum.getNoteNumber());
+        } else if (isInternalSynth && presetCombo != null && 
+                  presetCombo.getSelectedItem() instanceof PresetItem) {
+            // For internal synth instruments
+            PresetItem selectedPreset = (PresetItem) presetCombo.getSelectedItem();
+            player.setPreset(selectedPreset.getNumber());
+            player.getInstrument().setCurrentPreset(selectedPreset.getNumber());
+        } else if (!isInternalSynth && presetSpinner != null) {
+            // For external instruments
+            player.setPreset((Integer) presetSpinner.getValue());
+        }
+    }
+    
+    // CRITICAL: Save to PlayerManager to ensure changes persist
+    PlayerManager.getInstance().savePlayerProperties(player);
+    
+    // Force sequencer update if player is owned by one
+    if (player.getOwner() instanceof MelodicSequencer sequencer) {
+        sequencer.initializeInstrument();
+        sequencer.applyInstrumentPreset();
+    }
+    
+    // Apply changes to MIDI device if available
+    if (player.getInstrument() != null) {
+        try {
+            // Apply bank and program changes
+            if (isInternalSynth) {
+                Integer bank = player.getInstrument().getBankIndex();
+                Integer preset = player.getPreset();
+                
+                if (bank != null && preset != null) {
+                    int bankMSB = (bank >> 7) & 0x7F;
+                    int bankLSB = bank & 0x7F;
+                    player.getInstrument().controlChange(0, bankMSB);
+                    player.getInstrument().controlChange(32, bankLSB);
+                    player.getInstrument().programChange(preset, 0);
+                }
+            } else {
+                // For external instruments, just send program change
+                Integer preset = player.getPreset();
+                if (preset != null) {
+                    player.getInstrument().programChange(preset, 0);
+                }
+            }
+        } catch (Exception e) {
+            logger.error("Error applying MIDI changes: {}", e.getMessage(), e);
+        }
+    }
+    
+    // Publish events to update other components
+    CommandBus.getInstance().publish(Commands.PLAYER_UPDATED, this, player);
+    if (player.getInstrument() != null) {
+        CommandBus.getInstance().publish(Commands.INSTRUMENT_UPDATED, this, player.getInstrument());
+    }
+    
+    logger.info("Applied and propagated changes to player: {}", player.getName());
+}
 
     /**
      * Load instrument data for the player

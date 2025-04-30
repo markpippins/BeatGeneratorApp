@@ -359,11 +359,11 @@ public final class InstrumentWrapper implements Serializable {
      */
     public void playMidiNote(int note, int velocity, int decay) {
         // Try internal synth optimization first
-        if ("Gervill".equals(deviceName)) {
-            // Use optimized internal synth path
-            InternalSynthManager.getInstance().playNote(note, velocity, decay, channel);
-            return;
-        }
+        // if ("Gervill".equals(deviceName)) {
+        //     // Use optimized internal synth path
+        //     InternalSynthManager.getInstance().playNote(note, velocity, decay, channel);
+        //     return;
+        // }
 
         // Fall back to standard MIDI path for external devices
         try {

@@ -225,8 +225,12 @@ public abstract class Player implements Callable<Boolean>, Serializable, IBusLis
     }
 
     public void setInstrument(InstrumentWrapper instrument) {
+        if (instrument == null) {
+            return;
+        }
         this.instrument = instrument;
-        this.instrumentId = Objects.nonNull(instrument) ? instrument.getId() : null;
+        this.instrument.setChannel(getChannel());
+        this.instrumentId = instrument.getId();
     }
 
     public String getPlayerClassName() {

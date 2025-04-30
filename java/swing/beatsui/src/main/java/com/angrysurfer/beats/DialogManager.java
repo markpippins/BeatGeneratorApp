@@ -214,6 +214,7 @@ public class DialogManager implements IBusListener {
                     boolean result = dialog.showDialog();
 
                     if (result) {
+                        panel.applyAllChanges();
                         // Get the updated player with all changes applied
                         Player updatedPlayer = panel.getUpdatedPlayer();
 

@@ -893,56 +893,55 @@ public class MelodicSequencer implements IBusListener {
         } else {
             // Create new player through PlayerManager
             logger.info("Creating new player for sequencer {}", id);
+            player = RedisService.getInstance().newNote();
 
             // Get an instrument from InstrumentManager
-            InstrumentWrapper instrument = getDefaultInstrument();
+            InstrumentWrapper instrument = InstrumentManager.getInstance()
+                    .getOrCreateInternalSynthInstrument(getSequenceData().getChannel());
 
-            // Create a Note player with proper name
-            String playerName = "Melody " + (id != null ? id : "");
-            player = new Note(playerName, session, instrument, 60, null);
+            if (instrument != null) {
 
-            // Configure base properties
-            player.setMinVelocity(60);
-            player.setMaxVelocity(127);
-            player.setLevel(100);
-            player.setChannel(getSequenceData().getChannel());
+                // Create a Note player with proper name
+                String playerName = "Melody " + (id != null ? id : "");
+                player = new Note(playerName, session, instrument, 60, null);
+                // Configure base properties
+                player.setMinVelocity(60);
+                player.setMaxVelocity(127);
+                player.setLevel(100);
+                player.setChannel(getSequenceData().getChannel());
 
-            // Associate player with this sequencer
-            player.setOwner(this);
+                // Associate player with this sequencer
+                player.setOwner(this);
 
-            // Generate an ID for the player if needed
-            if (player.getId() == null) {
-                player.setId(RedisService.getInstance().getNextPlayerId());
+                // Generate an ID for the player if needed
+                if (player.getId() == null) {
+                    player.setId(RedisService.getInstance().getNextPlayerId());
+                }
+
+                // Add to session
+                session.getPlayers().add(player);
+                player.setInstrument(instrument);
+
+                // Save through PlayerManager
+                PlayerManager.getInstance().savePlayerProperties(player);
+
+                logger.info("Created new player {} for melodic sequencer {}", player.getId(), id);
             }
 
-            // Add to session
-            session.getPlayers().add(player);
+            if (player.getInstrument() != null) {
+                MidiDevice device = DeviceManager.getInstance().getMidiDevice(player.getInstrument().getDeviceName());
+                if (device != null)
+                    player.getInstrument().setDevice(device);
+            }
 
-            // Save through PlayerManager
-            PlayerManager.getInstance().savePlayerProperties(player);
-
-            logger.info("Created new player {} for melodic sequencer {}", player.getId(), id);
-        }
-
-        if (player.getInstrument() != null) {
-            MidiDevice device = DeviceManager.getInstance().getMidiDevice(player.getInstrument().getDeviceName());
-            if (device != null)
-                player.getInstrument().setDevice(device);
-        }
-
-        // ensurePlayerHasInstrument();
-        // Always initialize the instrument once player is set up
-        if (player.getInstrument() == null) {
-            initializeInternalInstrument(player);
+            // ensurePlayerHasInstrument();
+            // Always initialize the instrument once player is set up
+            if (player.getInstrument() == null) {
+                initializeInternalInstrument(player);
+            }
         }
     }
 
-    /**
-     * Initialize an internal synthesizer instrument for a player
-     * Used when a player doesn't have an instrument or is using internal synth
-     *
-     * @param player The player to initialize with internal instrument
-     */
     private void initializeInternalInstrument(Player player) {
         if (player == null) {
             logger.warn("Cannot initialize internal instrument for null player");
