@@ -93,7 +93,7 @@ public class SoundParametersPanel extends JPanel implements IBusListener {
         
         switch (action.getCommand()) {
             case Commands.PLAYER_UPDATED -> handlePlayerUpdated(action);
-            case Commands.PLAYER_ACTIVATED -> handlePlayerActivated(action);
+            case Commands.PLAYER_SELECTED -> handlePlayerActivated(action);
             case Commands.PLAYER_PRESET_CHANGED -> handlePlayerPresetChanged(action);
             case Commands.PLAYER_INSTRUMENT_CHANGED -> handlePlayerInstrumentChanged(action);
         }

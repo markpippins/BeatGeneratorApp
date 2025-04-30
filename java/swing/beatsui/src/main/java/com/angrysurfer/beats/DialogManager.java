@@ -202,7 +202,7 @@ public class DialogManager implements IBusListener {
                         Player updatedPlayer = panel.getUpdatedPlayer();
 
                         // CRITICAL STEP: Activate player and request update through command bus
-                        commandBus.publish(Commands.PLAYER_ACTIVATE_REQUEST, this, updatedPlayer);
+                        commandBus.publish(Commands.PLAYER_SELECTED, this, updatedPlayer);
                         commandBus.publish(Commands.PLAYER_UPDATE_REQUEST, this, updatedPlayer);
                         
                         // Publish dialog-specific completion event

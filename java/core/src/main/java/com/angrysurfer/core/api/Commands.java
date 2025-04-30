@@ -330,9 +330,6 @@ public class Commands {
     public static final String INSTRUMENT_CHANGED = "INSTRUMENT_CHANGED";
     public static final String DRUM_STEP_UPDATED = "DRUM_STEP_UPDATED";
 
-    // Player activation commands
-    public static final String PLAYER_ACTIVATE_REQUEST = "PLAYER_ACTIVATE_REQUEST";
-    public static final String PLAYER_ACTIVATED = "PLAYER_ACTIVATED";
     
     // Player update commands
     public static final String PLAYER_UPDATE_REQUEST = "PLAYER_UPDATE_REQUEST";

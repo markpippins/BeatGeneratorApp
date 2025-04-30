@@ -444,7 +444,7 @@ public class StatusBar extends JPanel implements IBusListener {
                         updateSessionInfo(session);
                     }
                 }
-                case Commands.PLAYER_ACTIVATED, Commands.PLAYER_SELECTED -> {
+                case Commands.PLAYER_SELECTED -> {
                     if (action.getData() instanceof Player player) {
                         updatePlayerInfo(player);
                     }

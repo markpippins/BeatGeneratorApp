@@ -82,7 +82,7 @@ public class PlayerManager implements IBusListener {
 
         try {
             switch (action.getCommand()) {
-                case Commands.PLAYER_ACTIVATE_REQUEST -> handleActivatePlayerRequest(action);
+                case Commands.PLAYER_SELECTED -> handleActivatePlayerRequest(action);
                 case Commands.PLAYER_UPDATE_REQUEST -> handleUpdatePlayerRequest(action);
                 case Commands.PLAYER_PRESET_CHANGE_REQUEST -> handlePresetChangeRequest(action);
                 case Commands.PLAYER_INSTRUMENT_CHANGE_REQUEST -> handleInstrumentChangeRequest(action);
@@ -190,7 +190,7 @@ public class PlayerManager implements IBusListener {
         logger.info("Active player set to: {} (ID: {})", activePlayer.getName(), activePlayer.getId());
         
         // Notify the system about active player change
-        commandBus.publish(Commands.PLAYER_ACTIVATED, this, activePlayer);
+        commandBus.publish(Commands.PLAYER_SELECTED, this, activePlayer);
     }
 
     /**

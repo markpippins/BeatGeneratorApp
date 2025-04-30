@@ -22,7 +22,7 @@ import com.angrysurfer.core.sequencer.MelodicSequencer;
  */
 public class MelodicSequencerGridPanel extends JPanel {
     private static final Logger logger = LoggerFactory.getLogger(MelodicSequencerGridPanel.class);
-    
+
     // UI state variables
     private List<TriggerButton> triggerButtons = new ArrayList<>();
     private List<Dial> noteDials = new ArrayList<>();
@@ -30,22 +30,23 @@ public class MelodicSequencerGridPanel extends JPanel {
     private List<Dial> gateDials = new ArrayList<>();
     private List<Dial> probabilityDials = new ArrayList<>();
     private List<Dial> nudgeDials = new ArrayList<>();
-    
+
     // Reference to sequencer
     private final MelodicSequencer sequencer;
-    
+
     // Flag to prevent recursive updates
     private boolean listenersEnabled = true;
-    
+
     /**
      * Create a new melodic sequencer grid panel
+     * 
      * @param sequencer The melodic sequencer to control
      */
     public MelodicSequencerGridPanel(MelodicSequencer sequencer) {
         this.sequencer = sequencer;
         initialize();
     }
-    
+
     /**
      * Initialize the grid panel
      */
@@ -60,17 +61,17 @@ public class MelodicSequencerGridPanel extends JPanel {
         // Create panel for the 16 columns (fix the initialization)
         JPanel sequencePanel = new JPanel();
         sequencePanel.setLayout(new BoxLayout(sequencePanel, BoxLayout.X_AXIS));
-        
+
         // Create 16 columns
         for (int i = 0; i < 16; i++) {
             JPanel columnPanel = createSequenceColumn(i);
             sequencePanel.add(columnPanel);
         }
-        
+
         // Add the sequence panel to the main panel
         add(sequencePanel);
     }
-    
+
     /**
      * Create a column for one step in the sequence
      */
@@ -214,14 +215,14 @@ public class MelodicSequencerGridPanel extends JPanel {
 
         return column;
     }
-    
+
     /**
      * Get the label for a knob based on its type
      */
     private String getKnobLabel(int i) {
         return i == 0 ? "Velocity" : i == 1 ? "Gate" : i == 2 ? "Probability" : i == 3 ? "Nudge" : "Note";
     }
-    
+
     /**
      * Update step highlighting based on sequence position
      */
@@ -231,11 +232,11 @@ public class MelodicSequencerGridPanel extends JPanel {
             triggerButtons.get(oldStep).setHighlighted(false);
             triggerButtons.get(oldStep).repaint();
         }
-        
+
         // Highlight new step with color based on position
         if (newStep >= 0 && newStep < triggerButtons.size()) {
             Color highlightColor;
-            
+
             if (newStep < 16) {
                 // First 16 steps - orange highlight
                 highlightColor = UIUtils.fadedOrange;
@@ -249,13 +250,13 @@ public class MelodicSequencerGridPanel extends JPanel {
                 // Steps 49-64
                 highlightColor = UIUtils.mutedOlive;
             }
-            
+
             triggerButtons.get(newStep).setHighlighted(true);
             triggerButtons.get(newStep).setHighlightColor(highlightColor);
             triggerButtons.get(newStep).repaint();
         }
     }
-    
+
     /**
      * Synchronize all UI elements with the current sequencer state
      */
@@ -264,29 +265,81 @@ public class MelodicSequencerGridPanel extends JPanel {
             logger.error("Cannot sync with null sequencer");
             return;
         }
-        
+
         listenersEnabled = false;
         try {
-            // Update probability dials
-            List<Integer> probabilities = sequencer.getProbabilityValues();
-            if (probabilities != null) {
-                for (int i = 0; i < Math.min(probabilityDials.size(), probabilities.size()); i++) {
-                    probabilityDials.get(i).setValue(probabilities.get(i));
-                }
-            } else {
-                logger.error("Received null probabilityValues from sequencer");
-            }
-            
-            // Same null-check pattern for other lists...
+
+            forceSync();
+
         } finally {
             listenersEnabled = true;
         }
     }
-    
+
     /**
-     * Get the trigger buttons
+     * Force initialization and synchronization with sequencer data
      */
-    public List<TriggerButton> getTriggerButtons() {
-        return triggerButtons;
+    public void forceSync() {
+        try {
+            if (sequencer == null) {
+                logger.error("Cannot sync with null sequencer");
+                return;
+            }
+
+            listenersEnabled = false;
+
+            // Log what we're syncing
+            logger.info("Force syncing grid panel with sequencer - activeSteps:{} steps",
+                    sequencer.getActiveSteps() != null ? sequencer.getActiveSteps().size() : 0);
+
+            // Update trigger buttons
+            List<Boolean> activeSteps = sequencer.getActiveSteps();
+            for (int i = 0; i < Math.min(triggerButtons.size(), activeSteps.size()); i++) {
+                boolean active = activeSteps.get(i);
+                triggerButtons.get(i).setSelected(active);
+                // Force immediate visual update
+                triggerButtons.get(i).repaint();
+
+                logger.debug("Step {} set to {}", i, active);
+            }
+
+            // Update other controls...
+
+            revalidate();
+            repaint();
+        } finally {
+            listenersEnabled = true;
+        }
+    }
+
+    /**
+     * Force explicit update of trigger buttons
+     */
+    public void forceTriggerButtonUpdate() {
+        if (sequencer == null) {
+            logger.error("Cannot update trigger buttons with null sequencer");
+            return;
+        }
+
+        // Get active steps directly from sequencer
+        List<Boolean> activeStepsList = sequencer.getSequenceData().getActiveSteps();
+        if (activeStepsList == null) {
+            logger.error("Active steps list is null");
+            return;
+        }
+
+        // Log what we're doing
+        int activeCount = (int) activeStepsList.stream().filter(b -> b).count();
+        logger.debug("Updating {} trigger buttons, {} are active",
+                Math.min(triggerButtons.size(), activeStepsList.size()),
+                activeCount);
+
+        // Explicitly update each button
+        for (int i = 0; i < Math.min(triggerButtons.size(), activeStepsList.size()); i++) {
+            // Set selected state
+            triggerButtons.get(i).setSelected(activeStepsList.get(i));
+            // Force immediate visual update
+            triggerButtons.get(i).repaint();
+        }
     }
 }
