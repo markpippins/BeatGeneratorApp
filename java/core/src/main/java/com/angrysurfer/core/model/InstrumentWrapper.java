@@ -302,7 +302,7 @@ public final class InstrumentWrapper implements Serializable {
             } else {
                 logger.warn("No receiver available for device: {}", 
                           device.getDeviceInfo().getName());
-                // Don't throw, just return
+                throw new MidiUnavailableException("Receiver is null");
             }
         } catch (MidiUnavailableException e) {
             // Log but don't rethrow - prevent cascading errors
@@ -320,6 +320,7 @@ public final class InstrumentWrapper implements Serializable {
                     }
                 } catch (Exception reopenEx) {
                     logger.error("Failed to reopen MIDI device: {}", reopenEx.getMessage());
+                    throw e;
                 }
             }
         }
