@@ -118,10 +118,10 @@ public class StatusBar extends JPanel implements IBusListener {
     private void setup() {
         // Global panel setup
         setLayout(new BorderLayout());
-        setBorder(new CompoundBorder(
-            new MatteBorder(1, 0, 0, 0, SECTION_BORDER_COLOR),
-            new EmptyBorder(3, 6, 3, 6)
-        ));
+        // setBorder(new CompoundBorder(
+        //     new MatteBorder(1, 0, 0, 0, SECTION_BORDER_COLOR),
+        //     new EmptyBorder(3, 6, 3, 6)
+        // ));
         
         // Create main panel with horizontal layout
         JPanel mainPanel = new JPanel();
@@ -239,7 +239,7 @@ public class StatusBar extends JPanel implements IBusListener {
         panel.setLayout(new FlowLayout(FlowLayout.LEFT, 5, 0));
         
         // Player name
-        playerLabel = new JLabel("Name:");
+        playerLabel = new JLabel("ID:");
         panel.add(playerLabel);
         
         playerNameField = createStatusField(MEDIUM_FIELD_WIDTH);
@@ -305,11 +305,12 @@ public class StatusBar extends JPanel implements IBusListener {
         gbc.insets = new Insets(0, 8, 0, 0);
         
         JPanel meterPanel = new JPanel();
-        meterPanel.setLayout(new BoxLayout(meterPanel, BoxLayout.X_AXIS));
+        meterPanel.setLayout(new BoxLayout(meterPanel, BoxLayout.Y_AXIS));
         leftMeter = new VuMeter(VuMeter.Orientation.HORIZONTAL);
         rightMeter = new VuMeter(VuMeter.Orientation.HORIZONTAL);
         meterPanel.add(leftMeter);
-        meterPanel.add(Box.createHorizontalStrut(2));
+        meterPanel.add(Box.createVerticalStrut(4));
+       
         meterPanel.add(rightMeter);
         
         panel.add(meterPanel, gbc);
@@ -319,7 +320,7 @@ public class StatusBar extends JPanel implements IBusListener {
     
     private JPanel createMessageSection() {
         JPanel panel = createSectionPanel("Status");
-        panel.setLayout(new BorderLayout(5, 0));
+        panel.setLayout(new BorderLayout(1, 0));
         
         messageLabel = new JLabel("Message:");
         panel.add(messageLabel, BorderLayout.WEST);
@@ -358,7 +359,7 @@ public class StatusBar extends JPanel implements IBusListener {
         field.setForeground(UIHelper.FIELD_FOREGROUND);
         
         if (width > 0) {
-            Dimension size = new Dimension(width, FIELD_HEIGHT);
+            Dimension size = new Dimension(width, UIUtils.CONTROL_HEIGHT);
             field.setPreferredSize(size);
             field.setMinimumSize(size);
         }

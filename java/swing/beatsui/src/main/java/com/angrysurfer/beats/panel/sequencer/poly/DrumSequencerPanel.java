@@ -281,6 +281,12 @@ public class DrumSequencerPanel extends JPanel implements IBusListener {
             // Update sound parameters panel
             updateSoundParametersPanel(padIndex);
 
+            CommandBus.getInstance().publish(
+                Commands.PLAYER_SELECTED,
+                this,
+                sequencer.getPlayers()[padIndex]
+            );
+
             // IMPORTANT: Notify other panels through the command bus
             CommandBus.getInstance().publish(
                     Commands.DRUM_PAD_SELECTED,

@@ -180,6 +180,21 @@ public class DialogManager implements IBusListener {
         }
     }
 
+    private String getPlayerTitle(Player player) {
+
+        String playerName = player.getName() + " (" + player.getId() + ")";
+        String instrumentName = "No Instrument";
+        String channelInfo = "";
+
+        if (player.getInstrument() != null) {
+            instrumentName = player.getInstrument().getName() + " (" + player.getInstrument().getId() + ")";
+            int channel = player.getChannel() != null ? player.getChannel() : 0;
+            channelInfo = " (Ch " + (channel + 1) + ")";
+        }
+
+        return playerName + " - " + instrumentName + " - " + channelInfo;
+    }
+
     /**
      * Handle player edit request
      */
@@ -189,11 +204,12 @@ public class DialogManager implements IBusListener {
                 try {
                     // Log original player state
                     logger.debug("Opening editor for player: {} (ID: {})", player.getName(), player.getId());
-                    
+
                     // Create panel with the player
                     PlayerEditPanel panel = new PlayerEditPanel(player);
                     Dialog<Player> dialog = frame.createDialog(player, panel);
-                    dialog.setTitle("Edit Player: " + player.getName());
+                    // dialog.setTitle("Edit Player: " + player.getName());
+                    dialog.setTitle(getPlayerTitle(player));
 
                     boolean result = dialog.showDialog();
 
@@ -204,7 +220,7 @@ public class DialogManager implements IBusListener {
                         // CRITICAL STEP: Activate player and request update through command bus
                         commandBus.publish(Commands.PLAYER_SELECTED, this, updatedPlayer);
                         commandBus.publish(Commands.PLAYER_UPDATE_REQUEST, this, updatedPlayer);
-                        
+
                         // Publish dialog-specific completion event
                         commandBus.publish(Commands.SHOW_PLAYER_EDITOR_OK, this, updatedPlayer);
                     }

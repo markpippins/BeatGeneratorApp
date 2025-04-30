@@ -62,33 +62,18 @@ public class MelodicSequencerPanel extends JPanel implements IBusListener {
     private MelodicSequencer sequencer;
 
     // UI state variables - keep these in the panel
-    private List<Dial> noteDials = new ArrayList<>();
-    private List<Dial> velocityDials = new ArrayList<>();
-    private List<Dial> gateDials = new ArrayList<>();
-    private List<DrumButton> melodicPadButtons = new ArrayList<>();
-    private List<Dial> probabilityDials = new ArrayList<>();
-    private List<Dial> nudgeDials = new ArrayList<>();
 
     // Labels and UI components
     private JLabel octaveLabel;
-    private JComboBox<String> rootNoteCombo;
-    private JComboBox<String> scaleCombo;
-    private JComboBox<String> directionCombo;
     private JComboBox<String> rangeCombo;
     private JComboBox<TimingDivision> timingCombo;
     private JToggleButton latchToggleButton;
-    private JSpinner lastStepSpinner;
-
-    private boolean listenersEnabled = true;
-    private boolean updatingUI = false;
-
+    
     private MelodicSequenceNavigationPanel navigationPanel;
 
     private MelodicSequencerSwingPanel swingPanel;
 
     private MelodicSequenceParametersPanel sequenceParamsPanel;
-
-    private JPanel southPanel;
 
     private TiltSequencerPanel tiltSequencerPanel;
 
@@ -97,6 +82,8 @@ public class MelodicSequencerPanel extends JPanel implements IBusListener {
     private MelodicSequencerScalePanel scalePanel;
 
     private JLabel instrumentInfoLabel;
+
+    private boolean updatingUI = false;
 
     /**
      * Constructor for MelodicSequencerPanel
@@ -338,8 +325,6 @@ public class MelodicSequencerPanel extends JPanel implements IBusListener {
         // Add the right panel to the bottom panel's EAST region
         bottomPanel.add(rightPanel, BorderLayout.EAST);
 
-        // Store reference to southPanel for use in updateTiltSequencerPanel()
-        this.southPanel = bottomPanel;
 
         // Add the bottom panel to the SOUTH region of the main panel
         add(bottomPanel, BorderLayout.SOUTH);
@@ -359,17 +344,17 @@ public class MelodicSequencerPanel extends JPanel implements IBusListener {
         }
 
         Player player = sequencer.getPlayer();
-        String playerName = player.getName();
+        String playerName = player.getName() + " (" + player.getId() + ")";
         String instrumentName = "No Instrument";
         String channelInfo = "";
 
         if (player.getInstrument() != null) {
-            instrumentName = player.getInstrument().getName();
+            instrumentName = player.getInstrument().getName() + " (" + player.getInstrument().getId() + ")";
             int channel = player.getChannel() != null ? player.getChannel() : 0;
             channelInfo = " (Ch " + (channel + 1) + ")";
         }
 
-        instrumentInfoLabel.setText(playerName + " - " + instrumentName + channelInfo);
+        instrumentInfoLabel.setText(playerName + " - " + instrumentName +  " - " + channelInfo);
     }
 
     /**

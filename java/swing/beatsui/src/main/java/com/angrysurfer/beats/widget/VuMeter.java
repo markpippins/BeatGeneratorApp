@@ -1,8 +1,11 @@
 package com.angrysurfer.beats.widget;
 
 import javax.swing.*;
+
 import java.awt.*;
 import java.awt.geom.Rectangle2D;
+
+import com.angrysurfer.beats.UIUtils;
 
 /**
  * A simple VU meter to display audio levels
@@ -21,7 +24,7 @@ public class VuMeter extends JPanel {
         this.orientation = orientation;
         
         if (orientation == Orientation.HORIZONTAL) {
-            setPreferredSize(new Dimension(50, 8));
+            setPreferredSize(new Dimension(50, 14));
         } else {
             setPreferredSize(new Dimension(8, 50));
         }

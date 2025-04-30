@@ -190,7 +190,7 @@ public class PlayerManager implements IBusListener {
         logger.info("Active player set to: {} (ID: {})", activePlayer.getName(), activePlayer.getId());
         
         // Notify the system about active player change
-        commandBus.publish(Commands.PLAYER_SELECTED, this, activePlayer);
+        // commandBus.publish(Commands.PLAYER_SELECTED, this, activePlayer);
     }
 
     /**
