@@ -37,6 +37,7 @@ import com.angrysurfer.core.api.Commands;
 import com.angrysurfer.core.model.InstrumentWrapper;
 import com.angrysurfer.core.model.Player;
 import com.angrysurfer.core.sequencer.DrumItem;
+import com.angrysurfer.core.sequencer.DrumSequencer;
 import com.angrysurfer.core.sequencer.MelodicSequencer;
 import com.angrysurfer.core.sequencer.PresetItem;
 import com.angrysurfer.core.service.InstrumentManager;
@@ -108,6 +109,7 @@ public class PlayerEditBasicPropertiesPanel extends JPanel {
         initComponents();
         layoutComponents();
         registerForInstrumentUpdates();
+        registerForDrumEvents();
         
         // Run this after component initialization to ensure proper state
         SwingUtilities.invokeLater(this::updatePresetControls);
@@ -359,7 +361,7 @@ public class PlayerEditBasicPropertiesPanel extends JPanel {
             if (initializing.get()) return;
             
             int preset = ((Number) presetSpinner.getValue()).intValue();
-            player.setPreset(preset);
+            player.getInstrument().setPreset(preset);
             
             // Immediately apply preset change for external instruments
             if (!isInternalSynth && player.getInstrument() != null) {
@@ -431,11 +433,11 @@ public class PlayerEditBasicPropertiesPanel extends JPanel {
             PresetItem item = (PresetItem) presetCombo.getSelectedItem();
 
             // Update player's preset
-            player.setPreset(item.getNumber());
+            player.getInstrument().setPreset(item.getNumber());
 
             // Update instrument's current preset
             if (player.getInstrument() != null) {
-                player.getInstrument().setCurrentPreset(item.getNumber());
+                player.getInstrument().setPreset(item.getNumber());
                 
                 // Update instrument through manager
                 instrumentManager.updateInstrument(player.getInstrument());
@@ -814,6 +816,57 @@ public class PlayerEditBasicPropertiesPanel extends JPanel {
     }
     
     /**
+     * Register for drum events
+     */
+    private void registerForDrumEvents() {
+        commandBus.register(action -> {
+            if (Commands.DRUM_PLAYER_INSTRUMENT_CHANGED.equals(action.getCommand()) && 
+                    action.getData() instanceof Object[] data) {
+                
+                // Extract the data
+                DrumSequencer sequencer = (DrumSequencer) data[0];
+                int playerIndex = (Integer) data[1];
+                InstrumentWrapper instrument = (InstrumentWrapper) data[2];
+                
+                // Get the player that was changed
+                Player changedPlayer = sequencer.getPlayer(playerIndex);
+                
+                // Ask user if they want to apply to all drums
+                int response = JOptionPane.showConfirmDialog(
+                        SwingUtilities.getWindowAncestor(this),
+                        "Apply this instrument change to all drum pads in the sequencer?",
+                        "Update All Drum Pads",
+                        JOptionPane.YES_NO_OPTION,
+                        JOptionPane.QUESTION_MESSAGE);
+                
+                if (response == JOptionPane.YES_OPTION) {
+                    // Apply the same instrument to all drum pads
+                    for (int i = 0; i < DrumSequencer.DRUM_PAD_COUNT; i++) {
+                        Player drumPlayer = sequencer.getPlayer(i);
+                        if (drumPlayer != null && i != playerIndex) {
+                            // Update instrument
+                            drumPlayer.setInstrument(instrument);
+                            drumPlayer.setInstrumentId(instrument.getId());
+                            
+                            // Save the player
+                            PlayerManager.getInstance().savePlayerProperties(drumPlayer);
+                            
+                            // Apply the instrument settings
+                            PlayerManager.getInstance().applyPlayerInstrument(drumPlayer);
+                            
+                            // Notify about update
+                            commandBus.publish(Commands.PLAYER_UPDATED, this, drumPlayer);
+                        }
+                    }
+                    
+                    logger.info("Applied instrument {} to all drum pads in sequencer", 
+                            instrument.getName());
+                }
+            }
+        });
+    }
+
+    /**
      * Refresh the instruments list with improved handling
      */
     private void refreshInstrumentsList() {
@@ -1058,9 +1111,9 @@ public class PlayerEditBasicPropertiesPanel extends JPanel {
                 // Update player's preset with default preset
                 PresetItem item = (PresetItem)presetCombo.getSelectedItem();
                 if (item != null) {
-                    player.setPreset(item.getNumber());
+                    player.getInstrument().setPreset(item.getNumber());
                     if (player.getInstrument() != null) {
-                        player.getInstrument().setCurrentPreset(item.getNumber());
+                        player.getInstrument().setPreset(item.getNumber());
                         instrumentManager.updateInstrument(player.getInstrument());
                     }
                 }
@@ -1246,8 +1299,8 @@ public class PlayerEditBasicPropertiesPanel extends JPanel {
                 
                 // Update instrument object
                 instrument.setBankIndex(bank);
-                instrument.setCurrentPreset(preset);
-                player.setPreset(preset);
+                instrument.setPreset(preset);
+                player.getInstrument().setPreset(preset);
                 
                 // Update in InstrumentManager to persist change
                 instrumentManager.updateInstrument(instrument);
@@ -1349,7 +1402,7 @@ public class PlayerEditBasicPropertiesPanel extends JPanel {
         
         // Apply preset based on UI state
         if (!isInternalSynth && !isDrumChannel && presetSpinner.isVisible()) {
-            player.setPreset((Integer) presetSpinner.getValue());
+            player.getInstrument().setPreset((Integer) presetSpinner.getValue());
         } else if (isDrumChannel && drumCombo.getSelectedItem() instanceof DrumItem) {
             DrumItem item = (DrumItem) drumCombo.getSelectedItem();
             player.setRootNote(item.getNoteNumber());
@@ -1370,8 +1423,8 @@ public class PlayerEditBasicPropertiesPanel extends JPanel {
             // Apply preset from combo if available
             if (isInternalSynth && presetCombo.getSelectedItem() instanceof PresetItem) {
                 PresetItem item = (PresetItem) presetCombo.getSelectedItem();
-                player.getInstrument().setCurrentPreset(item.getNumber());
-                player.setPreset(item.getNumber());
+                player.getInstrument().setPreset(item.getNumber());
+                player.getInstrument().setPreset(item.getNumber());
             }
             
             // Update instrument through manager to persist changes
@@ -1471,11 +1524,11 @@ public void applyAllChanges() {
                   presetCombo.getSelectedItem() instanceof PresetItem) {
             // For internal synth instruments
             PresetItem selectedPreset = (PresetItem) presetCombo.getSelectedItem();
-            player.setPreset(selectedPreset.getNumber());
-            player.getInstrument().setCurrentPreset(selectedPreset.getNumber());
+            player.getInstrument().setPreset(selectedPreset.getNumber());
+            player.getInstrument().setPreset(selectedPreset.getNumber());
         } else if (!isInternalSynth && presetSpinner != null) {
             // For external instruments
-            player.setPreset((Integer) presetSpinner.getValue());
+            player.getInstrument().setPreset((Integer) presetSpinner.getValue());
         }
     }
     
@@ -1484,7 +1537,7 @@ public void applyAllChanges() {
     
     // Force sequencer update if player is owned by one
     if (player.getOwner() instanceof MelodicSequencer sequencer) {
-        sequencer.initializeInstrument(player);
+        PlayerManager.getInstance().initializeInstrument(player);
         PlayerManager.getInstance().applyInstrumentPreset(player);
     }
     
@@ -1511,7 +1564,7 @@ public void applyAllChanges() {
                 }
             }
         } catch (Exception e) {
-            logger.error("Error applying MIDI changes: {}", e.getMessage(), e);
+            logger.error("Error applying MIDI changes: {}", e.getMessage());
         }
     }
     
@@ -1604,7 +1657,7 @@ public void applyAllChanges() {
             // Get current settings from UI components
             String soundbank = getCurrentSoundbankSelection();
             int bankIndex = getCurrentBankIndex();
-            int presetIndex = getCurrentPresetIndex();
+            int presetIndex = getPresetIndex();
             int channel = player.getChannel() != null ? player.getChannel() : 0;
             
             // Apply settings to the instrument
@@ -1642,7 +1695,7 @@ public void applyAllChanges() {
         return 0;
     }
 
-    private int getCurrentPresetIndex() {
+    private int getPresetIndex() {
         String presetItem = (String) presetCombo.getSelectedItem();
         if (presetItem != null && presetItem.contains(":")) {
             try {
@@ -1704,7 +1757,7 @@ public void applyAllChanges() {
                 // Update preset combo if it exists
                 if (presetCombo != null) {
                     // Fix type conversion - find the preset item by preset number
-                    int currentPreset = player.getInstrument().getCurrentPreset();
+                    int currentPreset = player.getInstrument().getPreset();
                     for (int i = 0; i < presetCombo.getItemCount(); i++) {
                         // Get the actual object from the combo box, which might be a PresetItem
                         Object item = presetCombo.getItemAt(i);

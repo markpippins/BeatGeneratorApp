@@ -4,6 +4,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
+import com.angrysurfer.core.model.InstrumentWrapper;
+import com.angrysurfer.core.model.Player;
+import com.angrysurfer.core.service.PlayerManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -59,7 +62,7 @@ public class MelodicSequencerHelper {
     }
 
     /**
-     * Apply loaded data to a MelodicSequencer
+     * Apply loaded data to a MelodicSequencer including instrument settings
      */
     public void applyToSequencer(MelodicSequenceData data, MelodicSequencer sequencer) {
         if (data == null || sequencer == null) {
@@ -125,6 +128,36 @@ public class MelodicSequencerHelper {
                 logger.info("Initialized default tilt values");
             }
 
+            // NEW: Apply instrument settings to the player
+            if (sequencer.getPlayer() != null && sequencer.getPlayer().getInstrument() != null) {
+                Player player = sequencer.getPlayer();
+                InstrumentWrapper instrument = player.getInstrument();
+                
+                // Only apply if values are present in the loaded data
+                if (data.getSoundbankName() != null) {
+                    instrument.setSoundbankName(data.getSoundbankName());
+                }
+                
+                if (data.getBankIndex() != null) {
+                    instrument.setBankIndex(data.getBankIndex());
+                }
+                
+                if (data.getPreset() != null) {
+                    player.getInstrument().setPreset(data.getPreset());
+                }
+                
+                logger.info("Applied instrument settings: soundbank={}, bank={}, preset={}",
+                    instrument.getSoundbankName(), instrument.getBankIndex(), instrument.getPreset());
+                
+                // Send MIDI program changes
+                try {
+                    PlayerManager.getInstance().applyInstrumentPreset(player);
+                    logger.info("Applied program change to instrument");
+                } catch (Exception e) {
+                    logger.error("Error applying program change: {}", e.getMessage(), e);
+                }
+            }
+
             // Notify that pattern has updated
             commandBus.publish(
                     Commands.MELODIC_SEQUENCE_LOADED,
@@ -137,7 +170,7 @@ public class MelodicSequencerHelper {
     }
 
     /**
-     * Save a melodic sequence
+     * Save a melodic sequence including instrument settings
      */
     public void saveMelodicSequence(MelodicSequencer sequencer) {
         try (Jedis jedis = jedisPool.getResource()) {
@@ -160,6 +193,18 @@ public class MelodicSequencerHelper {
             data.setTimingDivision(sequencer.getTimingDivision());
             data.setLooping(sequencer.isLooping());
             data.setOctaveShift(sequencer.getOctaveShift());
+
+            // NEW: Save instrument settings from player
+            if (sequencer.getPlayer() != null && sequencer.getPlayer().getInstrument() != null) {
+                InstrumentWrapper instrument = sequencer.getPlayer().getInstrument();
+                // Save soundbank, bank, and preset settings
+                data.setSoundbankName(instrument.getSoundbankName());
+                data.setBankIndex(instrument.getBankIndex());
+                data.setPreset(instrument.getPreset());
+                
+                logger.info("Saving instrument settings: soundbank={}, bank={}, preset={}", 
+                    data.getSoundbankName(), data.getBankIndex(), data.getPreset());
+            }
 
             // Copy quantization settings
             data.setQuantizeEnabled(sequencer.isQuantizeEnabled());

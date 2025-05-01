@@ -40,14 +40,17 @@ public class MelodicSequencerSwingPanel extends JPanel {
         setLayout(new FlowLayout(FlowLayout.LEFT, 1, 0));
 
         // Use compact titled border
-        setBorder(BorderFactory.createTitledBorder(
-            BorderFactory.createLineBorder(Color.GRAY),
-            "Swing",
-            TitledBorder.DEFAULT_JUSTIFICATION,
-            TitledBorder.DEFAULT_POSITION,
-            null, 
-            null
-        ));
+        // setBorder(BorderFactory.createTitledBorder(
+        //     BorderFactory.createLineBorder(Color.GRAY),
+        //     "Swing",
+        //     TitledBorder.DEFAULT_JUSTIFICATION,
+        //     TitledBorder.DEFAULT_POSITION,
+        //     null, 
+        //     null
+        // ));
+        setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createTitledBorder("Swing"),
+                BorderFactory.createEmptyBorder(1, 2, 1, 2)));
 
         // Swing on/off toggle
         swingToggle = new JToggleButton("On", sequencer.isSwingEnabled());

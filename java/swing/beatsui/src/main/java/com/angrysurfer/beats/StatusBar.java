@@ -50,7 +50,6 @@ public class StatusBar extends JPanel implements IBusListener {
     // Transport section
     private LEDIndicator playingLed;
     private LEDIndicator recordingLed;
-    // private JTextField transportStateField;
     private JLabel timeSignatureLabel;
     private JTextField timeSignatureField;
 
@@ -118,25 +117,20 @@ public class StatusBar extends JPanel implements IBusListener {
     private void setup() {
         // Global panel setup
         setLayout(new BorderLayout());
-        // setBorder(new CompoundBorder(
-        //     new MatteBorder(1, 0, 0, 0, SECTION_BORDER_COLOR),
-        //     new EmptyBorder(3, 6, 3, 6)
-        // ));
+        setBorder(BorderFactory.createEmptyBorder(5, 8, 5, 8));
         
         // Create main panel with horizontal layout
         JPanel mainPanel = new JPanel();
         mainPanel.setLayout(new BoxLayout(mainPanel, BoxLayout.X_AXIS));
         
         // Create and add all sections
-        mainPanel.add(createSessionSection());
-        mainPanel.add(Box.createHorizontalStrut(SECTION_SPACING));
-        mainPanel.add(createTransportSection());
-        mainPanel.add(Box.createHorizontalStrut(SECTION_SPACING));
         mainPanel.add(createPlayerSection());
         mainPanel.add(Box.createHorizontalStrut(SECTION_SPACING));
-        mainPanel.add(createMonitoringSection());
         mainPanel.add(Box.createHorizontalStrut(SECTION_SPACING));
         mainPanel.add(createMessageSection());
+        mainPanel.add(createTransportSection());
+        mainPanel.add(Box.createHorizontalStrut(SECTION_SPACING));
+        mainPanel.add(createMonitoringSection());
         
         // Add main panel to status bar
         add(mainPanel, BorderLayout.CENTER);
@@ -146,6 +140,12 @@ public class StatusBar extends JPanel implements IBusListener {
         JPanel panel = createSectionPanel("Session");
         panel.setLayout(new GridBagLayout());
         GridBagConstraints gbc = new GridBagConstraints();
+        
+        // Set vertical centering for all GridBagConstraints
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        gbc.anchor = GridBagConstraints.CENTER; // Center vertically
+        gbc.insets = new Insets(2, 2, 2, 2);   // Even padding
+        gbc.weighty = 1.0;                     // Allow vertical growth
         
         // Session ID
         gbc.gridx = 0;
@@ -199,67 +199,72 @@ public class StatusBar extends JPanel implements IBusListener {
         JPanel panel = createSectionPanel("Transport");
         panel.setLayout(new FlowLayout(FlowLayout.LEFT, 5, 0));
         
-        // Transport state indicator
-        JPanel ledPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 3, 0));
+        // Create a wrapper panel for LEDs to control height
+        JPanel ledPanel = new JPanel();
+        ledPanel.setLayout(new BoxLayout(ledPanel, BoxLayout.X_AXIS));
+        ledPanel.setAlignmentY(Component.CENTER_ALIGNMENT);
+        
+        // Set preferred height for LED panel to match text fields
+        ledPanel.setPreferredSize(new Dimension(ledPanel.getPreferredSize().width, UIUtils.CONTROL_HEIGHT));
+        
         playingLed = new LEDIndicator(Color.GREEN, "PLAY");
         playingLed.setOffColor(Color.RED);
         recordingLed = new LEDIndicator(Color.RED, "REC");
         recordingLed.setOffColor(Color.RED);
+        
+        // Add LEDs to panel with centering
+        ledPanel.add(Box.createVerticalGlue());
         ledPanel.add(playingLed);
+        ledPanel.add(Box.createHorizontalStrut(3));
         ledPanel.add(recordingLed);
+        ledPanel.add(Box.createVerticalGlue());
+        
         panel.add(ledPanel);
         
-        // Transport state text
-        // transportStateField = createStatusField(SMALL_FIELD_WIDTH);
-        // transportStateField.setText("Stopped");
-        // panel.add(transportStateField);
+        // Add time signature with vertical alignment
+        panel.add(createLabelFieldPair(timeSignatureLabel = new JLabel("Time:"),
+                                      timeSignatureField = createStatusField(SMALL_FIELD_WIDTH)));
         
-        // Time signature
-        timeSignatureLabel = new JLabel("Time:");
-        panel.add(timeSignatureLabel);
+        // Add position with vertical alignment
+        panel.add(createLabelFieldPair(positionLabel = new JLabel("Pos:"),
+                                      positionField = createStatusField(MEDIUM_FIELD_WIDTH)));
         
-        timeSignatureField = createStatusField(SMALL_FIELD_WIDTH);
-        timeSignatureField.setText("4/4");
-        panel.add(timeSignatureField);
-        
-        // Position display
-        positionLabel = new JLabel("Pos:");
-        panel.add(positionLabel);
-        
-        positionField = createStatusField(MEDIUM_FIELD_WIDTH);
+        // Set monospaced font for position display
         positionField.setFont(new Font(Font.MONOSPACED, Font.PLAIN, 12));
         updateTimeDisplay();
-        panel.add(positionField);
         
         return panel;
     }
     
     private JPanel createPlayerSection() {
         JPanel panel = createSectionPanel("Active Player");
+        
+        // Use FlowLayout with vertical centering
         panel.setLayout(new FlowLayout(FlowLayout.LEFT, 5, 0));
         
-        // Player name
-        playerLabel = new JLabel("ID:");
-        panel.add(playerLabel);
+        // Wrap each label and field in a panel for consistent height
+        JPanel[] components = new JPanel[] {
+            createLabelFieldPair(playerLabel = new JLabel("ID:"), 
+                                playerNameField = createStatusField(MEDIUM_FIELD_WIDTH)),
+            createLabelFieldPair(channelLabel = new JLabel("Ch:"), 
+                                channelField = createStatusField(SMALL_FIELD_WIDTH)),
+            createLabelFieldPair(instrumentLabel = new JLabel("Inst:"), 
+                                instrumentField = createStatusField(MEDIUM_FIELD_WIDTH))
+        };
         
-        playerNameField = createStatusField(MEDIUM_FIELD_WIDTH);
-        panel.add(playerNameField);
-        
-        // Channel
-        channelLabel = new JLabel("Ch:");
-        panel.add(channelLabel);
-        
-        channelField = createStatusField(SMALL_FIELD_WIDTH);
-        panel.add(channelField);
-        
-        // Instrument
-        instrumentLabel = new JLabel("Inst:");
-        panel.add(instrumentLabel);
-        
-        instrumentField = createStatusField(MEDIUM_FIELD_WIDTH);
-        panel.add(instrumentField);
+        for (JPanel comp : components) {
+            panel.add(comp);
+        }
         
         return panel;
+    }
+
+    // Helper method to create vertically aligned label-field pairs
+    private JPanel createLabelFieldPair(JLabel label, JTextField field) {
+        JPanel pair = new JPanel(new BorderLayout(5, 0));
+        pair.add(label, BorderLayout.WEST);
+        pair.add(field, BorderLayout.CENTER);
+        return pair;
     }
     
     private JPanel createMonitoringSection() {
@@ -320,10 +325,16 @@ public class StatusBar extends JPanel implements IBusListener {
     
     private JPanel createMessageSection() {
         JPanel panel = createSectionPanel("Status");
-        panel.setLayout(new BorderLayout(1, 0));
+        panel.setLayout(new BorderLayout(5, 0));
         
+        // Create a wrapper panel for the label to vertically center it
+        JPanel labelPanel = new JPanel(new BorderLayout());
+        labelPanel.setPreferredSize(new Dimension(labelPanel.getPreferredSize().width, UIUtils.CONTROL_HEIGHT));
         messageLabel = new JLabel("Message:");
-        panel.add(messageLabel, BorderLayout.WEST);
+        labelPanel.add(messageLabel, BorderLayout.CENTER);
+        
+        // Add components with proper vertical alignment
+        panel.add(labelPanel, BorderLayout.WEST);
         
         messageField = createStatusField(0); // Will expand to fill space
         panel.add(messageField, BorderLayout.CENTER);
@@ -345,9 +356,12 @@ public class StatusBar extends JPanel implements IBusListener {
     
     private JPanel createSectionPanel(String title) {
         JPanel panel = new JPanel();
-        panel.setBorder(BorderFactory.createTitledBorder(
-            BorderFactory.createLineBorder(SECTION_BORDER_COLOR, 1),
-            title
+        panel.setBorder(BorderFactory.createCompoundBorder(
+            BorderFactory.createTitledBorder(
+                BorderFactory.createLineBorder(SECTION_BORDER_COLOR, 1),
+                title
+            ),
+            BorderFactory.createEmptyBorder(2, 5, 2, 5) // Add consistent padding inside panels
         ));
         return panel;
     }
@@ -358,10 +372,15 @@ public class StatusBar extends JPanel implements IBusListener {
         field.setBackground(UIHelper.FIELD_BACKGROUND);
         field.setForeground(UIHelper.FIELD_FOREGROUND);
         
+        // Always set the height to UIUtils.CONTROL_HEIGHT
         if (width > 0) {
             Dimension size = new Dimension(width, UIUtils.CONTROL_HEIGHT);
             field.setPreferredSize(size);
             field.setMinimumSize(size);
+        } else {
+            // For fields with dynamic width, still set the height
+            field.setPreferredSize(new Dimension(field.getPreferredSize().width, UIUtils.CONTROL_HEIGHT));
+            field.setMinimumSize(new Dimension(0, UIUtils.CONTROL_HEIGHT));
         }
         
         return field;
@@ -442,7 +461,7 @@ public class StatusBar extends JPanel implements IBusListener {
                 }
                 case Commands.SESSION_SELECTED, Commands.SESSION_UPDATED, Commands.SESSION_LOADED -> {
                     if (action.getData() instanceof Session session) {
-                        updateSessionInfo(session);
+                        // updateSessionInfo(session);
                     }
                 }
                 case Commands.PLAYER_SELECTED -> {
@@ -581,8 +600,8 @@ public class StatusBar extends JPanel implements IBusListener {
             String instName = instrument.getName();
             
             // If available, add preset information
-            if (instrument.getCurrentPreset() != null) {
-                instName += " (" + instrument.getCurrentPreset() + ")";
+            if (instrument.getPreset() != null) {
+                instName += " (" + instrument.getPreset() + ")";
             }
             
             instrumentField.setText(instName);

@@ -400,7 +400,7 @@ public class MuteButtonsPanel extends JPanel implements IBusListener {
         return buttonPanel;
     }
 
-    private static Dimension buttonSize = new Dimension(16, 16); // Square button
+    private static Dimension buttonSize = new Dimension(18, 18); // Square button
 
     private JToggleButton createMuteButton(int index, boolean isDrum) {
         JToggleButton muteButton = new JToggleButton();

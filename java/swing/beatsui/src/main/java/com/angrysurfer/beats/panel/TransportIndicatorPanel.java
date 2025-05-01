@@ -575,8 +575,8 @@ public class TransportIndicatorPanel extends JPanel implements IBusListener {
             String instName = instrument.getName();
             
             // If available, add preset information
-            if (instrument.getCurrentPreset() != null) {
-                instName += " (" + instrument.getCurrentPreset() + ")";
+            if (instrument.getPreset() != null) {
+                instName += " (" + instrument.getPreset() + ")";
             }
             
             instrumentField.setText(instName);

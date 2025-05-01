@@ -38,7 +38,6 @@ public class TransportPanel extends JPanel {
     private boolean isRecording = false;
     private boolean isPlaying = false;
 
-    
     // Add a flag to track initial application load state
     private boolean initialLoadCompleted = false;
     private boolean ignoreNextSessionUpdate = true; // Flag to ignore the first update
@@ -54,10 +53,8 @@ public class TransportPanel extends JPanel {
     public TransportPanel() {
         super(new BorderLayout());
         setPreferredSize(new Dimension(getPreferredSize().width, 75));
-        
-        setBorder(BorderFactory.createCompoundBorder(
-            BorderFactory.createTitledBorder("Transport"),
-            BorderFactory.createEmptyBorder(1, 2, 1, 2)));
+
+        setBorder(BorderFactory.createEmptyBorder(2, 2, 2, 2));
 
         // Start with recording disabled
         isRecording = false;
@@ -74,11 +71,11 @@ public class TransportPanel extends JPanel {
         // Get transport buttons panel and add it to center
         JPanel transportButtonsPanel = setupTransportButtons();
         add(transportButtonsPanel, BorderLayout.CENTER);
-        
+
         // Get indicator section and add it to north
         JPanel indicatorPanel = createIndicatorSection();
         add(indicatorPanel, BorderLayout.SOUTH);
-        
+
         setupCommandBusListener();
 
         // Set initial button states
@@ -86,21 +83,19 @@ public class TransportPanel extends JPanel {
         stopButton.setEnabled(false);
     }
 
-    
-    
     private JPanel createIndicatorSection() {
         return new JPanel();
     }
-    
 
     /**
      * Creates and configures transport control buttons
+     * 
      * @return JPanel containing all transport buttons
      */
     private JPanel setupTransportButtons() {
         // Create panel to hold transport buttons with flow layout
         JPanel buttonsPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 5, 0));
-        
+
         rewindButton = createToolbarButton(Commands.TRANSPORT_REWIND, "⏮", "Previous Session");
 
         // Create pause button with special handling
@@ -131,7 +126,7 @@ public class TransportPanel extends JPanel {
         });
 
         // Rest of existing code...
-        
+
         recordButton = new JButton("⏺");
         // ... existing recordButton setup ...
 
@@ -149,7 +144,7 @@ public class TransportPanel extends JPanel {
 
         updatePlayButtonAppearance();
         updateRecordButtonAppearance();
-        
+
         return buttonsPanel;
     }
 

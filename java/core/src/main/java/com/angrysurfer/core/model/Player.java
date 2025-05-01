@@ -74,7 +74,7 @@ public abstract class Player implements Callable<Boolean>, Serializable, IBusLis
 
     private Integer maxVelocity = 110;
 
-    private Integer preset = 1;
+    // private Integer preset = 1;
 
     private Boolean stickyPreset = false;
 
@@ -279,7 +279,8 @@ public abstract class Player implements Callable<Boolean>, Serializable, IBusLis
 
     /**
      * Trigger a note with throttling to prevent MIDI buffer overflows
-     * @param note MIDI note number to play
+     * 
+     * @param note     MIDI note number to play
      * @param velocity Note velocity (0-127)
      */
     public void triggerNoteWithThrottle(int note, int velocity) {
@@ -287,14 +288,14 @@ public abstract class Player implements Callable<Boolean>, Serializable, IBusLis
         if (instrument == null) {
             return;
         }
-        
+
         // Update player state
         setPlaying(true);
-        
+
         // Throttle rapid note triggering
         long now = System.nanoTime() / 1_000_000; // Current time in ms
         long timeSinceLastNote = now - lastNoteTime;
-        
+
         if (timeSinceLastNote < NOTE_THROTTLE_THRESHOLD) {
             // Use the executor to slightly delay the note if we're sending too many
             NOTE_EXECUTOR.submit(() -> {
@@ -310,10 +311,10 @@ public abstract class Player implements Callable<Boolean>, Serializable, IBusLis
             // Send note immediately if we're not throttling
             sendNoteOnMessage(note, velocity);
         }
-        
+
         // Always update the last note time
         lastNoteTime = now;
-        
+
         // Update UI only if needed (throttled)
         updateUIIfNeeded();
     }
@@ -323,7 +324,8 @@ public abstract class Player implements Callable<Boolean>, Serializable, IBusLis
      */
     private void sendNoteOnMessage(int note, int velocity) {
         try {
-            // Use synchronized block to prevent concurrent modification of the reusable message
+            // Use synchronized block to prevent concurrent modification of the reusable
+            // message
             synchronized (messageLock) {
                 reuseableMessage.setMessage(ShortMessage.NOTE_ON, note, velocity);
                 // Replace sendMessage with sendToDevice
@@ -353,12 +355,12 @@ public abstract class Player implements Callable<Boolean>, Serializable, IBusLis
             if (instrument != null) {
                 synchronized (messageLock) {
                     reuseableMessage.setMessage(ShortMessage.NOTE_ON, note, velocity);
-                    instrument.sendToDevice(reuseableMessage);  // Changed from sendMessage to sendToDevice
+                    instrument.sendToDevice(reuseableMessage); // Changed from sendMessage to sendToDevice
                 }
             }
         } catch (InvalidMidiDataException e) {
             logger.error("Error in noteOn: {}", e.getMessage(), e);
-        } catch (MidiUnavailableException e) {  // Add this catch block
+        } catch (MidiUnavailableException e) { // Add this catch block
             logger.error("MIDI device unavailable: {}", e.getMessage(), e);
         }
     }
@@ -392,28 +394,28 @@ public abstract class Player implements Callable<Boolean>, Serializable, IBusLis
      * @param velocity Note velocity (0-127)
      * @param gate     Note gate time in ms
      */
-//    public void noteOn(int note, int velocity, int gate) {
-//        // Update player state
-//        setPlaying(true);
-//        updateUIIfNeeded();
-//
-//        // Skip note if player is muted
-//        if (level <= 0) {
-//            return;
-//        }
-//
-//        try {
-//            // Delegate to instrument wrapper
-//            if (instrument != null) {
-//                synchronized (messageLock) {
-//                    reuseableMessage.setMessage(ShortMessage.NOTE_ON, note, velocity);
-//                    instrument.sendToDevice(reuseableMessage);
-//                }
-//            }
-//        } catch (Exception e) {
-//            logger.error("Error in noteOn: {}", e.getMessage(), e);
-//        }
-//    }
+    // public void noteOn(int note, int velocity, int gate) {
+    // // Update player state
+    // setPlaying(true);
+    // updateUIIfNeeded();
+    //
+    // // Skip note if player is muted
+    // if (level <= 0) {
+    // return;
+    // }
+    //
+    // try {
+    // // Delegate to instrument wrapper
+    // if (instrument != null) {
+    // synchronized (messageLock) {
+    // reuseableMessage.setMessage(ShortMessage.NOTE_ON, note, velocity);
+    // instrument.sendToDevice(reuseableMessage);
+    // }
+    // }
+    // } catch (Exception e) {
+    // logger.error("Error in noteOn: {}", e.getMessage(), e);
+    // }
+    // }
 
     /**
      * Facade method to stop a note
@@ -437,6 +439,48 @@ public abstract class Player implements Callable<Boolean>, Serializable, IBusLis
                     50, java.util.concurrent.TimeUnit.MILLISECONDS);
         } catch (Exception e) {
             logger.error("Error in noteOff: {}", e.getMessage(), e);
+        }
+    }
+
+    /**
+     * Sends All Notes Off message on player's channel
+     * Uses MIDI Control Change #123 to immediately stop all playing notes
+     */
+    public void allNotesOff() {
+        logger.debug("Sending All Notes Off for player {} on channel {}", getName(), getChannel());
+
+        try {
+            // First approach: Use control change 123 (All Notes Off)
+            if (instrument != null) {
+                instrument.controlChange(123, 0);
+                logger.debug("Sent All Notes Off message to instrument {}",
+                        instrument.getName());
+            }
+
+            // Second approach: Send explicit note off messages for safety
+            // Some hardware/software synths don't properly respond to CC 123
+            try {
+                // Send note off for all possible MIDI notes (0-127)
+                if (instrument != null) {
+                    for (int note = 0; note < 128; note++) {
+                        synchronized (messageLock) {
+                            reuseableMessage.setMessage(ShortMessage.NOTE_OFF, getChannel(), note, 0);
+                            instrument.sendToDevice(reuseableMessage);
+                        }
+                    }
+                }
+            } catch (Exception e) {
+                logger.warn("Error sending explicit note-off messages: {}", e.getMessage());
+            }
+
+            // Update player state
+            setPlaying(false);
+
+            // Notify UI
+            updateUIIfNeeded();
+
+        } catch (Exception e) {
+            logger.error("Error in allNotesOff: {}", e.getMessage(), e);
         }
     }
 
@@ -486,7 +530,7 @@ public abstract class Player implements Callable<Boolean>, Serializable, IBusLis
     /**
      * Determines whether this player should play at the given position
      *
-     * @param timingUpdate        Current TIMING_UPDATE
+     * @param timingUpdate Current TIMING_UPDATE
      */
     public boolean shouldPlay(TimingUpdate timingUpdate) {
         // Quick checks first
@@ -1007,5 +1051,9 @@ public abstract class Player implements Callable<Boolean>, Serializable, IBusLis
             // Log but continue - we can create a new one each time if needed
             System.err.println("Error reinitializing MIDI message: " + e.getMessage());
         }
+    }
+
+    public Integer getPreset() {
+        return Objects.nonNull(instrument) ? instrument.getPreset() : 0;
     }
 }

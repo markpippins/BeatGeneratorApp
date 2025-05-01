@@ -11,6 +11,7 @@ import java.util.stream.Collectors;
 import javax.sound.midi.MidiDevice;
 import javax.sound.midi.MidiUnavailableException;
 
+import com.angrysurfer.core.service.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -27,11 +28,6 @@ import com.angrysurfer.core.model.Note;
 import com.angrysurfer.core.model.Player;
 import com.angrysurfer.core.model.Session;
 import com.angrysurfer.core.redis.RedisService;
-import com.angrysurfer.core.service.DeviceManager;
-import com.angrysurfer.core.service.InstrumentManager;
-import com.angrysurfer.core.service.InternalSynthManager;
-import com.angrysurfer.core.service.PlayerManager;
-import com.angrysurfer.core.service.SessionManager;
 
 import lombok.Getter;
 import lombok.Setter;
@@ -46,6 +42,8 @@ public class MelodicSequencer implements IBusListener {
     private long tickCounter = 0; // Tick counter
     private boolean isPlaying = false; // Flag indicating playback state
     private int bounceDirection = 1; // Direction for bounce mode
+
+    private Integer currentBar = null;
 
     // Add the data object that will store all pattern and settings data
 
@@ -81,9 +79,6 @@ public class MelodicSequencer implements IBusListener {
     // Add or modify this field and methods
     private Consumer<NoteEvent> noteEventPublisher;
 
-    // Add this field to the class
-    private int currentTilt = 0;
-
     // Add field for next pattern ID
     private Long nextPatternId = null;
 
@@ -104,13 +99,19 @@ public class MelodicSequencer implements IBusListener {
     // Note object for storing melodic properties
     private Player player;
 
+    private int tempChannel = 0;
+
+    private int currentTilt = 0;
+
     /**
      * Creates a new melodic sequencer
      */
-    public MelodicSequencer() {
+    public MelodicSequencer(Integer id, Integer channel) {
+
+        setId(id);
+        setTempChannel(channel);
 
         initializePlayer();
-
         // Register with CommandBus
         CommandBus.getInstance().register(this);
         TimingBus.getInstance().register(this);
@@ -180,11 +181,10 @@ public class MelodicSequencer implements IBusListener {
     }
 
     public int getChannel() {
-        return sequenceData.getChannel();
+        return player != null ? player.getChannel() : 0;
     }
 
     public void setChannel(int channel) {
-        sequenceData.setChannel(channel);
 
         // Update the player's channel too
         if (player != null) {
@@ -386,10 +386,17 @@ public class MelodicSequencer implements IBusListener {
             return;
         }
 
+        if (getHarmonicTiltValues() == null || getHarmonicTiltValues().isEmpty()) {
+            logger.warn("No harmonic tilt values set, using default 0");
+            setHarmonicTiltValues(Collections.singletonList(0));
+        }
+        currentTilt = getHarmonicTiltValues().get(0);
         // Reset position if needed
         if (currentStep >= getSequenceData().getPatternLength()) {
             reset();
         }
+
+        PlayerManager.getInstance().applyInstrumentPreset(player);
 
         isPlaying = true;
         logger.info("Melodic sequencer {} started playback", id);
@@ -416,8 +423,8 @@ public class MelodicSequencer implements IBusListener {
      */
     public void ensurePlayerHasInstrument() {
         if (player != null && player.getInstrument() == null) {
-            logger.warn("Player {} has no instrument, initializing default", player.getId());
-            initializeInternalInstrument(player);
+            logger.warn("Player {} has no instrument, initializing default", getTempChannel());
+            PlayerManager.getInstance().initializeInternalInstrument(player);
         }
     }
 
@@ -634,7 +641,6 @@ public class MelodicSequencer implements IBusListener {
         logger.info("Sequencer reset");
     }
 
-
     /**
      * Trigger a note for the specified step
      * 
@@ -670,33 +676,13 @@ public class MelodicSequencer implements IBusListener {
         int noteValue = sequenceData.getNoteValue(stepIndex);
         int velocity = sequenceData.getVelocityValue(stepIndex);
         int gate = sequenceData.getGateValue(stepIndex);
-        int harmonicTilt = 0;
-        if (stepIndex < sequenceData.getHarmonicTiltValuesRaw().length)
-            harmonicTilt = sequenceData.getHarmonicTiltValuesRaw()[stepIndex];
-        else
-            logger.error("EMPTY TILT VALUES");
-        // Apply quantization if enabled
+
         if (sequenceData.isQuantizeEnabled()) {
             noteValue = quantizeNote(noteValue);
         }
 
-        // Apply harmonic tilt
-        if (harmonicTilt != 0) {
-            // Store original note for logging
-            int beforeTilt = noteValue;
-
-            // Apply tilt with enhanced effect (adjust multiplier as needed)
-            // int tiltEffect = harmonicTilt * 2; // Multiply effect for more dramatic shift
-            noteValue += harmonicTilt;
-
-            // Ensure note stays in MIDI range
-            noteValue = Math.max(0, Math.min(127, noteValue));
-
-            // Log detailed info about the tilt application
-            // logger.debug("Tilt applied: note before={}, tilt={}, scaled effect={}, note
-            // after={}",
-            // beforeTilt, harmonicTilt, tiltEffect, noteValue);
-        }
+        // apply harmonic tilt
+        noteValue = noteValue + currentTilt;
 
         try {
             // Check for too-frequent note triggers
@@ -710,7 +696,7 @@ public class MelodicSequencer implements IBusListener {
 
             // Calculate note duration based on gate percentage
             // (assuming a full step is 4 beats)
-            int channel = sequenceData.getChannel();
+
             int noteOnVelocity = velocity;
 
             // Create note event
@@ -733,7 +719,7 @@ public class MelodicSequencer implements IBusListener {
             }
 
             logger.debug("Triggered step {} - note:{} vel:{} gate:{} tilt:{}",
-                    stepIndex, noteValue, velocity, gate, harmonicTilt);
+                    stepIndex, noteValue, velocity, gate, currentTilt);
 
         } catch (Exception e) {
             logger.error("Error triggering note: {}", e.getMessage(), e);
@@ -804,10 +790,11 @@ public class MelodicSequencer implements IBusListener {
             // Use existing player
             logger.info("Using existing player {} for sequencer {}", existingPlayer.getId(), id);
             player = existingPlayer;
-
+            // String playerName = "Melody " + getChannel();
             // Update channel if needed
-            if (player.getChannel() != getSequenceData().getChannel()) {
-                player.setChannel(getSequenceData().getChannel());
+            // setChannel(getSequenceData().getChannel());
+            if (player.getChannel() != getChannel()) {
+                player.setChannel(getChannel());
                 // Save the player through PlayerManager
                 PlayerManager.getInstance().savePlayerProperties(player);
             }
@@ -815,21 +802,16 @@ public class MelodicSequencer implements IBusListener {
             // Create new player through PlayerManager
             logger.info("Creating new player for sequencer {}", id);
             player = RedisService.getInstance().newNote();
-
+            player.setName(player.getId().toString());
             // Get an instrument from InstrumentManager
             InstrumentWrapper instrument = InstrumentManager.getInstance()
-                    .getOrCreateInternalSynthInstrument(getSequenceData().getChannel());
+                    .getOrCreateInternalSynthInstrument(player.getChannel());
 
             if (instrument != null) {
 
-                // Create a Note player with proper name
-                String playerName = "Melody " + (id != null ? id : "");
-                player = new Note(playerName, session, instrument, 60, null);
                 // Configure base properties
-                player.setMinVelocity(60);
-                player.setMaxVelocity(127);
-                player.setLevel(100);
-                player.setChannel(getSequenceData().getChannel());
+
+                player.setChannel(getChannel());
 
                 // Associate player with this sequencer
                 player.setOwner(this);
@@ -858,87 +840,41 @@ public class MelodicSequencer implements IBusListener {
             // ensurePlayerHasInstrument();
             // Always initialize the instrument once player is set up
             if (player.getInstrument() == null) {
-                initializeInternalInstrument(player);
+                PlayerManager.getInstance().initializeInternalInstrument(player);
             }
-        }
-    }
 
-    public void initializeInternalInstrument(Player player) {
-        if (player == null) {
-            logger.warn("Cannot initialize internal instrument for null player");
-            return;
-        }
+            // If we have soundbank/bank/preset settings in the sequence data, apply them
+            if (sequenceData.getSoundbankName() != null || sequenceData.getBankIndex() != null ||
+                    sequenceData.getPreset() != null) {
 
-        try {
-            // Try to get an internal instrument from the manager
-            InstrumentManager manager = InstrumentManager.getInstance();
-            InstrumentWrapper internalInstrument = null;
+                if (player.getInstrument() != null) {
+                    // Apply saved settings
+                    if (sequenceData.getSoundbankName() != null) {
+                        player.getInstrument().setSoundbankName(sequenceData.getSoundbankName());
+                    }
 
-            // First try to find an existing internal instrument for this channel
-            for (InstrumentWrapper instrument : manager.getCachedInstruments()) {
-                if (Boolean.TRUE.equals(instrument.getInternal()) &&
-                        instrument.getChannel() != null &&
-                        instrument.getChannel() == player.getChannel()) {
-                    internalInstrument = instrument;
-                    logger.info("Found existing internal instrument for channel {}", player.getChannel());
-                    break;
+                    if (sequenceData.getBankIndex() != null) {
+                        player.getInstrument().setBankIndex(sequenceData.getBankIndex());
+                    }
+
+                    if (sequenceData.getPreset() != null) {
+                        player.getInstrument().setPreset(10);
+                    }
+
+                    // Send program change
+                    PlayerManager.getInstance().applyInstrumentPreset(player);
                 }
             }
 
-            // If no instrument found, create a new one
-            if (internalInstrument == null) {
-                // Get a reference to the internal synthesizer device
-                MidiDevice internalSynthDevice;
-                try {
-                    internalSynthDevice = InternalSynthManager.getInstance().getInternalSynthDevice();
-                } catch (MidiUnavailableException e) {
-                    logger.error("Failed to get internal synth device: {}", e.getMessage());
-                    return;
-                }
-
-                // Generate a numeric ID for the instrument
-                long numericId = 9985L + player.getChannel();
-
-                // Create the instrument with proper constructor parameters
-                internalInstrument = new InstrumentWrapper(
-                        "Internal Synth " + player.getChannel(), // Name
-                        internalSynthDevice, // Device (not a String)
-                        player.getChannel() // Channel
-                );
-
-                // Set the rest of the properties
-                internalInstrument.setInternal(true);
-                internalInstrument.setDeviceName("Gervill");
-                internalInstrument.setSoundbankName("Default");
-                internalInstrument.setBankIndex(0);
-                internalInstrument.setId(numericId); // Set ID separately
-                internalInstrument.setChannel(player.getChannel());
-                internalInstrument
-                        .setCurrentPreset(player.getPreset() != null ? player.getPreset() : player.getChannel());
-
-                // Register with instrument manager
-                manager.updateInstrument(internalInstrument);
-                logger.info("Created new internal instrument for channel {}", player.getChannel());
+            if (player.getInstrument() != null) {
+                player.getInstrument().setAssignedToPlayer(true);
+                setChannel(tempChannel);
             }
 
-            // Assign instrument to player
-            player.setInstrument(internalInstrument);
-            player.setUsingInternalSynth(true);
-            player.setPreset(0); // Piano
-
-            // Save the player
-            PlayerManager.getInstance().savePlayerProperties(player);
-
-            logger.info("Player {} initialized with internal instrument", player.getId());
-
-            // Send program change to actually set the instrument sound
-            PlayerManager.getInstance().initializeInstrument(player);
-            // PlayerManager.getInstance().applyInstrumentPreset(player);
-
-        } catch (Exception e) {
-            logger.error("Failed to initialize internal instrument: {}", e.getMessage(), e);
         }
     }
+
+
 
     /**
      * Find a player in the session that belongs to this sequencer
@@ -956,13 +892,13 @@ public class MelodicSequencer implements IBusListener {
                     p.getOwner() instanceof MelodicSequencer &&
                     ((MelodicSequencer) p.getOwner()).getId() != null &&
                     ((MelodicSequencer) p.getOwner()).getId().equals(id) &&
-                    p.getChannel() == getSequenceData().getChannel()) { // Added channel check
+                    p.getChannel() == getChannel()) { // Added channel check
 
                 return p;
             }
         }
 
-        logger.info("No player found for sequencer {} and channel {}", id, getSequenceData().getChannel());
+        logger.info("No player found for sequencer {} and channel {}", id, getChannel());
         return null;
     }
 
@@ -1003,6 +939,16 @@ public class MelodicSequencer implements IBusListener {
                 if (isPlaying && action.getData() instanceof TimingUpdate update) {
                     if (update.tick() != null) {
                         processTick(update.tick());
+                    }
+
+                    if (update.bar() != null) {
+                        currentBar = update.bar() - 1; // Adjust for 0-based index
+                        logger.debug("Current bar updated to {}", currentBar);
+                        if (getHarmonicTiltValues() != null && getHarmonicTiltValues().size() > currentBar) {
+                            // Get the current tilt value based on the bar
+                            currentTilt = getHarmonicTiltValues().get(currentBar);
+                            logger.debug("Current tilt value for bar {}: {}", currentBar, currentTilt);
+                        }
                     }
                 }
             }

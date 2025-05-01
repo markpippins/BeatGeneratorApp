@@ -71,7 +71,6 @@ public class MelodicSequenceNavigationPanel extends JPanel {
         setBorder(BorderFactory.createCompoundBorder(
                 BorderFactory.createTitledBorder("Sequence"),
                 BorderFactory.createEmptyBorder(1, 2, 1, 2)));
-
         // Create ID label
         sequenceIdLabel = new JLabel(getFormattedIdText(), SwingConstants.CENTER);
         sequenceIdLabel.setPreferredSize(new Dimension(LABEL_WIDTH, UIUtils.CONTROL_HEIGHT));

@@ -48,7 +48,7 @@ public class Ratchet extends Strike {
         setRandomDegree(getParent().getRandomDegree());
         setFadeIn(getParent().getFadeIn());
         setFadeOut(getParent().getFadeOut());
-        setPreset(getParent().getPreset());
+//        setPreset(getParent().getPreset());
         setEnabled(true);
 
         setName(getParent().getName() + " [R]");

@@ -28,7 +28,7 @@ public class MelodicSequenceData {
     private int patternLength = 16; // Default pattern length
     private Direction direction = Direction.FORWARD; // Default direction
     private boolean looping = true; // Default to looping
-    private int channel = 3; // Default MIDI channel
+    // private int channel = 3; // Default MIDI channel
     private TimingDivision timingDivision = TimingDivision.NORMAL;
 
     // Scale & quantization
@@ -52,13 +52,14 @@ public class MelodicSequenceData {
     private Integer sequencerId;
     private String name = "Unnamed Pattern";
 
-    private String soundbankName;
-    private Integer bankIndex;
-    private Integer currentPreset;
-    
+    private String soundbankName = "Default";
+    private Integer bankIndex = 0;
+    private Integer preset = 0;
+
     /**
      * Default constructor
      */
+
     public MelodicSequenceData() {
         initializePatternData();
     }
@@ -162,20 +163,21 @@ public class MelodicSequenceData {
     public int[] getHarmonicTiltValuesRaw() {
         return harmonicTiltValues;
     }
-    
+
     /**
      * Get harmonic tilt values as a list with safety checks
      */
     public List<Integer> getHarmonicTiltValues() {
         // Add null check to prevent NullPointerException
         if (harmonicTiltValues == null) {
-            logger.warn("harmonicTiltValues array is null, initializing with defaults for pattern length {}", patternLength);
+            logger.warn("harmonicTiltValues array is null, initializing with defaults for pattern length {}",
+                    patternLength);
             harmonicTiltValues = new int[patternLength];
         }
-        
+
         List<Integer> result = Arrays.stream(harmonicTiltValues).boxed().collect(Collectors.toList());
         logger.debug("MelodicSequenceData.getHarmonicTiltValues() returning list of size {}", result.size());
-        
+
         return result;
     }
 
@@ -200,14 +202,14 @@ public class MelodicSequenceData {
             logger.info("Creating new harmonicTiltValues array with length {}", patternLength);
             harmonicTiltValues = new int[patternLength];
         }
-        
+
         // Resize if needed
         if (index >= harmonicTiltValues.length) {
             int[] newArray = new int[Math.max(patternLength, index + 1)];
             System.arraycopy(harmonicTiltValues, 0, newArray, 0, harmonicTiltValues.length);
             harmonicTiltValues = newArray;
         }
-        
+
         // Set the value
         harmonicTiltValues[index] = value;
     }
@@ -495,7 +497,6 @@ public class MelodicSequenceData {
         }
         return Arrays.stream(nudgeValues).boxed().collect(Collectors.toList());
     }
-
 
     /**
      * Get active steps as a List<Boolean>

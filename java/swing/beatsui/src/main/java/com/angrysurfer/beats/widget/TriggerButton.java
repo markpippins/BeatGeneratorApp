@@ -13,7 +13,7 @@ public class TriggerButton extends JToggleButton {
     private boolean highlighted = false;
     private boolean toggleable = false;
     private static final Dimension BUTTON_SIZE = new Dimension(30, 20);
-    private static final Color defaultColor = Color.BLACK;
+    private static final Color defaultColor = UIUtils.agedOffWhite;
     private static final Color selectedColor = Color.GREEN;
     private Color highlightColor = UIUtils.fadedOrange; // Default highlight color
 

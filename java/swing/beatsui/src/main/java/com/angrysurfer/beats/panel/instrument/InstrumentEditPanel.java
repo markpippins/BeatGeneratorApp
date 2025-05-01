@@ -153,7 +153,7 @@ public class InstrumentEditPanel extends JPanel {
         updatedInstrument.setLowestNote(instrument.getLowestNote());
         updatedInstrument.setSoundbankName(instrument.getSoundbankName());
         updatedInstrument.setBankIndex(instrument.getBankIndex());
-        updatedInstrument.setCurrentPreset(instrument.getCurrentPreset());
+        updatedInstrument.setPreset(instrument.getPreset());
         
         return updatedInstrument;
     }

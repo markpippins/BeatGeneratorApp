@@ -260,7 +260,7 @@ public class Commands {
     public static final String SOUNDBANK_UNSELECTED_CHANGED = "SOUNDBANK_UNSELECTED_CHANGED";
     public static final String SOUNDBANK_SELECTED_REQUEST = "SOUNDBANK_SELECTED_REQUEST";
     public static final String SOUNDBANK_UNSELECTED_REQUEST = "SOUNDBANK_UNSELECTED_REQUEST";
- 
+
     public static final String PAD_TOGGLED = "PAD_TOGGLED";
     public static final String NEW_VALUE_OCTAVE = "NEW_VALUE_OCTAVE";
     public static final String SEQUENCER_STEP_UPDATE = "SEQUENCER_STEP_UPDATE";
@@ -274,7 +274,7 @@ public class Commands {
     public static final String DRUM_SEQUENCE_REMOVED = "DRUM_SEQUENCE_REMOVED";
     public static final String DRUM_SEQUENCE_ADDED = "DRUM_SEQUENCE_ADDED";
     public static final String DRUM_SEQUENCE_SELECTED = "DRUM_SEQUENCE_SELECTED";
-	public static final String SAVE_DRUM_SEQUENCE = "SAVE_DRUM_SEQUENCE";
+    public static final String SAVE_DRUM_SEQUENCE = "SAVE_DRUM_SEQUENCE";
     public static final String LOAD_DRUM_SEQUENCE = "LOAD_DRUM_SEQUENCE";
     public static final String DRUM_SEQUENCE_PARAMS_CHANGED = "DRUM_SEQUENCE_PARAMS_CHANGED";
     public static final String DRUM_SEQUENCE_LOADED = "DRUM_SEQUENCE_LOADED";
@@ -330,15 +330,15 @@ public class Commands {
     public static final String INSTRUMENT_CHANGED = "INSTRUMENT_CHANGED";
     public static final String DRUM_STEP_UPDATED = "DRUM_STEP_UPDATED";
 
-    
     // Player update commands
     public static final String PLAYER_UPDATE_REQUEST = "PLAYER_UPDATE_REQUEST";
-    
+
     // Player preset commands
     public static final String PLAYER_PRESET_CHANGE_REQUEST = "PLAYER_PRESET_CHANGE_REQUEST";
     public static final String PLAYER_PRESET_CHANGED = "PLAYER_PRESET_CHANGED";
-    
+
     // Player instrument commands
+    public static final String PLAYER_CHANNEL_CHANGE_REQUEST = "PLAYER_CHANNEL_CHANGE_REQUEST";
     public static final String PLAYER_INSTRUMENT_CHANGE_REQUEST = "PLAYER_INSTRUMENT_CHANGE_REQUEST";
     public static final String PLAYER_INSTRUMENT_CHANGED = "PLAYER_INSTRUMENT_CHANGED";
     public static final String TRANSPORT_STATE_REQUEST = "TRANSPORT_STATE_REQUEST";

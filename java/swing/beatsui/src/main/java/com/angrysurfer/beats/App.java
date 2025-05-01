@@ -30,7 +30,6 @@ public class App implements IBusListener {
     private static final Logger logger = LoggerFactory.getLogger(App.class.getName());
 
     private static final CommandBus commandBus = CommandBus.getInstance();
-    private static final RedisService redisService = RedisService.getInstance();
 
     private static final boolean showSplash = false;
 
@@ -162,11 +161,7 @@ public class App implements IBusListener {
             splash.completeTask("Applied visual theme");
         } catch (Exception e) {
             logger.error("Error setting look and feel: " + e.getMessage());
-            try {
-                UIManager.setLookAndFeel(new FlatLightLaf());
-            } catch (Exception ex) {
-                logger.error("Error setting default look and feel: " + ex.getMessage());
-            }
+
         }
     }
 

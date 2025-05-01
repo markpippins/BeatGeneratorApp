@@ -60,8 +60,8 @@ public final class InstrumentWrapper implements Serializable {
     private int bankMSB = 0; // Default to bank 0
     private int bankLSB = 0; // Default to bank 0
 
-    private int program = 0; // Default to program 0
-    
+    // private int program = 0; // Default to program 0
+
     private Boolean assignedToPlayer = false;
 
     private List<ControlCode> controlCodes = new ArrayList<>();
@@ -113,10 +113,12 @@ public final class InstrumentWrapper implements Serializable {
 
     private Set<Pattern> patterns;
 
+    private Integer preset = 1;
+
     // Add fields for soundbank support
     private String soundbankName;
     private Integer bankIndex;
-    private Integer currentPreset;
+    // private Integer currentPreset;
 
     // Add these fields:
     @JsonIgnore
@@ -150,7 +152,7 @@ public final class InstrumentWrapper implements Serializable {
         this.name = name;
         this.device = device;
         this.channel = channel;
-        
+
         // Safely get device info if device is not null
         if (device != null) {
             this.deviceInfo = device.getDeviceInfo();
@@ -159,9 +161,9 @@ public final class InstrumentWrapper implements Serializable {
             // Set default values for null device
             this.deviceName = "Internal";
         }
-        
+
         // Set default values
-        this.internal = (device == null);  // Assume internal if device is null
+        this.internal = (device == null); // Assume internal if device is null
     }
 
     public InstrumentWrapper(String name, MidiDevice device, Integer[] channels) {
@@ -175,7 +177,7 @@ public final class InstrumentWrapper implements Serializable {
     public void setName(String name) {
         this.name = name;
         if (name != null) {
- 
+
             if (name.toLowerCase().contains("gervill")) {
                 this.internal = true;
             }
@@ -186,7 +188,7 @@ public final class InstrumentWrapper implements Serializable {
             if (name.toLowerCase().contains("drum")) {
                 this.internal = true;
             }
- 
+
             // this.name = name.replaceAll("[^a-zA-Z0-9]", "_");
         }
     }
@@ -219,7 +221,7 @@ public final class InstrumentWrapper implements Serializable {
             logger.warn("Cannot send control change - device is null");
             return;
         }
-        
+
         try {
             ShortMessage message = new ShortMessage();
             message.setMessage(ShortMessage.CONTROL_CHANGE, channel, controller, value);
@@ -286,21 +288,21 @@ public final class InstrumentWrapper implements Serializable {
             logger.warn("Cannot send MIDI message - device is null");
             return; // Just return instead of throwing exception
         }
-        
+
         try {
             // Get receiver but handle null case gracefully
             Receiver receiver = device.getReceiver();
             if (receiver != null) {
                 receiver.send(message, -1); // -1 means process immediately
             } else {
-                logger.warn("No receiver available for device: {}", 
-                          device.getDeviceInfo().getName());
+                logger.warn("No receiver available for device: {}",
+                        device.getDeviceInfo().getName());
                 throw new MidiUnavailableException("Receiver is null");
             }
         } catch (MidiUnavailableException e) {
             // Log but don't rethrow - prevent cascading errors
             logger.error("MIDI device unavailable: {}", e.getMessage());
-            
+
             // Try to recover the device if it's closed
             if (device != null && !device.isOpen()) {
                 try {
@@ -325,24 +327,22 @@ public final class InstrumentWrapper implements Serializable {
      * @param instrument The instrument to initialize
      */
     public void initializeInstrument(InstrumentWrapper instrument) {
-        if (instrument == null || instrument.getCurrentPreset() == null) {
+        if (instrument == null || instrument.getPreset() == null) {
             return;
         }
 
         try {
             int channel = 0; // Default channel
-            int preset = instrument.getCurrentPreset();
 
             // Apply bank if specified
             if (instrument.getBankIndex() != null && instrument.getBankIndex() > 0) {
-                instrument.controlChange( 0, 0); // Bank MSB
-                instrument.controlChange( 32, instrument.getBankIndex()); // Bank LSB
+                instrument.controlChange(0, 0); // Bank MSB
+                instrument.controlChange(32, instrument.getBankIndex()); // Bank LSB
             }
 
             // Apply program change
-            instrument.programChange( preset, 0);
-            logger.debug("Initialized instrument {} with preset {}",
-                    instrument.getName(), preset);
+            instrument.programChange(instrument.getPreset(), 0);
+            logger.debug("Initialized instrument {} with preset {}", preset);
         } catch (Exception e) {
             logger.warn("Failed to initialize instrument: {}", e.getMessage());
         }
@@ -354,16 +354,16 @@ public final class InstrumentWrapper implements Serializable {
     public void playMidiNote(int note, int velocity, int decay) {
         // Try internal synth optimization first
         // if ("Gervill".equals(deviceName)) {
-        //     // Use optimized internal synth path
-        //     InternalSynthManager.getInstance().playNote(note, velocity, decay, channel);
-        //     return;
+        // // Use optimized internal synth path
+        // InternalSynthManager.getInstance().playNote(note, velocity, decay, channel);
+        // return;
         // }
 
         // Fall back to standard MIDI path for external devices
         try {
-            noteOn( note, velocity);
+            noteOn(note, velocity);
             // Schedule note off
-            scheduleNoteOff( note, velocity, decay);
+            scheduleNoteOff(note, velocity, decay);
         } catch (InvalidMidiDataException e) {
             throw new RuntimeException(e);
         } catch (MidiUnavailableException e) {
@@ -394,7 +394,7 @@ public final class InstrumentWrapper implements Serializable {
         NOTE_OFF_SCHEDULER.schedule(() -> {
             try {
                 // Send note-off message using existing method
-                noteOff( note, 0); // Usually 0 velocity for note off
+                noteOff(note, 0); // Usually 0 velocity for note off
 
                 // Debug logging if needed (uncomment for debugging)
                 // logger.debug("Note off sent for note {} on channel {}", note, channel);
@@ -545,37 +545,18 @@ public final class InstrumentWrapper implements Serializable {
      */
     public void setBankIndex(Integer bankIndex) {
         this.bankIndex = bankIndex;
-        
+
         if (bankIndex == null) {
             this.bankMSB = 0;
             this.bankLSB = 0;
         } else {
             // Use upper/lower bytes of the integer for MSB/LSB
-            this.bankMSB = (bankIndex >> 7) & 0x7F;  // Upper 7 bits
-            this.bankLSB = bankIndex & 0x7F;         // Lower 7 bits
+            this.bankMSB = (bankIndex >> 7) & 0x7F; // Upper 7 bits
+            this.bankLSB = bankIndex & 0x7F; // Lower 7 bits
         }
-        
-        logger.info("Set bank index to: {} (MSB: {}, LSB: {})", 
-                    bankIndex, bankMSB, bankLSB);
-    }
 
-    /**
-     * Get the currently selected preset
-     * 
-     * @return The preset number
-     */
-    public Integer getCurrentPreset() {
-        return currentPreset;
-    }
-
-    /**
-     * Set the currently selected preset
-     * 
-     * @param preset The preset number
-     */
-    public void setCurrentPreset(int preset) {
-        this.currentPreset = preset;
-        logger.info("Set current preset to: {}", preset);
+        logger.info("Set bank index to: {} (MSB: {}, LSB: {})",
+                bankIndex, bankMSB, bankLSB);
     }
 
     /**
@@ -594,9 +575,9 @@ public final class InstrumentWrapper implements Serializable {
             controlChange(32, bankIndex);
 
             // Send program change if we have a preset set
-            if (currentPreset != null) {
-                programChange(currentPreset, 0);
-                logger.info("Applied bank={}, program={} to channel={}", bankIndex, currentPreset, channel);
+            if (preset != null) {
+                programChange(preset, 0);
+                logger.info("Applied bank={}, program={} to channel={}", bankIndex, preset, channel);
             }
         }
     }
@@ -636,6 +617,7 @@ public final class InstrumentWrapper implements Serializable {
 
     /**
      * Checks if this is an internal synth instrument
+     * 
      * @return true if this is an internal synth
      */
     public boolean isInternalSynth() {
@@ -645,15 +627,17 @@ public final class InstrumentWrapper implements Serializable {
 
     /**
      * Getter for the internal flag
+     * 
      * @return the internal flag value, never null
      */
     public Boolean getInternal() {
-        // Make sure we never return null
-        return internal != null ? internal : Boolean.FALSE;
+        return Objects.nonNull(deviceName) && (deviceName.toLowerCase().contains("microsoft gs wavetable synth")
+                || deviceName.toLowerCase().contains("gervill"));
     }
 
     /**
      * Gets the Bank Select MSB (CC #0) value
+     * 
      * @return MSB value (0-127)
      */
     public int getBankMSB() {
@@ -662,6 +646,7 @@ public final class InstrumentWrapper implements Serializable {
 
     /**
      * Sets the Bank Select MSB (CC #0) value
+     * 
      * @param msb MSB value (0-127)
      */
     public void setBankMSB(int msb) {
@@ -672,6 +657,7 @@ public final class InstrumentWrapper implements Serializable {
 
     /**
      * Gets the Bank Select LSB (CC #32) value
+     * 
      * @return LSB value (0-127)
      */
     public int getBankLSB() {
@@ -680,6 +666,7 @@ public final class InstrumentWrapper implements Serializable {
 
     /**
      * Sets the Bank Select LSB (CC #32) value
+     * 
      * @param lsb LSB value (0-127)
      */
     public void setBankLSB(int lsb) {

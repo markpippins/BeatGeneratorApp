@@ -49,7 +49,7 @@ public class DrumSelectorPanel extends JPanel {
         
         // Use GridLayout for perfect vertical alignment with grid cells
         setLayout(new GridLayout(DRUM_PAD_COUNT, 1, 2, 2));
-        setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 10));
+        setBorder(BorderFactory.createEmptyBorder(0, 5, 0, 0));
         
         initializeButtons();
     }
@@ -209,5 +209,14 @@ public class DrumSelectorPanel extends JPanel {
         for (int i = 0; i < drumButtons.size(); i++) {
             drumButtons.get(i).setSelected(i == selectedIndex);
         }
+    }
+
+    public Integer getSelectedDrumPadIndex() {
+        for (int i = 0; i < drumButtons.size(); i++) {
+            if (drumButtons.get(i).isSelected()) {
+                return i;
+            }
+        }
+        return null; // No drum pad selected
     }
 }

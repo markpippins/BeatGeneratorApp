@@ -83,12 +83,11 @@ public class MainPanel extends JPanel implements AutoCloseable, IBusListener {
 
     private JTabbedPane melodicTabbedPane;
 
-
     private Point dragStartPoint;
 
     public MainPanel(StatusBar statusBar) {
         super(new BorderLayout());
-        setBorder(new EmptyBorder(2, 5, 2, 5));
+        // setBorder(new EmptyBorder(2, 5, 2, 5));
 
         CommandBus.getInstance().register(this);
 
@@ -183,85 +182,110 @@ public class MainPanel extends JPanel implements AutoCloseable, IBusListener {
             }
         });
 
-        // Add change listener to handle tab selection events
+        addListeners(tabbedPane);
+        addListeners(melodicTabbedPane);
+        addListeners(drumsTabbedPane);
+
+        updateMuteButtonSequencers();
+    }
+
+    private void addListeners(JTabbedPane tabbedPane) {
         tabbedPane.addChangeListener(e -> {
+            // Get the selected component
             Component selectedComponent = tabbedPane.getSelectedComponent();
 
             // Request focus on the newly selected tab component
             if (selectedComponent != null) {
                 SwingUtilities.invokeLater(() -> {
                     selectedComponent.requestFocusInWindow();
-
-                    // If it's the params panel, give it focus
-                    if (selectedComponent instanceof DrumParamsSequencerPanel) {
-                        ((DrumParamsSequencerPanel) selectedComponent).requestFocusInWindow();
-                    }
-
-                    if (selectedComponent instanceof DrumEffectsSequencerPanel) {
-                        ((DrumEffectsSequencerPanel) selectedComponent).requestFocusInWindow();
-                    }
                 });
             }
-        });
 
-        melodicTabbedPane.addChangeListener(e -> {
-            // Get the selected component
-            Component selectedComponent = melodicTabbedPane.getSelectedComponent();
-            
-            // Find the MelodicSequencerPanel within the selected tab
-            MelodicSequencerPanel melodicPanel = findMelodicSequencerPanel(selectedComponent);
-            
-            if (melodicPanel != null && melodicPanel.getSequencer() != null) {
-                // Get the player from the sequencer
-                Player player = melodicPanel.getSequencer().getPlayer();
-                
-                // Set as active player if available
+            if (selectedComponent == drumSequencerPanel && drumSequencerPanel.getDrumSelectorPanel().getSelectedDrumPadIndex() != null) {
+                // Get the currently selected drum effects sequencer panel
+                // DrumSequencerPanel drumSequencerPanel = (DrumSequencerPanel) selectedComponent;
+
+
+                // Set the player as active
+                Player player = drumSequencerPanel.getSequencer().getPlayer(drumSequencerPanel.getDrumSelectorPanel().getSelectedDrumPadIndex());
                 if (player != null) {
-                    PlayerManager.getInstance().setActivePlayer(player);
-                    
-                    // Also publish a PLAYER_SELECTED event
                     CommandBus.getInstance().publish(
-                        Commands.PLAYER_SELECTED,
-                        this,
-                        player
-                    );
-                    
-                    logger.debug("Tab selected - set melodic player '{}' (ID: {}) as active player", 
-                        player.getName(), player.getId());
+                            Commands.PLAYER_SELECTED,
+                            this,
+                            player);
+
+                    logger.debug("Main tab switched to drum effects - set player '{}' as active", player.getName());
                 }
             }
-        });
 
-        tabbedPane.addChangeListener(e -> {
-            // Get the selected component
-            Component selectedComponent = tabbedPane.getSelectedComponent();
-            
+            if (selectedComponent == drumParamsSequencerPanel) {
+                // Get the currently selected drum effects sequencer panel
+                // DrumParamsSequencerPanel drumEffectsPanel = (DrumParamsSequencerPanel) selectedComponent;
+
+                // Set the player as active
+                Player player = drumParamsSequencerPanel.getSequencer().getPlayer(drumParamsSequencerPanel.getSelectedPadIndex());
+                if (player != null) {
+                    CommandBus.getInstance().publish(
+                            Commands.PLAYER_SELECTED,
+                            this,
+                            player);
+
+                    logger.debug("Main tab switched to drum effects - set player '{}' as active", player.getName());
+                }
+            }
+
+            if (selectedComponent == drumEffectsSequencerPanel) {
+                // Get the currently selected drum effects sequencer panel
+                // DrumEffectsSequencerPanel drumEffectsPanel = (DrumEffectsSequencerPanel) selectedComponent;
+
+                // Set the player as active
+                Player player = drumEffectsSequencerPanel.getSequencer().getPlayer(drumEffectsSequencerPanel.getSelectedPadIndex());
+                if (player != null) {
+                    CommandBus.getInstance().publish(
+                            Commands.PLAYER_SELECTED,
+                            this,
+                            player);
+
+                    logger.debug("Main tab switched to drum effects - set player '{}' as active", player.getName());
+                }
+            }
+
+            if (selectedComponent instanceof MelodicSequencerPanel) {
+
+                // Set the player as active
+                Player player = ((MelodicSequencerPanel) selectedComponent).getSequencer().getPlayer();
+                if (player != null) {
+                    CommandBus.getInstance().publish(
+                            Commands.PLAYER_SELECTED,
+                            this,
+                            player);
+
+                    logger.debug("Main tab switched to drum effects - set player '{}' as active", player.getName());
+                }
+            }
+
             // If selected component is the melodic tab pane
             if (selectedComponent == melodicTabbedPane) {
                 // Get the currently selected melodic tab
                 Component selectedMelodicTab = melodicTabbedPane.getSelectedComponent();
-                
+
                 // Find the MelodicSequencerPanel within the selected tab
                 MelodicSequencerPanel melodicPanel = findMelodicSequencerPanel(selectedMelodicTab);
-                
+
                 if (melodicPanel != null && melodicPanel.getSequencer() != null) {
                     // Set the player as active
                     Player player = melodicPanel.getSequencer().getPlayer();
                     if (player != null) {
                         CommandBus.getInstance().publish(
-                            Commands.PLAYER_SELECTED,
-                            this,
-                            player
-                        );
-                        
+                                Commands.PLAYER_SELECTED,
+                                this,
+                                player);
+
                         logger.debug("Main tab switched to melodic - set player '{}' as active", player.getName());
                     }
                 }
             }
         });
-
-        // At the end of the method, update the mute buttons with sequencers
-        updateMuteButtonSequencers();
     }
 
     private JTabbedPane createDrumSequencersPanel() {
@@ -283,10 +307,10 @@ public class MainPanel extends JPanel implements AutoCloseable, IBusListener {
         for (int i = 0; i < melodicPanels.length; i++) {
             // Get channel from ChannelManager based on sequencer index
             int channel = ChannelManager.getInstance().getChannelForSequencerIndex(i);
-            
+
             // Create panel with proper channel assignment
             melodicPanels[i] = createMelodicSequencerPanel(i, channel);
-            
+
             // Use channel number (1-based for display) in tab title
             melodicTabbedPane.addTab("Mono " + (channel + 1), melodicPanels[i]);
         }
@@ -867,7 +891,7 @@ public class MainPanel extends JPanel implements AutoCloseable, IBusListener {
                 }
             }
         }
-        
+
         // Release channels used by melodic panels
         for (MelodicSequencerPanel panel : melodicPanels) {
             if (panel != null && panel.getSequencer() != null) {

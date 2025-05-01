@@ -715,7 +715,7 @@ public class Session implements Serializable, IBusListener {
             // Get current instrument settings
             InstrumentWrapper instrument = player.getInstrument();
             int channel = player.getChannel();
-            Integer preset = player.getPreset();
+            Integer preset = instrument.getPreset();
             
             if (preset != null) {
                 // Apply bank select if needed

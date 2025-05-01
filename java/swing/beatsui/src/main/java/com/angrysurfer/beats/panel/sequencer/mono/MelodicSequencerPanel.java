@@ -103,7 +103,7 @@ public class MelodicSequencerPanel extends JPanel implements IBusListener {
         });
 
         // Apply instrument preset immediately to ensure correct sound
-        PlayerManager.getInstance().applyInstrumentPreset(player);
+        PlayerManager.getInstance().applyInstrumentPreset(sequencer.getPlayer());
 
         // Initialize the UI
         initialize();
@@ -160,43 +160,10 @@ public class MelodicSequencerPanel extends JPanel implements IBusListener {
                 // Make sure player settings are properly applied
                 Player player = sequencer.getPlayer();
                 if (player != null && player.getInstrument() != null) {
-                    try {
-                        // Reload the player from PlayerManager to ensure we have latest settings
-                        Player freshPlayer = PlayerManager.getInstance().getPlayerById(player.getId());
-                        if (freshPlayer != null) {
-                            // Apply the instrument settings from the fresh player
-                            player.setPreset(freshPlayer.getPreset());
-
-                            if (player.getInstrument() != null && freshPlayer.getInstrument() != null) {
-                                player.getInstrument().setSoundbankName(freshPlayer.getInstrument().getSoundbankName());
-                                player.getInstrument().setBankIndex(freshPlayer.getInstrument().getBankIndex());
-                                player.getInstrument().setCurrentPreset(freshPlayer.getInstrument().getCurrentPreset());
-
-                                // Apply MIDI changes directly
-                                int channel = player.getChannel() != null ? player.getChannel() : 0;
-                                int bankIndex = player.getInstrument().getBankIndex();
-                                int presetIndex = player.getInstrument().getCurrentPreset();
-
-                                // Apply soundbank
-                                InternalSynthManager.getInstance().applySoundbank(
-                                        player.getInstrument(),
-                                        player.getInstrument().getSoundbankName());
-
-                                // Apply bank and program changes
-                                int bankMSB = (bankIndex >> 7) & 0x7F;
-                                int bankLSB = bankIndex & 0x7F;
-                                player.getInstrument().controlChange(0, bankMSB);
-                                player.getInstrument().controlChange(32, bankLSB);
-                                player.getInstrument().programChange(presetIndex, 0);
-
-                                logger.info(
-                                        "Applied instrument settings during sequence load: soundbank={}, bank={}, preset={}",
-                                        player.getInstrument().getSoundbankName(), bankIndex, presetIndex);
-                            }
-                        }
-                    } catch (Exception e) {
-                        logger.error("Error applying player settings during sequence load: {}", e.getMessage(), e);
-                    }
+                    player.getInstrument().setSoundbankName(data.getSoundbankName());
+                    player.getInstrument().setBankIndex(data.getBankIndex());
+                    player.getInstrument().setPreset(data.getPreset());
+                    PlayerManager.getInstance().applyInstrumentPreset(player);
                 }
 
                 // Update the UI to reflect loaded sequence
@@ -220,7 +187,7 @@ public class MelodicSequencerPanel extends JPanel implements IBusListener {
                         this,
                         new MelodicSequencerHelper.MelodicSequencerEvent(
                                 sequencer.getId(),
-                                sequencer.getSequenceData().getId()));
+                                data.getId()));
 
                 // If we have a navigation panel, update its display
                 if (navigationPanel != null) {
@@ -273,9 +240,9 @@ public class MelodicSequencerPanel extends JPanel implements IBusListener {
         JPanel centerPanel = new JPanel(new GridBagLayout()); // Use GridBagLayout for true vertical centering
 
         // Create the instrument info label
-        instrumentInfoLabel = new JLabel();
-        instrumentInfoLabel.setFont(new Font(Font.SANS_SERIF, Font.BOLD, 12));
-        updateInstrumentInfoLabel(); // Initialize with current values
+        // instrumentInfoLabel = new JLabel();
+        // instrumentInfoLabel.setFont(new Font(Font.SANS_SERIF, Font.BOLD, 12));
+        // updateInstrumentInfoLabel(); // Initialize with current values
 
         // Add constraints to center vertically and horizontally
         GridBagConstraints gbc = new GridBagConstraints();
@@ -285,7 +252,7 @@ public class MelodicSequencerPanel extends JPanel implements IBusListener {
         gbc.anchor = GridBagConstraints.CENTER;
         gbc.weightx = 1.0; // Give horizontal weight
         gbc.weighty = 1.0; // Give vertical weight - this is key for vertical centering
-        centerPanel.add(instrumentInfoLabel, gbc);
+        // centerPanel.add(instrumentInfoLabel, gbc);
 
         // Add centerPanel to the top panel
         UIUtils.addSafely(topPanel, centerPanel, BorderLayout.CENTER);
@@ -346,25 +313,25 @@ public class MelodicSequencerPanel extends JPanel implements IBusListener {
      * Update the instrument info label with current player and instrument
      * information
      */
-    private void updateInstrumentInfoLabel() {
-        if (sequencer == null || sequencer.getPlayer() == null) {
-            instrumentInfoLabel.setText("No Player");
-            return;
-        }
+    // private void updateInstrumentInfoLabel() {
+    //     if (sequencer == null || sequencer.getPlayer() == null) {
+    //         instrumentInfoLabel.setText("No Player");
+    //         return;
+    //     }
 
-        Player player = sequencer.getPlayer();
-        String playerName = player.getName() + " (" + player.getId() + ")";
-        String instrumentName = "No Instrument";
-        String channelInfo = "";
+    //     Player player = sequencer.getPlayer();
+    //     String playerName = player.getName() + " (" + player.getId() + ")";
+    //     String instrumentName = "No Instrument";
+    //     String channelInfo = "";
 
-        if (player.getInstrument() != null) {
-            instrumentName = player.getInstrument().getName() + " (" + player.getInstrument().getId() + ")";
-            int channel = player.getChannel() != null ? player.getChannel() : 0;
-            channelInfo = " (Ch " + (channel + 1) + ")";
-        }
+    //     if (player.getInstrument() != null) {
+    //         instrumentName = player.getInstrument().getName() + " (" + player.getInstrument().getId() + ")";
+    //         int channel = player.getChannel() != null ? player.getChannel() : 0;
+    //         channelInfo = " (Ch " + (channel + 1) + ")";
+    //     }
 
-        instrumentInfoLabel.setText(playerName + " - " + instrumentName + " - " + channelInfo);
-    }
+    //     instrumentInfoLabel.setText(playerName + " - " + instrumentName + " - " + channelInfo);
+    // }
 
     /**
      * Creates the sound parameters panel for instrument selection and editing
@@ -478,7 +445,7 @@ public class MelodicSequencerPanel extends JPanel implements IBusListener {
             }
 
             // Update instrument info label - THIS WAS MISSING
-            updateInstrumentInfoLabel();
+            // updateInstrumentInfoLabel();
 
             // Check and update latch toggle button if needed - THIS WAS MISSING
             if (latchToggleButton != null)
@@ -563,13 +530,13 @@ public class MelodicSequencerPanel extends JPanel implements IBusListener {
 
             case Commands.PLAYER_UPDATED, Commands.INSTRUMENT_CHANGED -> {
                 // Check if this update is for our sequencer's player
-                if (action.getData() instanceof Player &&
-                        sequencer != null &&
-                        sequencer.getPlayer() != null &&
-                        sequencer.getPlayer().getId().equals(((Player) action.getData()).getId())) {
+                // if (action.getData() instanceof Player &&
+                //         sequencer != null &&
+                //         sequencer.getPlayer() != null &&
+                //         sequencer.getPlayer().getId().equals(((Player) action.getData()).getId())) {
 
-                    SwingUtilities.invokeLater(this::updateInstrumentInfoLabel);
-                }
+                //     SwingUtilities.invokeLater(this::updateInstrumentInfoLabel);
+                // }
             }
 
             default -> {

@@ -965,25 +965,25 @@ public class InternalSynthPresetPanel extends JPanel {
                     if (presetCombo.getSelectedItem() instanceof DrumItem) {
                         int noteNumber = ((DrumItem) presetCombo.getSelectedItem()).getNoteNumber();
                         player.setRootNote(noteNumber);
-                        instrument.setCurrentPreset(0); // Standard GM drum kit
+                        instrument.setPreset(0); // Standard GM drum kit
                     }
                 } else {
                     // For melodic instruments
                     if (presetCombo.getSelectedItem() instanceof PresetItem) {
                         int preset = ((PresetItem) presetCombo.getSelectedItem()).getNumber();
-                        instrument.setCurrentPreset(preset);
-                        player.setPreset(preset);
+                        instrument.setPreset(preset);
+                        player.getInstrument().setPreset(preset);
                     }
                 }
                 
                 // Apply changes to the physical MIDI device
-                if (instrument.getBankIndex() != null && instrument.getCurrentPreset() != null) {
+                if (instrument.getBankIndex() != null && instrument.getPreset() != null) {
                     instrument.applyBankAndProgram(channel);
                 }
             } else {
                 // For external instruments, use spinner value
                 int preset = ((Number) presetSpinner.getValue()).intValue();
-                player.setPreset(preset);
+                player.getInstrument().setPreset(preset);
             }
             
             // Notify that the player has been updated
@@ -1047,7 +1047,7 @@ public class InternalSynthPresetPanel extends JPanel {
         player.setName(getPlayerName());
         player.setInstrument(getSelectedInstrument());
         player.setChannel(getSelectedChannel());
-        player.setPreset(getSelectedPreset());
+        player.getInstrument().setPreset(getSelectedPreset());
         if (isDrumChannel) {
             player.setRootNote(getSelectedDrumNote());
         }

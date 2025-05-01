@@ -265,7 +265,7 @@ public class InstrumentManager implements IBusListener {
         internalInstrument.setDeviceName("Gervill");
         internalInstrument.setSoundbankName("Default");
         internalInstrument.setBankIndex(0);
-        internalInstrument.setCurrentPreset(0);  // Piano
+        internalInstrument.setPreset(0);  // Piano
         internalInstrument.setId(9985L + channel);
         
         // Add to cache and persist
@@ -292,7 +292,7 @@ public class InstrumentManager implements IBusListener {
         internalInstrument.setDeviceName("Gervill");
         internalInstrument.setSoundbankName("Default");
         internalInstrument.setBankIndex(0);
-        internalInstrument.setCurrentPreset(0);  // Default to piano
+        internalInstrument.setPreset(0);  // Default to piano
         internalInstrument.setId(9985L + channel);  // Use channel for unique ID
         
         // Register with manager
@@ -312,7 +312,8 @@ public class InstrumentManager implements IBusListener {
         
         // Try to find by ID first
         InstrumentWrapper instrument = instrumentCache.get(id);
-        if (instrument != null) {
+        if (instrument != null && !instrument.getAssignedToPlayer()) {
+            instrument.setAssignedToPlayer(true);
             return instrument;
         }
         
@@ -320,7 +321,9 @@ public class InstrumentManager implements IBusListener {
         for (InstrumentWrapper cached : instrumentCache.values()) {
             if (Boolean.TRUE.equals(cached.getInternal()) && 
                 cached.getChannel() != null && 
+                !cached.getAssignedToPlayer() &&
                 cached.getChannel() == channel) {
+                cached.setAssignedToPlayer(true);
                 return cached;
             }
         }

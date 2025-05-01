@@ -226,6 +226,9 @@ public class PlayerHelper {
 
         player.setId(getNextPlayerId());
         player.setRules(new HashSet<>()); // Ensure rules are initialized
+        player.setMinVelocity(60);
+        player.setMaxVelocity(127);
+        player.setLevel(100);
         savePlayer(player);
         return player;
 

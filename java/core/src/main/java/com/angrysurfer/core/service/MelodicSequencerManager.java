@@ -4,6 +4,10 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+import com.angrysurfer.core.model.InstrumentWrapper;
+import com.angrysurfer.core.model.Note;
+import com.angrysurfer.core.model.Player;
+import com.angrysurfer.core.model.Session;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -12,6 +16,8 @@ import com.angrysurfer.core.api.Commands;
 import com.angrysurfer.core.redis.RedisService;
 import com.angrysurfer.core.sequencer.MelodicSequenceData;
 import com.angrysurfer.core.sequencer.MelodicSequencer;
+
+import javax.sound.midi.MidiDevice;
 
 /**
  * Manager for MelodicSequencer instances.
@@ -68,7 +74,7 @@ public class MelodicSequencerManager {
      */
     public MelodicSequencer newSequencer(int id, Integer channel) {
         // Create a new sequencer with the specified ID and channel
-        MelodicSequencer sequencer = new MelodicSequencer();
+        MelodicSequencer sequencer = new MelodicSequencer(id, channel);
         sequencer.setSequenceData(new MelodicSequenceData());
         // Set id and channel after creation
         sequencer.setId(id);
@@ -329,4 +335,134 @@ public class MelodicSequencerManager {
         }
         return null;
     }
+
+//    private void initializePlayer(int channel) {
+//        // Don't directly create with RedisService.getInstance().newNote()
+//        Player player;
+//        // Get the current session from SessionManager
+//        Session session = SessionManager.getInstance().getActiveSession();
+//        if (session == null) {
+//            logger.error("Cannot initialize player - no active session");
+//            return;
+//        }
+//
+//        // Check if a player already exists for this sequencer in the session
+//        Player existingPlayer = findExistingPlayerForSequencer(session);
+//
+//        if (existingPlayer != null) {
+//            // Use existing player
+//            logger.info("Using existing player {} for sequencer {}", existingPlayer.getId(), id);
+//            player = existingPlayer;
+//            // String playerName = "Melody " + getChannel();
+//            // Update channel if needed
+//            // setChannel(getSequenceData().getChannel());
+//            if (player.getChannel() != channel) {
+//                player.setChannel(channel);
+//                // Save the player through PlayerManager
+//                PlayerManager.getInstance().savePlayerProperties(player);
+//            }
+//        } else {
+//            // Create new player through PlayerManager
+//            logger.info("Creating new player for sequencer {}", id);
+//            player = RedisService.getInstance().newNote();
+//            player.setName(player.getId().toString());
+//            // Get an instrument from InstrumentManager
+//            InstrumentWrapper instrument = InstrumentManager.getInstance()
+//                    .getOrCreateInternalSynthInstrument(player.getChannel());
+//
+//            if (instrument != null) {
+//
+//                // Configure base properties
+//
+//                player.setChannel(getChannel());
+//
+//                // Associate player with this sequencer
+//                player.setOwner(this);
+//
+//                // Generate an ID for the player if needed
+//                if (player.getId() == null) {
+//                    player.setId(RedisService.getInstance().getNextPlayerId());
+//                }
+//
+//                // Add to session
+//                session.getPlayers().add(player);
+//                player.setInstrument(instrument);
+//
+//                // Save through PlayerManager
+//                PlayerManager.getInstance().savePlayerProperties(player);
+//
+//                logger.info("Created new player {} for melodic sequencer {}", player.getId(), id);
+//            }
+//
+//            if (player.getInstrument() != null) {
+//                MidiDevice device = DeviceManager.getInstance().getMidiDevice(player.getInstrument().getDeviceName());
+//                if (device != null)
+//                    player.getInstrument().setDevice(device);
+//            }
+//
+//            // ensurePlayerHasInstrument();
+//            // Always initialize the instrument once player is set up
+//            if (player.getInstrument() == null) {
+//                PlayerManager.getInstance().initializeInternalInstrument(player);
+//            }
+//
+//            // If we have soundbank/bank/preset settings in the sequence data, apply them
+//            if (sequenceData.getSoundbankName() != null || sequenceData.getBankIndex() != null ||
+//                    sequenceData.getPreset() != null) {
+//
+//                if (player.getInstrument() != null) {
+//                    // Apply saved settings
+//                    if (sequenceData.getSoundbankName() != null) {
+//                        player.getInstrument().setSoundbankName(sequenceData.getSoundbankName());
+//                    }
+//
+//                    if (sequenceData.getBankIndex() != null) {
+//                        player.getInstrument().setBankIndex(sequenceData.getBankIndex());
+//                    }
+//
+//                    if (sequenceData.getPreset() != null) {
+//                        player.getInstrument().setPreset(10);
+//                    }
+//
+//                    // Send program change
+//                    PlayerManager.getInstance().applyInstrumentPreset(player);
+//                }
+//            }
+//
+//            if (player.getInstrument() != null) {
+//                player.getInstrument().setAssignedToPlayer(true);
+//                setChannel(tempChannel);
+//            }
+//
+//        }
+//    }
+
+
+    /**
+     * Find a player in the session that belongs to this sequencer
+     */
+    private Player findExistingPlayerForSequencer(int id, int channel) {
+        Session session = SessionManager.getInstance().getActiveSession();
+        if (session == null) {
+            return null;
+        }
+
+        // Look for a player that's associated with this sequencer AND has the correct
+        // channel
+        for (Player p : session.getPlayers()) {
+            if (p instanceof Note &&
+                    p.getOwner() != null &&
+                    p.getOwner() instanceof MelodicSequencer &&
+                    ((MelodicSequencer) p.getOwner()).getId() != null &&
+                    ((MelodicSequencer) p.getOwner()).getId().equals(id) &&
+                    p.getChannel() == channel) { // Added channel check
+
+                return p;
+            }
+        }
+
+        logger.info("No player found for channel {}", channel);
+        return null;
+    }
+
 }

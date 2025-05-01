@@ -138,7 +138,7 @@ public class PlayerEditPanel extends JPanel implements IBusListener {
             logger.debug("Returning player with instrument settings - Name: {}, Bank: {}, Preset: {}",
                 updatedPlayer.getInstrument().getName(),
                 updatedPlayer.getInstrument().getBankIndex(),
-                updatedPlayer.getInstrument().getCurrentPreset());
+                updatedPlayer.getInstrument().getPreset());
         }
         
         return updatedPlayer;

@@ -1024,7 +1024,7 @@ public class InternalSynthManager {
         try {
             // Store the settings in the instrument
             instrument.setBankIndex(bankIndex);
-            instrument.setCurrentPreset(presetNumber);
+            instrument.setPreset(presetNumber);
 
             // Get the MIDI channel from the instrument or default to 0
             int channel = 0;
