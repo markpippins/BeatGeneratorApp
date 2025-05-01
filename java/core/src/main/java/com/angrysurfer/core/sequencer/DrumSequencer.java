@@ -294,26 +294,21 @@ public class DrumSequencer implements IBusListener {
             }
         }
 
-        // Get internal synthesizer from InternalSynthManager
-        javax.sound.midi.Synthesizer synth = InternalSynthManager.getInstance().getSynthesizer();
-
-        // Initialize Players with proper configuration
+        // Initialize players array
         instruments = new InstrumentWrapper[DRUM_PAD_COUNT];
         players = new Player[DRUM_PAD_COUNT];
-
+        
         for (int i = 0; i < DRUM_PAD_COUNT; i++) {
             players[i] = RedisService.getInstance().newStrike();
             players[i].setOwner(this);
             players[i].setChannel(MIDI_DRUM_CHANNEL);
-            // Set default root notes - standard GM drum map starting points
-            players[i].setRootNote(MIDI_DRUM_NOTE_OFFSET + i); // Start from MIDI note 36 (C1)
+            players[i].setRootNote(MIDI_DRUM_NOTE_OFFSET + i);
             players[i].setName(InternalSynthManager.getInstance().getDrumName(MIDI_DRUM_NOTE_OFFSET + i));
-            // Configure to use drum channel (9)
-
-            // Create an InstrumentWrapper for the internal synth
-            // Assign the internal synth instrument
-            PlayerManager.getInstance().initializeInstrument(players[i], false);
-            PlayerManager.getInstance().applyPlayerInstrument(players[i]);
+            
+            // Use PlayerManager to initialize the instrument - it will use our enhanced API
+            PlayerManager.getInstance().initializeInternalInstrument(players[i], false);
+            
+            // Store reference to instrument
             instruments[i] = players[i].getInstrument();
             logger.debug("Initialized drum pad {} with note {}", i, MIDI_DRUM_NOTE_OFFSET + i);
         }

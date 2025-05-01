@@ -1,24 +1,16 @@
 package com.angrysurfer.core.model;
 
 import java.io.Serializable;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.stream.IntStream;
 
-import javax.sound.midi.InvalidMidiDataException;
 import javax.sound.midi.MidiDevice;
 import javax.sound.midi.MidiUnavailableException;
-
-import com.angrysurfer.core.service.InstrumentManager;
-import com.angrysurfer.core.service.PlayerManager;
-import com.angrysurfer.core.util.LowLatencyMidiClock;
-import com.angrysurfer.core.util.MidiClockSource;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -32,6 +24,10 @@ import com.angrysurfer.core.api.TimingBus;
 import com.angrysurfer.core.sequencer.Scale;
 import com.angrysurfer.core.sequencer.TimingUpdate;
 import com.angrysurfer.core.service.DeviceManager;
+import com.angrysurfer.core.service.InstrumentManager;
+import com.angrysurfer.core.service.PlayerManager;
+import com.angrysurfer.core.util.LowLatencyMidiClock;
+import com.angrysurfer.core.util.MidiClockSource;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import jakarta.persistence.Transient;
@@ -216,19 +212,7 @@ public class Session implements Serializable, IBusListener {
         beat = 1.0;
         bar = 1;
         part = 1;
-        // ... other initialization
     }
-
-    // public Session(Session other) {
-    //     // Copy all fields from other
-    //     this.id = other.id;
-    //     this.name = other.name;
-    //     // Copy all other fields...
-        
-    //     // Initialize transient fields properly
-    //     this.timingListeners = new ConcurrentLinkedQueue<>();
-    //     // Initialize other transient fields...
-    // }
 
     public int getMetronomChannel() {
         return 9;

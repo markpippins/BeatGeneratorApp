@@ -33,6 +33,7 @@ import com.angrysurfer.core.model.Rule;
 import com.angrysurfer.core.model.Session;
 import com.angrysurfer.core.service.InternalSynthManager;
 
+import com.angrysurfer.core.service.SoundbankManager;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -825,7 +826,7 @@ public class PlayerTimelinePanel extends JPanel implements IBusListener {
                     }
                 } else {
                     // For standard internal instruments
-                    String presetName = InternalSynthManager.getInstance().getPresetName(instrumentId, presetNumber);
+                    String presetName = SoundbankManager.getInstance().getPresetName(instrumentId, presetNumber);
                     if (presetName != null && !presetName.isEmpty()) {
                         playerInfo.append(" - ").append(presetName);
                     }

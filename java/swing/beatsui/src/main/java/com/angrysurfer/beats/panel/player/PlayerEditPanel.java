@@ -28,7 +28,7 @@ public class PlayerEditPanel extends JPanel implements IBusListener {
     // UI Components
     private PlayerEditBasicPropertiesPanel basicPropertiesPanel;
     private PlayerEditDetailPanel detailPanel;
-    private SoundParametersPanel soundParametersPanel;
+    // private SoundParametersPanel soundParametersPanel;
 
     // Services
     private final CommandBus commandBus = CommandBus.getInstance();
@@ -106,7 +106,7 @@ public class PlayerEditPanel extends JPanel implements IBusListener {
         // Create panels with player reference
         basicPropertiesPanel = new PlayerEditBasicPropertiesPanel(player);
         detailPanel = new PlayerEditDetailPanel(player);
-        soundParametersPanel = new SoundParametersPanel(player);
+        // soundParametersPanel = new SoundParametersPanel(player);
     }
 
     /**
@@ -120,7 +120,7 @@ public class PlayerEditPanel extends JPanel implements IBusListener {
         mainPanel.add(basicPropertiesPanel, BorderLayout.NORTH);
 
         // Add sound parameters panel below basics
-        mainPanel.add(soundParametersPanel, BorderLayout.CENTER);
+        // mainPanel.add(soundParametersPanel, BorderLayout.CENTER);
 
         // Add detail panel at bottom
         mainPanel.add(detailPanel, BorderLayout.SOUTH);
@@ -139,7 +139,7 @@ public class PlayerEditPanel extends JPanel implements IBusListener {
         // Update each panel with fresh player data
         basicPropertiesPanel.updateFromPlayer(player);
         detailPanel.updateFromPlayer(player);
-        soundParametersPanel.updateFromPlayer(player);
+        // soundParametersPanel.updateFromPlayer(player);
     }
 
     /**

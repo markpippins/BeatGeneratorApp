@@ -25,6 +25,7 @@ import javax.swing.JSlider;
 import javax.swing.JTabbedPane;
 import javax.swing.filechooser.FileNameExtensionFilter;
 
+import com.angrysurfer.core.service.SoundbankManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -299,7 +300,7 @@ public class InternalSynthControlPanel extends JPanel {
         try {
             // Use the manager instance to initialize soundbanks
             InternalSynthManager manager = InternalSynthManager.getInstance();
-            manager.initializeSoundbanks();
+            manager.loadDefaultSoundbank();
 
             // Update UI with data from the manager
             soundbankCombo.removeAllItems();
@@ -342,8 +343,7 @@ public class InternalSynthControlPanel extends JPanel {
             currentSoundbankName = soundbankName;
 
             // Get the soundbank by name
-            InternalSynthManager manager = InternalSynthManager.getInstance();
-            Soundbank soundbank = manager.getSoundbank(soundbankName);
+            Soundbank soundbank = SoundbankManager.getInstance().getSoundbank(soundbankName);
 
             // Load the soundbank into the synthesizer if it's not null
             if (soundbank != null && getSynthesizer() != null && getSynthesizer().isOpen()) {
@@ -470,7 +470,7 @@ public class InternalSynthControlPanel extends JPanel {
                 logger.info("Loading soundbank file: {}", soundbankFile.getAbsolutePath());
 
                 // Fix type mismatch: loadSoundbankFile returns a String (name), not a Soundbank
-                String soundbankName = InternalSynthManager.getInstance().loadSoundbankFile(soundbankFile);
+                String soundbankName = SoundbankManager.getInstance().loadSoundbankFile(soundbankFile);
 
                 if (soundbankName != null) {
                     // Update UI with the new soundbank list

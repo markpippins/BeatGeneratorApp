@@ -1,0 +1,853 @@
+package com.angrysurfer.core.service;
+
+import java.io.File;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.logging.Logger;
+
+import javax.sound.midi.Instrument;
+import javax.sound.midi.MidiChannel;
+import javax.sound.midi.MidiDevice;
+import javax.sound.midi.MidiSystem;
+import javax.sound.midi.Soundbank;
+import javax.sound.midi.Synthesizer;
+
+import com.angrysurfer.core.api.Command;
+import com.angrysurfer.core.api.CommandBus;
+import com.angrysurfer.core.api.Commands;
+import com.angrysurfer.core.api.IBusListener;
+import com.angrysurfer.core.api.StatusUpdate;
+import com.angrysurfer.core.model.InstrumentWrapper;
+import com.angrysurfer.core.model.SynthData;
+import com.angrysurfer.core.sequencer.DrumItem;
+import org.slf4j.LoggerFactory;
+
+public class SoundbankManager implements IBusListener {
+
+    private static final org.slf4j.Logger logger = LoggerFactory.getLogger(SoundbankManager.class);
+
+    private static SoundbankManager instance;
+
+    // Add synthesizer as a central instance
+    private Synthesizer synthesizer;
+    private int defaultMidiChannel = 15; // Default channel for melodic sounds
+
+    // Map of synth IDs to preset information
+    private final Map<Long, SynthData> synthDataMap = new HashMap<>();
+
+    // Use LinkedHashMap to preserve insertion order
+    private final LinkedHashMap<String, Soundbank> soundbanks = new LinkedHashMap<>();
+
+    // Map to store available banks for each soundbank (by name)
+    private Map<String, List<Integer>> availableBanksMap = new HashMap<>();
+
+    private SoundbankManager() {
+        // Register with command bus
+        CommandBus.getInstance().register(this);
+    }
+
+    public static SoundbankManager getInstance() {
+        if (instance == null) {
+            instance = new SoundbankManager();
+        }
+        return instance;
+    }
+
+    /**
+     * Initialize available soundbanks
+     * 
+     * @return true if initialization was successful
+     */
+    public boolean initializeSoundbanks() {
+        try {
+            logger.info("Initializing soundbanks...");
+
+            // Clear existing collections first
+            soundbanks.clear();
+            availableBanksMap.clear();
+
+            // Make sure we have a synthesizer
+            if (synthesizer == null || !synthesizer.isOpen()) {
+                initializeSynthesizer();
+                if (synthesizer == null) {
+                    logger.error("Failed to initialize synthesizer");
+                    return false;
+                }
+            }
+
+            // Add default Java soundbank
+            Soundbank defaultSoundbank = synthesizer.getDefaultSoundbank();
+            if (defaultSoundbank != null) {
+                String sbName = "Java Internal Soundbank";
+                soundbanks.put(sbName, defaultSoundbank);
+
+                // Get or create SynthData for this soundbank
+                long synthId = System.identityHashCode(synthesizer);
+                SynthData synthData = synthDataMap.get(synthId);
+                if (synthData == null) {
+                    // This should have been initialized in initializeSynthData
+                    // but in case it wasn't, do it now
+                    synthData = new SynthData(sbName);
+                    for (Instrument instrument : defaultSoundbank.getInstruments()) {
+                        synthData.addInstrument(instrument);
+                    }
+                    synthDataMap.put(synthId, synthData);
+                }
+
+                // Update available banks map
+                availableBanksMap.put(sbName, synthData.getAvailableBanks());
+
+                logger.info("Added default soundbank with {} instruments",
+                        defaultSoundbank.getInstruments().length);
+            } else {
+                logger.warn("No default soundbank available in synthesizer");
+            }
+
+            // Check for additional user soundbanks in the app's data directory
+            File soundbankDir = getUserSoundbankDirectory();
+            if (soundbankDir.exists() && soundbankDir.isDirectory()) {
+                File[] files = soundbankDir.listFiles(
+                        (dir, name) -> name.toLowerCase().endsWith(".sf2") || name.toLowerCase().endsWith(".dls"));
+
+                if (files != null) {
+                    for (File file : files) {
+                        try {
+                            // Try to load the soundbank
+                            Soundbank sb = MidiSystem.getSoundbank(file);
+                            if (sb != null) {
+                                String name = file.getName();
+                                soundbanks.put(name, sb);
+
+                                // Create SynthData for this soundbank
+                                SynthData sbData = new SynthData(name);
+                                for (Instrument instrument : sb.getInstruments()) {
+                                    sbData.addInstrument(instrument);
+                                }
+
+                                // Store with unique ID
+                                synthDataMap.put((long) sb.hashCode(), sbData);
+
+                                // Update available banks
+                                availableBanksMap.put(name, sbData.getAvailableBanks());
+
+                                logger.info("Loaded soundbank from file: {} with {} instruments",
+                                        name, sb.getInstruments().length);
+                            }
+                        } catch (Exception e) {
+                            logger.warn("Failed to load soundbank from file: {}", file.getName(), e);
+                        }
+                    }
+                }
+            }
+
+            logger.info("Soundbank initialization complete. Total soundbanks: {}", soundbanks.size());
+            return true;
+        } catch (Exception e) {
+            logger.error("Error initializing soundbanks: {}", e.getMessage(), e);
+            return false;
+        }
+    }
+
+    /**
+     * Get the directory for user soundbank files
+     */
+    private File getUserSoundbankDirectory() {
+        // First try user home
+        String userHome = System.getProperty("user.home");
+        File soundbanksDir = new File(userHome, ".beatsapp/soundbanks");
+
+        // Create directory if it doesn't exist
+        if (!soundbanksDir.exists()) {
+            soundbanksDir.mkdirs();
+        }
+
+        return soundbanksDir;
+    }
+
+    /**
+     * Load a soundbank from a file
+     *
+     * @param file The soundbank file (.sf2 or .dls)
+     * @return The name of the loaded soundbank, or null if loading failed
+     */
+    public String loadSoundbank(File file) {
+        if (file == null || !file.exists() || !file.canRead()) {
+            logger.error("Invalid soundbank file: {}", file);
+            return null;
+        }
+
+        try {
+            // Load the soundbank
+            Soundbank soundbank = MidiSystem.getSoundbank(file);
+            if (soundbank == null) {
+                logger.error("Failed to load soundbank from file: {}", file);
+                return null;
+            }
+
+            // Use the filename as the soundbank name
+            String name = file.getName();
+
+            // Add to collections
+            soundbanks.put(name, soundbank);
+
+            // Create SynthData for this soundbank
+            SynthData sbData = new SynthData(name);
+            for (Instrument instrument : soundbank.getInstruments()) {
+                sbData.addInstrument(instrument);
+            }
+
+            // Store with unique ID
+            synthDataMap.put((long) soundbank.hashCode(), sbData);
+
+            // Update available banks
+            availableBanksMap.put(name, sbData.getAvailableBanks());
+
+            // Copy file to user soundbank directory for persistence
+            File userDir = getUserSoundbankDirectory();
+            File destFile = new File(userDir, file.getName());
+            if (!destFile.equals(file)) {
+                java.nio.file.Files.copy(
+                        file.toPath(),
+                        destFile.toPath(),
+                        java.nio.file.StandardCopyOption.REPLACE_EXISTING);
+            }
+
+            logger.info("Loaded soundbank: {} with {} instruments",
+                    name, soundbank.getInstruments().length);
+
+            return name;
+        } catch (Exception e) {
+            logger.error("Error loading soundbank: {}", e.getMessage());
+            return null;
+        }
+    }
+
+    /**
+     * Load a soundbank from a file (alias for loadSoundbank)
+     *
+     * @param file The soundbank file (.sf2 or .dls)
+     * @return The name of the loaded soundbank, or null if loading failed
+     */
+    public String loadSoundbankFile(File file) {
+        return loadSoundbank(file);
+    }
+
+    /**
+     * Delete a soundbank and its associated file
+     *
+     * @param name The name of the soundbank to delete
+     * @return true if deletion was successful
+     */
+    public boolean deleteSoundbank(String name) {
+        if ("Java Internal Soundbank".equals(name)) {
+            logger.warn("Cannot delete the default Java soundbank");
+            return false;
+        }
+
+        try {
+            // Remove from collections
+            Soundbank removed = soundbanks.remove(name);
+            if (removed != null) {
+                // Also remove from bank maps
+                availableBanksMap.remove(name);
+
+                // Find and remove associated SynthData
+                long removeKey = -1;
+                for (Map.Entry<Long, SynthData> entry : synthDataMap.entrySet()) {
+                    if (entry.getValue().getName().equals(name)) {
+                        removeKey = entry.getKey();
+                        break;
+                    }
+                }
+                if (removeKey >= 0) {
+                    synthDataMap.remove(removeKey);
+                }
+
+                // Try to delete the file if it exists
+                File userDir = getUserSoundbankDirectory();
+                File soundbankFile = new File(userDir, name);
+                if (soundbankFile.exists()) {
+                    boolean deleted = soundbankFile.delete();
+                    if (!deleted) {
+                        logger.warn("Could not delete soundbank file: {}", soundbankFile);
+                    }
+                }
+
+                logger.info("Deleted soundbank: {}", name);
+                return true;
+            } else {
+                logger.warn("Soundbank not found: {}", name);
+                return false;
+            }
+        } catch (Exception e) {
+            logger.error("Error deleting soundbank: {}", e.getMessage(), e);
+            return false;
+        }
+    }
+
+    /**
+     * Get a list of available soundbank names
+     */
+    public List<String> getSoundbankNames() {
+        return new ArrayList<>(soundbanks.keySet());
+    }
+
+    /**
+     * Get a soundbank by name
+     */
+    public Soundbank getSoundbank(String name) {
+        return soundbanks.get(name);
+    }
+
+    /**
+     * Get a soundbank by name (alias for getSoundbank)
+     *
+     * @param name The name of the soundbank to retrieve
+     * @return The Soundbank object, or null if not found
+     */
+    public Soundbank getSoundbankByName(String name) {
+        return getSoundbank(name);
+    }
+
+    /**
+     * Get available banks for a soundbank by name
+     */
+    public List<Integer> getAvailableBanksByName(String soundbankName) {
+        return availableBanksMap.getOrDefault(soundbankName, new ArrayList<>());
+    }
+
+    /**
+     * Get preset names for a specific soundbank and bank
+     */
+    public List<String> getPresetNames(String soundbankName, int bankIndex) {
+        // Find the SynthData for this soundbank
+        for (SynthData synthData : synthDataMap.values()) {
+            if (synthData.getName().equals(soundbankName)) {
+                return synthData.getPresetNamesForBank(bankIndex);
+            }
+        }
+        return new ArrayList<>();
+    }
+
+    /**
+     * Get preset names for a specific instrument ID
+     *
+     * @param instrumentId The instrument ID to look up presets for
+     * @return List of preset names for the instrument
+     */
+    public List<String> getPresetNames(Long instrumentId) {
+        if (instrumentId == null) {
+            return getGeneralMIDIPresetNames(); // Fall back to standard GM names
+        }
+
+        try {
+            // Get the instrument from InstrumentManager
+            InstrumentWrapper instrument = InstrumentManager.getInstance().getInstrumentById(instrumentId);
+            if (instrument == null) {
+                logger.warn("Instrument not found for ID: {}", instrumentId);
+                return getGeneralMIDIPresetNames();
+            }
+
+            // Get soundbank name from instrument
+            String soundbankName = instrument.getSoundbankName();
+            if (soundbankName == null || soundbankName.isEmpty()) {
+                soundbankName = "Java Internal Soundbank";
+            }
+
+            // Get bank index from instrument
+            int bankIndex = instrument.getBankIndex() != null ? instrument.getBankIndex() : 0;
+
+            // Call the original method with the extracted parameters
+            return getPresetNames(soundbankName, bankIndex);
+        } catch (Exception e) {
+            logger.error("Error getting preset names for instrument {}: {}",
+                    instrumentId, e.getMessage());
+            return getGeneralMIDIPresetNames(); // Fall back to standard GM names
+        }
+    }
+
+    /**
+     * Get a preset name for an instrument and preset number
+     *
+     * @param instrumentId The ID of the instrument (used to find the right
+     *                     soundbank)
+     * @param presetNumber The preset number to look up
+     * @return The name of the preset, or a default name if not found
+     */
+    public String getPresetName(Long instrumentId, long presetNumber) {
+        if (instrumentId == null || presetNumber < 0 || presetNumber > 127) {
+            return "Unknown Preset";
+        }
+
+        try {
+            // First, get the instrument from InstrumentManager
+            InstrumentWrapper instrument = InstrumentManager.getInstance().getInstrumentById(instrumentId);
+            if (instrument == null) {
+                return "Program " + presetNumber;
+            }
+
+            // Get the soundbank name from the instrument
+            String soundbankName = instrument.getSoundbankName();
+            if (soundbankName == null || soundbankName.isEmpty()) {
+                // Fall back to default soundbank
+                soundbankName = "Java Internal Soundbank";
+            }
+
+            // Get the bank index from the instrument or default to 0
+            int bankIndex = instrument.getBankIndex() != null ? instrument.getBankIndex() : 0;
+
+            // Find the SynthData for this soundbank
+            for (SynthData synthData : synthDataMap.values()) {
+                if (synthData.getName().equals(soundbankName)) {
+                    // Get the presets for this bank
+                    Map<Integer, String> presets = synthData.getPresetsForBank(bankIndex);
+
+                    // Look up the preset name
+                    String presetName = presets.get((int) presetNumber);
+                    if (presetName != null && !presetName.isEmpty()) {
+                        return presetName;
+                    } else {
+                        // Return a default name with the number if not found
+                        return "Program " + presetNumber;
+                    }
+                }
+            }
+
+            // If we get here, the soundbank wasn't found
+            return "Program " + presetNumber;
+        } catch (Exception e) {
+            logger.error("Error getting preset name: {}", e.getMessage());
+            return "Program " + presetNumber;
+        }
+    }
+
+    /**
+     * Get a list of standard General MIDI drum items
+     *
+     * @return List of DrumItem objects for all standard GM drum sounds
+     */
+    public List<DrumItem> getDrumItems() {
+        List<DrumItem> drums = new ArrayList<>();
+
+        // Standard General MIDI drum mappings
+        drums.add(new DrumItem(35, "Acoustic Bass Drum"));
+        drums.add(new DrumItem(36, "Bass Drum 1"));
+        drums.add(new DrumItem(37, "Side Stick"));
+        drums.add(new DrumItem(38, "Acoustic Snare"));
+        drums.add(new DrumItem(39, "Hand Clap"));
+        drums.add(new DrumItem(40, "Electric Snare"));
+        drums.add(new DrumItem(41, "Low Floor Tom"));
+        drums.add(new DrumItem(42, "Closed Hi-Hat"));
+        drums.add(new DrumItem(43, "High Floor Tom"));
+        drums.add(new DrumItem(44, "Pedal Hi-Hat"));
+        drums.add(new DrumItem(45, "Low Tom"));
+        drums.add(new DrumItem(46, "Open Hi-Hat"));
+        drums.add(new DrumItem(47, "Low-Mid Tom"));
+        drums.add(new DrumItem(48, "Hi-Mid Tom"));
+        drums.add(new DrumItem(49, "Crash Cymbal 1"));
+        drums.add(new DrumItem(50, "High Tom"));
+        drums.add(new DrumItem(51, "Ride Cymbal 1"));
+        drums.add(new DrumItem(52, "Chinese Cymbal"));
+        drums.add(new DrumItem(53, "Ride Bell"));
+        drums.add(new DrumItem(54, "Tambourine"));
+        drums.add(new DrumItem(55, "Splash Cymbal"));
+        drums.add(new DrumItem(56, "Cowbell"));
+        drums.add(new DrumItem(57, "Crash Cymbal 2"));
+        drums.add(new DrumItem(58, "Vibraslap"));
+        drums.add(new DrumItem(59, "Ride Cymbal 2"));
+        drums.add(new DrumItem(60, "Hi Bongo"));
+        drums.add(new DrumItem(61, "Low Bongo"));
+        drums.add(new DrumItem(62, "Mute Hi Conga"));
+        drums.add(new DrumItem(63, "Open Hi Conga"));
+        drums.add(new DrumItem(64, "Low Conga"));
+        drums.add(new DrumItem(65, "High Timbale"));
+        drums.add(new DrumItem(66, "Low Timbale"));
+        drums.add(new DrumItem(67, "High Agogo"));
+        drums.add(new DrumItem(68, "Low Agogo"));
+        drums.add(new DrumItem(69, "Cabasa"));
+        drums.add(new DrumItem(70, "Maracas"));
+        drums.add(new DrumItem(71, "Short Whistle"));
+        drums.add(new DrumItem(72, "Long Whistle"));
+        drums.add(new DrumItem(73, "Short Guiro"));
+        drums.add(new DrumItem(74, "Long Guiro"));
+        drums.add(new DrumItem(75, "Claves"));
+        drums.add(new DrumItem(76, "Hi Wood Block"));
+        drums.add(new DrumItem(77, "Low Wood Block"));
+        drums.add(new DrumItem(78, "Mute Cuica"));
+        drums.add(new DrumItem(79, "Open Cuica"));
+        drums.add(new DrumItem(80, "Mute Triangle"));
+        drums.add(new DrumItem(81, "Open Triangle"));
+
+        return drums;
+    }
+
+    /**
+     * Get the name of a drum sound by its MIDI note number
+     *
+     * @param noteNumber The MIDI note number to look up
+     * @return The name of the drum sound, or "Unknown Drum" if not found
+     */
+    public String getDrumName(int noteNumber) {
+        // Get all drum items
+        List<DrumItem> drums = getDrumItems();
+
+        // Find the matching drum by note number
+        for (DrumItem drum : drums) {
+            if (drum.getNoteNumber() == noteNumber) {
+                return drum.getName();
+            }
+        }
+
+        // Return a placeholder for unknown drums
+        return "Unknown Drum (" + noteNumber + ")";
+    }
+
+    /**
+     * Get the standard General MIDI instrument preset names
+     *
+     * @return List of 128 preset names as defined by the General MIDI specification
+     */
+    public List<String> getGeneralMIDIPresetNames() {
+        List<String> presets = new ArrayList<>(128);
+
+        // Piano Family (0-7)
+        presets.add("Acoustic Grand Piano");
+        presets.add("Bright Acoustic Piano");
+        presets.add("Electric Grand Piano");
+        presets.add("Honky-tonk Piano");
+        presets.add("Electric Piano 1");
+        presets.add("Electric Piano 2");
+        presets.add("Harpsichord");
+        presets.add("Clavinet");
+
+        // Chromatic Percussion (8-15)
+        presets.add("Celesta");
+        presets.add("Glockenspiel");
+        presets.add("Music Box");
+        presets.add("Vibraphone");
+        presets.add("Marimba");
+        presets.add("Xylophone");
+        presets.add("Tubular Bells");
+        presets.add("Dulcimer");
+
+        // Organ (16-23)
+        presets.add("Drawbar Organ");
+        presets.add("Percussive Organ");
+        presets.add("Rock Organ");
+        presets.add("Church Organ");
+        presets.add("Reed Organ");
+        presets.add("Accordion");
+        presets.add("Harmonica");
+        presets.add("Tango Accordion");
+
+        // Guitar (24-31)
+        presets.add("Acoustic Guitar (nylon)");
+        presets.add("Acoustic Guitar (steel)");
+        presets.add("Electric Guitar (jazz)");
+        presets.add("Electric Guitar (clean)");
+        presets.add("Electric Guitar (muted)");
+        presets.add("Overdriven Guitar");
+        presets.add("Distortion Guitar");
+        presets.add("Guitar Harmonics");
+
+        // Bass (32-39)
+        presets.add("Acoustic Bass");
+        presets.add("Electric Bass (finger)");
+        presets.add("Electric Bass (pick)");
+        presets.add("Fretless Bass");
+        presets.add("Slap Bass 1");
+        presets.add("Slap Bass 2");
+        presets.add("Synth Bass 1");
+        presets.add("Synth Bass 2");
+
+        // Strings (40-47)
+        presets.add("Violin");
+        presets.add("Viola");
+        presets.add("Cello");
+        presets.add("Contrabass");
+        presets.add("Tremolo Strings");
+        presets.add("Pizzicato Strings");
+        presets.add("Orchestral Harp");
+        presets.add("Timpani");
+
+        // Ensemble (48-55)
+        presets.add("String Ensemble 1");
+        presets.add("String Ensemble 2");
+        presets.add("Synth Strings 1");
+        presets.add("Synth Strings 2");
+        presets.add("Choir Aahs");
+        presets.add("Voice Oohs");
+        presets.add("Synth Choir");
+        presets.add("Orchestra Hit");
+
+        // Brass (56-63)
+        presets.add("Trumpet");
+        presets.add("Trombone");
+        presets.add("Tuba");
+        presets.add("Muted Trumpet");
+        presets.add("French Horn");
+        presets.add("Brass Section");
+        presets.add("Synth Brass 1");
+        presets.add("Synth Brass 2");
+
+        // Reed (64-71)
+        presets.add("Soprano Sax");
+        presets.add("Alto Sax");
+        presets.add("Tenor Sax");
+        presets.add("Baritone Sax");
+        presets.add("Oboe");
+        presets.add("English Horn");
+        presets.add("Bassoon");
+        presets.add("Clarinet");
+
+        // Pipe (72-79)
+        presets.add("Piccolo");
+        presets.add("Flute");
+        presets.add("Recorder");
+        presets.add("Pan Flute");
+        presets.add("Blown Bottle");
+        presets.add("Shakuhachi");
+        presets.add("Whistle");
+        presets.add("Ocarina");
+
+        // Synth Lead (80-87)
+        presets.add("Lead 1 (square)");
+        presets.add("Lead 2 (sawtooth)");
+        presets.add("Lead 3 (calliope)");
+        presets.add("Lead 4 (chiff)");
+        presets.add("Lead 5 (charang)");
+        presets.add("Lead 6 (voice)");
+        presets.add("Lead 7 (fifths)");
+        presets.add("Lead 8 (bass + lead)");
+
+        // Synth Pad (88-95)
+        presets.add("Pad 1 (new age)");
+        presets.add("Pad 2 (warm)");
+        presets.add("Pad 3 (polysynth)");
+        presets.add("Pad 4 (choir)");
+        presets.add("Pad 5 (bowed)");
+        presets.add("Pad 6 (metallic)");
+        presets.add("Pad 7 (halo)");
+        presets.add("Pad 8 (sweep)");
+
+        // Synth Effects (96-103)
+        presets.add("FX 1 (rain)");
+        presets.add("FX 2 (soundtrack)");
+        presets.add("FX 3 (crystal)");
+        presets.add("FX 4 (atmosphere)");
+        presets.add("FX 5 (brightness)");
+        presets.add("FX 6 (goblins)");
+        presets.add("FX 7 (echoes)");
+        presets.add("FX 8 (sci-fi)");
+
+        // Ethnic (104-111)
+        presets.add("Sitar");
+        presets.add("Banjo");
+        presets.add("Shamisen");
+        presets.add("Koto");
+        presets.add("Kalimba");
+        presets.add("Bagpipe");
+        presets.add("Fiddle");
+        presets.add("Shanai");
+
+        // Percussive (112-119)
+        presets.add("Tinkle Bell");
+        presets.add("Agogo");
+        presets.add("Steel Drums");
+        presets.add("Woodblock");
+        presets.add("Taiko Drum");
+        presets.add("Melodic Tom");
+        presets.add("Synth Drum");
+        presets.add("Reverse Cymbal");
+
+        // Sound Effects (120-127)
+        presets.add("Guitar Fret Noise");
+        presets.add("Breath Noise");
+        presets.add("Seashore");
+        presets.add("Bird Tweet");
+        presets.add("Telephone Ring");
+        presets.add("Helicopter");
+        presets.add("Applause");
+        presets.add("Gunshot");
+
+        return presets;
+    }
+
+    /**
+     * Apply a preset change to an instrument
+     *
+     * @param instrument   The instrument to apply the preset to
+     * @param bankIndex    The bank index to select
+     * @param presetNumber The preset number to select
+     */
+    public void applyPresetChange(InstrumentWrapper instrument, int bankIndex, int presetNumber) {
+        if (instrument == null) {
+            return;
+        }
+
+        try {
+            // Store the settings in the instrument
+            instrument.setBankIndex(bankIndex);
+            instrument.setPreset(presetNumber);
+
+            // Get the MIDI channel from the instrument or default to 0
+            int channel = 0;
+            if (instrument.getChannels() != null && instrument.getChannels().length > 0) {
+                channel = instrument.getChannels()[0];
+            }
+
+            // Apply the bank and program change to the instrument's device
+            if (instrument.getDevice() instanceof Synthesizer) {
+                Synthesizer synth = (Synthesizer) instrument.getDevice();
+                if (!synth.isOpen()) {
+                    synth.open();
+                }
+
+                // Get the MIDI channel
+                MidiChannel[] channels = synth.getChannels();
+                if (channels != null && channel < channels.length) {
+                    // Calculate bank MSB and LSB
+                    int bankMSB = (bankIndex >> 7) & 0x7F;
+                    int bankLSB = bankIndex & 0x7F;
+
+                    // Send bank select and program change
+                    channels[channel].controlChange(0, bankMSB);
+                    channels[channel].controlChange(32, bankLSB);
+                    channels[channel].programChange(presetNumber);
+
+                    logger.debug("Applied preset change to synthesizer: bank={}, preset={}, channel={}",
+                            bankIndex, presetNumber, channel);
+                    return;
+                }
+            }
+
+            // Fall back to standard MIDI messages via InstrumentWrapper
+            instrument.controlChange(0, (bankIndex >> 7) & 0x7F); // Bank MSB
+            instrument.controlChange(32, bankIndex & 0x7F); // Bank LSB
+            instrument.programChange(presetNumber, 0);
+
+        } catch (Exception e) {
+            logger.error("Failed to apply preset change: {}", e.getMessage(), e);
+        }
+    }
+
+    /**
+     * Apply a soundbank to an instrument
+     * 
+     * @param instrument    The instrument to apply the soundbank to
+     * @param soundbankName The name of the soundbank to apply
+     * @return true if successful, false otherwise
+     */
+    public boolean applySoundbank(InstrumentWrapper instrument, String soundbankName) {
+        if (instrument == null || soundbankName == null || soundbankName.isEmpty()) {
+            logger.warn("Cannot apply soundbank: Invalid parameters");
+            return false;
+        }
+
+        try {
+            // Get the actual Soundbank object by name
+            Soundbank soundbank = soundbanks.get(soundbankName);
+            if (soundbank == null) {
+                logger.warn("Soundbank not found: {}", soundbankName);
+                return false;
+            }
+
+            // Get the MIDI device
+            MidiDevice device = instrument.getDevice();
+            if (device == null || !(device instanceof Synthesizer)) {
+                logger.warn("Cannot apply soundbank: Device is not a synthesizer");
+                return false;
+            }
+
+            // Cast to synthesizer and apply soundbank
+            Synthesizer synth = (Synthesizer) device;
+            if (!synth.isSoundbankSupported(soundbank)) {
+                logger.warn("Soundbank not supported by synthesizer: {}", soundbankName);
+                return false;
+            }
+
+            // Unload any existing instruments first
+            synth.unloadAllInstruments(synth.getDefaultSoundbank());
+
+            // Load the new soundbank
+            boolean success = synth.loadAllInstruments(soundbank);
+
+            // Store the soundbank name in the instrument
+            if (success) {
+                instrument.setSoundbankName(soundbankName);
+                logger.info("Successfully applied soundbank {} to instrument {}",
+                        soundbankName, instrument.getName());
+            } else {
+                logger.warn("Failed to load instruments from soundbank {}", soundbankName);
+            }
+
+            return success;
+
+        } catch (Exception e) {
+            logger.error("Error applying soundbank: {}", e.getMessage(), e);
+            return false;
+        }
+    }
+
+
+    /**
+     * Initialize synthesizer for soundbank operations
+     */
+    public boolean initializeSynthesizer() {
+        try {
+            if (synthesizer == null || !synthesizer.isOpen()) {
+                // Get default synthesizer
+                synthesizer = MidiSystem.getSynthesizer();
+                synthesizer.open();
+                logger.info("Synthesizer initialized: {}", synthesizer.getDeviceInfo().getName());
+                return true;
+            }
+            return true;
+        } catch (Exception e) {
+            logger.error("Error initializing synthesizer: {}", e.getMessage(), e);
+            return false;
+        }
+    }
+    
+    // All existing methods remain the same...
+    
+    /**
+     * Handle command bus events
+     */
+    @Override
+    public void onAction(Command action) {
+        if (action == null || action.getCommand() == null) {
+            return;
+        }
+        
+        switch (action.getCommand()) {
+            case Commands.LOAD_SOUNDBANK:
+                if (action.getData() instanceof File) {
+                    String name = loadSoundbank((File) action.getData());
+                    if (name != null) {
+                        CommandBus.getInstance().publish(
+                            Commands.SOUNDBANK_LOADED, 
+                            this, 
+                            name);
+                    } else {
+                        CommandBus.getInstance().publish(
+                            Commands.STATUS_UPDATE, 
+                            this, 
+                            new StatusUpdate("SoundbankManager", "Error", "Failed to load soundbank"));
+                    }
+                }
+                break;
+                
+            case Commands.REFRESH_SOUNDBANKS:
+                boolean success = initializeSoundbanks();
+                CommandBus.getInstance().publish(
+                    Commands.SOUNDBANKS_REFRESHED, 
+                    this, 
+                    success);
+                break;
+        }
+    }
+}

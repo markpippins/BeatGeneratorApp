@@ -309,45 +309,47 @@ public class InstrumentManager implements IBusListener {
      * @return The instrument, creating it if necessary
      */
     public InstrumentWrapper getOrCreateInternalSynthInstrument(int channel, boolean exclusive) {
-        // Generate the ID using the same formula as MelodicSequencer
+        // First try to find an existing instrument
         Long id = 9985L + channel;
-
+        
         // Try to find by ID first
         InstrumentWrapper instrument = instrumentCache.get(id);
-        if (instrument != null && !instrument.getAssignedToPlayer()) {
-            instrument.setAssignedToPlayer(true);
+        if (instrument != null && (!exclusive || !instrument.getAssignedToPlayer())) {
+            if (exclusive) {
+                instrument.setAssignedToPlayer(true);
+            }
             return instrument;
         }
-
-        // Next try by name and channel
+        
+        // Next try by device name and channel
         for (InstrumentWrapper cached : instrumentCache.values()) {
-            if (Boolean.TRUE.equals(cached.getInternal()) &&
+            if (InternalSynthManager.getInstance().isInternalSynthInstrument(cached) &&
                     cached.getChannel() != null &&
-                    (!exclusive || !cached.getAssignedToPlayer()) &&
-                    cached.getChannel() == channel) {
-                cached.setAssignedToPlayer(exclusive);
+                    cached.getChannel() == channel &&
+                    (!exclusive || !cached.getAssignedToPlayer())) {
+                
+                if (exclusive) {
+                    cached.setAssignedToPlayer(true);
+                }
                 return cached;
             }
         }
-
-        // No instrument found, create a new one
-        try {
-            MidiDevice synthDevice = InternalSynthManager.getInstance().getInternalSynthDevice();
-            instrument = new InstrumentWrapper(
-                    "Internal Synth " + channel,
-                    synthDevice,
-                    channel);
-            instrument.setId(id);
-            instrument.setInternal(true);
-            instrument.setDeviceName("Gervill");
-            instrument.setSoundbankName("Default");
-            instrument.setBankIndex(0);
+        
+        // No instrument found, create a new one using InternalSynthManager
+        boolean isDrumChannel = (channel == 9);
+        instrument = InternalSynthManager.getInstance().createInternalInstrument(
+                channel, isDrumChannel, null);
+        
+        if (instrument != null) {
+            // Store in our cache
             updateInstrument(instrument);
-
-            return instrument;
-        } catch (MidiUnavailableException e) {
-            logger.error("Failed to create internal instrument: {}", e.getMessage());
-            return null;
+            
+            // Mark as assigned if exclusive
+            if (exclusive) {
+                instrument.setAssignedToPlayer(true);
+            }
         }
+        
+        return instrument;
     }
 }

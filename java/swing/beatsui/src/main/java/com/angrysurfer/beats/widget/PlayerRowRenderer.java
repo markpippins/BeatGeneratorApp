@@ -15,6 +15,7 @@ import com.angrysurfer.core.model.Player;
 import com.angrysurfer.core.model.Session;
 import com.angrysurfer.core.service.InternalSynthManager;
 import com.angrysurfer.core.service.SessionManager;
+import com.angrysurfer.core.service.SoundbankManager;
 
 /**
  * Custom renderer for player table rows that centers numeric values
@@ -151,7 +152,7 @@ public class PlayerRowRenderer extends DefaultTableCellRenderer implements IBusL
                 else if (player.getInstrument() != null && 
                         InternalSynthManager.getInstance().isInternalSynth(player.getInstrument())) {
                     // Get preset name from InternalSynthManager
-                    String presetName = InternalSynthManager.getInstance().getPresetName(
+                    String presetName = SoundbankManager.getInstance().getPresetName(
                         player.getInstrument().getId(), 
                         value instanceof Number ? ((Number)value).longValue() : 0
                     );

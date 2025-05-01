@@ -549,10 +549,6 @@ public class MainPanel extends JPanel implements AutoCloseable, IBusListener {
         InternalSynthManager.getInstance().playNote(note, velocity, durationMs, activeMidiChannel);
     }
 
-    public void playDrumNote(int note, int velocity) {
-        InternalSynthManager.getInstance().playDrumNote(note, velocity);
-    }
-
     @Override
     public void onAction(Command action) {
         if (action.getCommand() == null) {

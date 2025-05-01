@@ -424,7 +424,8 @@ public class MelodicSequencer implements IBusListener {
     public void ensurePlayerHasInstrument() {
         if (player != null && player.getInstrument() == null) {
             logger.warn("Player {} has no instrument, initializing default", getTempChannel());
-            PlayerManager.getInstance().initializeInternalInstrument(player,true);
+            // Use PlayerManager with our enhanced API
+            PlayerManager.getInstance().initializeInternalInstrument(player, true);
         }
     }
 

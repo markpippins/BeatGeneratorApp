@@ -350,4 +350,9 @@ public class Commands {
     public static final String MELODIC_PATTERN_UPDATED = "MELODIC_PATTERN_UPDATED";
     public static final String DRUM_PLAYER_INSTRUMENT_CHANGED = "DRUM_PLAYER_INSTRUMENT_CHANGED";
     public static final String CREATE_INSTRUMENT_FOR_PLAYER_REQUEST = "CREATE_INSTRUMENT_FOR_PLAYER_REQUEST";
+
+    // Add these constants to the Commands class
+public static final String LOAD_SOUNDBANK = "LOAD_SOUNDBANK";
+public static final String REFRESH_SOUNDBANKS = "REFRESH_SOUNDBANKS";
+public static final String SOUNDBANKS_REFRESHED = "SOUNDBANKS_REFRESHED";
 }

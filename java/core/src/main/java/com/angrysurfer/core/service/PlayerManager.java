@@ -137,9 +137,6 @@ public class PlayerManager implements IBusListener {
     /**
      * Handle request to change a player's instrument
      */
-    /**
-     * Handle request to change a player's instrument
-     */
     private void handleInstrumentChangeRequest(Command action) {
         if (action.getData() instanceof Object[] data && data.length >= 2) {
             Long playerId = (Long) data[0];
@@ -323,17 +320,27 @@ public class PlayerManager implements IBusListener {
      * Apply a player's instrument settings to MIDI system
      */
     public void applyPlayerInstrument(Player player) {
-        if (player == null || player.getInstrument() == null)
+        if (player == null || player.getInstrument() == null) {
             return;
-
+        }
+        
         try {
-            // If player belongs to a sequencer, refresh its instrument
-            PlayerManager.getInstance().initializeInstrument(player, player.getOwner() instanceof MelodicSequencer);
-
-            // Also apply the preset
-            applyPlayerPreset(player);
-
-            logger.debug("Applied instrument for player: {}", player.getName());
+            InstrumentWrapper instrument = player.getInstrument();
+            
+            // Check if this is an internal synth instrument
+            if (InternalSynthManager.getInstance().isInternalSynthInstrument(instrument)) {
+                // Use InternalSynthManager for internal instruments
+                InternalSynthManager.getInstance().initializeInstrumentState(instrument);
+            } else {
+                // Use standard method for external instruments
+                if (instrument.getBankIndex() != null && instrument.getPreset() != null) {
+                    instrument.controlChange(0, (instrument.getBankIndex() >> 7) & 0x7F);
+                    instrument.controlChange(32, instrument.getBankIndex() & 0x7F);
+                    instrument.programChange(instrument.getPreset(), 0);
+                }
+            }
+            
+            logger.debug("Applied instrument settings for player {}", player.getName());
         } catch (Exception e) {
             logger.error("Error applying player instrument: {}", e.getMessage(), e);
         }
@@ -444,81 +451,32 @@ public class PlayerManager implements IBusListener {
             logger.warn("Cannot initialize internal instrument for null player");
             return;
         }
-
+        
         Player currentPlayer = getActivePlayer();
-
+        
         try {
-            // Try to get an internal instrument from the manager
-            InstrumentManager manager = InstrumentManager.getInstance();
-            InstrumentWrapper internalInstrument = null;
-
-            // First try to find an existing internal instrument for this channel
-            for (InstrumentWrapper instrument : manager.getCachedInstruments()) {
-                if (Boolean.TRUE.equals(instrument.getInternal()) &&
-                        instrument.getChannel() != null &&
-                        instrument.getChannel() == player.getChannel()) {
-                    internalInstrument = instrument;
-                    logger.info("Found existing internal instrument for channel {}", player.getChannel());
-                    break;
-                }
+            // Get an internal instrument from InstrumentManager
+            InstrumentWrapper internalInstrument = InstrumentManager.getInstance()
+                .getOrCreateInternalSynthInstrument(player.getChannel(), exclusive);
+            
+            if (internalInstrument != null) {
+                // Assign to player
+                player.setInstrument(internalInstrument);
+                player.setInstrumentId(internalInstrument.getId());
+                player.setUsingInternalSynth(true);
+                
+                // Save the player
+                savePlayerProperties(player);
+                
+                // Initialize the instrument state
+                InternalSynthManager.getInstance().initializeInstrumentState(internalInstrument);
+                
+                logger.info("Player {} initialized with internal instrument", player.getId());
             }
-
-            // If no instrument found, create a new one
-            if (internalInstrument == null) {
-                // Get a reference to the internal synthesizer device
-                MidiDevice internalSynthDevice;
-                try {
-                    internalSynthDevice = InternalSynthManager.getInstance().getInternalSynthDevice();
-                } catch (MidiUnavailableException e) {
-                    logger.error("Failed to get internal synth device: {}", e.getMessage());
-                    return;
-                }
-
-                // Generate a numeric ID for the instrument
-                long numericId = 9985L + player.getChannel();
-
-                // Create the instrument with proper constructor parameters
-                internalInstrument = new InstrumentWrapper(
-                        "Internal Synth " + player.getChannel(), // Name
-                        internalSynthDevice, // Device (not a String)
-                        player.getChannel() // Channel
-                );
-
-                // Set the rest of the properties
-                internalInstrument.setInternal(true);
-                internalInstrument.setDeviceName("Gervill");
-                internalInstrument.setSoundbankName("Default");
-                internalInstrument.setBankIndex(0);
-                internalInstrument.setId(numericId); // Set ID separately
-                internalInstrument.setChannel(player.getChannel());
-                // internalInstrument
-                // .setPreset(
-                // player.getInstrument().getPreset() != null ?
-                // player.getInstrument().getPreset()
-                // : player.getChannel());
-
-                // Register with instrument manager
-                manager.updateInstrument(internalInstrument);
-                logger.info("Created new internal instrument for channel {}", player.getChannel());
-            }
-
-            // Assign instrument to player
-            player.setInstrument(internalInstrument);
-            player.setUsingInternalSynth(true);
-            player.getInstrument().setPreset(0); // Piano
-
-            // Save the player
-            savePlayerProperties(player);
-
-            logger.info("Player {} initialized with internal instrument", player.getId());
-
-            // Send program change to actually set the instrument sound
-            initializeInstrument(player, exclusive);
-
         } catch (Exception e) {
             logger.error("Failed to initialize internal instrument: {}", e.getMessage(), e);
         }
-
+        
         setActivePlayer(currentPlayer);
     }
 
@@ -567,7 +525,35 @@ public class PlayerManager implements IBusListener {
      * Sends the appropriate program change MIDI message to set the instrument sound
      */
     public void applyInstrumentPreset(Player player) {
-
+        if (player == null || player.getInstrument() == null) {
+            return;
+        }
+        
+        try {
+            InstrumentWrapper instrument = player.getInstrument();
+            
+            // Check if this is an internal synth instrument
+            if (InternalSynthManager.getInstance().isInternalSynthInstrument(instrument)) {
+                // Use InternalSynthManager for internal instruments
+                InternalSynthManager.getInstance().updateInstrumentPreset(
+                    instrument, 
+                    instrument.getBankIndex(), 
+                    instrument.getPreset());
+            } else {
+                // Use standard method for external instruments
+                int bankIndex = instrument.getBankIndex() != null ? instrument.getBankIndex() : 0;
+                int preset = instrument.getPreset() != null ? instrument.getPreset() : 0;
+                
+                // Apply bank and program changes
+                instrument.controlChange(0, (bankIndex >> 7) & 0x7F);
+                instrument.controlChange(32, bankIndex & 0x7F);
+                instrument.programChange(preset, 0);
+            }
+            
+            logger.debug("Applied preset for player: {}", player.getName());
+        } catch (Exception e) {
+            logger.error("Error applying player preset: {}", e.getMessage(), e);
+        }
     }
 
     public Rule addRule(Player player, int beat, int equals, double v, int i) {

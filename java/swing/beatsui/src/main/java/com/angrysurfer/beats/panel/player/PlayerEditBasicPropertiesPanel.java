@@ -46,6 +46,7 @@ import com.angrysurfer.core.service.InstrumentManager;
 import com.angrysurfer.core.service.InternalSynthManager;
 import com.angrysurfer.core.service.PlayerManager;
 import com.angrysurfer.core.service.ReceiverManager;
+import com.angrysurfer.core.service.SoundbankManager;
 
 /**
  * Panel for editing basic player properties with improved state management.
@@ -225,7 +226,7 @@ public class PlayerEditBasicPropertiesPanel extends JPanel {
                 player.getInstrument().setSoundbankName(soundbankName);
 
                 // Apply soundbank change
-                Soundbank soundbank = synthManager.getSoundbank(soundbankName);
+                Soundbank soundbank = SoundbankManager.getInstance().getSoundbankByName(soundbankName);
                 if (soundbank != null && player.getInstrument().getDevice() instanceof Synthesizer) {
                     try {
                         Synthesizer synth = (Synthesizer) player.getInstrument().getDevice();
@@ -321,7 +322,7 @@ public class PlayerEditBasicPropertiesPanel extends JPanel {
             if (result == JOptionPane.YES_OPTION) {
                 try {
                     // Delete the soundbank
-                    boolean deleted = synthManager.deleteSoundbank(selectedSoundbank);
+                    boolean deleted = SoundbankManager.getInstance().deleteSoundbank(selectedSoundbank);
                     if (deleted) {
                         // Update UI
                         initializeSoundbanks();
@@ -675,16 +676,14 @@ public class PlayerEditBasicPropertiesPanel extends JPanel {
 
     /**
      * Load a soundbank file
-     * Calls the InternalSynthManager to load the soundbank and updates UI
      */
     private void loadSoundbankFile() {
         JFileChooser fileChooser = new JFileChooser();
-        // Filter for .sf2 and .dls files
         fileChooser.setFileFilter(new FileFilter() {
             @Override
             public boolean accept(File f) {
-                return f.isDirectory() || f.getName().toLowerCase().endsWith(".sf2")
-                        || f.getName().toLowerCase().endsWith(".dls");
+                return f.isDirectory() || f.getName().toLowerCase().endsWith(".sf2") 
+                    || f.getName().toLowerCase().endsWith(".dls");
             }
 
             @Override
@@ -696,19 +695,24 @@ public class PlayerEditBasicPropertiesPanel extends JPanel {
         int result = fileChooser.showOpenDialog(this);
         if (result == JFileChooser.APPROVE_OPTION) {
             File selectedFile = fileChooser.getSelectedFile();
-            // Call manager to load soundbank
-            String soundbankName = InternalSynthManager.getInstance().loadSoundbank(selectedFile);
-
-            if (soundbankName != null) {
-                // Refresh soundbanks
-                initializeSoundbanks();
-                // Select the newly loaded soundbank
-                soundbankCombo.setSelectedItem(soundbankName);
-            } else {
-                JOptionPane.showMessageDialog(this,
-                        "Failed to load soundbank file: " + selectedFile.getName(),
-                        "Soundbank Load Error", JOptionPane.ERROR_MESSAGE);
-            }
+            
+            // Use SoundbankManager instead of InternalSynthManager
+            CommandBus.getInstance().publish(Commands.LOAD_SOUNDBANK, this, selectedFile);
+            
+            // Register for one-time notification when soundbank is loaded
+            CommandBus.getInstance().registerOneTime(action -> {
+                if (Commands.SOUNDBANK_LOADED.equals(action.getCommand()) && 
+                    action.getData() instanceof String) {
+                    
+                    String soundbankName = (String) action.getData();
+                    SwingUtilities.invokeLater(() -> {
+                        // Refresh soundbanks
+                        initializeSoundbanks();
+                        // Select the newly loaded soundbank
+                        soundbankCombo.setSelectedItem(soundbankName);
+                    });
+                }
+            });
         }
     }
 
@@ -717,21 +721,20 @@ public class PlayerEditBasicPropertiesPanel extends JPanel {
      */
     private void initializeSoundbanks() {
         // Store current selection
-        String currentSelection = soundbankCombo.getSelectedItem() != null
-                ? soundbankCombo.getSelectedItem().toString()
-                : null;
-
+        String currentSelection = soundbankCombo.getSelectedItem() != null 
+                ? soundbankCombo.getSelectedItem().toString() : null;
+                
         // Clear the combo
         soundbankCombo.removeAllItems();
-
-        // Get available soundbanks from manager
-        List<String> soundbanks = InternalSynthManager.getInstance().getSoundbankNames();
-
+        
+        // Get available soundbanks from SoundbankManager
+        List<String> soundbanks = SoundbankManager.getInstance().getSoundbankNames();
+        
         // Add them to combo
         for (String soundbank : soundbanks) {
             soundbankCombo.addItem(soundbank);
         }
-
+        
         // Restore selection if possible
         if (currentSelection != null) {
             soundbankCombo.setSelectedItem(currentSelection);

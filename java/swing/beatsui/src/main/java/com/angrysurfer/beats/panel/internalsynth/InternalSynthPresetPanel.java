@@ -9,13 +9,11 @@ import java.awt.GridBagLayout;
 import java.awt.Insets;
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
 
-import javax.sound.midi.Instrument;
-import javax.sound.midi.MidiChannel;
-import javax.sound.midi.Soundbank;
-import javax.sound.midi.Synthesizer;
+import javax.sound.midi.*;
 import javax.swing.BorderFactory;
 import javax.swing.DefaultListCellRenderer;
 import javax.swing.JButton;
@@ -31,6 +29,7 @@ import javax.swing.SpinnerNumberModel;
 import javax.swing.SwingUtilities;
 import javax.swing.filechooser.FileNameExtensionFilter;
 
+import com.angrysurfer.core.service.SoundbankManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -193,7 +192,7 @@ public class InternalSynthPresetPanel extends JPanel {
         List<InstrumentWrapper> instruments = UserConfigManager.getInstance().getInstruments();
         
         // Add internal synths
-        instruments.addAll(InternalSynthManager.getInstance().getInternalSynths());
+        instruments.addAll(getInternalSynths());
         
         if (instruments == null || instruments.isEmpty()) {
             logger.error("No instruments found");
@@ -254,7 +253,51 @@ public class InternalSynthPresetPanel extends JPanel {
             }
         });
     }
-    
+
+    /**
+     * Get all available internal synthesizers in the system
+     *
+     * @return A list of InstrumentWrapper objects that are internal synthesizers
+     */
+    public List<InstrumentWrapper> getInternalSynths() {
+        List<InstrumentWrapper> internalSynths = new ArrayList<>();
+
+        try {
+            // Get all MIDI device info
+            MidiDevice.Info[] infos = MidiSystem.getMidiDeviceInfo();
+
+            for (MidiDevice.Info info : infos) {
+                try {
+                    // Try to get the device
+                    MidiDevice device = MidiSystem.getMidiDevice(info);
+
+                    // Check if it's a synthesizer
+                    if (device instanceof Synthesizer) {
+                        // Create an instrument wrapper for this synth
+                        InstrumentWrapper wrapper = new InstrumentWrapper();
+                        wrapper.setId(System.currentTimeMillis()); // Unique ID
+                        wrapper.setName(info.getName());
+                        wrapper.setDeviceName(info.getName());
+                        wrapper.setDevice(device);
+                        wrapper.setDescription(info.getDescription());
+                        wrapper.setInternalSynth(true);
+
+                        // Add to the list
+                        internalSynths.add(wrapper);
+
+                        logger.debug("Found internal synthesizer: {}", info.getName());
+                    }
+                } catch (Exception e) {
+                    logger.warn("Error checking device {}: {}", info.getName(), e.getMessage());
+                }
+            }
+        } catch (Exception e) {
+            logger.error("Error getting internal synthesizers: {}", e.getMessage(), e);
+        }
+
+        return internalSynths;
+    }
+
     /**
      * Set up the soundbank panel
      */
@@ -401,7 +444,7 @@ public class InternalSynthPresetPanel extends JPanel {
             initializing = true;
             
             // Initialize soundbanks using InternalSynthManager
-            InternalSynthManager.getInstance().initializeSoundbanks();
+            InternalSynthManager.getInstance().loadDefaultSoundbank();
             
             // Get soundbank names
             List<String> names = InternalSynthManager.getInstance().getSoundbankNames();
@@ -564,7 +607,7 @@ public class InternalSynthPresetPanel extends JPanel {
             } else {
                 // For other instruments, get preset names for the instrument
                 Long instrumentId = selectedInstrument.getId(); // getId() already returns Long
-                presetNames = InternalSynthManager.getInstance().getPresetNames(instrumentId);
+                presetNames = SoundbankManager.getInstance().getPresetNames(instrumentId);
             }
             
             // If no presets found, use generic names
@@ -860,9 +903,7 @@ public class InternalSynthPresetPanel extends JPanel {
         
         try {
             // Load the soundbank - notice this returns a String, not a Soundbank
-            InternalSynthManager manager = InternalSynthManager.getInstance();
-            String soundbankName = manager.loadSoundbankFile(file);
-            
+            String soundbankName = SoundbankManager.getInstance().loadSoundbankFile(file);
             if (soundbankName == null) {
                 JOptionPane.showMessageDialog(this, 
                         "Failed to load soundbank file", 
@@ -873,7 +914,7 @@ public class InternalSynthPresetPanel extends JPanel {
             logger.info("Loaded soundbank: {}", soundbankName);
             
             // Update UI with the new soundbank list
-            List<String> names = manager.getSoundbankNames();
+            List<String> names = SoundbankManager.getInstance().getSoundbankNames();
             soundbankCombo.removeAllItems();
             for (String name : names) {
                 soundbankCombo.addItem(name);
@@ -893,7 +934,7 @@ public class InternalSynthPresetPanel extends JPanel {
                 instrument.setSoundbankName(soundbankName);
                 
                 // Get the actual Soundbank object if needed for direct operations
-                Soundbank soundbank = manager.getSoundbankByName(soundbankName);
+                Soundbank soundbank = SoundbankManager.getInstance().getSoundbankByName(soundbankName);
                 
                 // Load soundbank into the instrument if it's a Synthesizer and we have the actual Soundbank
                 if (instrument.getDevice() instanceof Synthesizer && soundbank != null) {

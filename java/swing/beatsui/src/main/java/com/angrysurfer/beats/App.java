@@ -22,6 +22,7 @@ import com.angrysurfer.core.service.DeviceManager;
 import com.angrysurfer.core.service.InstrumentManager;
 import com.angrysurfer.core.service.InternalSynthManager;
 import com.angrysurfer.core.service.SessionManager;
+import com.angrysurfer.core.service.SoundbankManager;
 import com.angrysurfer.core.service.PlayerManager;
 import com.formdev.flatlaf.FlatLightLaf;
 
@@ -42,22 +43,23 @@ public class App implements IBusListener {
 
         try {
             logger.info("Starting application...");
-            
+
             // Create and initialize splash screen synchronously
             splash = new SplashScreen();
-            splash.setTaskCount(6);
-            
+            splash.setTaskCount(7);
+
             // Show splash screen using SwingUtilities.invokeLater
             SwingUtilities.invokeLater(() -> {
                 splash.setVisible(showSplash);
                 splash.setStatus("Initializing application...");
-                
+
                 // Only start initialization AFTER splash screen is visible
                 // This ensures splash is initialized before background work begins
                 startInitialization();
             });
         } catch (Exception e) {
-            if (splash != null) splash.dispose();
+            if (splash != null)
+                splash.dispose();
             handleInitializationFailure("Fatal error during application startup", e);
         }
     }
@@ -71,40 +73,42 @@ public class App implements IBusListener {
             try {
                 // Initialize services in background
                 initializeServices();
-                
+
                 // Setup UI on EDT when services are ready
                 SwingUtilities.invokeLater(() -> {
                     try {
                         splash.setStatus("Setting up Look and Feel...");
                         setupLookAndFeel();
-                        
+
                         splash.setStatus("Creating main window...");
                         App app = new App();
-                        
+
                         splash.setStatus("Loading application...");
                         app.createAndShowGUI();
-                        
+
                         // Dispose splash screen after short delay
                         splash.setProgress(100);
                         splash.setStatus("Ready!");
-                        
+
                         // Small delay before closing splash screen
                         try {
                             Thread.sleep(600);
                         } catch (InterruptedException e) {
                             // Ignore
                         }
-                        
+
                         splash.dispose();
                         logger.info("Application started successfully");
                     } catch (Exception e) {
-                        if (splash != null) splash.dispose();
+                        if (splash != null)
+                            splash.dispose();
                         handleInitializationFailure("Failed to create application window", e);
                     }
                 });
             } catch (Exception e) {
                 SwingUtilities.invokeLater(() -> {
-                    if (splash != null) splash.dispose();
+                    if (splash != null)
+                        splash.dispose();
                     handleInitializationFailure("Fatal error during application startup", e);
                 });
             }
@@ -157,7 +161,7 @@ public class App implements IBusListener {
                 UIManager.setLookAndFeel(new FlatLightLaf());
                 logger.info("Set default Look and Feel: FlatLightLaf");
             }
-            
+
             splash.completeTask("Applied visual theme");
         } catch (Exception e) {
             logger.error("Error setting look and feel: " + e.getMessage());
@@ -171,35 +175,39 @@ public class App implements IBusListener {
             RedisService redisService = RedisService.getInstance();
             logger.info("Redis service initialized");
             splash.completeTask("Connected to database");
-            
+
             // Initialize MIDI device manager
             DeviceManager deviceManager = DeviceManager.getInstance();
             deviceManager.refreshDeviceList();
             splash.completeTask("Detected MIDI devices");
-            
+
+            // Initialize SoundbankManager BEFORE InternalSynthManager
+            SoundbankManager.getInstance().initializeSoundbanks();
+            splash.completeTask("Loaded soundbanks");
+
             // Initialize synth engine - now using InternalSynthManager
             InternalSynthManager.getInstance().initializeSynthesizer();
-            InternalSynthManager.getInstance().initializeSoundbanks();
+            InternalSynthManager.getInstance().loadDefaultSoundbank();
             splash.completeTask("Loaded internal synthesizer");
-            
+
             // Initialize instrument management
             InstrumentHelper instrumentHelper = redisService.getInstrumentHelper();
             List<InstrumentWrapper> instruments = instrumentHelper.findAllInstruments();
             logger.info("Found " + instruments.size() + " instruments in Redis");
-            
+
             // Initialize InstrumentManager (if not already)
             InstrumentManager.getInstance().refreshInstruments();
             splash.completeTask("Loaded instrument configurations");
-            
+
             // Initialize SessionManager AFTER instruments are loaded
             SessionManager sessionManager = SessionManager.getInstance();
             sessionManager.initialize();
             logger.info("Session manager initialized");
             splash.completeTask("Initialized session manager");
-            
+
             // Ensure channel consistency in PlayerManager
             PlayerManager.getInstance().ensureChannelConsistency();
-            
+
             // Signal system ready - this will trigger waiting sequencers to initialize
             CommandBus.getInstance().publish(Commands.SYSTEM_READY, App.class, null);
             logger.info("System initialization complete");
