@@ -40,21 +40,7 @@ public class DrumSequenceGeneratorPanel extends JPanel {
      */
     public DrumSequenceGeneratorPanel(DrumSequencer sequencer) {
         this.sequencer = sequencer;
-
-        // Use compact titled border
-        // setBorder(BorderFactory.createTitledBorder(
-        // BorderFactory.createLineBorder(Color.GRAY),
-        // "Generate",
-        // TitledBorder.DEFAULT_JUSTIFICATION,
-        // TitledBorder.DEFAULT_POSITION,
-        // null,
-        // null
-        // ));
-        // In DrumSequenceGeneratorPanel's constructor
-
-        setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createTitledBorder("Generate"),
-                BorderFactory.createEmptyBorder(1, 2, 1, 2)));
+        UIUtils.setWidgetPanelBorder(this, "Generate");
 
         // REDUCED: from 5,2 to 2,1
         setLayout(new FlowLayout(FlowLayout.LEFT, 2, 1));

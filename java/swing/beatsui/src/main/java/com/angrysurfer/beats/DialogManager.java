@@ -208,15 +208,31 @@ public class DialogManager implements IBusListener {
                     // Create panel with the player
                     PlayerEditPanel panel = new PlayerEditPanel(player);
                     Dialog<Player> dialog = frame.createDialog(player, panel);
-                    // dialog.setTitle("Edit Player: " + player.getName());
                     dialog.setTitle(getPlayerTitle(player));
 
                     boolean result = dialog.showDialog();
 
                     if (result) {
+                        // Apply all changes including drum-specific handling
                         panel.applyAllChanges();
+
                         // Get the updated player with all changes applied
                         Player updatedPlayer = panel.getUpdatedPlayer();
+
+                        // Save and apply the changes
+                        PlayerManager.getInstance().savePlayerProperties(updatedPlayer);
+
+                        // If this was a drum player in a sequencer whose instrument changed,
+                        // other drum players may have been updated too
+                        if (updatedPlayer.getChannel() == 9 && updatedPlayer.getOwner() instanceof DrumSequencer) {
+                            DrumSequencer sequencer = (DrumSequencer) updatedPlayer.getOwner();
+                            for (Player drumPlayer : sequencer.getPlayers()) {
+                                if (drumPlayer != null && !drumPlayer.equals(updatedPlayer)) {
+                                    PlayerManager.getInstance().savePlayerProperties(drumPlayer);
+                                    commandBus.publish(Commands.PLAYER_UPDATED, this, drumPlayer);
+                                }
+                            }
+                        }
 
                         // CRITICAL STEP: Activate player and request update through command bus
                         commandBus.publish(Commands.PLAYER_SELECTED, this, updatedPlayer);

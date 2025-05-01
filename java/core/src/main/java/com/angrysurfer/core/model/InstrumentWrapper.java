@@ -289,6 +289,15 @@ public final class InstrumentWrapper implements Serializable {
             return; // Just return instead of throwing exception
         }
 
+        if (!device.isOpen()) {
+            device.open();
+        }
+
+        if (!device.isOpen()) {
+            logger.warn("MIDI device is closed - cannot send message");
+            return; // Just return instead of throwing exception
+        }
+
         try {
             // Get receiver but handle null case gracefully
             Receiver receiver = device.getReceiver();

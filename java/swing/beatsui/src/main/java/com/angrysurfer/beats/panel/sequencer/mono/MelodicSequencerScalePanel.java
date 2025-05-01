@@ -57,19 +57,7 @@ public class MelodicSequencerScalePanel extends JPanel {
      * Initialize the panel with all controls
      */
     private void initialize() {
-        // Use compact titled border
-        // setBorder(BorderFactory.createTitledBorder(
-        //     BorderFactory.createLineBorder(Color.GRAY),
-        //     "Scale Parameters",
-        //     TitledBorder.DEFAULT_JUSTIFICATION,
-        //     TitledBorder.DEFAULT_POSITION,
-        //     null,
-        //     null
-        // ));
-        
-        setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createTitledBorder("Scale Parameters"),
-                BorderFactory.createEmptyBorder(1, 2, 1, 2)));
+        UIUtils.setWidgetPanelBorder(this,"Scale Parameters");
 
         // Use BorderLayout for the main panel instead of FlowLayout
         setLayout(new BorderLayout(0, 0));

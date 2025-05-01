@@ -83,10 +83,10 @@ public class InstrumentManager implements IBusListener {
 
     public void initializeCache() {
         logger.info("Initializing instrument cache");
-        
+
         // Set flag to prevent recursion
         isInitializing = true;
-        
+
         try {
             // Get instruments from UserConfigManager which is the source of truth
             List<InstrumentWrapper> instruments = UserConfigManager.getInstance().getInstruments();
@@ -114,7 +114,7 @@ public class InstrumentManager implements IBusListener {
             logger.debug("Skipping recursive refresh call");
             return;
         }
-        
+
         logger.info("Refreshing instruments cache");
         initializeCache();
         needsRefresh = false;
@@ -132,11 +132,13 @@ public class InstrumentManager implements IBusListener {
 
     /**
      * Get instrument by ID
+     * 
      * @param id The instrument ID
      * @return The instrument, or null if not found
      */
     public InstrumentWrapper getInstrumentById(Long id) {
-        if (id == null) return null;
+        if (id == null)
+            return null;
         return instrumentCache.get(id);
     }
 
@@ -200,15 +202,15 @@ public class InstrumentManager implements IBusListener {
             logger.warn("Cannot update instrument: null or missing ID");
             return;
         }
-        
+
         // Store in cache
         instrumentCache.put(instrument.getId(), instrument);
-        
+
         // Persist to storage using RedisService instead of persistenceService
         try {
             RedisService.getInstance().saveInstrument(instrument);
-            logger.debug("Saved instrument: {} (ID: {})", 
-                instrument.getName(), instrument.getId());
+            logger.debug("Saved instrument: {} (ID: {})",
+                    instrument.getName(), instrument.getId());
         } catch (Exception e) {
             logger.error("Failed to persist instrument: {}", e.getMessage());
         }
@@ -224,17 +226,17 @@ public class InstrumentManager implements IBusListener {
             logger.warn("Attempt to remove instrument with null ID");
             return;
         }
-        
+
         // Get instrument for logging before removal
         InstrumentWrapper instrument = instrumentCache.get(instrumentId);
         String name = instrument != null ? instrument.getName() : "Unknown";
-        
+
         // Remove from cache
         instrumentCache.remove(instrumentId);
-        
+
         // Remove from UserConfigManager
         UserConfigManager.getInstance().removeInstrument(instrumentId);
-        
+
         logger.info("Instrument removed: {} (ID: {})", name, instrumentId);
     }
 
@@ -247,30 +249,29 @@ public class InstrumentManager implements IBusListener {
     public InstrumentWrapper findOrCreateInternalInstrument(int channel) {
         // Try to find an existing internal instrument for this channel
         for (InstrumentWrapper instrument : getCachedInstruments()) {
-            if (Boolean.TRUE.equals(instrument.getInternal()) && 
-                instrument.getChannel() == channel) {
+            if (Boolean.TRUE.equals(instrument.getInternal()) &&
+                    instrument.getChannel() == channel) {
                 return instrument;
             }
         }
-        
+
         // Create a new internal instrument
         InstrumentWrapper internalInstrument = new InstrumentWrapper(
-            "Internal Synth", 
-            null,  // Internal synth uses null device
-            channel
-        );
-        
+                "Internal Synth",
+                null, // Internal synth uses null device
+                channel);
+
         // Configure as internal instrument
         internalInstrument.setInternal(true);
         internalInstrument.setDeviceName("Gervill");
         internalInstrument.setSoundbankName("Default");
         internalInstrument.setBankIndex(0);
-        internalInstrument.setPreset(0);  // Piano
+        internalInstrument.setPreset(0); // Piano
         internalInstrument.setId(9985L + channel);
-        
+
         // Add to cache and persist
         updateInstrument(internalInstrument);
-        
+
         return internalInstrument;
     }
 
@@ -282,67 +283,67 @@ public class InstrumentManager implements IBusListener {
     private InstrumentWrapper getDefaultInstrument(int channel) {
         // Create with null device (indicates internal synth)
         InstrumentWrapper internalInstrument = new InstrumentWrapper(
-            "Internal Synth", 
-            null,
-            channel  // Use the sequencer's channel
+                "Internal Synth",
+                null,
+                channel // Use the sequencer's channel
         );
-        
+
         // Configure as internal instrument
         internalInstrument.setInternal(true);
         internalInstrument.setDeviceName("Gervill");
         internalInstrument.setSoundbankName("Default");
         internalInstrument.setBankIndex(0);
-        internalInstrument.setPreset(0);  // Default to piano
-        internalInstrument.setId(9985L + channel);  // Use channel for unique ID
-        
+        internalInstrument.setPreset(0); // Default to piano
+        internalInstrument.setId(9985L + channel); // Use channel for unique ID
+
         // Register with manager
         InstrumentManager.getInstance().updateInstrument(internalInstrument);
-        
+
         return internalInstrument;
     }
 
     /**
      * Get instrument for internal synthesizer on a specific channel
+     * 
      * @param channel MIDI channel
      * @return The instrument, creating it if necessary
      */
-    public InstrumentWrapper getOrCreateInternalSynthInstrument(int channel) {
+    public InstrumentWrapper getOrCreateInternalSynthInstrument(int channel, boolean exclusive) {
         // Generate the ID using the same formula as MelodicSequencer
         Long id = 9985L + channel;
-        
+
         // Try to find by ID first
         InstrumentWrapper instrument = instrumentCache.get(id);
         if (instrument != null && !instrument.getAssignedToPlayer()) {
             instrument.setAssignedToPlayer(true);
             return instrument;
         }
-        
+
         // Next try by name and channel
         for (InstrumentWrapper cached : instrumentCache.values()) {
-            if (Boolean.TRUE.equals(cached.getInternal()) && 
-                cached.getChannel() != null && 
-                !cached.getAssignedToPlayer() &&
-                cached.getChannel() == channel) {
-                cached.setAssignedToPlayer(true);
+            if (Boolean.TRUE.equals(cached.getInternal()) &&
+                    cached.getChannel() != null &&
+                    (!exclusive || !cached.getAssignedToPlayer()) &&
+                    cached.getChannel() == channel) {
+                cached.setAssignedToPlayer(exclusive);
                 return cached;
             }
         }
-        
+
         // No instrument found, create a new one
         try {
             MidiDevice synthDevice = InternalSynthManager.getInstance().getInternalSynthDevice();
             instrument = new InstrumentWrapper(
-                "Internal Synth " + channel,
-                synthDevice,
-                channel
-            );
+                    "Internal Synth " + channel,
+                    synthDevice,
+                    channel);
             instrument.setId(id);
             instrument.setInternal(true);
             instrument.setDeviceName("Gervill");
             instrument.setSoundbankName("Default");
             instrument.setBankIndex(0);
             updateInstrument(instrument);
-            
+
             return instrument;
         } catch (MidiUnavailableException e) {
             logger.error("Failed to create internal instrument: {}", e.getMessage());

@@ -424,7 +424,7 @@ public class MelodicSequencer implements IBusListener {
     public void ensurePlayerHasInstrument() {
         if (player != null && player.getInstrument() == null) {
             logger.warn("Player {} has no instrument, initializing default", getTempChannel());
-            PlayerManager.getInstance().initializeInternalInstrument(player);
+            PlayerManager.getInstance().initializeInternalInstrument(player,true);
         }
     }
 
@@ -795,6 +795,7 @@ public class MelodicSequencer implements IBusListener {
             // setChannel(getSequenceData().getChannel());
             if (player.getChannel() != getChannel()) {
                 player.setChannel(getChannel());
+                player.setOwner(this);
                 // Save the player through PlayerManager
                 PlayerManager.getInstance().savePlayerProperties(player);
             }
@@ -802,10 +803,11 @@ public class MelodicSequencer implements IBusListener {
             // Create new player through PlayerManager
             logger.info("Creating new player for sequencer {}", id);
             player = RedisService.getInstance().newNote();
-            player.setName(player.getId().toString());
+            player.setOwner(this);
+            player.setName("Melo " + id);
             // Get an instrument from InstrumentManager
             InstrumentWrapper instrument = InstrumentManager.getInstance()
-                    .getOrCreateInternalSynthInstrument(player.getChannel());
+                    .getOrCreateInternalSynthInstrument(player.getChannel(),true);
 
             if (instrument != null) {
 
@@ -840,7 +842,7 @@ public class MelodicSequencer implements IBusListener {
             // ensurePlayerHasInstrument();
             // Always initialize the instrument once player is set up
             if (player.getInstrument() == null) {
-                PlayerManager.getInstance().initializeInternalInstrument(player);
+                PlayerManager.getInstance().initializeInternalInstrument(player,true);
             }
 
             // If we have soundbank/bank/preset settings in the sequence data, apply them

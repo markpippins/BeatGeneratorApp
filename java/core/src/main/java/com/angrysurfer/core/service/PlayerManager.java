@@ -133,84 +133,85 @@ public class PlayerManager implements IBusListener {
     /**
      * Handle request to change a player's instrument
      */
-/**
- * Handle request to change a player's instrument
- */
-private void handleInstrumentChangeRequest(Command action) {
-    if (action.getData() instanceof Object[] data && data.length >= 2) {
-        Long playerId = (Long) data[0];
-        InstrumentWrapper instrument = (InstrumentWrapper) data[1];
+    /**
+     * Handle request to change a player's instrument
+     */
+    private void handleInstrumentChangeRequest(Command action) {
+        if (action.getData() instanceof Object[] data && data.length >= 2) {
+            Long playerId = (Long) data[0];
+            InstrumentWrapper instrument = (InstrumentWrapper) data[1];
 
-        Player player = getPlayerById(playerId);
-        if (player != null && instrument != null) {
-            // Store previous instrument ID for logging
-            Long previousInstrumentId = player.getInstrumentId();
-            
-            // Check if this is a drum player (channel 9) and part of a DrumSequencer
-            boolean isDrumPlayer = player.getChannel() == 9;
-            boolean isPartOfSequencer = false;
-            DrumSequencer owningSequencer = null;
-            int playerIndexInSequencer = -1;
-            
-            // Find if this player belongs to a DrumSequencer
-            if (isDrumPlayer && player.getOwner() instanceof DrumSequencer) {
-                owningSequencer = (DrumSequencer) player.getOwner();
-                isPartOfSequencer = true;
-                
-                // Find the index of this player in the sequencer
-                for (int i = 0; i < owningSequencer.getPlayers().length; i++) {
-                    if (player.equals(owningSequencer.getPlayers()[i])) {
-                        playerIndexInSequencer = i;
-                        break;
+            Player player = getPlayerById(playerId);
+            if (player != null && instrument != null) {
+                // Store previous instrument ID for logging
+                Long previousInstrumentId = player.getInstrumentId();
+
+                // Check if this is a drum player (channel 9) and part of a DrumSequencer
+                boolean isDrumPlayer = player.getChannel() == 9;
+                boolean isPartOfSequencer = false;
+                DrumSequencer owningSequencer = null;
+                int playerIndexInSequencer = -1;
+
+                // Find if this player belongs to a DrumSequencer
+                if (isDrumPlayer && player.getOwner() instanceof DrumSequencer) {
+                    owningSequencer = (DrumSequencer) player.getOwner();
+                    isPartOfSequencer = true;
+
+                    // Find the index of this player in the sequencer
+                    for (int i = 0; i < owningSequencer.getPlayers().length; i++) {
+                        if (player.equals(owningSequencer.getPlayers()[i])) {
+                            playerIndexInSequencer = i;
+                            break;
+                        }
                     }
                 }
-            }
-            
-            // Update player's instrument
-            player.setInstrument(instrument);
-            player.setInstrumentId(instrument.getId());
-            
-            // Mark instrument as assigned
-            instrument.setAssignedToPlayer(true);
-            instrument.setChannel(player.getChannel());
-            
-            // If previous instrument exists, mark it as unassigned
-            if (previousInstrumentId != null && !previousInstrumentId.equals(instrument.getId())) {
-                InstrumentWrapper previousInstrument = 
-                    InstrumentManager.getInstance().getInstrumentById(previousInstrumentId);
-                if (previousInstrument != null) {
-                    previousInstrument.setAssignedToPlayer(false);
+
+                // Update player's instrument
+                player.setInstrument(instrument);
+                player.setInstrumentId(instrument.getId());
+
+                // Mark instrument as assigned
+                instrument.setAssignedToPlayer(true);
+                instrument.setChannel(player.getChannel());
+
+                // If previous instrument exists, mark it as unassigned
+                if (previousInstrumentId != null && !previousInstrumentId.equals(instrument.getId())) {
+                    InstrumentWrapper previousInstrument = InstrumentManager.getInstance()
+                            .getInstrumentById(previousInstrumentId);
+                    if (previousInstrument != null) {
+                        previousInstrument.setAssignedToPlayer(false);
+                    }
                 }
-            }
 
-            // Save and apply the change
-            savePlayerProperties(player);
-            applyPlayerInstrument(player);
-            
-            // If this is a drum player in a sequencer, ask if user wants to apply to all drum pads
-            if (isPartOfSequencer && owningSequencer != null) {
-                // This should be handled by the UI component that initiated the change
-                commandBus.publish(Commands.DRUM_PLAYER_INSTRUMENT_CHANGED, this,
-                        new Object[] { owningSequencer, playerIndexInSequencer, instrument });
-            }
-            
-            // If this is the active player, update the reference
-            if (activePlayer != null && activePlayer.getId().equals(player.getId())) {
-                activePlayer = player;
-            }
+                // Save and apply the change
+                savePlayerProperties(player);
+                applyPlayerInstrument(player);
 
-            // Broadcast successful update
-            commandBus.publish(Commands.PLAYER_UPDATED, this, player);
-            commandBus.publish(Commands.PLAYER_INSTRUMENT_CHANGED, this,
-                    new Object[] { playerId, instrument.getId() });
-            
-            logger.info("Changed instrument for player {} from {} to {}",
-                    player.getName(), 
-                    previousInstrumentId, 
-                    instrument.getId());
+                // If this is a drum player in a sequencer, ask if user wants to apply to all
+                // drum pads
+                if (isPartOfSequencer && owningSequencer != null) {
+                    // This should be handled by the UI component that initiated the change
+                    commandBus.publish(Commands.DRUM_PLAYER_INSTRUMENT_CHANGED, this,
+                            new Object[] { owningSequencer, playerIndexInSequencer, instrument });
+                }
+
+                // If this is the active player, update the reference
+                if (activePlayer != null && activePlayer.getId().equals(player.getId())) {
+                    activePlayer = player;
+                }
+
+                // Broadcast successful update
+                commandBus.publish(Commands.PLAYER_UPDATED, this, player);
+                commandBus.publish(Commands.PLAYER_INSTRUMENT_CHANGED, this,
+                        new Object[] { playerId, instrument.getId() });
+
+                logger.info("Changed instrument for player {} from {} to {}",
+                        player.getName(),
+                        previousInstrumentId,
+                        instrument.getId());
+            }
         }
     }
-}
 
     /**
      * Set the currently active player and notify the system
@@ -289,7 +290,7 @@ private void handleInstrumentChangeRequest(Command action) {
     /**
      * Apply a player's preset to MIDI system
      */
-    private void applyPlayerPreset(Player player) {
+    public void applyPlayerPreset(Player player) {
         if (player == null || player.getInstrument() == null)
             return;
 
@@ -308,9 +309,7 @@ private void handleInstrumentChangeRequest(Command action) {
                     player.getName(), instrument.getPreset());
 
             // Also update sequencer if player belongs to one
-            if (player.getOwner() instanceof MelodicSequencer sequencer) {
-                PlayerManager.getInstance().initializeInstrument(player);
-            }
+            PlayerManager.getInstance().initializeInstrument(player, player.getOwner() instanceof MelodicSequencer);
         } catch (Exception e) {
             logger.error("Error applying player preset: {}", e.getMessage(), e);
         }
@@ -319,15 +318,13 @@ private void handleInstrumentChangeRequest(Command action) {
     /**
      * Apply a player's instrument settings to MIDI system
      */
-    private void applyPlayerInstrument(Player player) {
+    public void applyPlayerInstrument(Player player) {
         if (player == null || player.getInstrument() == null)
             return;
 
         try {
             // If player belongs to a sequencer, refresh its instrument
-            if (player.getOwner() instanceof MelodicSequencer sequencer) {
-                PlayerManager.getInstance().initializeInstrument(player);
-            }
+            PlayerManager.getInstance().initializeInstrument(player, player.getOwner() instanceof MelodicSequencer);
 
             // Also apply the preset
             applyPlayerPreset(player);
@@ -438,11 +435,13 @@ private void handleInstrumentChangeRequest(Command action) {
         logger.info("Channel consistency check completed");
     }
 
-    public void initializeInternalInstrument(Player player) {
+    public void initializeInternalInstrument(Player player, boolean exclusive) {
         if (player == null) {
             logger.warn("Cannot initialize internal instrument for null player");
             return;
         }
+
+        Player currentPlayer = getActivePlayer();
 
         try {
             // Try to get an internal instrument from the manager
@@ -488,10 +487,11 @@ private void handleInstrumentChangeRequest(Command action) {
                 internalInstrument.setBankIndex(0);
                 internalInstrument.setId(numericId); // Set ID separately
                 internalInstrument.setChannel(player.getChannel());
-//                internalInstrument
-//                        .setPreset(
-//                                player.getInstrument().getPreset() != null ? player.getInstrument().getPreset()
-//                                        : player.getChannel());
+                // internalInstrument
+                // .setPreset(
+                // player.getInstrument().getPreset() != null ?
+                // player.getInstrument().getPreset()
+                // : player.getChannel());
 
                 // Register with instrument manager
                 manager.updateInstrument(internalInstrument);
@@ -509,18 +509,20 @@ private void handleInstrumentChangeRequest(Command action) {
             logger.info("Player {} initialized with internal instrument", player.getId());
 
             // Send program change to actually set the instrument sound
-            initializeInstrument(player);
+            initializeInstrument(player, exclusive);
 
         } catch (Exception e) {
             logger.error("Failed to initialize internal instrument: {}", e.getMessage(), e);
         }
+
+        setActivePlayer(currentPlayer);
     }
 
     /**
      * Initialize the instrument for this sequencer
      * Called by PlayerManager during setup
      */
-    public void initializeInstrument(Player player) {
+    public void initializeInstrument(Player player, boolean exclusive) {
         // If we don't have a player yet, exit
         if (player == null) {
             logger.warn("Cannot initialize instrument - no player assigned to sequencer");
@@ -534,7 +536,7 @@ private void handleInstrumentChangeRequest(Command action) {
                 // First try to find an existing instrument for this channel
                 int channel = player.getChannel();
                 player.setInstrument(InstrumentManager.getInstance()
-                        .getOrCreateInternalSynthInstrument(channel));
+                        .getOrCreateInternalSynthInstrument(channel,exclusive));
 
                 logger.info("Created default instrument for sequencer on channel {}", channel);
             }

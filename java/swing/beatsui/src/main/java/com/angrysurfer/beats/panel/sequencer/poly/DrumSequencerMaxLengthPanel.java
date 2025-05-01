@@ -37,21 +37,8 @@ public class DrumSequencerMaxLengthPanel extends JPanel {
      */
     public DrumSequencerMaxLengthPanel(DrumSequencer sequencer) {
         this.sequencer = sequencer;
-
-        // Use compact titled border with lighter border
-        // setBorder(BorderFactory.createTitledBorder(
-        // BorderFactory.createLineBorder(Color.GRAY),
-        // "Sequencer Parameters",
-        // TitledBorder.DEFAULT_JUSTIFICATION,
-        // TitledBorder.DEFAULT_POSITION,
-        // null,
-        // null
-        // ));
-
         // In DrumSequencerMaxLengthPanel's constructor
-        setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createTitledBorder("Sequencer Parameters"),
-                BorderFactory.createEmptyBorder(1, 2, 1, 2)));
+        UIUtils.setWidgetPanelBorder(this, "Sequencer");
 
         // REDUCED: from 5,2 to 2,1
         setLayout(new FlowLayout(FlowLayout.CENTER, 2, 1));
@@ -64,7 +51,7 @@ public class DrumSequencerMaxLengthPanel extends JPanel {
      */
     private void initializeComponents() {
         // Create a label with minimum width
-        JLabel label = new JLabel("Max Length:");
+        JLabel label = new JLabel("Length:");
         label.setFont(label.getFont().deriveFont(11f)); // Smaller font
         add(label);
 
@@ -72,9 +59,9 @@ public class DrumSequencerMaxLengthPanel extends JPanel {
         Integer[] maxLengths = { 16, 32, 64, 128 };
         maxLengthCombo = new JComboBox<>(maxLengths);
         maxLengthCombo.setSelectedItem(sequencer.getMaxPatternLength());
-
+        
         // REDUCED: width from MEDIUM_CONTROL_WIDTH to SMALL_CONTROL_WIDTH + 10
-        maxLengthCombo.setPreferredSize(new Dimension(UIUtils.SMALL_CONTROL_WIDTH + 10, UIUtils.CONTROL_HEIGHT));
+        maxLengthCombo.setPreferredSize(new Dimension(UIUtils.MEDIUM_CONTROL_WIDTH + 10, UIUtils.CONTROL_HEIGHT));
         maxLengthCombo.setToolTipText("Set maximum pattern length");
 
         maxLengthCombo.addActionListener(e -> {

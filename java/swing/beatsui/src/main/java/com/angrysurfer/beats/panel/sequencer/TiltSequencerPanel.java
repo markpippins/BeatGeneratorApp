@@ -43,7 +43,7 @@ public class TiltSequencerPanel extends JPanel implements IBusListener {
     public TiltSequencerPanel(MelodicSequencer sequencer) {
         this.sequencer = sequencer;
         setLayout(new BorderLayout());
-        setBorder(BorderFactory.createTitledBorder("Harmonic Tilt"));
+        UIUtils.setWidgetPanelBorder(this, "Harmonic Tilt");
         setPreferredSize(new Dimension(getPreferredSize().width, 100));
 
         JPanel dialsPanel = new JPanel(new GridLayout(1, DIAL_COUNT, 2, 0));

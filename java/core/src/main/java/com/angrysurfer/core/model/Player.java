@@ -74,8 +74,6 @@ public abstract class Player implements Callable<Boolean>, Serializable, IBusLis
 
     private Integer maxVelocity = 110;
 
-    // private Integer preset = 1;
-
     private Boolean stickyPreset = false;
 
     private Integer probability = 100;

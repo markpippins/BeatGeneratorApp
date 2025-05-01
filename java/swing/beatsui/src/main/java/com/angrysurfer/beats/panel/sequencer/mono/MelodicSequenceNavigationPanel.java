@@ -61,16 +61,7 @@ public class MelodicSequenceNavigationPanel extends JPanel {
     private void initializeUI() {
         // Set layout and border with more compact spacing
         setLayout(new FlowLayout(FlowLayout.LEFT, 5, 2));
-        // setBorder(BorderFactory.createTitledBorder(
-        //         BorderFactory.createLineBorder(
-        //                 UIUtils.getColors()[MelodicSequencerManager.getInstance().getSequencerCount()]),
-        //         "Sequence",
-        //         TitledBorder.LEFT,
-        //         TitledBorder.TOP));
-
-        setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createTitledBorder("Sequence"),
-                BorderFactory.createEmptyBorder(1, 2, 1, 2)));
+        UIUtils.setWidgetPanelBorder(this, "Sequence");
         // Create ID label
         sequenceIdLabel = new JLabel(getFormattedIdText(), SwingConstants.CENTER);
         sequenceIdLabel.setPreferredSize(new Dimension(LABEL_WIDTH, UIUtils.CONTROL_HEIGHT));

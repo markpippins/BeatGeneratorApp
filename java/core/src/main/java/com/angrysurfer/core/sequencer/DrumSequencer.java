@@ -7,6 +7,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 
 import com.angrysurfer.core.redis.RedisService;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -22,6 +23,7 @@ import com.angrysurfer.core.model.InstrumentWrapper;
 import com.angrysurfer.core.model.Player;
 import com.angrysurfer.core.service.DrumSequencerManager;
 import com.angrysurfer.core.service.InternalSynthManager;
+import com.angrysurfer.core.service.PlayerManager;
 import com.angrysurfer.core.service.SessionManager;
 
 import lombok.Getter;
@@ -301,24 +303,18 @@ public class DrumSequencer implements IBusListener {
 
         for (int i = 0; i < DRUM_PAD_COUNT; i++) {
             players[i] = RedisService.getInstance().newStrike();
-            players[i].setName("Drum " + (i + 1));
+            players[i].setOwner(this);
+            players[i].setChannel(MIDI_DRUM_CHANNEL);
             // Set default root notes - standard GM drum map starting points
             players[i].setRootNote(MIDI_DRUM_NOTE_OFFSET + i); // Start from MIDI note 36 (C1)
+            players[i].setName(InternalSynthManager.getInstance().getDrumName(MIDI_DRUM_NOTE_OFFSET + i));
             // Configure to use drum channel (9)
-            players[i].setChannel(MIDI_DRUM_CHANNEL);
 
             // Create an InstrumentWrapper for the internal synth
-            instruments[i] = new InstrumentWrapper(synth.getDeviceInfo().getName(), synth);
-            instruments[i].setName(synth.getDeviceInfo().getName());
-            instruments[i].setDeviceName(synth.getDeviceInfo().getName());
-            instruments[i].setChannels(new Integer[] { MIDI_DRUM_CHANNEL }); // Drum channel
-            instruments[i].setInternal(true);
-            instruments[i].setChannel(MIDI_DRUM_CHANNEL);
-            logger.info("Created internal synth instrument for drum sequencer: {}", instruments[i].getName());
-
             // Assign the internal synth instrument
-            players[i].setInstrument(instruments[i]);
-
+            PlayerManager.getInstance().initializeInstrument(players[i], false);
+            PlayerManager.getInstance().applyPlayerInstrument(players[i]);
+            instruments[i] = players[i].getInstrument();
             logger.debug("Initialized drum pad {} with note {}", i, MIDI_DRUM_NOTE_OFFSET + i);
         }
 

@@ -52,20 +52,7 @@ public class DrumSequenceNavigationPanel extends JPanel {
         // REDUCED: from 5,2 to 2,1
         setLayout(new FlowLayout(FlowLayout.LEFT, 2, 1));
 
-        // Use compact titled border with lighter border
-        // setBorder(BorderFactory.createTitledBorder(
-        // BorderFactory.createLineBorder(Color.GRAY),
-        // "Sequence Navigation",
-        // TitledBorder.LEFT,
-        // TitledBorder.TOP,
-        // null,
-        // null
-        // ));
-        // In DrumSequenceNavigationPanel's initializeUI method
-
-        setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createTitledBorder("Sequence Navigation"),
-                BorderFactory.createEmptyBorder(1, 2, 1, 2)));
+        UIUtils.setWidgetPanelBorder(this, "Sequence");
 
         // Make ID label slightly smaller
         sequenceIdLabel = new JLabel(getFormattedIdText(), SwingConstants.CENTER);

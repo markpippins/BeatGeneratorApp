@@ -53,15 +53,7 @@ public class DrumSequencerParametersPanel extends JPanel {
     public DrumSequencerParametersPanel(DrumSequencer sequencer) {
         this.sequencer = sequencer;
         
-        // Use compact titled border
-        setBorder(BorderFactory.createTitledBorder(
-            BorderFactory.createLineBorder(Color.GRAY),
-            "Sequence Parameters",
-            TitledBorder.DEFAULT_JUSTIFICATION,
-            TitledBorder.DEFAULT_POSITION,
-            null,
-            null
-        ));
+        UIUtils.setWidgetPanelBorder(this,"Sequence Parameters");
         
         initializeComponents();
     }
@@ -112,7 +104,7 @@ public class DrumSequencerParametersPanel extends JPanel {
         // REDUCED: from 5,0 to 2,0
         JPanel directionPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 2, 0));
         directionCombo = new JComboBox<>(new String[] { "Forward", "Backward", "Bounce", "Random" });
-        directionCombo.setPreferredSize(new Dimension(UIUtils.MEDIUM_CONTROL_WIDTH + 15, UIUtils.CONTROL_HEIGHT));
+        directionCombo.setPreferredSize(new Dimension(UIUtils.LARGE_CONTROL_WIDTH + 15, UIUtils.CONTROL_HEIGHT));
         directionCombo.setToolTipText("Set the playback direction of the pattern");
         directionCombo.addActionListener(e -> {
             if (updatingControls) return;
@@ -139,7 +131,7 @@ public class DrumSequencerParametersPanel extends JPanel {
         // REDUCED: from 5,0 to 2,0
         JPanel timingPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 2, 0));
         timingCombo = new JComboBox<>(TimingDivision.getValuesAlphabetically());
-        timingCombo.setPreferredSize(new Dimension(UIUtils.MEDIUM_CONTROL_WIDTH + 15, UIUtils.CONTROL_HEIGHT));
+        timingCombo.setPreferredSize(new Dimension(UIUtils.LARGE_CONTROL_WIDTH + 15, UIUtils.CONTROL_HEIGHT));
         timingCombo.addActionListener(e -> {
             if (updatingControls) return;
             

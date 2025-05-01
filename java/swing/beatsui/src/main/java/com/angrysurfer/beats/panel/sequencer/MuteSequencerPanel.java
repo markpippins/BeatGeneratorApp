@@ -92,15 +92,8 @@ public class MuteSequencerPanel extends JPanel implements IBusListener {
     
     private void initialize() {
         setLayout(new BorderLayout(2, 2));
-        setBorder(BorderFactory.createTitledBorder(
-            BorderFactory.createLineBorder(Color.GRAY),
-            "Mute Sequence",
-            javax.swing.border.TitledBorder.DEFAULT_JUSTIFICATION,
-            javax.swing.border.TitledBorder.DEFAULT_POSITION,
-            null,
-            null
-         ));
-        
+        UIUtils.setWidgetPanelBorder(this, "Mutes");
+
         // Set both preferred and maximum height to 40px
         setPreferredSize(new Dimension(800, 44));
         setMaximumSize(new Dimension(Integer.MAX_VALUE, 4));

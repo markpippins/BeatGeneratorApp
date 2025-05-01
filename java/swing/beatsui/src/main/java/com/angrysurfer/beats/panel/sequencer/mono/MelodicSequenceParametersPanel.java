@@ -49,22 +49,7 @@ public class MelodicSequenceParametersPanel extends JPanel {
      * Initialize the panel with all controls
      */
     private void initialize() {
-        // Use a more compact titled border with smaller insets
-        // setBorder(BorderFactory.createTitledBorder(
-        // BorderFactory.createLineBorder(Color.GRAY),
-        // "Sequence Parameters",
-        // TitledBorder.DEFAULT_JUSTIFICATION,
-        // TitledBorder.DEFAULT_POSITION,
-        // null,
-        // null
-        // ));
-
-        setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createTitledBorder("Sequence Parameters"),
-                BorderFactory.createEmptyBorder(1, 2, 1, 2)));
-
-        // Use BorderLayout for the main panel instead of FlowLayout
-        setLayout(new BorderLayout(0, 0));
+        UIUtils.setWidgetPanelBorder(this,"Sequence Parameters");
 
         // Reduce spacing in the controls panel
         JPanel controlsPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 1, 0));
