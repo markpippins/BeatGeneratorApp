@@ -1,6 +1,8 @@
 package com.angrysurfer.beats.panel.sequencer.poly;
 
-import java.awt.*;
+import java.awt.Component;
+import java.awt.Container;
+import java.awt.GridLayout;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
@@ -12,13 +14,12 @@ import javax.swing.BorderFactory;
 import javax.swing.JPanel;
 import javax.swing.JTabbedPane;
 
-import com.angrysurfer.beats.panel.MainPanel;
-import com.angrysurfer.core.model.Player;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.angrysurfer.beats.panel.MainPanel;
 import com.angrysurfer.beats.widget.DrumSequencerButton;
-import com.angrysurfer.core.model.Strike;
+import com.angrysurfer.core.model.Player;
 import com.angrysurfer.core.sequencer.DrumSequencer;
 
 /**
@@ -129,22 +130,27 @@ public class DrumSelectorPanel extends JPanel {
                         // Select the drum pad first
                         parentPanel.selectDrumPad(drumIndex);
                         
-                        // Find the MainPanel ancestor
-                        MainPanel mainPanel = findMainPanel();
-                        if (mainPanel != null) {
-                            // Get the currently selected component from the main tabbed pane
-                            Component selectedComponent = mainPanel.getSelectedComponent();
-                            
-                            // If it's a JTabbedPane and likely our drumsTabbedPane
-                            if (selectedComponent instanceof JTabbedPane) {
-                                JTabbedPane drumsTabbedPane = (JTabbedPane) selectedComponent;
-                                
-                                // Switch to the "Parameters" tab (index 1)
-                                drumsTabbedPane.setSelectedIndex(1);
-                                
-                                logger.debug("Double-clicked drum pad {} - switched to Parameters tab", drumIndex);
+                        // Find the parent tabbed pane that contains "Parameters" tab
+                        // This approach works regardless of the nesting structure
+                        Container parent = parentPanel;
+                        while (parent != null) {
+                            if (parent instanceof JTabbedPane) {
+                                JTabbedPane tabbedPane = (JTabbedPane) parent;
+                                // Check if this tabbed pane has a "Parameters" tab
+
+                                for (int i = 0; i < tabbedPane.getTabCount(); i++) {
+                                    if ("Parameters".equals(tabbedPane.getTitleAt(i))) {
+                                        // Found it - switch to the Parameters tab
+                                        tabbedPane.setSelectedIndex(i);
+                                        logger.debug("Double-clicked drum pad {} - switched to Parameters tab", drumIndex);
+                                        return;
+                                    }
+                                }
                             }
+                            parent = parent.getParent();
                         }
+                        
+                        logger.warn("Could not find Parameters tab when double-clicking drum pad {}", drumIndex);
                     }
                 }
             });

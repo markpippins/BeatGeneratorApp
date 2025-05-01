@@ -21,6 +21,7 @@ import javax.swing.JSpinner;
 import javax.swing.JToggleButton;
 import javax.swing.SwingUtilities;
 
+import com.angrysurfer.beats.widget.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -30,8 +31,6 @@ import com.angrysurfer.beats.panel.SessionControlPanel;
 import com.angrysurfer.beats.panel.player.SoundParametersPanel;
 import com.angrysurfer.beats.panel.sequencer.MuteSequencerPanel;
 import com.angrysurfer.beats.panel.sequencer.TiltSequencerPanel;
-import com.angrysurfer.beats.widget.Dial;
-import com.angrysurfer.beats.widget.DrumButton;
 import com.angrysurfer.core.api.Command;
 import com.angrysurfer.core.api.CommandBus;
 import com.angrysurfer.core.api.Commands;
@@ -207,21 +206,13 @@ public class MelodicSequencerPanel extends JPanel implements IBusListener {
         // Clear any existing components first to prevent duplication
         removeAll();
 
-        // REDUCED: from 5,5 to 2,2
         setLayout(new BorderLayout(2, 2));
-        // REDUCED: from 5,5,5,5 to 2,2,2,2
-        setBorder(BorderFactory.createEmptyBorder(2, 2, 2, 2));
+        UIUtils.setPanelBorder(this);
 
-        // Create west panel to hold navigation
-        // REDUCED: from 5,5 to 2,2
         JPanel westPanel = new JPanel(new BorderLayout(2, 2));
 
-        // Create east panel for sound parameters
-        // REDUCED: from 5,5 to 2,2
         JPanel eastPanel = new JPanel(new BorderLayout(2, 2));
 
-        // Create top panel to hold west and east panels
-        // REDUCED: from 5,5 to 2,2
         JPanel topPanel = new JPanel(new BorderLayout(2, 2));
 
         // Create sequence navigation panel
@@ -310,39 +301,54 @@ public class MelodicSequencerPanel extends JPanel implements IBusListener {
     }
 
     /**
-     * Update the instrument info label with current player and instrument
-     * information
-     */
-    // private void updateInstrumentInfoLabel() {
-    //     if (sequencer == null || sequencer.getPlayer() == null) {
-    //         instrumentInfoLabel.setText("No Player");
-    //         return;
-    //     }
-
-    //     Player player = sequencer.getPlayer();
-    //     String playerName = player.getName() + " (" + player.getId() + ")";
-    //     String instrumentName = "No Instrument";
-    //     String channelInfo = "";
-
-    //     if (player.getInstrument() != null) {
-    //         instrumentName = player.getInstrument().getName() + " (" + player.getInstrument().getId() + ")";
-    //         int channel = player.getChannel() != null ? player.getChannel() : 0;
-    //         channelInfo = " (Ch " + (channel + 1) + ")";
-    //     }
-
-    //     instrumentInfoLabel.setText(playerName + " - " + instrumentName + " - " + channelInfo);
-    // }
-
-    /**
-     * Creates the sound parameters panel for instrument selection and editing
+     * Creates the sound parameters panel with instrument and channel selectors
      */
     private JPanel createSoundParametersPanel() {
-        // Create the standardized SoundParametersPanel with the current player
-        // Player is null-safe in SoundParametersPanel constructor
-        SoundParametersPanel panel = new SoundParametersPanel(sequencer.getPlayer());
+        // Create main container with BorderLayout
+        JPanel containerPanel = new JPanel(new BorderLayout(4, 2));
 
-        // Return the panel
-        return panel;
+        // Create left panel to hold instrument and channel combos
+        JPanel leftPanel = new JPanel(new BorderLayout(2, 4));
+
+        // Create instrument combo panel with add button
+        JPanel instrumentPanel = new JPanel(new BorderLayout(2, 0));
+        UIUtils.setWidgetPanelBorder(instrumentPanel, "Instrument");
+        
+        // Create combo and button in sub-panel
+        JPanel instrumentComboPanel = new JPanel(new BorderLayout());
+        InstrumentCombo instrumentCombo = new InstrumentCombo();
+        instrumentCombo.setCurrentPlayer(sequencer.getPlayer());
+        instrumentComboPanel.add(instrumentCombo, BorderLayout.CENTER);
+        
+        // Create add instrument button and add to the right of combo
+        AddInstrumentButton addInstrumentButton = new AddInstrumentButton();
+        addInstrumentButton.setCurrentPlayer(sequencer.getPlayer());
+        
+        // Add combo (center) and button (east) to the instrument panel
+        instrumentPanel.add(instrumentComboPanel, BorderLayout.CENTER);
+        instrumentPanel.add(addInstrumentButton, BorderLayout.EAST);
+
+        // Create channel combo panel
+        JPanel channelPanel = new JPanel(new BorderLayout());
+        UIUtils.setWidgetPanelBorder(channelPanel, "Channel");
+        ChannelCombo channelCombo = new ChannelCombo();
+        channelCombo.setCurrentPlayer(sequencer.getPlayer());
+        channelPanel.add(channelCombo, BorderLayout.CENTER);
+
+        // Add instrument panel at the top of left panel
+        leftPanel.add(instrumentPanel, BorderLayout.WEST);
+
+        // Add channel panel below instrument panel
+        leftPanel.add(channelPanel, BorderLayout.CENTER);
+
+        // Create the standardized SoundParametersPanel with the current player
+        SoundParametersPanel soundPanel = new SoundParametersPanel(sequencer.getPlayer());
+
+        // Add left panel to the WEST and sound panel to the CENTER
+        containerPanel.add(leftPanel, BorderLayout.WEST);
+        containerPanel.add(soundPanel, BorderLayout.CENTER);
+
+        return containerPanel;
     }
 
     private JPanel createGeneratePanel() {
@@ -531,11 +537,11 @@ public class MelodicSequencerPanel extends JPanel implements IBusListener {
             case Commands.PLAYER_UPDATED, Commands.INSTRUMENT_CHANGED -> {
                 // Check if this update is for our sequencer's player
                 // if (action.getData() instanceof Player &&
-                //         sequencer != null &&
-                //         sequencer.getPlayer() != null &&
-                //         sequencer.getPlayer().getId().equals(((Player) action.getData()).getId())) {
+                // sequencer != null &&
+                // sequencer.getPlayer() != null &&
+                // sequencer.getPlayer().getId().equals(((Player) action.getData()).getId())) {
 
-                //     SwingUtilities.invokeLater(this::updateInstrumentInfoLabel);
+                // SwingUtilities.invokeLater(this::updateInstrumentInfoLabel);
                 // }
             }
 

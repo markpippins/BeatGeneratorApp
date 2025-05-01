@@ -62,6 +62,7 @@ public class MelodicSequenceNavigationPanel extends JPanel {
         // Set layout and border with more compact spacing
         setLayout(new FlowLayout(FlowLayout.LEFT, 5, 2));
         UIUtils.setWidgetPanelBorder(this, "Sequence");
+
         // Create ID label
         sequenceIdLabel = new JLabel(getFormattedIdText(), SwingConstants.CENTER);
         sequenceIdLabel.setPreferredSize(new Dimension(LABEL_WIDTH, UIUtils.CONTROL_HEIGHT));

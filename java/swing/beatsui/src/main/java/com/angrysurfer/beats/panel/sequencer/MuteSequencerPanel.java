@@ -167,7 +167,7 @@ public class MuteSequencerPanel extends JPanel implements IBusListener {
         // Assuming 24 ticks per step (96 PPQN / 4 = 24 ticks per 16th note)
         if (update.tick() != null && update.tick() % 24 == 0) {
             // Calculate step from tick (0-15)
-            int step = (int)((update.tick() / 24) % STEP_COUNT);
+            int step = (int)((update.bar() / 24) % STEP_COUNT);
             
             // Only process if step changed
             if (step != currentStep) {

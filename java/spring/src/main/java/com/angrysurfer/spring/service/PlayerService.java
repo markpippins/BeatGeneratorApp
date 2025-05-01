@@ -117,14 +117,14 @@ public class PlayerService {
         return null;
     }
 
-    public Player mutePlayer(Long playerId) {
+    public Player getSessionPlayer(Long playerId) {
         logger.info("mutePlayer() - playerId: {}", playerId);
         Session session = getSession();
         if (session != null) {
-            Player player = playerManager.mutePlayer(session, playerId);
-            if (player != null) {
-                redisService.savePlayer(player);
-            }
+            Player player = playerManager.getPlayerById(playerId);
+//            if (player != null) {
+//                redisService.savePlayer(player);
+//            }
             return player;
         }
         return null;

@@ -356,13 +356,7 @@ public class StatusBar extends JPanel implements IBusListener {
     
     private JPanel createSectionPanel(String title) {
         JPanel panel = new JPanel();
-        panel.setBorder(BorderFactory.createCompoundBorder(
-            BorderFactory.createTitledBorder(
-                BorderFactory.createLineBorder(SECTION_BORDER_COLOR, 1),
-                title
-            ),
-            BorderFactory.createEmptyBorder(2, 5, 2, 5) // Add consistent padding inside panels
-        ));
+        UIUtils.setWidgetPanelBorder(panel, title);
         return panel;
     }
     

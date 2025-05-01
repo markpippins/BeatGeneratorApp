@@ -20,17 +20,15 @@ import javax.swing.SpinnerNumberModel;
 import javax.swing.SwingUtilities;
 import javax.swing.filechooser.FileNameExtensionFilter;
 
+import com.angrysurfer.core.api.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.angrysurfer.beats.panel.EuclideanPatternPanel;
 import com.angrysurfer.beats.panel.instrument.CustomControlsPanel;
+import com.angrysurfer.beats.panel.instrument.PlayerInstrumentPanel;
 import com.angrysurfer.beats.panel.player.PlayerEditPanel;
 import com.angrysurfer.beats.panel.player.RuleEditPanel;
-import com.angrysurfer.core.api.Command;
-import com.angrysurfer.core.api.CommandBus;
-import com.angrysurfer.core.api.Commands;
-import com.angrysurfer.core.api.IBusListener;
 import com.angrysurfer.core.config.UserConfig;
 import com.angrysurfer.core.config.UserConfigConverter;
 import com.angrysurfer.core.model.InstrumentWrapper;
@@ -73,6 +71,7 @@ public class DialogManager implements IBusListener {
             case Commands.RULE_ADD_REQUEST -> handleAddRule((Player) action.getData());
             case Commands.RULE_EDIT_REQUEST -> handleEditRule((Rule) action.getData());
             case Commands.EDIT_PLAYER_PARAMETERS -> handlePlayerParameters((Player) action.getData());
+            case Commands.CREATE_INSTRUMENT_FOR_PLAYER_REQUEST -> handleCreateInstrumentForPlayer((Player) action.getData());
             case Commands.LOAD_CONFIG -> SwingUtilities.invokeLater(() -> showConfigFileChooserDialog());
             case Commands.SAVE_CONFIG -> SwingUtilities.invokeLater(() -> showConfigFileSaverDialog());
             case Commands.SHOW_MAX_LENGTH_DIALOG -> handleMaxLengthDialog((DrumSequencer) action.getData());
@@ -344,6 +343,34 @@ public class DialogManager implements IBusListener {
                     "No instrument assigned to player",
                     "Warning",
                     JOptionPane.WARNING_MESSAGE);
+        }
+    }
+
+    private void handleCreateInstrumentForPlayer(Player player) {
+        if (player != null) {
+            SwingUtilities.invokeLater(() -> {
+                try {
+                    // Create panel for creating new instrument
+                    PlayerInstrumentPanel panel = new PlayerInstrumentPanel(player);
+                    Dialog<InstrumentWrapper> dialog = frame.createDialog(null, panel);
+                    dialog.setTitle("Create Instrument for " + player.getName());
+                    
+                    // Show dialog
+                    boolean result = dialog.showDialog();
+                    
+                    // Result handling is done inside PlayerInstrumentPanel
+                    // which publishes the appropriate events
+                    
+                } catch (Exception e) {
+                    logger.error("Error creating instrument for player: " + e.getMessage(), e);
+                    commandBus.publish(
+                        Commands.STATUS_UPDATE,
+                        this,
+                        new StatusUpdate("DialogManager", "Error",
+                            "Failed to create instrument: " + e.getMessage())
+                    );
+                }
+            });
         }
     }
 

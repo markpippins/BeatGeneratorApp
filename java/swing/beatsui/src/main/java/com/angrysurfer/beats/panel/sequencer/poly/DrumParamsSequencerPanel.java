@@ -180,8 +180,7 @@ public class DrumParamsSequencerPanel extends JPanel implements IBusListener {
 
         // REDUCED: from 5,5 to 2,2
         setLayout(new BorderLayout(2, 2));
-        // REDUCED: from 5,5,5,5 to 2,2,2,2
-        // setBorder(BorderFactory.createEmptyBorder(2, 2, 2, 2));
+        UIUtils.setPanelBorder(this);
 
         // Create west panel to hold navigation
         JPanel westPanel = new JPanel(new BorderLayout(2, 2));
@@ -699,20 +698,20 @@ public class DrumParamsSequencerPanel extends JPanel implements IBusListener {
                 // Only respond to events from other panels to avoid loops
                 if (action.getData() instanceof DrumPadSelectionEvent event && action.getSender() != this) {
                     int newSelection = event.getNewSelection();
-                    
+
                     // Check if index is valid and different
-                    if (newSelection != selectedPadIndex && 
-                        newSelection >= 0 && 
-                        newSelection < drumPadPanel.getButtonCount()) {
-                        
+                    if (newSelection != selectedPadIndex &&
+                            newSelection >= 0 &&
+                            newSelection < drumPadPanel.getButtonCount()) {
+
                         // Skip heavy operations - just update necessary state
                         selectedPadIndex = newSelection;
-                        
+
                         // Update UI without triggering further events
                         SwingUtilities.invokeLater(() -> {
                             // Just visually select without callbacks
                             drumPadPanel.selectDrumPadNoCallback(newSelection);
-                            
+
                             // Update minimal UI elements
                             updateInstrumentInfoLabel();
                             refreshTriggerButtonsForPad(newSelection);
@@ -835,44 +834,48 @@ public class DrumParamsSequencerPanel extends JPanel implements IBusListener {
 
     // Replace the handleDrumPadSelected method with this version
     private void handleDrumPadSelected(int padIndex) {
-        // Don't process if already selected or we're in the middle of handling a selection
-        if (padIndex == selectedPadIndex || isHandlingSelection) return;
+        // Don't process if already selected or we're in the middle of handling a
+        // selection
+        if (padIndex == selectedPadIndex || isHandlingSelection)
+            return;
 
         try {
             // Set flag to prevent recursive calls
             isHandlingSelection = true;
-            
+
             selectedPadIndex = padIndex;
             sequencer.setSelectedPadIndex(padIndex);
-            
+
             // Get the player for this pad index
             if (padIndex >= 0 && padIndex < sequencer.getPlayers().length) {
                 Player player = sequencer.getPlayers()[padIndex];
-                
+
                 if (player != null) {
-                    // Just set active player without triggering events
-                    PlayerManager.getInstance().setActivePlayer(player);
+                    CommandBus.getInstance().publish(
+                            Commands.PLAYER_SELECTED,
+                            this,
+                            player);
                 }
             }
-            
+
             // Update UI in a specific order
             updateInstrumentInfoLabel();
             setTriggerButtonsEnabled(true);
             refreshTriggerButtonsForPad(selectedPadIndex);
             updateDialsForSelectedPad();
-            
+
             // Then do other updates
             if (sequenceParamsPanel != null) {
                 sequenceParamsPanel.updateControls(padIndex);
             }
             updateSoundParametersPanel();
-            
-            // Publish drum pad event LAST and only if we're handling a direct user selection
+
+            // Publish drum pad event LAST and only if we're handling a direct user
+            // selection
             CommandBus.getInstance().publish(
-                Commands.DRUM_PAD_SELECTED,
-                this, 
-                new DrumPadSelectionEvent(-1, padIndex)
-            );
+                    Commands.DRUM_PAD_SELECTED,
+                    this,
+                    new DrumPadSelectionEvent(-1, padIndex));
         } finally {
             // Always clear the flag when done
             isHandlingSelection = false;

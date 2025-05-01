@@ -179,11 +179,9 @@ public class DrumEffectsSequencerPanel extends JPanel implements IBusListener {
 
         // REDUCED: from 5,5 to 2,2
         setLayout(new BorderLayout(2, 2));
-        // REDUCED: from 5,5,5,5 to 2,2,2,2
-        // setBorder(BorderFactory.createEmptyBorder(2, 2, 2, 2));
+        UIUtils.setPanelBorder(this);
 
         // Create west panel to hold navigation
-        // REDUCED: from 5,5 to 2,2
         JPanel westPanel = new JPanel(new BorderLayout(2, 2));
 
         // Create east panel for sound parameters
@@ -562,8 +560,11 @@ public class DrumEffectsSequencerPanel extends JPanel implements IBusListener {
                 Player player = sequencer.getPlayers()[padIndex];
                 
                 if (player != null) {
-                    // Just set active player without triggering events
-                    PlayerManager.getInstance().setActivePlayer(player);
+                    CommandBus.getInstance().publish(
+                        Commands.PLAYER_SELECTED,
+                        this, 
+                        player
+                    );
                 }
             }
             

@@ -49,6 +49,7 @@ public class MelodicSequenceParametersPanel extends JPanel {
      * Initialize the panel with all controls
      */
     private void initialize() {
+        setLayout(new BorderLayout(0, 0)); // No gaps between components
         UIUtils.setWidgetPanelBorder(this,"Sequence Parameters");
 
         // Reduce spacing in the controls panel
@@ -61,14 +62,7 @@ public class MelodicSequenceParametersPanel extends JPanel {
         createLoopButton(controlsPanel);
         createRotationControls(controlsPanel);
 
-        // Remove these calls as they're now in MelodicSequencerScalePanel:
-        // createRootNoteControls(controlsPanel);
-        // createQuantizeControls(controlsPanel);
-        // createScaleControls(controlsPanel);
-        // createOctaveControls(controlsPanel);
-
-        // Add the controls panel to the CENTER of the BorderLayout
-        add(controlsPanel, BorderLayout.CENTER);
+        add(controlsPanel, BorderLayout.WEST);
 
         // Reduce spacing in the clear button panel
         JPanel clearPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 1, 0));

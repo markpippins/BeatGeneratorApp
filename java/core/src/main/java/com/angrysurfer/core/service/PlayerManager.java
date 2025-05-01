@@ -1,11 +1,15 @@
 package com.angrysurfer.core.service;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 
 import javax.sound.midi.MidiDevice;
 import javax.sound.midi.MidiUnavailableException;
 
+import com.angrysurfer.core.model.Rule;
+import com.angrysurfer.core.model.Session;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -563,45 +567,30 @@ public class PlayerManager implements IBusListener {
      * Sends the appropriate program change MIDI message to set the instrument sound
      */
     public void applyInstrumentPreset(Player player) {
-        if (player == null || player.getInstrument() == null) {
-            logger.debug("Cannot apply preset - player or instrument is null");
-            return;
-        }
 
-        if (player.getChannel() == null || player.getInstrument().getPreset() == null) {
-            logger.debug("Cannot apply preset - missing channel or preset value");
-            return;
-        }
-
-        try {
-            // Get the instrument from the player
-            InstrumentWrapper instrument = player.getInstrument();
-
-            // Get bank index from instrument if available
-            Integer bankIndex = instrument.getBankIndex();
-
-            if (bankIndex != null && bankIndex > 0) {
-                // Calculate MSB and LSB from bankIndex
-                int bankMSB = (bankIndex >> 7) & 0x7F; // Controller 0
-                int bankLSB = bankIndex & 0x7F; // Controller 32
-
-                // Send bank select messages
-                instrument.controlChange(0, bankMSB); // Bank MSB
-                instrument.controlChange(32, bankLSB); // Bank LSB
-
-                logger.debug("Sent bank select MSB={}, LSB={} for bank={}",
-                        bankMSB, bankLSB, bankIndex);
-            }
-
-            // Send program change with correct parameters (second param should be 0)
-            instrument.programChange(instrument.getPreset(), 0); // Fixed: added second parameter
-
-            logger.info("Applied program change {} on channel {} for player {}",
-                    instrument.getPreset(), player.getChannel(), player.getName());
-
-        } catch (Exception e) {
-            logger.error("Failed to apply instrument preset: {}", e.getMessage(), e);
-        }
     }
 
+    public Rule addRule(Player player, int beat, int equals, double v, int i) {
+        return null;
+    }
+
+    public void removeRule(Player player, Long ruleId) {
+    }
+
+    public Player updatePlayer(Session session, Long playerId, int updateType, int updateValue) {
+        return null;
+    }
+
+    public Set<Player> removePlayer(Session session, Long playerId) {
+    return Collections.emptySet();
+    }
+
+    public void clearPlayers(Session session) {
+    }
+
+    public void clearPlayersWithNoRules(Session session) {
+    }
+
+    public void removeAllPlayers(Session session) {
+    }
 }

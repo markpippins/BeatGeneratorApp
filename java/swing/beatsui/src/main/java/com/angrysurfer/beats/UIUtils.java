@@ -156,4 +156,9 @@ public class UIUtils {
                 BorderFactory.createEmptyBorder(1, 2, 1, 2)));
     }
 
+    
+    public static void setPanelBorder(JPanel panel) {
+        panel.setBorder(BorderFactory.createEmptyBorder(1, 2, 1, 2));
+    }
+
 }

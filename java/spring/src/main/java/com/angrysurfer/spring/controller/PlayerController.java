@@ -81,7 +81,8 @@ public class PlayerController {
     @PutMapping(Constants.MUTE_PLAYER)
     public ResponseEntity<Player> mutePlayer(@RequestParam Long playerId) {
         logger.info("PUT {} - playerId: {}", Constants.MUTE_PLAYER, playerId);
-        Player player = service.mutePlayer(playerId);
+        Player player = service.getSessionPlayer(playerId);
+        player.setMuted(true);
         return player != null ? 
             ResponseEntity.ok(player) : 
             ResponseEntity.notFound().build();

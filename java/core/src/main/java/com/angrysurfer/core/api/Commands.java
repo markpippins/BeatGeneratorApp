@@ -349,4 +349,5 @@ public class Commands {
     // Add this if it doesn't exist
     public static final String MELODIC_PATTERN_UPDATED = "MELODIC_PATTERN_UPDATED";
     public static final String DRUM_PLAYER_INSTRUMENT_CHANGED = "DRUM_PLAYER_INSTRUMENT_CHANGED";
+    public static final String CREATE_INSTRUMENT_FOR_PLAYER_REQUEST = "CREATE_INSTRUMENT_FOR_PLAYER_REQUEST";
 }
