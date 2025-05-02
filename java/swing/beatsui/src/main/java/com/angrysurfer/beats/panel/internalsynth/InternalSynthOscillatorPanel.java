@@ -58,9 +58,9 @@ public class InternalSynthOscillatorPanel extends JPanel {
         this.midiChannel = midiChannel;
         this.oscillatorIndex = oscillatorIndex;
         this.baseCCForOsc = oscillatorIndex * 20 + 20; // Space out CC numbers
-        
-        // Set fixed height with preferred width
-        setPreferredSize(new Dimension(getPreferredSize().width, 120));
+
+        setPreferredSize(new Dimension(getPreferredSize().width, 100));
+        setMaximumSize(new Dimension(getMaximumSize().width, 100));
         
         setupUI();
     }

@@ -1,6 +1,7 @@
 package com.angrysurfer.core.redis;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.Arrays;
 
@@ -16,6 +17,7 @@ import com.angrysurfer.core.config.FrameState;
 import com.angrysurfer.core.config.TableState;
 import com.angrysurfer.core.config.UserConfig;
 import com.angrysurfer.core.event.PatternSwitchEvent;
+import com.angrysurfer.core.model.ControlCode;
 import com.angrysurfer.core.model.InstrumentWrapper;
 import com.angrysurfer.core.model.Pattern;
 import com.angrysurfer.core.model.Player;
@@ -85,16 +87,16 @@ public class RedisService implements IBusListener {
 
     private ObjectMapper createObjectMapper() {
         ObjectMapper mapper = new ObjectMapper();
-        
+
         // Configure mapper
         mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
         mapper.configure(SerializationFeature.FAIL_ON_EMPTY_BEANS, false);
-        
+
         // Register module with custom deserializer
         SimpleModule module = new SimpleModule();
         module.addDeserializer(Session.class, new SessionDeserializer());
         mapper.registerModule(module);
-        
+
         return mapper;
     }
 
@@ -176,7 +178,8 @@ public class RedisService implements IBusListener {
 
         Long currentId = session.getId();
         List<Long> allIds = getAllSessionIds();
-        logger.info("Finding previous ID before {} among {} session IDs", currentId, allIds != null ? allIds.size() : 0);
+        logger.info("Finding previous ID before {} among {} session IDs", currentId,
+                allIds != null ? allIds.size() : 0);
 
         if (allIds == null || allIds.isEmpty()) {
             return null;
@@ -243,33 +246,33 @@ public class RedisService implements IBusListener {
                 logger.warn("Cannot save null player");
                 return;
             }
-            
+
             logger.debug("Saving player ID: {} with name: {}", player.getId(), player.getName());
-            
+
             // Save the instrument first if it exists
             if (player.getInstrument() != null) {
                 saveInstrument(player.getInstrument());
-                
+
                 // Ensure the player's instrumentId is set correctly
                 player.setInstrumentId(player.getInstrument().getId());
-                
-                logger.debug("Associated instrument ID: {} with name: {}", 
-                    player.getInstrumentId(), player.getInstrument().getName());
+
+                logger.debug("Associated instrument ID: {} with name: {}",
+                        player.getInstrumentId(), player.getInstrument().getName());
             }
-            
+
             // Save the player
             playerHelper.savePlayer(player);
-            
+
             // If the player belongs to a session, update the session as well
             Session session = sessionHelper.findSessionForPlayer(player); // Pass player, not player.getId()
             if (session != null) {
                 // Sets don't have index-based access, so we need to:
                 // 1. Remove the existing player with the same ID
                 session.getPlayers().removeIf(p -> p.getId().equals(player.getId()));
-                
+
                 // 2. Add the updated player
                 session.getPlayers().add(player);
-                
+
                 // Save the updated session
                 sessionHelper.saveSession(session);
             }
@@ -393,7 +396,7 @@ public class RedisService implements IBusListener {
             String json = jedis.get("tablestate-" + table);
             if (json != null) {
                 TableState state = objectMapper.readValue(json, TableState.class);
-                logger.info("Loaded table state with column order: {}", 
+                logger.info("Loaded table state with column order: {}",
                         (state.getColumnOrder() != null ? String.join(", ", state.getColumnOrder()) : "null"));
                 return state;
             }
@@ -408,7 +411,7 @@ public class RedisService implements IBusListener {
         try (Jedis jedis = jedisPool.getResource()) {
             String json = objectMapper.writeValueAsString(state);
             jedis.set("tablestate-" + table, json);
-            logger.info("Saved table state with column order: {}", 
+            logger.info("Saved table state with column order: {}",
                     (state.getColumnOrder() != null ? String.join(", ", state.getColumnOrder()) : "null"));
         } catch (Exception e) {
             logger.error("Error saving frame state: {}", e.getMessage());
@@ -566,7 +569,7 @@ public class RedisService implements IBusListener {
     /**
      * Apply a melodic sequence to a sequencer
      * 
-     * @param data The melodic sequence data to apply
+     * @param data      The melodic sequence data to apply
      * @param sequencer The sequencer to apply the data to
      */
     public void applyMelodicSequenceToSequencer(MelodicSequenceData data, MelodicSequencer sequencer) {
@@ -574,53 +577,53 @@ public class RedisService implements IBusListener {
             logger.error("Cannot apply null sequence or sequencer");
             return;
         }
-        
+
         try {
             // Store current playback and step state before applying new data
             boolean wasPlaying = sequencer.isPlaying();
             int currentStep = sequencer.getCurrentStep();
-            
+
             // Simply set the data reference - no need to copy properties individually
             sequencer.setSequenceData(data);
-            
+
             // Update sequencer state based on the new data
             sequencer.updateQuantizer();
-            
+
             // Restore runtime state if needed
             if (wasPlaying) {
                 sequencer.setPlaying(true);
             }
             sequencer.setCurrentStep(Math.min(currentStep, data.getPatternLength() - 1));
-            
+
             // Log successful application
             logger.info("Applied melodic sequence ID {} to sequencer {}",
-                data.getId(), sequencer.getId());
-                
+                    data.getId(), sequencer.getId());
+
             // Publish event so UI components can update
             CommandBus.getInstance().publish(
-                Commands.MELODIC_PATTERN_SWITCHED,
-                this,
-                new PatternSwitchEvent(null, data.getId()));
-                
+                    Commands.MELODIC_PATTERN_SWITCHED,
+                    this,
+                    new PatternSwitchEvent(null, data.getId()));
+
             // Add explicit debug about harmonic tilt values
             if (data.getHarmonicTiltValuesRaw() != null) {
-                logger.info("Source data has {} harmonic tilt values", 
-                           data.getHarmonicTiltValuesRaw().length);
-                           
+                logger.info("Source data has {} harmonic tilt values",
+                        data.getHarmonicTiltValuesRaw().length);
+
                 // Make a copy of the harmonic tilt values array
-                int[] tiltArrayCopy = Arrays.copyOf(data.getHarmonicTiltValuesRaw(), 
-                                                   data.getHarmonicTiltValuesRaw().length);
-                                                   
+                int[] tiltArrayCopy = Arrays.copyOf(data.getHarmonicTiltValuesRaw(),
+                        data.getHarmonicTiltValuesRaw().length);
+
                 // Set explicitly on sequencer's data
                 sequencer.getSequenceData().setHarmonicTiltValues(tiltArrayCopy);
-                
+
                 // Verify
-                logger.info("After setting, sequencer has {} harmonic tilt values", 
-                           sequencer.getSequenceData().getHarmonicTiltValuesRaw().length);
+                logger.info("After setting, sequencer has {} harmonic tilt values",
+                        sequencer.getSequenceData().getHarmonicTiltValuesRaw().length);
             } else {
                 logger.warn("Source data has NULL harmonic tilt values array");
             }
-                
+
         } catch (Exception e) {
             logger.error("Error applying melodic sequence: {}", e.getMessage(), e);
         }
@@ -666,4 +669,22 @@ public class RedisService implements IBusListener {
     public Long getPreviousMelodicSequenceId(Integer sequencerId, Long currentId) {
         return melodicSequencerHelper.getPreviousMelodicSequenceId(sequencerId, currentId);
     }
+
+    /**
+ * Get an instrument by ID
+ * 
+ * @param id The instrument ID to look up
+ * @return The instrument with the specified ID, or null if not found
+ */
+public InstrumentWrapper getInstrumentById(Long id) {
+    if (id == null) {
+        logger.warn("getInstrumentById called with null ID");
+        return null;
+    }
+    
+    logger.debug("Looking up instrument by ID: {}", id);
+    
+    // Delegate to the InstrumentHelper 
+    return instrumentHelper.findInstrumentById(id);
+}
 }

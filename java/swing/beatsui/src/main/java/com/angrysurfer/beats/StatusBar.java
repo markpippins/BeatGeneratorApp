@@ -137,7 +137,7 @@ public class StatusBar extends JPanel implements IBusListener {
     }
     
     private JPanel createSessionSection() {
-        JPanel panel = createSectionPanel("Session");
+        JPanel panel = UIUtils.createSectionPanel("Session");
         panel.setLayout(new GridBagLayout());
         GridBagConstraints gbc = new GridBagConstraints();
         
@@ -196,7 +196,7 @@ public class StatusBar extends JPanel implements IBusListener {
     }
     
     private JPanel createTransportSection() {
-        JPanel panel = createSectionPanel("Transport");
+        JPanel panel = UIUtils.createSectionPanel("Transport");
         panel.setLayout(new FlowLayout(FlowLayout.LEFT, 5, 0));
         
         // Create a wrapper panel for LEDs to control height
@@ -230,14 +230,14 @@ public class StatusBar extends JPanel implements IBusListener {
                                       positionField = createStatusField(MEDIUM_FIELD_WIDTH)));
         
         // Set monospaced font for position display
-        positionField.setFont(new Font(Font.MONOSPACED, Font.PLAIN, 12));
+        // positionField.setFont(new Font(Font.MONOSPACED, Font.PLAIN, 12));
         updateTimeDisplay();
         
         return panel;
     }
     
     private JPanel createPlayerSection() {
-        JPanel panel = createSectionPanel("Active Player");
+        JPanel panel = UIUtils.createSectionPanel("Active Player");
         
         // Use FlowLayout with vertical centering
         panel.setLayout(new FlowLayout(FlowLayout.LEFT, 5, 0));
@@ -268,7 +268,7 @@ public class StatusBar extends JPanel implements IBusListener {
     }
     
     private JPanel createMonitoringSection() {
-        JPanel panel = createSectionPanel("System");
+        JPanel panel = UIUtils.createSectionPanel("System");
         panel.setLayout(new GridBagLayout());
         GridBagConstraints gbc = new GridBagConstraints();
         
@@ -324,7 +324,7 @@ public class StatusBar extends JPanel implements IBusListener {
     }
     
     private JPanel createMessageSection() {
-        JPanel panel = createSectionPanel("Status");
+        JPanel panel = UIUtils.createSectionPanel("Status");
         panel.setLayout(new BorderLayout(5, 0));
         
         // Create a wrapper panel for the label to vertically center it
@@ -353,13 +353,7 @@ public class StatusBar extends JPanel implements IBusListener {
         
         return panel;
     }
-    
-    private JPanel createSectionPanel(String title) {
-        JPanel panel = new JPanel();
-        UIUtils.setWidgetPanelBorder(panel, title);
-        return panel;
-    }
-    
+     
     private JTextField createStatusField(int width) {
         JTextField field = new JTextField();
         field.setEditable(false);

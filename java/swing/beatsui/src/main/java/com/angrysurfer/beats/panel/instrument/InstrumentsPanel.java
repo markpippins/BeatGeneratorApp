@@ -8,12 +8,9 @@ import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Timer;
-import java.util.TimerTask;
+import java.util.*;
 
+import javax.sound.midi.Instrument;
 import javax.sound.midi.MidiDevice;
 import javax.sound.midi.Receiver;
 import javax.sound.midi.ShortMessage;
@@ -34,10 +31,15 @@ import javax.swing.ListSelectionModel;
 import javax.swing.RowSorter;
 import javax.swing.SortOrder;
 import javax.swing.SpinnerNumberModel;
+import javax.swing.SwingUtilities;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableModel;
 
+import com.angrysurfer.core.model.Player;
+import com.angrysurfer.core.sequencer.DrumSequencer;
+import com.angrysurfer.core.sequencer.MelodicSequencer;
+import com.angrysurfer.core.service.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -51,9 +53,6 @@ import com.angrysurfer.core.model.ControlCode;
 import com.angrysurfer.core.model.ControlCodeCaption;
 import com.angrysurfer.core.model.InstrumentWrapper;
 import com.angrysurfer.core.redis.RedisService;
-import com.angrysurfer.core.service.DeviceManager;
-import com.angrysurfer.core.service.InstrumentManager;
-import com.angrysurfer.core.service.UserConfigManager;
 
 import lombok.Getter;
 import lombok.Setter;
@@ -107,7 +106,7 @@ public class InstrumentsPanel extends JPanel {
 
         // Add main content to the CENTER
         add(createOptionsPanel(), BorderLayout.CENTER);
-        
+
         // Add MIDI test panel to the SOUTH position (bottom) of the main panel
         add(createMidiTestControls(), BorderLayout.SOUTH);
     }
@@ -188,7 +187,7 @@ public class InstrumentsPanel extends JPanel {
         buttonPanel.add(enableInstrumentButton);
 
         toolBar.add(buttonPanel, BorderLayout.CENTER);
-        
+
         return toolBar;
     }
 
@@ -198,25 +197,25 @@ public class InstrumentsPanel extends JPanel {
     private JPanel createMidiTestControls() {
         JPanel panel = new JPanel(new FlowLayout(FlowLayout.LEFT, 5, 0));
         panel.setBorder(BorderFactory.createTitledBorder("MIDI Test"));
-        
+
         // --- Note testing section ---
-        
+
         // Channel selector for notes (use channels defined in the instrument)
         JPanel channelPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 2, 0));
         channelPanel.add(new JLabel("Ch:"));
         JSpinner channelSpinner = new JSpinner(new SpinnerNumberModel(1, 1, 16, 1));
-        
+
         // Update channel spinner based on selected instrument
         if (selectedInstrument != null && selectedInstrument.getChannel() != null) {
             // Convert from 0-based to 1-based for display
             channelSpinner.setValue(selectedInstrument.getChannel() + 1);
         }
-        
+
         channelSpinner.setPreferredSize(new Dimension(50, 25));
         channelSpinner.setToolTipText("MIDI Channel (1-16)");
         channelPanel.add(channelSpinner);
         panel.add(channelPanel);
-        
+
         // Note selector
         JPanel notePanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 2, 0));
         notePanel.add(new JLabel("Note:"));
@@ -225,7 +224,7 @@ public class InstrumentsPanel extends JPanel {
         noteSpinner.setToolTipText("MIDI Note (0-127)");
         notePanel.add(noteSpinner);
         panel.add(notePanel);
-        
+
         // Velocity selector
         JPanel velocityPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 2, 0));
         velocityPanel.add(new JLabel("Vel:"));
@@ -234,24 +233,23 @@ public class InstrumentsPanel extends JPanel {
         velocitySpinner.setToolTipText("Note Velocity (1-127)");
         velocityPanel.add(velocitySpinner);
         panel.add(velocityPanel);
-        
+
         // Send note button
         JButton sendNoteButton = new JButton("Send Note");
         sendNoteButton.setMargin(new Insets(2, 8, 2, 8));
         sendNoteButton.addActionListener(e -> {
             sendMidiNote(
-                (Integer)channelSpinner.getValue() - 1, // Convert 1-16 to 0-15 
-                (Integer)noteSpinner.getValue(),
-                (Integer)velocitySpinner.getValue()
-            );
+                    (Integer) channelSpinner.getValue() - 1, // Convert 1-16 to 0-15
+                    (Integer) noteSpinner.getValue(),
+                    (Integer) velocitySpinner.getValue());
         });
         panel.add(sendNoteButton);
-        
+
         // Add separator
         panel.add(Box.createHorizontalStrut(15));
-        
+
         // --- Control Change section ---
-        
+
         // CC number selector
         JPanel ccPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 2, 0));
         ccPanel.add(new JLabel("CC:"));
@@ -260,7 +258,7 @@ public class InstrumentsPanel extends JPanel {
         ccSpinner.setToolTipText("Control Change Number (0-127)");
         ccPanel.add(ccSpinner);
         panel.add(ccPanel);
-        
+
         // CC value selector
         JPanel valuePanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 2, 0));
         valuePanel.add(new JLabel("Val:"));
@@ -269,24 +267,23 @@ public class InstrumentsPanel extends JPanel {
         valueSpinner.setToolTipText("Control Change Value (0-127)");
         valuePanel.add(valueSpinner);
         panel.add(valuePanel);
-        
+
         // Send CC button
         JButton sendCCButton = new JButton("Send CC");
         sendCCButton.setMargin(new Insets(2, 8, 2, 8));
         sendCCButton.addActionListener(e -> {
             sendMidiControlChange(
-                (Integer)channelSpinner.getValue() - 1, // Convert 1-16 to 0-15
-                (Integer)ccSpinner.getValue(),
-                (Integer)valueSpinner.getValue()
-            );
+                    (Integer) channelSpinner.getValue() - 1, // Convert 1-16 to 0-15
+                    (Integer) ccSpinner.getValue(),
+                    (Integer) valueSpinner.getValue());
         });
         panel.add(sendCCButton);
-        
+
         // Add separator
         panel.add(Box.createHorizontalStrut(15));
-        
+
         // --- Program Change section ---
-        
+
         // Program number selector
         JPanel programPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 2, 0));
         programPanel.add(new JLabel("Program:"));
@@ -295,31 +292,29 @@ public class InstrumentsPanel extends JPanel {
         programSpinner.setToolTipText("Program Number (0-127)");
         programPanel.add(programSpinner);
         panel.add(programPanel);
-        
+
         // Send Program Change button
         JButton sendPCButton = new JButton("Send PC");
         sendPCButton.setMargin(new Insets(2, 8, 2, 8));
         sendPCButton.addActionListener(e -> {
             sendMidiProgramChange(
-                (Integer)channelSpinner.getValue() - 1, // Convert 1-16 to 0-15
-                (Integer)programSpinner.getValue()
-            );
+                    (Integer) channelSpinner.getValue() - 1, // Convert 1-16 to 0-15
+                    (Integer) programSpinner.getValue());
         });
         panel.add(sendPCButton);
-        
+
         return panel;
     }
 
     private void sendMidiNote(int channel, int noteNumber, int velocity) {
         if (selectedInstrument == null) {
             CommandBus.getInstance().publish(
-                Commands.STATUS_UPDATE,
-                this,
-                new StatusUpdate("MIDI Test", "Error", "No instrument selected")
-            );
+                    Commands.STATUS_UPDATE,
+                    this,
+                    new StatusUpdate("MIDI Test", "Error", "No instrument selected"));
             return;
         }
-        
+
         try {
             // Get selected output device from device selection
             MidiDevice device = getSelectedInstrument().getDevice();
@@ -328,30 +323,29 @@ public class InstrumentsPanel extends JPanel {
             }
             if (device == null) {
                 CommandBus.getInstance().publish(
-                    Commands.STATUS_UPDATE,
-                    this,
-                    new StatusUpdate("MIDI Test", "Error", "No MIDI output device selected")
-                );
+                        Commands.STATUS_UPDATE,
+                        this,
+                        new StatusUpdate("MIDI Test", "Error", "No MIDI output device selected"));
                 return;
             }
-            
+
             // Open device if not already open
             if (!device.isOpen()) {
                 device.open();
             }
-            
+
             // Get receiver
             Receiver receiver = device.getReceiver();
-            
+
             // Create note on message
             ShortMessage noteOn = new ShortMessage();
             noteOn.setMessage(ShortMessage.NOTE_ON, channel, noteNumber, velocity);
             receiver.send(noteOn, -1);
-            
+
             // Create note off message (to be sent after a delay)
             ShortMessage noteOff = new ShortMessage();
             noteOff.setMessage(ShortMessage.NOTE_OFF, channel, noteNumber, 0);
-            
+
             // Schedule note off message after 500ms
             new Timer().schedule(new TimerTask() {
                 @Override
@@ -359,22 +353,20 @@ public class InstrumentsPanel extends JPanel {
                     receiver.send(noteOff, -1);
                 }
             }, 500);
-            
+
             // Log and update status
             CommandBus.getInstance().publish(
-                Commands.STATUS_UPDATE,
-                this,
-                new StatusUpdate("MIDI Test", "Info", 
-                    String.format("Sent note: %d on channel: %d with velocity: %d", 
-                        noteNumber, channel + 1, velocity))
-            );
-            
+                    Commands.STATUS_UPDATE,
+                    this,
+                    new StatusUpdate("MIDI Test", "Info",
+                            String.format("Sent note: %d on channel: %d with velocity: %d",
+                                    noteNumber, channel + 1, velocity)));
+
         } catch (Exception e) {
             CommandBus.getInstance().publish(
-                Commands.STATUS_UPDATE,
-                this,
-                new StatusUpdate("MIDI Test", "Error", "Failed to send MIDI note: " + e.getMessage())
-            );
+                    Commands.STATUS_UPDATE,
+                    this,
+                    new StatusUpdate("MIDI Test", "Error", "Failed to send MIDI note: " + e.getMessage()));
             logger.error("Error sending MIDI note", e);
         }
     }
@@ -385,42 +377,39 @@ public class InstrumentsPanel extends JPanel {
     private void sendMidiControlChange(int channel, int controlNumber, int value) {
         if (selectedInstrument == null) {
             CommandBus.getInstance().publish(
-                Commands.STATUS_UPDATE,
-                this,
-                new StatusUpdate("InstrumentsPanel", "Error", "No instrument selected")
-            );
+                    Commands.STATUS_UPDATE,
+                    this,
+                    new StatusUpdate("InstrumentsPanel", "Error", "No instrument selected"));
             return;
         }
-        
+
         try {
             // Check if the instrument is available
             if (!selectedInstrument.getAvailable()) {
                 CommandBus.getInstance().publish(
-                    Commands.STATUS_UPDATE,
-                    this,
-                    new StatusUpdate("InstrumentsPanel", "Error", "Instrument is not available: " + selectedInstrument.getName())
-                );
+                        Commands.STATUS_UPDATE,
+                        this,
+                        new StatusUpdate("InstrumentsPanel", "Error",
+                                "Instrument is not available: " + selectedInstrument.getName()));
                 return;
             }
 
             // Send control change message
             selectedInstrument.controlChange(controlNumber, value);
-            
+
             // Log and update status
             CommandBus.getInstance().publish(
-                Commands.STATUS_UPDATE,
-                this,
-                new StatusUpdate("InstrumentsPanel", "Info", 
-                    String.format("Sent CC: %d on channel: %d with value: %d", 
-                        controlNumber, channel + 1, value))
-            );
-            
+                    Commands.STATUS_UPDATE,
+                    this,
+                    new StatusUpdate("InstrumentsPanel", "Info",
+                            String.format("Sent CC: %d on channel: %d with value: %d",
+                                    controlNumber, channel + 1, value)));
+
         } catch (Exception e) {
             CommandBus.getInstance().publish(
-                Commands.STATUS_UPDATE,
-                this,
-                new StatusUpdate("InstrumentsPanel", "Error", "Failed to send MIDI CC: " + e.getMessage())
-            );
+                    Commands.STATUS_UPDATE,
+                    this,
+                    new StatusUpdate("InstrumentsPanel", "Error", "Failed to send MIDI CC: " + e.getMessage()));
             logger.error("Error sending MIDI control change", e);
         }
     }
@@ -431,43 +420,103 @@ public class InstrumentsPanel extends JPanel {
     private void sendMidiProgramChange(int channel, int programNumber) {
         if (selectedInstrument == null) {
             CommandBus.getInstance().publish(
-                Commands.STATUS_UPDATE,
-                this,
-                new StatusUpdate("InstrumentsPanel", "Error", "No instrument selected")
-            );
+                    Commands.STATUS_UPDATE,
+                    this,
+                    new StatusUpdate("InstrumentsPanel", "Error", "No instrument selected"));
             return;
         }
-        
+
         try {
             // Check if the instrument is available
             if (!selectedInstrument.getAvailable()) {
                 CommandBus.getInstance().publish(
-                    Commands.STATUS_UPDATE,
-                    this,
-                    new StatusUpdate("InstrumentsPanel", "Error", "Instrument is not available: " + selectedInstrument.getName())
-                );
+                        Commands.STATUS_UPDATE,
+                        this,
+                        new StatusUpdate("InstrumentsPanel", "Error",
+                                "Instrument is not available: " + selectedInstrument.getName()));
                 return;
             }
 
             // Send program change message
             selectedInstrument.programChange(programNumber, 0);
-            
+
             // Log and update status
             CommandBus.getInstance().publish(
-                Commands.STATUS_UPDATE,
-                this,
-                new StatusUpdate("InstrumentsPanel", "Info", 
-                    String.format("Sent Program Change: %d on channel: %d", 
-                        programNumber, channel + 1))
-            );
-            
+                    Commands.STATUS_UPDATE,
+                    this,
+                    new StatusUpdate("InstrumentsPanel", "Info",
+                            String.format("Sent Program Change: %d on channel: %d",
+                                    programNumber, channel + 1)));
+
         } catch (Exception e) {
             CommandBus.getInstance().publish(
-                Commands.STATUS_UPDATE,
-                this,
-                new StatusUpdate("InstrumentsPanel", "Error", "Failed to send MIDI Program Change: " + e.getMessage())
-            );
+                    Commands.STATUS_UPDATE,
+                    this,
+                    new StatusUpdate("InstrumentsPanel", "Error",
+                            "Failed to send MIDI Program Change: " + e.getMessage()));
             logger.error("Error sending MIDI program change", e);
+        }
+    }
+
+    /**
+     * Determine who owns/uses an instrument
+     * 
+     * @param instrument The instrument to check
+     * @return A string description of the owner(s)
+     */
+    private String determineInstrumentOwner(InstrumentWrapper instrument) {
+        if (instrument == null || instrument.getId() == null) {
+            return "";
+        }
+
+        List<String> owners = new ArrayList<>();
+
+        try {
+            // Check session players
+            Set<Player> sessionPlayers = SessionManager.getInstance().getActiveSession().getPlayers();
+            if (sessionPlayers != null) {
+                for (Player player : sessionPlayers) {
+                    if (player != null &&
+                            player.getInstrumentId() != null &&
+                            player.getInstrumentId().equals(instrument.getId())) {
+                        owners.add("Session: " + player.getName());
+                    }
+                }
+            }
+
+            // Check melodic sequencers
+            for (MelodicSequencer sequencer : MelodicSequencerManager.getInstance().getAllSequencers()) {
+                if (sequencer != null && sequencer.getPlayer() != null &&
+                        sequencer.getPlayer().getInstrumentId() != null &&
+                        sequencer.getPlayer().getInstrumentId().equals(instrument.getId())) {
+                    owners.add("Melodic: " + sequencer.getClass().getName());
+                }
+            }
+
+            // Check drum sequencers (which have multiple players)
+            for (DrumSequencer sequencer : DrumSequencerManager.getInstance().getAllSequencers()) {
+                if (sequencer != null && sequencer.getPlayers() != null) {
+                    for (Player player : sequencer.getPlayers()) {
+                        if (player != null &&
+                                player.getInstrumentId() != null &&
+                                player.getInstrumentId().equals(instrument.getId())) {
+                            owners.add(sequencer.getClass().getName() + " (" + player.getName() + ")");
+                        }
+                    }
+                }
+            }
+
+            if (owners.isEmpty()) {
+                return "None";
+            } else if (owners.size() <= 2) {
+                return String.join(", ", owners);
+            } else {
+                // If there are many owners, show a count
+                return owners.get(0) + " and " + (owners.size() - 1) + " more";
+            }
+        } catch (Exception e) {
+            logger.error("Error determining instrument owner: {}", e.getMessage(), e);
+            return "Error";
         }
     }
 
@@ -512,8 +561,9 @@ public class InstrumentsPanel extends JPanel {
     }
 
     private JTable createInstrumentsTable() {
-        // Update the columns array to include ID
-        String[] columns = {"ID", "Name", "Device Name", "Channel", "Available", "Low", "High", "Initialized"};
+        // Update the columns array to include Owner at the end
+        String[] columns = { "ID", "Name", "Device Name", "Channel", "Available", "Low", "High", "Initialized",
+                "Owner" };
 
         DefaultTableModel model = new DefaultTableModel(columns, 0) {
             @Override
@@ -543,29 +593,30 @@ public class InstrumentsPanel extends JPanel {
         // Load data from Redis
         List<InstrumentWrapper> instruments = RedisService.getInstance().findAllInstruments();
         for (InstrumentWrapper instrument : instruments) {
-            model.addRow(new Object[]{
-                instrument.getId(),
-                instrument.getName(), 
-                instrument.getDeviceName(), 
-                instrument.getChannel() != null ? instrument.getChannel() + 1 : null, // Convert to 1-based
-                instrument.getAvailable(),
-                instrument.getLowestNote(), 
-                instrument.getHighestNote(), 
-                instrument.isInitialized()
+            model.addRow(new Object[] {
+                    instrument.getId(),
+                    instrument.getName(),
+                    instrument.getDeviceName(),
+                    instrument.getChannel() != null ? instrument.getChannel() + 1 : null, // Convert to 1-based
+                    instrument.getAvailable(),
+                    instrument.getLowestNote(),
+                    instrument.getHighestNote(),
+                    instrument.isInitialized(),
+                    determineInstrumentOwner(instrument) // Add owner column
             });
         }
 
         JTable table = new JTable(model);
-        
+
         // Enable auto-sorting
         table.setAutoCreateRowSorter(true);
-        
+
         // Add default sorting by name (column 1)
         RowSorter<? extends TableModel> sorter = table.getRowSorter();
         ArrayList<RowSorter.SortKey> sortKeys = new ArrayList<>();
         sortKeys.add(new RowSorter.SortKey(1, SortOrder.ASCENDING));
         sorter.setSortKeys(sortKeys);
-        
+
         // Add double-click handler for instrument editing
         table.addMouseListener(new MouseAdapter() {
             @Override
@@ -575,35 +626,35 @@ public class InstrumentsPanel extends JPanel {
                 }
             }
         });
-        
+
         // Center-align numeric columns
         DefaultTableCellRenderer centerRenderer = new DefaultTableCellRenderer();
         centerRenderer.setHorizontalAlignment(JLabel.CENTER);
-        
+
         // Create a left-aligned renderer for the ID column
         DefaultTableCellRenderer leftRenderer = new DefaultTableCellRenderer();
         leftRenderer.setHorizontalAlignment(JLabel.LEFT);
-        
+
         // Apply left alignment to ID column (column 0)
-        table.getColumnModel().getColumn(0).setCellRenderer(leftRenderer); 
-        
+        table.getColumnModel().getColumn(0).setCellRenderer(leftRenderer);
+
         // Apply center alignment to other numeric columns
         table.getColumnModel().getColumn(3).setCellRenderer(centerRenderer); // Channel
         for (int i = 5; i <= 6; i++) { // Center-align note columns
             table.getColumnModel().getColumn(i).setCellRenderer(centerRenderer);
         }
-        
+
         // Set column widths
-        table.getColumnModel().getColumn(0).setMaxWidth(70);  // ID
+        table.getColumnModel().getColumn(0).setMaxWidth(70); // ID
         table.getColumnModel().getColumn(0).setPreferredWidth(70);
-        table.getColumnModel().getColumn(3).setMaxWidth(60);  // Channel
+        table.getColumnModel().getColumn(3).setMaxWidth(60); // Channel
         table.getColumnModel().getColumn(3).setPreferredWidth(60);
-        
+
         return table;
     }
 
     private JTable createControlCodesTable() {
-        String[] columns = {"Name", "Code", "Min", "Max"};
+        String[] columns = { "Name", "Code", "Min", "Max" };
 
         DefaultTableModel model = new DefaultTableModel(columns, 0) {
             @Override
@@ -683,7 +734,7 @@ public class InstrumentsPanel extends JPanel {
     }
 
     private JTable createCaptionsTable() {
-        String[] columns = {"Code", "Description"};
+        String[] columns = { "Code", "Description" };
 
         DefaultTableModel model = new DefaultTableModel(columns, 0) {
             @Override
@@ -750,7 +801,7 @@ public class InstrumentsPanel extends JPanel {
                     + selectedInstrument.getControlCodes().size() + " codes");
 
             for (ControlCode cc : selectedInstrument.getControlCodes()) {
-                model.addRow(new Object[]{cc.getName(), cc.getCode(), cc.getLowerBound(), cc.getUpperBound()});
+                model.addRow(new Object[] { cc.getName(), cc.getCode(), cc.getLowerBound(), cc.getUpperBound() });
                 logger.info("Added control code to table: " + cc.getName());
             }
         } else {
@@ -768,7 +819,7 @@ public class InstrumentsPanel extends JPanel {
                     + selectedControlCode.getCaptions().size() + " captions");
 
             for (ControlCodeCaption caption : selectedControlCode.getCaptions()) {
-                model.addRow(new Object[]{caption.getCode(), caption.getDescription()});
+                model.addRow(new Object[] { caption.getCode(), caption.getDescription() });
                 logger.info("Added caption to table: " + caption.getDescription());
             }
         } else {
@@ -778,9 +829,21 @@ public class InstrumentsPanel extends JPanel {
     }
 
     private InstrumentWrapper findInstrumentByName(String name) {
-        // Convert view index to model index when getting data
-        return RedisService.getInstance().findAllInstruments().stream().filter(i -> i.getName().equals(name))
-                .findFirst().orElse(null);
+        if (name == null)
+            return null;
+
+        // First try InstrumentManager's cache for better performance
+        for (InstrumentWrapper instrument : InstrumentManager.getInstance().getCachedInstruments()) {
+            if (instrument != null && name.equals(instrument.getName())) {
+                return instrument;
+            }
+        }
+
+        // Fallback to Redis search
+        return RedisService.getInstance().findAllInstruments().stream()
+                .filter(i -> i != null && name.equals(i.getName()))
+                .findFirst()
+                .orElse(null);
     }
 
     private ControlCode findControlCodeByName(String name) {
@@ -840,8 +903,7 @@ public class InstrumentsPanel extends JPanel {
             CommandBus.getInstance().publish(
                     Commands.STATUS_UPDATE,
                     this,
-                    new StatusUpdate("No control code selected")
-            );
+                    new StatusUpdate("No control code selected"));
             return;
         }
 
@@ -909,104 +971,203 @@ public class InstrumentsPanel extends JPanel {
     }
 
     private void showInstrumentDialog(InstrumentWrapper instrument) {
-        boolean isNew = (instrument == null);
-        if (isNew) {
-            instrument = new InstrumentWrapper();
-            // Initialize required fields for new instruments
-            instrument.setInternal(Boolean.FALSE);  // Ensure this is not null
-            instrument.setAvailable(Boolean.FALSE); // Ensure this is not null
-        } else {
-            // For existing instruments, make sure boolean fields are not null
-            if (instrument.getInternal() == null) {
+        try {
+            boolean isNew = (instrument == null);
+            logger.info("Showing instrument dialog: {}", isNew ? "new instrument" : instrument.getName());
+
+            if (isNew) {
+                instrument = new InstrumentWrapper();
+                // Initialize required fields for new instruments
                 instrument.setInternal(Boolean.FALSE);
-            }
-            if (instrument.getAvailable() == null) {
                 instrument.setAvailable(Boolean.FALSE);
+            } else {
+                // Make a copy of the instrument to avoid modifying the original until save is confirmed
+                // instrument = instrument.copy();
+                
+                // For existing instruments, make sure boolean fields are not null
+                if (instrument.getInternal() == null) {
+                    instrument.setInternal(Boolean.FALSE);
+                }
+                if (instrument.getAvailable() == null) {
+                    instrument.setAvailable(Boolean.FALSE);
+                }
             }
-        }
 
-        InstrumentEditPanel editorPanel = new InstrumentEditPanel(instrument);
-        Dialog<InstrumentWrapper> dialog = new Dialog<>(instrument, editorPanel);
-        dialog.setTitle(isNew ? "Add Instrument" : "Edit Instrument");
+            // Create and configure dialog
+            InstrumentEditPanel editorPanel = new InstrumentEditPanel(instrument);
+            Dialog<InstrumentWrapper> dialog = new Dialog<>(instrument, editorPanel);
+            dialog.setTitle(isNew ? "Add Instrument" : "Edit Instrument: " + instrument.getName());
+            dialog.setLocationRelativeTo(this);
 
-        if (dialog.showDialog()) {
-            try {
+            logger.info("Showing dialog for instrument...");
+            boolean result = dialog.showDialog();
+            logger.info("Dialog result: {}", result);
+
+            // Here's the missing part - process the result when dialog is closed
+            if (result) {
+                // Get the updated instrument from the editor panel
                 InstrumentWrapper updatedInstrument = editorPanel.getUpdatedInstrument();
                 
-                // Verify all boolean fields are set
-                if (updatedInstrument.getInternal() == null) {
-                    updatedInstrument.setInternal(Boolean.FALSE);
-                }
-                if (updatedInstrument.getAvailable() == null) {
-                    updatedInstrument.setAvailable(Boolean.FALSE);
-                }
+                logger.info("Saving updated instrument: {}", updatedInstrument.getName());
                 
-                // Save to Redis with proper error handling
+                // Save to Redis
                 RedisService.getInstance().saveInstrument(updatedInstrument);
+                
+                // Update in InstrumentManager's cache
+                InstrumentManager.getInstance().updateInstrument(updatedInstrument);
+                
+                // Refresh the UI
                 refreshInstrumentsTable();
                 
+                // If this was the selected instrument, update selected instrument reference
+                if (selectedInstrument != null && 
+                    updatedInstrument.getId() != null && 
+                    updatedInstrument.getId().equals(selectedInstrument.getId())) {
+                    selectedInstrument = updatedInstrument;
+                    updateControlCodesTable();
+                    updateCaptionsTable();
+                }
+                
+                // Notify system of the update
+                CommandBus.getInstance().publish(Commands.INSTRUMENT_UPDATED, this, updatedInstrument);
+                
+                // Show status message
                 CommandBus.getInstance().publish(
-                    Commands.STATUS_UPDATE, 
+                    Commands.STATUS_UPDATE,
                     this,
                     new StatusUpdate("InstrumentsPanel", "Success", 
                         "Saved instrument: " + updatedInstrument.getName())
                 );
-            } catch (Exception e) {
-                logger.error("Error saving instrument: {}", e.getMessage(), e);
-                CommandBus.getInstance().publish(
-                    Commands.STATUS_UPDATE, 
-                    this,
-                    new StatusUpdate("InstrumentsPanel", "Error", 
-                        "Failed to save instrument: " + e.getMessage())
-                );
-                
-                // Show error dialog to user
-                JOptionPane.showMessageDialog(
-                    this,
-                    "Failed to save instrument: " + e.getMessage(),
-                    "Error",
-                    JOptionPane.ERROR_MESSAGE
-                );
+            } else {
+                logger.info("Dialog cancelled, no changes made");
             }
+        } catch (Exception e) {
+            logger.error("Error showing/processing instrument dialog: {}", e.getMessage(), e);
+            CommandBus.getInstance().publish(
+                Commands.STATUS_UPDATE,
+                this,
+                new StatusUpdate("InstrumentsPanel", "Error", 
+                    "Error editing instrument: " + e.getMessage())
+            );
         }
     }
 
+    /**
+     * Delete selected instruments with validation checks
+     */
     private void deleteSelectedInstrument() {
         int[] selectedRows = instrumentsTable.getSelectedRows();
         if (selectedRows.length == 0) {
             return;
         }
 
-        // Ask for confirmation if deleting multiple instruments
-        String message = selectedRows.length == 1 ? "Delete the selected instrument?"
-                : "Delete " + selectedRows.length + " instruments?";
+        // Collect all instruments to delete
+        List<InstrumentWrapper> instrumentsToDelete = new ArrayList<>();
+        List<InstrumentWrapper> inUseInstruments = new ArrayList<>();
 
-        int choice = JOptionPane.showConfirmDialog(this, message, "Delete Instrument", JOptionPane.YES_NO_OPTION,
-                JOptionPane.WARNING_MESSAGE);
+        // Check each selected instrument
+        for (int viewRow : selectedRows) {
+            int modelRow = instrumentsTable.convertRowIndexToModel(viewRow);
+            // First column (index 1) contains the instrument name (ID is at index 0)
+            String name = (String) instrumentsTable.getModel().getValueAt(modelRow, 1);
 
-        if (choice == JOptionPane.YES_OPTION) {
-            // Process each selected row
-            for (int viewRow : selectedRows) {
-                // Convert view index to model index when sorting is enabled
-                int modelRow = instrumentsTable.convertRowIndexToModel(viewRow);
-                String name = (String) instrumentsTable.getModel().getValueAt(modelRow, 0);
+            InstrumentWrapper instrument = findInstrumentByName(name);
+            if (instrument != null) {
+                // Check if instrument is in use by any player
+                boolean isInUse = isInstrumentInUse(instrument);
 
-                InstrumentWrapper instrument = findInstrumentByName(name);
-                if (instrument != null) {
-                    // Delete from Redis
-                    RedisService.getInstance().deleteInstrument(instrument);
-
-                    CommandBus.getInstance().publish(
-                            Commands.STATUS_UPDATE,
-                            this,
-                            new StatusUpdate("Deleted instrument: " + name));
-
-                    logger.info("Deleted instrument: " + name);
+                if (isInUse) {
+                    inUseInstruments.add(instrument);
+                } else {
+                    instrumentsToDelete.add(instrument);
                 }
             }
+        }
+
+        // Handle warnings and confirmations
+        if (!inUseInstruments.isEmpty()) {
+            StringBuilder warningMsg = new StringBuilder();
+            warningMsg.append("The following instruments are in use and cannot be deleted:\n\n");
+
+            for (InstrumentWrapper instrument : inUseInstruments) {
+                warningMsg.append("• ").append(instrument.getName()).append("\n");
+            }
+
+            if (!instrumentsToDelete.isEmpty()) {
+                warningMsg.append("\nProceed with deleting the other ").append(instrumentsToDelete.size())
+                        .append(" instrument(s)?");
+
+                int choice = JOptionPane.showConfirmDialog(this, warningMsg.toString(),
+                        "Instruments In Use", JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE);
+
+                if (choice != JOptionPane.YES_OPTION) {
+                    return;
+                }
+            } else {
+                JOptionPane.showMessageDialog(this, warningMsg.toString(),
+                        "Cannot Delete In-Use Instruments", JOptionPane.WARNING_MESSAGE);
+                return;
+            }
+        } else if (!instrumentsToDelete.isEmpty()) {
+            // Confirm deletion when all instruments can be deleted
+            String message = instrumentsToDelete.size() == 1
+                    ? "Delete the selected instrument?"
+                    : "Delete " + instrumentsToDelete.size() + " instruments?";
+
+            int choice = JOptionPane.showConfirmDialog(this, message, "Delete Instrument",
+                    JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE);
+
+            if (choice != JOptionPane.YES_OPTION) {
+                return;
+            }
+        }
+
+        // Process deletions
+        int deletedCount = 0;
+        StringBuilder statusMsg = new StringBuilder();
+
+        for (InstrumentWrapper instrument : instrumentsToDelete) {
+            try {
+                // Delete from Redis
+                RedisService.getInstance().deleteInstrument(instrument);
+
+                // Also remove from InstrumentManager's cache
+                InstrumentManager.getInstance().removeInstrument(instrument.getId());
+
+                deletedCount++;
+
+                // Add to status message (limit to first 3 for brevity)
+                if (deletedCount <= 3) {
+                    if (statusMsg.length() > 0) {
+                        statusMsg.append(", ");
+                    }
+                    statusMsg.append(instrument.getName());
+                }
+
+                logger.info("Deleted instrument: {}", instrument.getName());
+            } catch (Exception e) {
+                logger.error("Error deleting instrument {}: {}", instrument.getName(), e.getMessage(), e);
+            }
+        }
+
+        // Publish status updates
+        if (deletedCount > 0) {
+            // Add ellipsis if more than 3 instruments were deleted
+            if (deletedCount > 3) {
+                statusMsg.append(", and ").append(deletedCount - 3).append(" more");
+            }
+
+            CommandBus.getInstance().publish(
+                    Commands.STATUS_UPDATE,
+                    this,
+                    new StatusUpdate("InstrumentsPanel", "Success",
+                            "Deleted: " + statusMsg.toString()));
 
             // Refresh the table after deletions
             refreshInstrumentsTable();
+
+            // Let any listeners know instruments have been deleted
+            CommandBus.getInstance().publish(Commands.INSTRUMENTS_REFRESHED, this, null);
 
             // Clear selection state
             selectedInstrument = null;
@@ -1018,28 +1179,86 @@ public class InstrumentsPanel extends JPanel {
         }
     }
 
+    /**
+     * Check if an instrument is in use by any player in the session or sequencers
+     */
+    private boolean isInstrumentInUse(InstrumentWrapper instrument) {
+        if (instrument == null || instrument.getId() == null) {
+            return false;
+        }
+
+        try {
+            // Check session players
+            Set<Player> sessionPlayers = SessionManager.getInstance().getActiveSession().getPlayers();
+            if (sessionPlayers != null) {
+                for (Player player : sessionPlayers) {
+                    if (player != null &&
+                            player.getInstrumentId() != null &&
+                            player.getInstrumentId().equals(instrument.getId())) {
+                        return true;
+                    }
+                }
+            }
+
+            // Check melodic sequencers
+            for (MelodicSequencer sequencer : MelodicSequencerManager.getInstance().getAllSequencers()) {
+                if (sequencer != null && sequencer.getPlayer() != null &&
+                        sequencer.getPlayer().getInstrumentId() != null &&
+                        sequencer.getPlayer().getInstrumentId().equals(instrument.getId())) {
+                    return true;
+                }
+            }
+
+            // Check drum sequencers (which have multiple players)
+            for (DrumSequencer sequencer : DrumSequencerManager.getInstance().getAllSequencers()) {
+                if (sequencer != null && sequencer.getPlayers() != null) {
+                    for (Player player : sequencer.getPlayers()) {
+                        if (player != null &&
+                                player.getInstrumentId() != null &&
+                                player.getInstrumentId().equals(instrument.getId())) {
+                            return true;
+                        }
+                    }
+                }
+            }
+
+            return false;
+        } catch (Exception e) {
+            logger.error("Error checking if instrument is in use: {}", e.getMessage(), e);
+            return true; // Assume in use if there's an error (safety first)
+        }
+    }
+
+    /**
+     * Fixed version of refreshInstrumentsTable that properly updates the model
+     */
     private void refreshInstrumentsTable() {
         DefaultTableModel model = (DefaultTableModel) instrumentsTable.getModel();
         model.setRowCount(0);
 
         // Get fresh data from Redis
-        List<InstrumentWrapper> instruments = RedisService.getInstance().findAllInstruments();
+        List<InstrumentWrapper> instruments = InstrumentManager.getInstance().getCachedInstruments();
         logger.info("Refreshing instruments table with " + instruments.size() + " instruments");
 
         // Add each instrument to the table
         for (InstrumentWrapper instrument : instruments) {
-            logger.info("Adding instrument to table: " + instrument.getName());
-            model.addRow(new Object[]{
-                instrument.getId(),
-                instrument.getName(), 
-                instrument.getDeviceName(), 
-                instrument.getChannel() != null ? instrument.getChannel() + 1 : null, // Convert to 1-based
-                instrument.getAvailable(),
-                instrument.getLowestNote(), 
-                instrument.getHighestNote(), 
-                instrument.isInitialized()
-            });
+            if (instrument != null) {
+                model.addRow(new Object[] {
+                        instrument.getId(),
+                        instrument.getName(),
+                        instrument.getDeviceName(),
+                        instrument.getChannel() != null ? instrument.getChannel() + 1 : null, // Convert to 1-based
+                        instrument.getAvailable() != null ? instrument.getAvailable() : false,
+                        instrument.getLowestNote(),
+                        instrument.getHighestNote(),
+                        instrument.isInitialized(),
+                        determineInstrumentOwner(instrument) // Add owner column
+                });
+            }
         }
+
+        // Force a repaint to ensure UI is updated
+        instrumentsTable.repaint();
     }
 
     private void setupContextMenus() {
@@ -1091,45 +1310,46 @@ public class InstrumentsPanel extends JPanel {
         });
     }
 
-    // Update selection listeners to handle context menu state
     private void setupInstrumentsTableSelectionListener() {
         instrumentsTable.getSelectionModel().addListSelectionListener(e -> {
             if (!e.getValueIsAdjusting()) {
-                boolean hasSelection = instrumentsTable.getSelectedRow() >= 0;
+                boolean hasSelection = instrumentsTable.getSelectedRow() != -1;
+
+                // Update button states
                 editInstrumentButton.setEnabled(hasSelection);
                 deleteInstrumentButton.setEnabled(hasSelection);
+                enableInstrumentButton.setEnabled(hasSelection);
 
-                // Update selectedInstrument based on table selection
-                if (hasSelection) {
-                    int modelRow = instrumentsTable.convertRowIndexToModel(instrumentsTable.getSelectedRow());
-                    String name = (String) instrumentsTable.getModel().getValueAt(modelRow, 0);
-                    selectedInstrument = findInstrumentByName(name);
-                    
-                    // Log selection for debugging
-                    logger.debug("Selected instrument: {}", 
-                        selectedInstrument != null ? selectedInstrument.getName() : "null");
-
-                    // Enable button is active only when instrument is initialized but not available
-                    if (selectedInstrument != null) {
-                        boolean enableButtonState = selectedInstrument.isInitialized() && !selectedInstrument.getAvailable();
-                        enableInstrumentButton.setEnabled(enableButtonState);
-                        
-                        // Update the control codes table for this instrument
-                        updateControlCodesTable();
-                    } else {
-                        enableInstrumentButton.setEnabled(false);
-                    }
-                } else {
-                    // Clear selection when no row is selected
-                    selectedInstrument = null;
-                    enableInstrumentButton.setEnabled(false);
-                    
-                    // Clear control codes table
-                    updateControlCodesTable();
-                }
-
+                // Update context menu states
                 instrumentsContextMenu.setEditEnabled(hasSelection);
                 instrumentsContextMenu.setDeleteEnabled(hasSelection);
+
+                if (hasSelection) {
+                    int viewRow = instrumentsTable.getSelectedRow();
+                    int modelRow = instrumentsTable.convertRowIndexToModel(viewRow);
+
+                    // Fix: Get ID as Long, not String - ID is in first column (index 0)
+                    Long instrumentId = (Long) instrumentsTable.getModel().getValueAt(modelRow, 0);
+                    String instrumentName = (String) instrumentsTable.getModel().getValueAt(modelRow, 1);
+
+                    // Find the selected instrument
+                    selectedInstrument = InstrumentManager.getInstance().getInstrumentById(instrumentId);
+
+                    if (selectedInstrument != null) {
+                        logger.info("Selected instrument: {} (ID: {})",
+                                selectedInstrument.getName(), selectedInstrument.getId());
+
+                        // Update UI components showing instrument details
+                        updateControlCodesTable();
+                        updateCaptionsTable();
+                    } else {
+                        logger.warn("Selected instrument not found: {}", instrumentName);
+                    }
+                } else {
+                    selectedInstrument = null;
+                    updateControlCodesTable(); // Clear tables when no selection
+                    updateCaptionsTable();
+                }
             }
         });
     }
@@ -1159,25 +1379,59 @@ public class InstrumentsPanel extends JPanel {
     }
 
     private void editSelectedInstrument() {
+        logger.info("Edit instrument button clicked");
         int row = instrumentsTable.getSelectedRow();
+        logger.info("Selected row: {}", row);
+        
         if (row >= 0) {
-            // Convert view row to model row if table is sorted
-            int modelRow = instrumentsTable.convertRowIndexToModel(row);
-            String name = (String) instrumentsTable.getModel().getValueAt(modelRow, 0);
+            try {
+                // Convert view row to model row if table is sorted
+                int modelRow = instrumentsTable.convertRowIndexToModel(row);
+                logger.info("Model row: {}", modelRow);
 
-            // Find the instrument by name
-            InstrumentWrapper instrument = findInstrumentByName(name);
-            if (instrument != null) {
-                showInstrumentDialog(instrument);
-            } else {
+                // Fix: Get ID as Long from column 0, and name from column 1
+                Object idObj = instrumentsTable.getModel().getValueAt(modelRow, 0);
+                logger.info("ID object type: {}, value: {}", idObj != null ? idObj.getClass().getName() : "null", idObj);
+                
+                Long id = (Long) idObj;
+                String name = (String) instrumentsTable.getModel().getValueAt(modelRow, 1);
 
+                logger.info("Attempting to edit instrument: {} (ID: {})", name, id);
+
+                // Find the instrument by ID instead of name
+                InstrumentWrapper instrument = InstrumentManager.getInstance().getInstrumentById(id);
+                logger.info("Retrieved instrument: {}", instrument != null ? instrument.getName() : "null");
+
+                final InstrumentWrapper finalInstrument = instrument;
+                if (finalInstrument != null) {
+                    logger.info("Found instrument, showing dialog...");
+                    // Use invokeLater to avoid potential thread issues
+                    SwingUtilities.invokeLater(() -> showInstrumentDialog(finalInstrument));
+                } else {
+                    logger.error("Failed to find instrument: {} (ID: {})", name, id);
+                    CommandBus.getInstance().publish(
+                            Commands.STATUS_UPDATE,
+                            this,
+                            new StatusUpdate("InstrumentsPanel", "Error",
+                                    "Failed to find instrument: " + name + " (ID: " + id + ")"));
+                    
+                    // Fallback: try finding by name if ID failed
+
+                    if (instrument != null) {
+                        logger.info("Found instrument by name instead, showing dialog...");
+                        SwingUtilities.invokeLater(() -> showInstrumentDialog(instrument));
+                    }
+                }
+            } catch (Exception e) {
+                logger.error("Error editing instrument: {}", e.getMessage(), e);
                 CommandBus.getInstance().publish(
                         Commands.STATUS_UPDATE,
                         this,
-                        new StatusUpdate("Failed to find instrument: " + name));
-
-                logger.error("Failed to find instrument: " + name);
+                        new StatusUpdate("InstrumentsPanel", "Error",
+                                "Error editing instrument: " + e.getMessage()));
             }
+        } else {
+            logger.warn("Edit button clicked but no row selected");
         }
     }
 

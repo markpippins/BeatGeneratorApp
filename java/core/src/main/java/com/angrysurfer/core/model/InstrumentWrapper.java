@@ -93,7 +93,7 @@ public final class InstrumentWrapper implements Serializable {
     private String description;
 
     @Convert(converter = IntegerArrayConverter.class)
-    private Integer[] channels;
+    private Integer[] channels = ALL_CHANNELS;
 
     private Integer channel;
 
@@ -198,9 +198,26 @@ public final class InstrumentWrapper implements Serializable {
         return channels != null && channels.length > 1;
     }
 
-    public boolean receivesOn(Integer channel) {
-        return Arrays.asList(this.channels).contains(channel);
+    /**
+     * Check if this instrument receives on the specified channel
+     */
+    public boolean receivesOn(int channel) {
+        // Handle null receivedChannels
+        if (channels == null) {
+            // If no channels specified, check the main channel
+            return this.channel != null && this.channel == channel;
+        }
+
+        // Check if the instrument receives on multiple channels
+        try {
+            return Arrays.asList(channels).contains(channel) ||
+                    (this.channel != null && this.channel == channel);
+        } catch (NullPointerException e) {
+            // Fallback to main channel if there's an issue with receivedChannels
+            return this.channel != null && this.channel == channel;
+        }
     }
+
 
     // Convenience method for single-channel devices
     public int getDefaultChannel() {

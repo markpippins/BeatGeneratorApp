@@ -75,7 +75,7 @@ public class MainPanel extends JPanel implements AutoCloseable, IBusListener {
     private DrumEffectsSequencerPanel drumEffectsSequencerPanel;
 
     private InternalSynthControlPanel internalSynthControlPanel;
-    private MelodicSequencerPanel[] melodicPanels = new MelodicSequencerPanel[8];
+    private MelodicSequencerPanel[] melodicPanels = new MelodicSequencerPanel[MelodicSequencer.SEQUENCER_CHANNELS.length];
 
     private MuteButtonsPanel muteButtonsPanel;
 
@@ -309,10 +309,10 @@ public class MainPanel extends JPanel implements AutoCloseable, IBusListener {
             int channel = ChannelManager.getInstance().getChannelForSequencerIndex(i);
 
             // Create panel with proper channel assignment
-            melodicPanels[i] = createMelodicSequencerPanel(i, channel);
+            melodicPanels[i] = createMelodicSequencerPanel(i);
 
             // Use channel number (1-based for display) in tab title
-            melodicTabbedPane.addTab("Mono " + (channel + 1), melodicPanels[i]);
+            melodicTabbedPane.addTab("Mono " + (i + 1), melodicPanels[i]);
         }
 
         return melodicTabbedPane;
@@ -432,11 +432,9 @@ public class MainPanel extends JPanel implements AutoCloseable, IBusListener {
         return drumParamsSequencerPanel;
     }
 
-    private MelodicSequencerPanel createMelodicSequencerPanel(int index, int channel) {
-        return new MelodicSequencerPanel(index, channel, noteEvent -> {
-            logger.debug("Note event received from sequencer {}: note={}, velocity={}, duration={}",
-                    index, noteEvent.getNote(), noteEvent.getVelocity(), noteEvent.getDurationMs());
-
+    private MelodicSequencerPanel createMelodicSequencerPanel(int index) {
+        return new MelodicSequencerPanel(index, noteEvent -> {
+           
             // Get the panel's sequencer to use as the event source
             MelodicSequencer sequencer = null;
             if (index >= 0 && index < melodicPanels.length && melodicPanels[index] != null) {

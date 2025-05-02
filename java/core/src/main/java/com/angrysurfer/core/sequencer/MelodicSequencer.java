@@ -9,9 +9,7 @@ import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 import javax.sound.midi.MidiDevice;
-import javax.sound.midi.MidiUnavailableException;
 
-import com.angrysurfer.core.service.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -28,6 +26,10 @@ import com.angrysurfer.core.model.Note;
 import com.angrysurfer.core.model.Player;
 import com.angrysurfer.core.model.Session;
 import com.angrysurfer.core.redis.RedisService;
+import com.angrysurfer.core.service.DeviceManager;
+import com.angrysurfer.core.service.InstrumentManager;
+import com.angrysurfer.core.service.PlayerManager;
+import com.angrysurfer.core.service.SessionManager;
 
 import lombok.Getter;
 import lombok.Setter;
@@ -36,6 +38,10 @@ import lombok.Setter;
 @Setter
 public class MelodicSequencer implements IBusListener {
     private static final Logger logger = LoggerFactory.getLogger(MelodicSequencer.class);
+
+    public static final int[] SEQUENCER_CHANNELS = { 1, 2, 3, 4, 5, 6, 7, 8, 11, 12, 13, 14 }; // Default scale notes
+
+    private int channel = 0; // Current step in the pattern
 
     // Keep these as class fields for real-time playback
     private int currentStep = 0; // Current step in the pattern
@@ -99,18 +105,15 @@ public class MelodicSequencer implements IBusListener {
     // Note object for storing melodic properties
     private Player player;
 
-    private int tempChannel = 0;
-
     private int currentTilt = 0;
 
     /**
      * Creates a new melodic sequencer
      */
-    public MelodicSequencer(Integer id, Integer channel) {
+    public MelodicSequencer(Integer id) {
 
         setId(id);
-        setTempChannel(channel);
-
+        
         initializePlayer();
         // Register with CommandBus
         CommandBus.getInstance().register(this);
@@ -181,7 +184,7 @@ public class MelodicSequencer implements IBusListener {
     }
 
     public int getChannel() {
-        return player != null ? player.getChannel() : 0;
+        return player != null ? player.getChannel() : SEQUENCER_CHANNELS[getId() % SEQUENCER_CHANNELS.length];
     }
 
     public void setChannel(int channel) {
@@ -423,7 +426,7 @@ public class MelodicSequencer implements IBusListener {
      */
     public void ensurePlayerHasInstrument() {
         if (player != null && player.getInstrument() == null) {
-            logger.warn("Player {} has no instrument, initializing default", getTempChannel());
+            logger.warn("Player {} has no instrument, initializing default", getChannel());
             // Use PlayerManager with our enhanced API
             PlayerManager.getInstance().initializeInternalInstrument(player, true);
         }
@@ -797,40 +800,25 @@ public class MelodicSequencer implements IBusListener {
             if (player.getChannel() != getChannel()) {
                 player.setChannel(getChannel());
                 player.setOwner(this);
+                setPlayer(existingPlayer);
                 // Save the player through PlayerManager
                 PlayerManager.getInstance().savePlayerProperties(player);
             }
         } else {
             // Create new player through PlayerManager
             logger.info("Creating new player for sequencer {}", id);
-            player = RedisService.getInstance().newNote();
+            setPlayer(RedisService.getInstance().newNote());
+
             player.setOwner(this);
             player.setName("Melo " + id);
+            player.setChannel(getChannel());
+
             // Get an instrument from InstrumentManager
             InstrumentWrapper instrument = InstrumentManager.getInstance()
-                    .getOrCreateInternalSynthInstrument(player.getChannel(),true);
-
+                    .getOrCreateInternalSynthInstrument(getChannel(), true);
             if (instrument != null) {
-
-                // Configure base properties
-
-                player.setChannel(getChannel());
-
-                // Associate player with this sequencer
-                player.setOwner(this);
-
-                // Generate an ID for the player if needed
-                if (player.getId() == null) {
-                    player.setId(RedisService.getInstance().getNextPlayerId());
-                }
-
-                // Add to session
-                session.getPlayers().add(player);
                 player.setInstrument(instrument);
-
-                // Save through PlayerManager
                 PlayerManager.getInstance().savePlayerProperties(player);
-
                 logger.info("Created new player {} for melodic sequencer {}", player.getId(), id);
             }
 
@@ -843,7 +831,7 @@ public class MelodicSequencer implements IBusListener {
             // ensurePlayerHasInstrument();
             // Always initialize the instrument once player is set up
             if (player.getInstrument() == null) {
-                PlayerManager.getInstance().initializeInternalInstrument(player,true);
+                PlayerManager.getInstance().initializeInternalInstrument(player, true);
             }
 
             // If we have soundbank/bank/preset settings in the sequence data, apply them
@@ -871,13 +859,13 @@ public class MelodicSequencer implements IBusListener {
 
             if (player.getInstrument() != null) {
                 player.getInstrument().setAssignedToPlayer(true);
-                setChannel(tempChannel);
             }
+            session.getPlayers().add(player);
+            SessionManager.getInstance().saveSession(session);
+            logger.info("Added new player to session {}: {}", session.getId(), player.getId());
 
         }
     }
-
-
 
     /**
      * Find a player in the session that belongs to this sequencer

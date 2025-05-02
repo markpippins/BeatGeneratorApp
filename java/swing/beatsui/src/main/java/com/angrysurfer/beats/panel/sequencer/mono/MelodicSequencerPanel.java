@@ -87,11 +87,11 @@ public class MelodicSequencerPanel extends JPanel implements IBusListener {
     /**
      * Constructor for MelodicSequencerPanel
      */
-    public MelodicSequencerPanel(int index, Integer channel, Consumer<NoteEvent> noteEventConsumer) {
+    public MelodicSequencerPanel(int index, Consumer<NoteEvent> noteEventConsumer) {
         super(new BorderLayout());
 
         // Create the sequencer with properly assigned channel
-        sequencer = MelodicSequencerManager.getInstance().newSequencer(index, channel);
+        sequencer = MelodicSequencerManager.getInstance().newSequencer(index);
 
         // Set up the note event listener
         sequencer.setNoteEventListener(noteEventConsumer);
@@ -113,7 +113,7 @@ public class MelodicSequencerPanel extends JPanel implements IBusListener {
         // Register with command bus for other UI updates (not step highlighting)
         CommandBus.getInstance().register(this);
 
-        logger.info("Created MelodicSequencerPanel with index {} on channel {}", index, channel);
+        logger.info("Created MelodicSequencerPanel with index {}", index);
     }
 
     /**
@@ -311,21 +311,22 @@ public class MelodicSequencerPanel extends JPanel implements IBusListener {
         JPanel leftPanel = new JPanel(new BorderLayout(2, 4));
 
         // Create instrument combo panel with add button
-        JPanel instrumentPanel = new JPanel(new BorderLayout(2, 0));
-        UIUtils.setWidgetPanelBorder(instrumentPanel, "Instrument");
+        JPanel instrumentPanel = UIUtils.createSectionPanel("Instrument"); 
+        // new JPanel(new BorderLayout(2, 0));
+        // UIUtils.setWidgetPanelBorder(instrumentPanel, "Instrument");
         
         // Create combo and button in sub-panel
-        JPanel instrumentComboPanel = new JPanel(new BorderLayout());
+        // JPanel instrumentComboPanel = new JPanel(new BorderLayout());
         InstrumentCombo instrumentCombo = new InstrumentCombo();
         instrumentCombo.setCurrentPlayer(sequencer.getPlayer());
-        instrumentComboPanel.add(instrumentCombo, BorderLayout.CENTER);
+        instrumentPanel.add(instrumentCombo, BorderLayout.CENTER);
         
         // Create add instrument button and add to the right of combo
         AddInstrumentButton addInstrumentButton = new AddInstrumentButton();
         addInstrumentButton.setCurrentPlayer(sequencer.getPlayer());
         
         // Add combo (center) and button (east) to the instrument panel
-        instrumentPanel.add(instrumentComboPanel, BorderLayout.CENTER);
+        // instrumentPanel.add(instrumentComboPanel, BorderLayout.CENTER);
         instrumentPanel.add(addInstrumentButton, BorderLayout.EAST);
 
         // Create channel combo panel

@@ -1,9 +1,6 @@
 package com.angrysurfer.core.service;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import javax.sound.midi.MidiDevice;
@@ -120,13 +117,30 @@ public class InstrumentManager implements IBusListener {
         needsRefresh = false;
     }
 
+    /**
+     * Get instruments that can be used on a specific channel
+     */
     public List<InstrumentWrapper> getInstrumentByChannel(int channel) {
-        if (needsRefresh) {
-            refreshInstruments();
-        }
         return instrumentCache.values().stream()
-                .filter(i -> i.receivesOn(channel) &&
-                        (devices == null || devices.isEmpty() || devices.contains(i.getDeviceName())))
+                .filter(instrument -> {
+                    // Safety check for null instrument
+                    if (instrument == null)
+                        return false;
+
+                    try {
+                        // Use safe receivesOn method
+                        return instrument.receivesOn(channel);
+                    } catch (Exception e) {
+                        // Fallback for any unexpected errors
+                        logger.warn("Error checking if instrument receives on channel {}: {}",
+                                channel, e.getMessage());
+
+                        // Check channel directly as fallback
+                        return instrument.getChannel() != null &&
+                                instrument.getChannel() == channel;
+                    }
+                })
+                .sorted(Comparator.comparing(InstrumentWrapper::getName))
                 .collect(Collectors.toList());
     }
 
@@ -136,10 +150,46 @@ public class InstrumentManager implements IBusListener {
      * @param id The instrument ID
      * @return The instrument, or null if not found
      */
+    /**
+     * Get an instrument by ID
+     * 
+     * @param id The instrument ID to look up
+     * @return The instrument with the specified ID, or null if not found
+     */
     public InstrumentWrapper getInstrumentById(Long id) {
-        if (id == null)
+        if (id == null) {
+            logger.warn("getInstrumentById called with null ID");
             return null;
-        return instrumentCache.get(id);
+        }
+
+        logger.debug("Looking up instrument by ID: {}", id);
+
+        // Check cache first
+        InstrumentWrapper instrument = instrumentCache.get(id);
+
+        // If not in cache, try to load from Redis
+        if (instrument == null) {
+            logger.info("Instrument with ID {} not found in cache, checking database", id);
+            try {
+                instrument = RedisService.getInstance().getInstrumentById(id);
+
+                // Add to cache if found
+                if (instrument != null) {
+                    logger.info("Found instrument in database: {} (ID: {})",
+                            instrument.getName(), instrument.getId());
+                    instrumentCache.put(id, instrument);
+                } else {
+                    logger.warn("Instrument with ID {} not found in database", id);
+                }
+            } catch (Exception e) {
+                logger.error("Error retrieving instrument with ID {}: {}", id, e.getMessage(), e);
+            }
+        } else {
+            logger.debug("Found instrument in cache: {} (ID: {})",
+                    instrument.getName(), instrument.getId());
+        }
+
+        return instrument;
     }
 
     public List<String> getInstrumentNames() {
@@ -311,7 +361,7 @@ public class InstrumentManager implements IBusListener {
     public InstrumentWrapper getOrCreateInternalSynthInstrument(int channel, boolean exclusive) {
         // First try to find an existing instrument
         Long id = 9985L + channel;
-        
+
         // Try to find by ID first
         InstrumentWrapper instrument = instrumentCache.get(id);
         if (instrument != null && (!exclusive || !instrument.getAssignedToPlayer())) {
@@ -320,36 +370,37 @@ public class InstrumentManager implements IBusListener {
             }
             return instrument;
         }
-        
+
         // Next try by device name and channel
         for (InstrumentWrapper cached : instrumentCache.values()) {
             if (InternalSynthManager.getInstance().isInternalSynthInstrument(cached) &&
                     cached.getChannel() != null &&
                     cached.getChannel() == channel &&
                     (!exclusive || !cached.getAssignedToPlayer())) {
-                
+
                 if (exclusive) {
                     cached.setAssignedToPlayer(true);
                 }
                 return cached;
             }
         }
-        
+
         // No instrument found, create a new one using InternalSynthManager
         boolean isDrumChannel = (channel == 9);
         instrument = InternalSynthManager.getInstance().createInternalInstrument(
                 channel, isDrumChannel, null);
-        
+
         if (instrument != null) {
             // Store in our cache
             updateInstrument(instrument);
-            
+
             // Mark as assigned if exclusive
             if (exclusive) {
                 instrument.setAssignedToPlayer(true);
             }
         }
-        
+
         return instrument;
     }
+
 }
