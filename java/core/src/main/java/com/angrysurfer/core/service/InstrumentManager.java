@@ -403,4 +403,22 @@ public class InstrumentManager implements IBusListener {
         return instrument;
     }
 
+    /**
+ * Refresh the instrument cache with the provided list of instruments
+ */
+public void refreshCache(List<InstrumentWrapper> instruments) {
+    if (instruments == null) return;
+    
+    // Clear the existing cache
+    instrumentCache.clear();
+    
+    // Add all instruments to the cache
+    for (InstrumentWrapper instrument : instruments) {
+        if (instrument != null && instrument.getId() != null) {
+            instrumentCache.put(instrument.getId(), instrument);
+        }
+    }
+    
+    logger.debug("Refreshed instrument cache with {} instruments", instruments.size());
+}
 }

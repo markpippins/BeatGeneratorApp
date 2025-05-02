@@ -357,4 +357,6 @@ public class Commands {
     public static final String SOUNDBANKS_REFRESHED = "SOUNDBANKS_REFRESHED";
 
     public static final String CHANNEL_ASSIGNMENT_CHANGED = "CHANNEL_ASSIGNMENT_CHANGED";
+    
+    public static final String DELETE_UNUSED_INSTRUMENTS = "DELETE_UNUSED_INSTRUMENTS";
 }

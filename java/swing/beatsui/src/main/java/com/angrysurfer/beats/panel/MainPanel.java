@@ -203,7 +203,7 @@ public class MainPanel extends JPanel implements AutoCloseable, IBusListener {
 
             if (selectedComponent == drumSequencerPanel && drumSequencerPanel.getDrumSelectorPanel().getSelectedDrumPadIndex() != null) {
                 // Get the currently selected drum effects sequencer panel
-                // DrumSequencerPanel drumSequencerPanel = (DrumSequencerPanel) selectedComponent;
+                 DrumSequencerPanel drumSequencerPanel = (DrumSequencerPanel) selectedComponent;
 
 
                 // Set the player as active

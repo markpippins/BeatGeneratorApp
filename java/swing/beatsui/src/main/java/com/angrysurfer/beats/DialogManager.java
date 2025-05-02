@@ -26,8 +26,8 @@ import org.slf4j.LoggerFactory;
 
 import com.angrysurfer.beats.panel.EuclideanPatternPanel;
 import com.angrysurfer.beats.panel.instrument.CustomControlsPanel;
-import com.angrysurfer.beats.panel.instrument.PlayerInstrumentPanel;
 import com.angrysurfer.beats.panel.player.PlayerEditPanel;
+import com.angrysurfer.beats.panel.player.PlayerInstrumentPanel;
 import com.angrysurfer.beats.panel.player.RuleEditPanel;
 import com.angrysurfer.core.config.UserConfig;
 import com.angrysurfer.core.config.UserConfigConverter;

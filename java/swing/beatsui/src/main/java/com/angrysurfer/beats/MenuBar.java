@@ -93,10 +93,26 @@ public class MenuBar extends JMenuBar {
             }
         });
 
+        JMenuItem deleteUnusedInstruments = new JMenuItem("Delete Unused Instruments");
+        deleteUnusedInstruments.addActionListener(e -> {
+            int result = JOptionPane.showConfirmDialog(
+                    parentFrame,
+                    "Are you sure you want to delete all instruments that aren't in use?\n" +
+                    "This action will permanently remove all instruments with no owners.",
+                    "Delete Unused Instruments",
+                    JOptionPane.YES_NO_OPTION,
+                    JOptionPane.WARNING_MESSAGE);
+
+            if (result == JOptionPane.YES_OPTION) {
+                commandBus.publish(Commands.DELETE_UNUSED_INSTRUMENTS, this);
+            }
+        });
+
         JMenu dbMenu = new JMenu("Database");
         dbMenu.setMnemonic(KeyEvent.VK_D);
         dbMenu.add(clearDb);
-        dbMenu.add(clearInvalidSessions); // Add the new menu item
+        dbMenu.add(clearInvalidSessions);
+        dbMenu.add(deleteUnusedInstruments);
 
         JMenuItem loadConfig = new JMenuItem("Load Configuration...");
         loadConfig.addActionListener(e -> {

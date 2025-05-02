@@ -981,9 +981,10 @@ public class InstrumentsPanel extends JPanel {
                 instrument.setInternal(Boolean.FALSE);
                 instrument.setAvailable(Boolean.FALSE);
             } else {
-                // Make a copy of the instrument to avoid modifying the original until save is confirmed
+                // Make a copy of the instrument to avoid modifying the original until save is
+                // confirmed
                 // instrument = instrument.copy();
-                
+
                 // For existing instruments, make sure boolean fields are not null
                 if (instrument.getInternal() == null) {
                     instrument.setInternal(Boolean.FALSE);
@@ -1007,48 +1008,46 @@ public class InstrumentsPanel extends JPanel {
             if (result) {
                 // Get the updated instrument from the editor panel
                 InstrumentWrapper updatedInstrument = editorPanel.getUpdatedInstrument();
-                
+
                 logger.info("Saving updated instrument: {}", updatedInstrument.getName());
-                
+
                 // Save to Redis
                 RedisService.getInstance().saveInstrument(updatedInstrument);
-                
+
                 // Update in InstrumentManager's cache
                 InstrumentManager.getInstance().updateInstrument(updatedInstrument);
-                
+
                 // Refresh the UI
                 refreshInstrumentsTable();
-                
+
                 // If this was the selected instrument, update selected instrument reference
-                if (selectedInstrument != null && 
-                    updatedInstrument.getId() != null && 
-                    updatedInstrument.getId().equals(selectedInstrument.getId())) {
+                if (selectedInstrument != null &&
+                        updatedInstrument.getId() != null &&
+                        updatedInstrument.getId().equals(selectedInstrument.getId())) {
                     selectedInstrument = updatedInstrument;
                     updateControlCodesTable();
                     updateCaptionsTable();
                 }
-                
+
                 // Notify system of the update
                 CommandBus.getInstance().publish(Commands.INSTRUMENT_UPDATED, this, updatedInstrument);
-                
+
                 // Show status message
                 CommandBus.getInstance().publish(
-                    Commands.STATUS_UPDATE,
-                    this,
-                    new StatusUpdate("InstrumentsPanel", "Success", 
-                        "Saved instrument: " + updatedInstrument.getName())
-                );
+                        Commands.STATUS_UPDATE,
+                        this,
+                        new StatusUpdate("InstrumentsPanel", "Success",
+                                "Saved instrument: " + updatedInstrument.getName()));
             } else {
                 logger.info("Dialog cancelled, no changes made");
             }
         } catch (Exception e) {
             logger.error("Error showing/processing instrument dialog: {}", e.getMessage(), e);
             CommandBus.getInstance().publish(
-                Commands.STATUS_UPDATE,
-                this,
-                new StatusUpdate("InstrumentsPanel", "Error", 
-                    "Error editing instrument: " + e.getMessage())
-            );
+                    Commands.STATUS_UPDATE,
+                    this,
+                    new StatusUpdate("InstrumentsPanel", "Error",
+                            "Error editing instrument: " + e.getMessage()));
         }
     }
 
@@ -1068,18 +1067,25 @@ public class InstrumentsPanel extends JPanel {
         // Check each selected instrument
         for (int viewRow : selectedRows) {
             int modelRow = instrumentsTable.convertRowIndexToModel(viewRow);
-            // First column (index 1) contains the instrument name (ID is at index 0)
+
+            // Get ID from column 0 and name from column 1
+            Long id = (Long) instrumentsTable.getModel().getValueAt(modelRow, 0);
             String name = (String) instrumentsTable.getModel().getValueAt(modelRow, 1);
 
-            InstrumentWrapper instrument = findInstrumentByName(name);
-            if (instrument != null) {
-                // Check if instrument is in use by any player
-                boolean isInUse = isInstrumentInUse(instrument);
+            // Get owner info from the last column (our newly added Owner column)
+            String ownerInfo = (String) instrumentsTable.getModel().getValueAt(modelRow,
+                    instrumentsTable.getModel().getColumnCount() - 1);
 
-                if (isInUse) {
-                    inUseInstruments.add(instrument);
-                } else {
+            InstrumentWrapper instrument = InstrumentManager.getInstance().getInstrumentById(id);
+            if (instrument != null) {
+                // Check if the instrument has no owner or owner is "None"
+                if (ownerInfo == null || ownerInfo.isEmpty() || "None".equals(ownerInfo)) {
                     instrumentsToDelete.add(instrument);
+                    logger.info("Instrument {} will be deleted (no owner)", instrument.getName());
+                } else {
+                    inUseInstruments.add(instrument);
+                    logger.info("Instrument {} cannot be deleted (owned by: {})",
+                            instrument.getName(), ownerInfo);
                 }
             }
         }
@@ -1172,6 +1178,7 @@ public class InstrumentsPanel extends JPanel {
             // Clear selection state
             selectedInstrument = null;
             updateControlCodesTable();
+            updateCaptionsTable();
 
             // Update button states
             editInstrumentButton.setEnabled(false);
@@ -1229,37 +1236,40 @@ public class InstrumentsPanel extends JPanel {
         }
     }
 
-    /**
-     * Fixed version of refreshInstrumentsTable that properly updates the model
-     */
-    private void refreshInstrumentsTable() {
-        DefaultTableModel model = (DefaultTableModel) instrumentsTable.getModel();
-        model.setRowCount(0);
+/**
+ * Fixed version of refreshInstrumentsTable that properly updates the model
+ */
+private void refreshInstrumentsTable() {
+    DefaultTableModel model = (DefaultTableModel) instrumentsTable.getModel();
+    model.setRowCount(0);
 
-        // Get fresh data from Redis
-        List<InstrumentWrapper> instruments = InstrumentManager.getInstance().getCachedInstruments();
-        logger.info("Refreshing instruments table with " + instruments.size() + " instruments");
+    // Get fresh data DIRECTLY from Redis instead of using the potentially stale cache
+    List<InstrumentWrapper> instruments = RedisService.getInstance().findAllInstruments();
+    logger.info("Refreshing instruments table with " + instruments.size() + " instruments from Redis");
+    
+    // Also refresh the InstrumentManager's cache to keep it in sync
+    InstrumentManager.getInstance().refreshCache(instruments);
 
-        // Add each instrument to the table
-        for (InstrumentWrapper instrument : instruments) {
-            if (instrument != null) {
-                model.addRow(new Object[] {
-                        instrument.getId(),
-                        instrument.getName(),
-                        instrument.getDeviceName(),
-                        instrument.getChannel() != null ? instrument.getChannel() + 1 : null, // Convert to 1-based
-                        instrument.getAvailable() != null ? instrument.getAvailable() : false,
-                        instrument.getLowestNote(),
-                        instrument.getHighestNote(),
-                        instrument.isInitialized(),
-                        determineInstrumentOwner(instrument) // Add owner column
-                });
-            }
+    // Add each instrument to the table
+    for (InstrumentWrapper instrument : instruments) {
+        if (instrument != null) {
+            model.addRow(new Object[] {
+                    instrument.getId(),
+                    instrument.getName(),
+                    instrument.getDeviceName(),
+                    instrument.getChannel() != null ? instrument.getChannel() + 1 : null, // Convert to 1-based
+                    instrument.getAvailable() != null ? instrument.getAvailable() : false,
+                    instrument.getLowestNote(),
+                    instrument.getHighestNote(),
+                    instrument.isInitialized(),
+                    determineInstrumentOwner(instrument) // Add owner column
+            });
         }
-
-        // Force a repaint to ensure UI is updated
-        instrumentsTable.repaint();
     }
+
+    // Force a repaint to ensure UI is updated
+    instrumentsTable.repaint();
+}
 
     private void setupContextMenus() {
         // Create context menus
@@ -1382,7 +1392,7 @@ public class InstrumentsPanel extends JPanel {
         logger.info("Edit instrument button clicked");
         int row = instrumentsTable.getSelectedRow();
         logger.info("Selected row: {}", row);
-        
+
         if (row >= 0) {
             try {
                 // Convert view row to model row if table is sorted
@@ -1391,8 +1401,9 @@ public class InstrumentsPanel extends JPanel {
 
                 // Fix: Get ID as Long from column 0, and name from column 1
                 Object idObj = instrumentsTable.getModel().getValueAt(modelRow, 0);
-                logger.info("ID object type: {}, value: {}", idObj != null ? idObj.getClass().getName() : "null", idObj);
-                
+                logger.info("ID object type: {}, value: {}", idObj != null ? idObj.getClass().getName() : "null",
+                        idObj);
+
                 Long id = (Long) idObj;
                 String name = (String) instrumentsTable.getModel().getValueAt(modelRow, 1);
 
@@ -1414,7 +1425,7 @@ public class InstrumentsPanel extends JPanel {
                             this,
                             new StatusUpdate("InstrumentsPanel", "Error",
                                     "Failed to find instrument: " + name + " (ID: " + id + ")"));
-                    
+
                     // Fallback: try finding by name if ID failed
 
                     if (instrument != null) {
