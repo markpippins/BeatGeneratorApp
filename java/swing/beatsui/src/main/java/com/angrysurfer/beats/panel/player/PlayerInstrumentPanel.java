@@ -1,13 +1,13 @@
 package com.angrysurfer.beats.panel.player;
 
 import java.awt.BorderLayout;
+import java.awt.Color;
 import java.awt.FlowLayout;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.util.ArrayList;
-import java.util.HashSet;
 
 import javax.swing.BorderFactory;
 import javax.swing.JButton;
@@ -16,11 +16,12 @@ import javax.swing.JComboBox;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
+import javax.swing.JScrollPane;
 import javax.swing.JSpinner;
+import javax.swing.JTextArea;
 import javax.swing.JTextField;
 import javax.swing.SpinnerNumberModel;
 import javax.swing.SwingUtilities;
-import javax.swing.WindowConstants;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -50,6 +51,7 @@ public class PlayerInstrumentPanel extends JPanel {
     private JCheckBox internalCheckbox;
     private JButton okButton;
     private JButton cancelButton;
+    private JTextArea ownershipInfoArea;
     
     private final Player player;
     private InstrumentWrapper newInstrument;
@@ -179,18 +181,35 @@ public class PlayerInstrumentPanel extends JPanel {
         gbc.anchor = GridBagConstraints.WEST;
         contentPanel.add(internalCheckbox, gbc);
         
-        // Player info
+        // Add ownership info
+        gbc.gridx = 0;
+        gbc.gridy++;
+        gbc.gridwidth = 2;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        
+        // Create ownership/assignment info area
+        ownershipInfoArea = new JTextArea(2, 20);
+        ownershipInfoArea.setEditable(false);
+        ownershipInfoArea.setLineWrap(true);
+        ownershipInfoArea.setWrapStyleWord(true);
+        ownershipInfoArea.setBackground(new Color(230, 255, 230)); // Light green background
+        ownershipInfoArea.setBorder(BorderFactory.createCompoundBorder(
+            BorderFactory.createTitledBorder("Ownership Information"),
+            BorderFactory.createEmptyBorder(5, 5, 5, 5)
+        ));
+        
+        // Set text based on player
         if (player != null) {
-            gbc.gridx = 0;
-            gbc.gridy++;
-            gbc.gridwidth = 2;
-            gbc.anchor = GridBagConstraints.CENTER;
-            JLabel playerLabel = new JLabel(
-                "Will be assigned to player: " + player.getName() + 
-                " (Channel: " + player.getChannel() + ")");
-            playerLabel.setBorder(BorderFactory.createEmptyBorder(10, 0, 0, 0));
-            contentPanel.add(playerLabel, gbc);
+            ownershipInfoArea.setText(
+                "This instrument will be created for and assigned to:\n" +
+                player.getName() + " (Channel: " + (player.getChannel() + 1) + ")"
+            );
+        } else {
+            ownershipInfoArea.setText("New instrument will be created without an owner.");
         }
+        
+        JScrollPane scrollPane = new JScrollPane(ownershipInfoArea);
+        contentPanel.add(scrollPane, gbc);
         
         // Buttons panel
         JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));

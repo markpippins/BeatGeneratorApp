@@ -88,12 +88,15 @@ public final class InstrumentWrapper implements Serializable {
 
     private String deviceName = "Gervill";
 
+    @JsonIgnore
+    private int defaultChannel = 0;
+
     private boolean internalSynth;
 
     private String description;
 
     @Convert(converter = IntegerArrayConverter.class)
-    private Integer[] channels = ALL_CHANNELS;
+    private Integer[] receivedChannels = ALL_CHANNELS;
 
     private Integer channel;
 
@@ -170,7 +173,7 @@ public final class InstrumentWrapper implements Serializable {
         setName(Objects.isNull(name) ? device.getDeviceInfo().getName() : name);
         setDevice(device);
         setDeviceName(device.getDeviceInfo().getName());
-        setChannels(channels);
+        setReceivedChannels(channels);
         logger.info("Created instrument {} with channels: {}", getName(), Arrays.toString(channels));
     }
 
@@ -193,24 +196,27 @@ public final class InstrumentWrapper implements Serializable {
         }
     }
 
-    // Helper method to determine if device is likely multi-timbral
+
+    @JsonIgnore
     public boolean isMultiTimbral() {
-        return channels != null && channels.length > 1;
+        // Check if the device is multi-timbral based on received channels
+        return receivedChannels != null && receivedChannels.length > 1;
     }
 
     /**
      * Check if this instrument receives on the specified channel
      */
+    @JsonIgnore
     public boolean receivesOn(int channel) {
         // Handle null receivedChannels
-        if (channels == null) {
+        if (receivedChannels == null) {
             // If no channels specified, check the main channel
             return this.channel != null && this.channel == channel;
         }
 
         // Check if the instrument receives on multiple channels
         try {
-            return Arrays.asList(channels).contains(channel) ||
+            return Arrays.asList(receivedChannels).contains(channel) ||
                     (this.channel != null && this.channel == channel);
         } catch (NullPointerException e) {
             // Fallback to main channel if there's an issue with receivedChannels
@@ -220,8 +226,9 @@ public final class InstrumentWrapper implements Serializable {
 
 
     // Convenience method for single-channel devices
+    @JsonIgnore
     public int getDefaultChannel() {
-        return channels != null && channels.length > 0 ? channels[0] : DEFAULT_CHANNEL;
+        return receivedChannels != null && receivedChannels.length > 0 ? receivedChannels[0] : DEFAULT_CHANNEL;
     }
 
     public String assignedControl(int cc) {
@@ -522,6 +529,7 @@ public final class InstrumentWrapper implements Serializable {
         getBoundaries().put(cc, new Integer[] { lowerBound, upperBound });
     }
 
+    @JsonIgnore
     public Integer getAssignmentCount() {
         return getAssignments().size();
     }

@@ -56,13 +56,8 @@ public class SoundParametersPanel extends JPanel implements IBusListener {
     /**
      * Constructor with improved manager delegation
      */
-    public SoundParametersPanel(Player player) {
+    public SoundParametersPanel() {
         super(new BorderLayout());
-        this.player = player;
-
-        if (player != null) {
-            this.playerId = player.getId();
-        }
 
         initComponents();
         layoutComponents();
@@ -86,8 +81,8 @@ public class SoundParametersPanel extends JPanel implements IBusListener {
         // Use BoxLayout for horizontal arrangement
         JPanel contentPanel = new JPanel();
         contentPanel.setLayout(new BoxLayout(contentPanel, BoxLayout.X_AXIS));
-        contentPanel.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
-
+        //contentPanel.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
+        UIUtils.setPanelBorder(this);
         // Create sub-panels for each control group
         JPanel soundbankPanel = new JPanel(new BorderLayout(0, 3));
         JPanel bankPanel = new JPanel(new BorderLayout(0, 3));
@@ -118,10 +113,9 @@ public class SoundParametersPanel extends JPanel implements IBusListener {
         contentPanel.add(presetPanel);
         
         // Set consistent preferred sizes for better UI
-        Dimension comboSize = new Dimension(150, 25);
         soundbankCombo.setPreferredSize(new Dimension(UIUtils.LARGE_CONTROL_WIDTH, UIUtils.CONTROL_HEIGHT));
         bankCombo.setPreferredSize(new Dimension(UIUtils.MEDIUM_CONTROL_WIDTH, UIUtils.CONTROL_HEIGHT));
-        presetCombo.setPreferredSize(comboSize);
+        presetCombo.setPreferredSize(new Dimension(UIUtils.LARGE_CONTROL_WIDTH, UIUtils.CONTROL_HEIGHT));
         
         // Button panel for the edit button
         JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));

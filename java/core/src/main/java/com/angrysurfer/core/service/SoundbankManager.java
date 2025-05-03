@@ -695,8 +695,8 @@ public class SoundbankManager implements IBusListener {
 
             // Get the MIDI channel from the instrument or default to 0
             int channel = 0;
-            if (instrument.getChannels() != null && instrument.getChannels().length > 0) {
-                channel = instrument.getChannels()[0];
+            if (instrument.getReceivedChannels() != null && instrument.getReceivedChannels().length > 0) {
+                channel = instrument.getReceivedChannels()[0];
             }
 
             // Apply the bank and program change to the instrument's device

@@ -1,7 +1,6 @@
 package com.angrysurfer.core.redis;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 import java.util.Arrays;
 
@@ -17,7 +16,6 @@ import com.angrysurfer.core.config.FrameState;
 import com.angrysurfer.core.config.TableState;
 import com.angrysurfer.core.config.UserConfig;
 import com.angrysurfer.core.event.PatternSwitchEvent;
-import com.angrysurfer.core.model.ControlCode;
 import com.angrysurfer.core.model.InstrumentWrapper;
 import com.angrysurfer.core.model.Pattern;
 import com.angrysurfer.core.model.Player;
@@ -54,7 +52,7 @@ public class RedisService implements IBusListener {
     private final SessionHelper sessionHelper;
     private final UserConfigHelper userConfigHelper;
     private final DrumSequenceHelper drumSequenceHelper;
-    private final MelodicSequencerHelper melodicSequencerHelper;
+    private final MelodicSequenceDataHelper melodicSequencerHelper;
     // private final RedisConfigHelper configHelper;
 
     private RedisService() {
@@ -71,7 +69,7 @@ public class RedisService implements IBusListener {
         this.instrumentHelper = new InstrumentHelper(jedisPool, objectMapper);
         this.userConfigHelper = new UserConfigHelper(jedisPool, objectMapper);
         this.drumSequenceHelper = new DrumSequenceHelper(jedisPool, objectMapper);
-        this.melodicSequencerHelper = new MelodicSequencerHelper(jedisPool, objectMapper);
+        this.melodicSequencerHelper = new MelodicSequenceDataHelper(jedisPool, objectMapper);
         // this.configHelper = new RedisConfigHelper(jedisPool, objectMapper);
 
         commandBus.register(this);

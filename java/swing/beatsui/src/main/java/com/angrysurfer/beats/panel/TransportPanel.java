@@ -72,9 +72,8 @@ public class TransportPanel extends JPanel {
         JPanel transportButtonsPanel = setupTransportButtons();
         add(transportButtonsPanel, BorderLayout.CENTER);
 
-        // Get indicator section and add it to north
-        // JPanel indicatorPanel = createIndicatorSection();
-        // add(indicatorPanel, BorderLayout.SOUTH);
+        JPanel indicatorPanel = createIndicatorSection();
+        add(indicatorPanel, BorderLayout.NORTH);
 
         setupCommandBusListener();
 

@@ -20,7 +20,7 @@ public class UserConfig {
     private Set<InstrumentConfig> configs = new HashSet<>();
     private int configVersion = 1;
     private Date lastUpdated;
-
+    private String name;
     @Data
     public static class InstrumentConfig {
         private String port;

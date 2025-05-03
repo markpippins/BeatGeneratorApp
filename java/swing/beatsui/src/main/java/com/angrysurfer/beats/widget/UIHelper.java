@@ -163,7 +163,7 @@ public class UIHelper {
      */
     public static JTextField createStatusField(String initialValue, int columns) {
         Color lightGray = new Color(240, 240, 240);
-        JTextField field = createTextField(initialValue, columns, false, false, true, lightGray);
+        JTextField field = createTextField(initialValue, columns, false, false, true, Color.GREEN);
         field.setMaximumSize(new Dimension(columns * 10, 25)); // Rough size approximation
         return field;
     }

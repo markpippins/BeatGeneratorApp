@@ -86,6 +86,7 @@ public class SessionDisplayPanel extends JPanel {
             case "Part" -> partField = field;
             }
 
+
             panel.add(fieldPanel);
         }
 
@@ -147,7 +148,7 @@ public class SessionDisplayPanel extends JPanel {
      * @param field The text field to modify
      */
     private void applyInverseDisplay(JTextField field) {
-        field.setForeground(inverseFontColor);
+        field.setForeground(Color.GREEN);
         field.setBackground(inverseBackgroundColor);
         field.setCaretColor(inverseFontColor);
     }

@@ -458,68 +458,6 @@ public class InstrumentsPanel extends JPanel {
         }
     }
 
-    /**
-     * Determine who owns/uses an instrument
-     * 
-     * @param instrument The instrument to check
-     * @return A string description of the owner(s)
-     */
-    private String determineInstrumentOwner(InstrumentWrapper instrument) {
-        if (instrument == null || instrument.getId() == null) {
-            return "";
-        }
-
-        List<String> owners = new ArrayList<>();
-
-        try {
-            // Check session players
-            Set<Player> sessionPlayers = SessionManager.getInstance().getActiveSession().getPlayers();
-            if (sessionPlayers != null) {
-                for (Player player : sessionPlayers) {
-                    if (player != null &&
-                            player.getInstrumentId() != null &&
-                            player.getInstrumentId().equals(instrument.getId())) {
-                        owners.add("Session: " + player.getName());
-                    }
-                }
-            }
-
-            // Check melodic sequencers
-            for (MelodicSequencer sequencer : MelodicSequencerManager.getInstance().getAllSequencers()) {
-                if (sequencer != null && sequencer.getPlayer() != null &&
-                        sequencer.getPlayer().getInstrumentId() != null &&
-                        sequencer.getPlayer().getInstrumentId().equals(instrument.getId())) {
-                    owners.add("Melodic: " + sequencer.getClass().getName());
-                }
-            }
-
-            // Check drum sequencers (which have multiple players)
-            for (DrumSequencer sequencer : DrumSequencerManager.getInstance().getAllSequencers()) {
-                if (sequencer != null && sequencer.getPlayers() != null) {
-                    for (Player player : sequencer.getPlayers()) {
-                        if (player != null &&
-                                player.getInstrumentId() != null &&
-                                player.getInstrumentId().equals(instrument.getId())) {
-                            owners.add(sequencer.getClass().getName() + " (" + player.getName() + ")");
-                        }
-                    }
-                }
-            }
-
-            if (owners.isEmpty()) {
-                return "None";
-            } else if (owners.size() <= 2) {
-                return String.join(", ", owners);
-            } else {
-                // If there are many owners, show a count
-                return owners.get(0) + " and " + (owners.size() - 1) + " more";
-            }
-        } catch (Exception e) {
-            logger.error("Error determining instrument owner: {}", e.getMessage(), e);
-            return "Error";
-        }
-    }
-
     private JPanel setupControlCodeToolbar() {
         JPanel toolBar = new JPanel(new BorderLayout());
         JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
@@ -602,7 +540,7 @@ public class InstrumentsPanel extends JPanel {
                     instrument.getLowestNote(),
                     instrument.getHighestNote(),
                     instrument.isInitialized(),
-                    determineInstrumentOwner(instrument) // Add owner column
+                    InstrumentManager.getInstance().determineInstrumentOwner(instrument) // Add owner column
             });
         }
 
@@ -974,64 +912,70 @@ public class InstrumentsPanel extends JPanel {
         try {
             boolean isNew = (instrument == null);
             logger.info("Showing instrument dialog: {}", isNew ? "new instrument" : instrument.getName());
-
+    
+            // Create a deep copy to avoid modifying original until save is confirmed
+            InstrumentWrapper instrumentCopy;
             if (isNew) {
-                instrument = new InstrumentWrapper();
+                instrumentCopy = new InstrumentWrapper();
                 // Initialize required fields for new instruments
-                instrument.setInternal(Boolean.FALSE);
-                instrument.setAvailable(Boolean.FALSE);
+                instrumentCopy.setInternal(Boolean.FALSE);
+                instrumentCopy.setAvailable(Boolean.FALSE);
             } else {
-                // Make a copy of the instrument to avoid modifying the original until save is
-                // confirmed
-                // instrument = instrument.copy();
-
-                // For existing instruments, make sure boolean fields are not null
-                if (instrument.getInternal() == null) {
-                    instrument.setInternal(Boolean.FALSE);
-                }
-                if (instrument.getAvailable() == null) {
-                    instrument.setAvailable(Boolean.FALSE);
-                }
+                // Create a deep copy to preserve original until save is confirmed
+                instrumentCopy = new InstrumentWrapper();
+                instrumentCopy.setId(instrument.getId());
+                instrumentCopy.setName(instrument.getName());
+                instrumentCopy.setDeviceName(instrument.getDeviceName());
+                instrumentCopy.setChannel(instrument.getChannel());
+                instrumentCopy.setLowestNote(instrument.getLowestNote());
+                instrumentCopy.setHighestNote(instrument.getHighestNote());
+                instrumentCopy.setInternal(instrument.getInternal() != null ? instrument.getInternal() : Boolean.FALSE);
+                instrumentCopy.setAvailable(instrument.getAvailable() != null ? instrument.getAvailable() : Boolean.FALSE);
+                instrumentCopy.setControlCodes(instrument.getControlCodes()); // Shallow copy of control codes is OK
+                instrumentCopy.setDescription(instrument.getDescription());
+                instrumentCopy.setReceivedChannels(instrument.getReceivedChannels());
+                // Copy any other fields you need to preserve
             }
-
+    
             // Create and configure dialog
-            InstrumentEditPanel editorPanel = new InstrumentEditPanel(instrument);
-            Dialog<InstrumentWrapper> dialog = new Dialog<>(instrument, editorPanel);
-            dialog.setTitle(isNew ? "Add Instrument" : "Edit Instrument: " + instrument.getName());
+            InstrumentEditPanel editorPanel = new InstrumentEditPanel(instrumentCopy);
+            Dialog<InstrumentWrapper> dialog = new Dialog<>(instrumentCopy, editorPanel);
+            dialog.setTitle(isNew ? "Add Instrument" : "Edit Instrument: " + instrumentCopy.getName());
             dialog.setLocationRelativeTo(this);
-
+    
             logger.info("Showing dialog for instrument...");
             boolean result = dialog.showDialog();
             logger.info("Dialog result: {}", result);
-
-            // Here's the missing part - process the result when dialog is closed
+    
             if (result) {
                 // Get the updated instrument from the editor panel
                 InstrumentWrapper updatedInstrument = editorPanel.getUpdatedInstrument();
-
-                logger.info("Saving updated instrument: {}", updatedInstrument.getName());
-
-                // Save to Redis
+                logger.info("Saving updated instrument: {} (ID: {})", updatedInstrument.getName(), updatedInstrument.getId());
+    
+                // First save to Redis
                 RedisService.getInstance().saveInstrument(updatedInstrument);
-
-                // Update in InstrumentManager's cache
+                
+                // Then explicitly update in UserConfigManager to ensure persistence
+                updateInstrumentInUserConfig(updatedInstrument);
+                
+                // Now update the InstrumentManager's cache
                 InstrumentManager.getInstance().updateInstrument(updatedInstrument);
-
+    
+                // Always publish the update event
+                CommandBus.getInstance().publish(Commands.INSTRUMENT_UPDATED, this, updatedInstrument);
+    
                 // Refresh the UI
                 refreshInstrumentsTable();
-
+    
                 // If this was the selected instrument, update selected instrument reference
-                if (selectedInstrument != null &&
+                if (selectedInstrument != null && 
                         updatedInstrument.getId() != null &&
                         updatedInstrument.getId().equals(selectedInstrument.getId())) {
                     selectedInstrument = updatedInstrument;
                     updateControlCodesTable();
                     updateCaptionsTable();
                 }
-
-                // Notify system of the update
-                CommandBus.getInstance().publish(Commands.INSTRUMENT_UPDATED, this, updatedInstrument);
-
+    
                 // Show status message
                 CommandBus.getInstance().publish(
                         Commands.STATUS_UPDATE,
@@ -1050,6 +994,7 @@ public class InstrumentsPanel extends JPanel {
                             "Error editing instrument: " + e.getMessage()));
         }
     }
+    
 
     /**
      * Delete selected instruments with validation checks
@@ -1262,7 +1207,7 @@ private void refreshInstrumentsTable() {
                     instrument.getLowestNote(),
                     instrument.getHighestNote(),
                     instrument.isInitialized(),
-                    determineInstrumentOwner(instrument) // Add owner column
+                    InstrumentManager.getInstance().determineInstrumentOwner(instrument) // Add owner column
             });
         }
     }

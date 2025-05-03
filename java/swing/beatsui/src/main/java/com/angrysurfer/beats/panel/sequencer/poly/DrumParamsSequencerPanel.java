@@ -914,7 +914,7 @@ public class DrumParamsSequencerPanel extends JPanel implements IBusListener {
      */
     private JPanel createSoundParametersPanel() {
         // Create the standardized SoundParametersPanel with null player initially
-        soundParamsPanel = new SoundParametersPanel(null);
+        soundParamsPanel = new SoundParametersPanel();
         return soundParamsPanel;
     }
 

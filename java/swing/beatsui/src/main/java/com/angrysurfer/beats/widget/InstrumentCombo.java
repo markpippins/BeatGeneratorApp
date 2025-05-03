@@ -1,7 +1,9 @@
 package com.angrysurfer.beats.widget;
 
+import java.awt.Color;
 import java.awt.Component;
 import java.awt.Dimension;
+import java.awt.Font;
 import java.util.List;
 
 import javax.swing.DefaultListCellRenderer;
@@ -65,18 +67,45 @@ public class InstrumentCombo extends JComboBox<InstrumentWrapper> implements IBu
                 Component c = super.getListCellRendererComponent(
                         list, value, index, isSelected, cellHasFocus);
                 
-                if (value instanceof InstrumentWrapper) {
+                if (value instanceof InstrumentWrapper && currentPlayer != null) {
                     InstrumentWrapper instrument = (InstrumentWrapper) value;
+                    Integer playerChannel = currentPlayer.getChannel();
                     
                     // Show instrument device type in display
                     boolean isInternal = instrument.getInternal() != null && instrument.getInternal();
                     String deviceInfo = isInternal ? "[Internal]" : 
                         (instrument.getDeviceName() != null ? "[" + instrument.getDeviceName() + "]" : "");
                     
-                    setText(instrument.getName() + " " + deviceInfo);
+                    // Check if this is for current player's channel
+                    boolean isForChannel = (playerChannel != null) && 
+                        isInstrumentForChannel(instrument, playerChannel);
+                    
+                    // Add channel indicator
+                    String channelInfo = "";
+                    if (instrument.getChannel() != null) {
+                        channelInfo = " (Ch:" + (instrument.getChannel() + 1) + ")";
+                    }
+                    
+                    // Format text - add star for channel-appropriate instruments
+                    String displayText = (isForChannel ? "★ " : "") + 
+                        instrument.getName() + channelInfo + " " + deviceInfo;
+                    
+                    setText(displayText);
+                    
+                    // Add bold font for channel-appropriate instruments
+                    if (isForChannel && !isSelected) {
+                        setFont(getFont().deriveFont(Font.BOLD));
+                        if (!isSelected) {
+                            // setBackground(new Color(240, 255, 240)); // Light green background
+                        }
+                    }
+                    
+                    // Set tooltip with detailed info
                     setToolTipText(instrument.getName() + 
                             (instrument.getDescription() != null ? 
-                             " - " + instrument.getDescription() : ""));
+                             " - " + instrument.getDescription() : "") + 
+                            " - Channel: " + (instrument.getChannel() != null ? 
+                                          (instrument.getChannel() + 1) : "Not set"));
                 }
                 
                 return c;
@@ -169,7 +198,7 @@ public class InstrumentCombo extends JComboBox<InstrumentWrapper> implements IBu
     
     /**
      * Populate the combo with instruments through InstrumentManager
-     * Fixed to prevent recursion
+     * Fixed to show all available instruments
      */
     public void populateInstruments() {
         // Check for recursion
@@ -187,43 +216,105 @@ public class InstrumentCombo extends JComboBox<InstrumentWrapper> implements IBu
                 return;
             }
             
-            // Get instruments appropriate for the player's channel
             try {
-                Integer channel = currentPlayer.getChannel();
-                if (channel == null) {
+                Integer playerChannel = currentPlayer.getChannel();
+                if (playerChannel == null) {
                     logger.warn("Player has no channel set");
                     return;
                 }
                 
-                List<InstrumentWrapper> instruments = 
-                    instrumentManager.getInstrumentByChannel(channel);
+                // Get ALL available instruments - not just channel-specific ones
+                List<InstrumentWrapper> allInstruments = 
+                    instrumentManager.getCachedInstruments();
                 
-                // Add items to combo
-                if (instruments != null) {
-                    for (InstrumentWrapper instrument : instruments) {
-                        if (instrument != null) {
+                // Sort instruments - put channel-appropriate ones first
+                allInstruments.sort((a, b) -> {
+                    // Primary sort: channel-appropriate instruments first
+                    boolean aForChannel = isInstrumentForChannel(a, playerChannel);
+                    boolean bForChannel = isInstrumentForChannel(b, playerChannel);
+                    
+                    if (aForChannel && !bForChannel) return -1;
+                    if (!aForChannel && bForChannel) return 1;
+                    
+                    // Secondary sort: by name
+                    return a.getName().compareTo(b.getName());
+                });
+                
+                // Add all instruments to combo
+                if (!allInstruments.isEmpty()) {
+                    for (InstrumentWrapper instrument : allInstruments) {
+                        // Only add available instruments
+                        if (instrument != null && 
+                            (instrument.getAvailable() == null || instrument.getAvailable())) {
                             addItem(instrument);
                         }
                     }
+                    
+                    logger.info("Added {} instruments to combo", getItemCount());
+                } else {
+                    logger.warn("No instruments found");
                 }
                 
-                // Select the current instrument - without triggering recursion
-                if (currentPlayer.getInstrumentId() != null) {
-                    for (int i = 0; i < getItemCount(); i++) {
-                        InstrumentWrapper item = getItemAt(i);
-                        if (item != null && item.getId() != null && 
-                            item.getId().equals(currentPlayer.getInstrumentId())) {
-                            setSelectedIndex(i);
-                            break;
-                        }
-                    }
-                }
+                // Select the current instrument if set
+                selectPlayerInstrument();
+                
             } catch (Exception e) {
                 logger.error("Error populating instruments: {}", e.getMessage(), e);
             }
         } finally {
             isInitializing = false;
         }
+    }
+
+    /**
+     * Helper method to select the player's instrument in the combo
+     */
+    private void selectPlayerInstrument() {
+        if (currentPlayer == null || currentPlayer.getInstrumentId() == null) return;
+        
+        Long instrumentId = currentPlayer.getInstrumentId();
+        
+        // Find matching instrument in the combo
+        for (int i = 0; i < getItemCount(); i++) {
+            InstrumentWrapper item = getItemAt(i);
+            if (item != null && item.getId() != null && 
+                item.getId().equals(instrumentId)) {
+                setSelectedIndex(i);
+                return;
+            }
+        }
+        
+        // If we get here, the instrument wasn't found in the combo
+        logger.warn("Instrument with ID {} not found in combo for player {}", 
+            instrumentId, currentPlayer.getName());
+        
+        // Fall back to first item if available
+        if (getItemCount() > 0) {
+            setSelectedIndex(0);
+        }
+    }
+
+    /**
+     * Check if an instrument is appropriate for the specified channel
+     */
+    private boolean isInstrumentForChannel(InstrumentWrapper instrument, int playerChannel) {
+        if (instrument == null) return false;
+        
+        // Check if instrument is on the same channel
+        if (instrument.getChannel() != null && instrument.getChannel() == playerChannel) {
+            return true;
+        }
+        
+        // Check if instrument receives on multiple channels including this one
+        if (instrument.getReceivedChannels() != null) {
+            for (Integer ch : instrument.getReceivedChannels()) {
+                if (ch != null && ch == playerChannel) {
+                    return true;
+                }
+            }
+        }
+        
+        return false;
     }
     
     /**

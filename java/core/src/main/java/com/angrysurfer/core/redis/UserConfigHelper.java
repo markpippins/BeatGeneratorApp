@@ -17,6 +17,8 @@ import lombok.Getter;
 import redis.clients.jedis.Jedis;
 import redis.clients.jedis.JedisPool;
 
+import javax.swing.*;
+
 @Getter
 public class UserConfigHelper {
     private static final Logger logger = LoggerFactory.getLogger(UserConfigHelper.class.getName());
@@ -35,7 +37,7 @@ public class UserConfigHelper {
                 return objectMapper.readValue(json, UserConfig.class);
             }
         } catch (Exception e) {
-            logger.error("Error loading config from Redis: " + e.getMessage());
+            JOptionPane.showMessageDialog(null,  "Error loading config from Redis: " + e.getMessage());
         }
         return null;
     }
@@ -52,7 +54,7 @@ public class UserConfigHelper {
             File file = new File(filePath);
             
             if (!file.exists()) {
-                logger.error("Configuration file not found: {}", filePath);
+                JOptionPane.showMessageDialog(null,  "Configuration file not found: " + filePath);
                 return null;
             }
             
@@ -64,7 +66,7 @@ public class UserConfigHelper {
             logger.info("Configuration successfully loaded from: {}", filePath);
             return config;
         } catch (IOException e) {
-            logger.error("Error loading configuration from file: {}", e.getMessage(), e);
+            JOptionPane.showMessageDialog(null,  "Error loading configuration from file: "  + e.getMessage());
             return null;
         }
     }
@@ -96,7 +98,7 @@ public class UserConfigHelper {
             jedis.set("userconfig", json);
             logger.info("Saved UserConfig to Redis");
         } catch (Exception e) {
-            logger.error("Error saving config to Redis: " + e.getMessage());
+            JOptionPane.showMessageDialog(null,  "Error saving config to Redis: " + e.getMessage());
             throw new RuntimeException("Failed to save config", e);
         }
     }
@@ -110,7 +112,7 @@ public class UserConfigHelper {
      */
     public boolean saveConfigToJSON(UserConfig config, String filePath) {
         if (config == null) {
-            logger.error("Cannot save null configuration to file");
+            JOptionPane.showMessageDialog(null,  "Cannot save null configuration to file");
             return false;
         }
         
@@ -129,10 +131,10 @@ public class UserConfigHelper {
             
             // Write the config to file
             mapper.writeValue(file, config);
-            logger.info("Configuration successfully saved to: {}", filePath);
+            logger.info("Configuration successfully saved to:" + filePath);
             return true;
         } catch (IOException e) {
-            logger.error("Error saving configuration to file: {}", e.getMessage(), e);
+            JOptionPane.showMessageDialog(null,  "Error saving configuration to file: " + e.getMessage());
             return false;
         }
     }

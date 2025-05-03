@@ -23,10 +23,12 @@ import lombok.Setter;
 import redis.clients.jedis.Jedis;
 import redis.clients.jedis.JedisPool;
 
+import javax.swing.*;
+
 @Getter
 @Setter
-public class MelodicSequencerHelper {
-    private static final Logger logger = LoggerFactory.getLogger(MelodicSequencerHelper.class);
+public class MelodicSequenceDataHelper {
+    private static final Logger logger = LoggerFactory.getLogger(MelodicSequenceDataHelper.class);
     private final JedisPool jedisPool;
     private final ObjectMapper objectMapper;
     private final CommandBus commandBus = CommandBus.getInstance();
@@ -34,7 +36,7 @@ public class MelodicSequencerHelper {
     // Constants
     private static final int MAX_STEPS = 16;
 
-    public MelodicSequencerHelper(JedisPool jedisPool, ObjectMapper objectMapper) {
+    public MelodicSequenceDataHelper(JedisPool jedisPool, ObjectMapper objectMapper) {
         this.jedisPool = jedisPool;
         this.objectMapper = objectMapper;
     }
@@ -458,4 +460,9 @@ public class MelodicSequencerHelper {
             return sequenceId;
         }
     }
+
+    static void showError(String testName, String message) {
+        JOptionPane.showMessageDialog(null, testName + "\n\nERROR: " + message);
+    }
+
 }

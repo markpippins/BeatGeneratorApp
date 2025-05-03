@@ -40,6 +40,7 @@ import com.angrysurfer.beats.panel.sequencer.poly.DrumEffectsSequencerPanel;
 import com.angrysurfer.beats.panel.sequencer.poly.DrumParamsSequencerPanel;
 import com.angrysurfer.beats.panel.sequencer.poly.DrumSequencerPanel;
 import com.angrysurfer.beats.widget.Dial;
+import com.angrysurfer.beats.panel.XYPadPanel;
 import com.angrysurfer.core.api.Command;
 import com.angrysurfer.core.api.CommandBus;
 import com.angrysurfer.core.api.Commands;
@@ -80,6 +81,8 @@ public class MainPanel extends JPanel implements AutoCloseable, IBusListener {
     private MuteButtonsPanel muteButtonsPanel;
 
     private JTabbedPane drumsTabbedPane;
+
+    private JTabbedPane modulationTabbedPane;
 
     private JTabbedPane melodicTabbedPane;
 
@@ -264,6 +267,33 @@ public class MainPanel extends JPanel implements AutoCloseable, IBusListener {
                 }
             }
 
+            if (selectedComponent == drumsTabbedPane) {
+                Player player = null;
+
+                // Get the currently selected melodic tab
+                Component selectedDrumsTab = drumsTabbedPane.getSelectedComponent();
+
+                if (selectedDrumsTab instanceof  DrumSequencerPanel) {
+                    int playerIndex = ((DrumSequencerPanel) selectedDrumsTab).getDrumSelectorPanel().getSelectedDrumPadIndex();
+                    player = ((DrumSequencerPanel) selectedDrumsTab).getSequencer().getPlayer(playerIndex);
+                }
+                else if (selectedDrumsTab instanceof  DrumEffectsSequencerPanel) {
+                    int playerIndex = ((DrumEffectsSequencerPanel) selectedDrumsTab).getSelectedPadIndex();
+                    player = ((DrumSequencerPanel) selectedDrumsTab).getSequencer().getPlayer(playerIndex);
+                }
+                else if (selectedDrumsTab instanceof  DrumParamsSequencerPanel) {
+                    int playerIndex = ((DrumParamsSequencerPanel) selectedDrumsTab).getSelectedPadIndex();
+                    player = ((DrumParamsSequencerPanel) selectedDrumsTab).getSequencer().getPlayer(playerIndex);
+                }
+
+
+                if (player != null) {
+                    CommandBus.getInstance().publish(
+                            Commands.PLAYER_SELECTED,
+                            this,
+                            player);
+                }
+            }
             // If selected component is the melodic tab pane
             if (selectedComponent == melodicTabbedPane) {
                 // Get the currently selected melodic tab
@@ -449,9 +479,12 @@ public class MainPanel extends JPanel implements AutoCloseable, IBusListener {
     }
 
     private Component createModulationMatrixPanel() {
+
+        modulationTabbedPane = new JTabbedPane();
+
         // Create a main panel with a border
-        JPanel mainPanel = new JPanel(new BorderLayout(10, 10));
-        mainPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+        JPanel lfoPanel = new JPanel(new BorderLayout(10, 10));
+        lfoPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
 
         // Create a panel with GridLayout (1 row, 3 columns) with spacing
         JPanel lfoBankPanel = new JPanel(new GridLayout(1, 3, 15, 0));
@@ -478,7 +511,7 @@ public class MainPanel extends JPanel implements AutoCloseable, IBusListener {
         lfoBankPanel.add(lfo3);
 
         // Add the grid panel to the main panel
-        mainPanel.add(lfoBankPanel, BorderLayout.CENTER);
+        lfoPanel.add(lfoBankPanel, BorderLayout.CENTER);
 
         // Add a title header
         // JLabel titleLabel = new JLabel("Modulation Matrix", SwingConstants.CENTER);
@@ -486,7 +519,15 @@ public class MainPanel extends JPanel implements AutoCloseable, IBusListener {
         // titleLabel.setBorder(BorderFactory.createEmptyBorder(0, 0, 10, 0));
         // mainPanel.add(titleLabel, BorderLayout.NORTH);
 
-        return mainPanel;
+
+        modulationTabbedPane.addTab("LFOs", lfoPanel);
+        modulationTabbedPane.addTab("XY Pad", createXYPadPanel());
+
+        return modulationTabbedPane;
+    }
+
+    private XYPadPanel createXYPadPanel() {
+        return new XYPadPanel();
     }
 
     private Component createMixerPanel() {

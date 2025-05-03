@@ -975,7 +975,7 @@ public class DrumEffectsSequencerPanel extends JPanel implements IBusListener {
         }
 
         // Create the standardized SoundParametersPanel
-        SoundParametersPanel panel = new SoundParametersPanel(player);
+        SoundParametersPanel panel = new SoundParametersPanel();
 
         // Return the panel
         return panel;

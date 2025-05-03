@@ -6,6 +6,9 @@ import java.util.stream.Collectors;
 import javax.sound.midi.MidiDevice;
 import javax.sound.midi.MidiUnavailableException;
 
+import com.angrysurfer.core.model.Player;
+import com.angrysurfer.core.sequencer.DrumSequencer;
+import com.angrysurfer.core.sequencer.MelodicSequencer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -421,4 +424,67 @@ public void refreshCache(List<InstrumentWrapper> instruments) {
     
     logger.debug("Refreshed instrument cache with {} instruments", instruments.size());
 }
+
+
+    /**
+     * Determine who owns/uses an instrument
+     *
+     * @param instrument The instrument to check
+     * @return A string description of the owner(s)
+     */
+    public String determineInstrumentOwner(InstrumentWrapper instrument) {
+        if (instrument == null || instrument.getId() == null) {
+            return "";
+        }
+
+        List<String> owners = new ArrayList<>();
+
+        try {
+            // Check session players
+            Set<Player> sessionPlayers = SessionManager.getInstance().getActiveSession().getPlayers();
+            if (sessionPlayers != null) {
+                for (Player player : sessionPlayers) {
+                    if (player != null &&
+                            player.getInstrumentId() != null &&
+                            player.getInstrumentId().equals(instrument.getId())) {
+                        owners.add("Session: " + player.getName());
+                    }
+                }
+            }
+
+            // Check melodic sequencers
+            for (MelodicSequencer sequencer : MelodicSequencerManager.getInstance().getAllSequencers()) {
+                if (sequencer != null && sequencer.getPlayer() != null &&
+                        sequencer.getPlayer().getInstrumentId() != null &&
+                        sequencer.getPlayer().getInstrumentId().equals(instrument.getId())) {
+                    owners.add("Melodic: " + sequencer.getClass().getName());
+                }
+            }
+
+            // Check drum sequencers (which have multiple players)
+            for (DrumSequencer sequencer : DrumSequencerManager.getInstance().getAllSequencers()) {
+                if (sequencer != null && sequencer.getPlayers() != null) {
+                    for (Player player : sequencer.getPlayers()) {
+                        if (player != null &&
+                                player.getInstrumentId() != null &&
+                                player.getInstrumentId().equals(instrument.getId())) {
+                            owners.add(sequencer.getClass().getName() + " (" + player.getName() + ")");
+                        }
+                    }
+                }
+            }
+
+            if (owners.isEmpty()) {
+                return "None";
+            } else if (owners.size() <= 2) {
+                return String.join(", ", owners);
+            } else {
+                // If there are many owners, show a count
+                return owners.get(0) + " and " + (owners.size() - 1) + " more";
+            }
+        } catch (Exception e) {
+            logger.error("Error determining instrument owner: {}", e.getMessage(), e);
+            return "Error";
+        }
+    }
 }

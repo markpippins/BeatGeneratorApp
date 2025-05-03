@@ -809,8 +809,10 @@ public class MelodicSequencer implements IBusListener {
             logger.info("Creating new player for sequencer {}", id);
             setPlayer(RedisService.getInstance().newNote());
 
+            Integer tag = getId() + 1;
+
             player.setOwner(this);
-            player.setName("Melo " + id);
+            player.setName("Melo " + tag.toString() + " [" + getChannel() + "] ");
             player.setChannel(getChannel());
 
             // Get an instrument from InstrumentManager

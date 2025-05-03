@@ -1,25 +1,29 @@
 package com.angrysurfer.beats.panel.instrument;
 
+import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
+import java.util.ArrayList;
+import java.util.List;
 
+import javax.sound.midi.MidiDevice;
+import javax.sound.midi.MidiSystem;
+import javax.swing.BorderFactory;
 import javax.swing.JCheckBox;
+import javax.swing.JComboBox;
 import javax.swing.JComponent;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
+import javax.swing.JScrollPane;
 import javax.swing.JSpinner;
+import javax.swing.JTextArea;
 import javax.swing.JTextField;
 import javax.swing.SpinnerNumberModel;
 
 import com.angrysurfer.core.model.InstrumentWrapper;
-
-import javax.sound.midi.MidiDevice;
-import javax.sound.midi.MidiSystem;
-import javax.swing.JComboBox;
-import java.util.ArrayList;
-import java.util.List;
+import com.angrysurfer.core.service.InstrumentManager;
 
 import lombok.Getter;
 
@@ -34,15 +38,16 @@ public class InstrumentEditPanel extends JPanel {
     private final JCheckBox availableCheckBox;
     private final JCheckBox initializedCheckBox;
     private final List<MidiDevice.Info> deviceInfos;
+    private final JTextArea ownerTextArea;
 
     public InstrumentEditPanel(InstrumentWrapper instrument) {
         super(new GridBagLayout());
         this.instrument = instrument;
         this.deviceInfos = new ArrayList<>();
         
-        setMinimumSize(new Dimension(200, 200));
-        setMaximumSize(new Dimension(200, 200));
-        setPreferredSize(new Dimension(200, 200));
+        setMinimumSize(new Dimension(300, 350)); // Increase size for new field
+        setMaximumSize(new Dimension(300, 350));
+        setPreferredSize(new Dimension(300, 350));
 
         nameField = new JTextField(instrument.getName(), 20);
 
@@ -85,6 +90,17 @@ public class InstrumentEditPanel extends JPanel {
         availableCheckBox = new JCheckBox("Available", false);
         initializedCheckBox = new JCheckBox("Initialized", instrument.isInitialized());
 
+        // Add owner information text area (read-only)
+        ownerTextArea = new JTextArea(3, 20);
+        ownerTextArea.setEditable(false);
+        ownerTextArea.setLineWrap(true);
+        ownerTextArea.setWrapStyleWord(true);
+        ownerTextArea.setBackground(new Color(245, 245, 245));
+        ownerTextArea.setBorder(BorderFactory.createEmptyBorder(2, 5, 2, 5));
+        
+        // Populate owner information
+        populateOwnerInfo();
+
         setupLayout();
     }
 
@@ -103,6 +119,27 @@ public class InstrumentEditPanel extends JPanel {
         }
     }
 
+    /**
+     * Populate the owner information text area
+     */
+    private void populateOwnerInfo() {
+        if (instrument == null || instrument.getId() == null) {
+            ownerTextArea.setText("New instrument - not owned by any players");
+            return;
+        }
+        
+        String ownerInfo = InstrumentManager.getInstance().determineInstrumentOwner(instrument);
+        
+        if (ownerInfo == null || ownerInfo.isEmpty() || "None".equals(ownerInfo)) {
+            ownerTextArea.setText("This instrument is not currently assigned to any players");
+        } else {
+            ownerTextArea.setText("Currently used by: " + ownerInfo);
+            
+            // Set background to light yellow to highlight that it's in use
+            ownerTextArea.setBackground(new Color(255, 255, 220));
+        }
+    }
+
     private void setupLayout() {
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.insets = new Insets(2, 2, 2, 2);
@@ -115,6 +152,22 @@ public class InstrumentEditPanel extends JPanel {
         addFormField("Highest Note:", highestNoteSpinner, gbc, 4);
         addFormField("", availableCheckBox, gbc, 5);
         addFormField("", initializedCheckBox, gbc, 6);
+        
+        // Add ownership information field with a title
+        gbc.gridx = 0;
+        gbc.gridy = 7;
+        gbc.gridwidth = 2;
+        add(new JLabel("Ownership:"), gbc);
+        
+        // Add the text area in a scroll pane
+        gbc.gridx = 0;
+        gbc.gridy = 8;
+        gbc.gridwidth = 2;
+        gbc.fill = GridBagConstraints.BOTH;
+        gbc.weighty = 1.0; // Allow it to expand vertically
+        JScrollPane scrollPane = new JScrollPane(ownerTextArea);
+        scrollPane.setPreferredSize(new Dimension(280, 60));
+        add(scrollPane, gbc);
     }
 
     private void addFormField(String label, JComponent field, GridBagConstraints gbc, int row) {

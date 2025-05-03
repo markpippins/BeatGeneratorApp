@@ -2,11 +2,16 @@ package com.angrysurfer.core.sequencer;
 
 import java.lang.reflect.Array;
 import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 
+import javax.sound.midi.MidiDevice;
+
+import com.angrysurfer.core.redis.MelodicSequenceDataHelper;
 import com.angrysurfer.core.redis.RedisService;
 
 import org.slf4j.Logger;
@@ -670,7 +675,7 @@ public class DrumSequencer implements IBusListener {
             player.setInstrument(instruments[drumIndex]);
             if (player.getInstrument() != null) {
                 player.getInstrument().setChannel(MIDI_DRUM_CHANNEL);
-                player.getInstrument().setChannels(new Integer[] { MIDI_DRUM_CHANNEL });
+                player.getInstrument().setReceivedChannels(new Integer[] { MIDI_DRUM_CHANNEL });
             }
         }
 
@@ -1830,4 +1835,5 @@ public class DrumSequencer implements IBusListener {
             // Just ignore errors to avoid performance impact
         }
     }
+
 }

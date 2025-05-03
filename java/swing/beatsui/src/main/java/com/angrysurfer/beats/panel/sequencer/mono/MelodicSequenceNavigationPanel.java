@@ -4,12 +4,10 @@ import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.Insets;
 
-import javax.swing.BorderFactory;
 import javax.swing.JButton;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.SwingConstants;
-import javax.swing.border.TitledBorder;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -18,7 +16,7 @@ import com.angrysurfer.beats.UIUtils;
 import com.angrysurfer.core.api.CommandBus;
 import com.angrysurfer.core.api.Commands;
 import com.angrysurfer.core.model.Direction;
-import com.angrysurfer.core.redis.MelodicSequencerHelper;
+import com.angrysurfer.core.redis.MelodicSequenceDataHelper;
 import com.angrysurfer.core.redis.RedisService;
 import com.angrysurfer.core.sequencer.MelodicSequencer;
 import com.angrysurfer.core.sequencer.TimingDivision;
@@ -166,7 +164,7 @@ public class MelodicSequenceNavigationPanel extends JPanel {
             }
 
             // Create a new sequence with an assigned ID right away
-            MelodicSequencerHelper.MelodicSequencerEvent event = new MelodicSequencerHelper.MelodicSequencerEvent(
+            MelodicSequenceDataHelper.MelodicSequencerEvent event = new MelodicSequenceDataHelper.MelodicSequencerEvent(
                     sequencer.getId(), 0L); // Use 0 to indicate new sequence
 
             // Reset the sequencer and clear pattern
@@ -214,7 +212,7 @@ public class MelodicSequenceNavigationPanel extends JPanel {
             CommandBus.getInstance().publish(
                     Commands.MELODIC_SEQUENCE_LOADED,
                     this,
-                    new MelodicSequencerHelper.MelodicSequencerEvent(
+                    new MelodicSequenceDataHelper.MelodicSequencerEvent(
                             sequencer.getId(),
                             sequencer.getSequenceData().getId()));
 
@@ -292,7 +290,7 @@ public class MelodicSequenceNavigationPanel extends JPanel {
         CommandBus.getInstance().publish(
                 Commands.MELODIC_SEQUENCE_SAVED,
                 this,
-                new MelodicSequencerHelper.MelodicSequencerEvent(
+                new MelodicSequenceDataHelper.MelodicSequencerEvent(
                         sequencer.getId(),
                         sequencer.getSequenceData().getId()));
 

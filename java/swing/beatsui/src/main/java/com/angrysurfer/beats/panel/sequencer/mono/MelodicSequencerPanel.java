@@ -3,11 +3,9 @@ package com.angrysurfer.beats.panel.sequencer.mono;
 import java.awt.BorderLayout;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
-import java.awt.Font;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
 
@@ -17,10 +15,10 @@ import javax.swing.JComboBox;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
-import javax.swing.JSpinner;
 import javax.swing.JToggleButton;
 import javax.swing.SwingUtilities;
 
+import com.angrysurfer.beats.panel.player.ChannelComboPanel;
 import com.angrysurfer.beats.widget.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -36,13 +34,12 @@ import com.angrysurfer.core.api.CommandBus;
 import com.angrysurfer.core.api.Commands;
 import com.angrysurfer.core.api.IBusListener;
 import com.angrysurfer.core.model.Player;
-import com.angrysurfer.core.redis.MelodicSequencerHelper;
+import com.angrysurfer.core.redis.MelodicSequenceDataHelper;
 import com.angrysurfer.core.redis.RedisService;
 import com.angrysurfer.core.sequencer.MelodicSequenceData;
 import com.angrysurfer.core.sequencer.MelodicSequencer;
 import com.angrysurfer.core.sequencer.NoteEvent;
 import com.angrysurfer.core.sequencer.TimingDivision;
-import com.angrysurfer.core.service.InternalSynthManager;
 import com.angrysurfer.core.service.MelodicSequencerManager;
 import com.angrysurfer.core.service.PlayerManager;
 
@@ -184,7 +181,7 @@ public class MelodicSequencerPanel extends JPanel implements IBusListener {
                 CommandBus.getInstance().publish(
                         Commands.MELODIC_SEQUENCE_LOADED,
                         this,
-                        new MelodicSequencerHelper.MelodicSequencerEvent(
+                        new MelodicSequenceDataHelper.MelodicSequencerEvent(
                                 sequencer.getId(),
                                 data.getId()));
 
@@ -330,20 +327,20 @@ public class MelodicSequencerPanel extends JPanel implements IBusListener {
         instrumentPanel.add(addInstrumentButton, BorderLayout.EAST);
 
         // Create channel combo panel
-        JPanel channelPanel = new JPanel(new BorderLayout());
-        UIUtils.setWidgetPanelBorder(channelPanel, "Channel");
-        ChannelCombo channelCombo = new ChannelCombo();
-        channelCombo.setCurrentPlayer(sequencer.getPlayer());
-        channelPanel.add(channelCombo, BorderLayout.CENTER);
+        //JPanel channelPanel = new JPanel(new BorderLayout());
+        //UIUtils.setWidgetPanelBorder(channelPanel, "Channel");
+        //ChannelCombo channelCombo = new ChannelCombo();
+        //channelCombo.setCurrentPlayer(sequencer.getPlayer());
+        //channelPanel.add(channelCombo, BorderLayout.CENTER);
 
         // Add instrument panel at the top of left panel
         leftPanel.add(instrumentPanel, BorderLayout.WEST);
 
         // Add channel panel below instrument panel
-        leftPanel.add(channelPanel, BorderLayout.CENTER);
+        leftPanel.add(new ChannelComboPanel(), BorderLayout.CENTER);
 
         // Create the standardized SoundParametersPanel with the current player
-        SoundParametersPanel soundPanel = new SoundParametersPanel(sequencer.getPlayer());
+        SoundParametersPanel soundPanel = new SoundParametersPanel();
 
         // Add left panel to the WEST and sound panel to the CENTER
         containerPanel.add(leftPanel, BorderLayout.WEST);
@@ -483,7 +480,7 @@ public class MelodicSequencerPanel extends JPanel implements IBusListener {
                     Commands.MELODIC_SEQUENCE_SELECTED,
                     Commands.MELODIC_SEQUENCE_UPDATED -> {
                 // Check if this event applies to our sequencer
-                if (action.getData() instanceof MelodicSequencerHelper.MelodicSequencerEvent event) {
+                if (action.getData() instanceof MelodicSequenceDataHelper.MelodicSequencerEvent event) {
                     if (event.getSequencerId().equals(sequencer.getId())) {
                         logger.info("Updating UI for sequence event: {}", action.getCommand());
                         syncUIWithSequencer();
