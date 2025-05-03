@@ -11,7 +11,7 @@ import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.angrysurfer.beats.UIUtils;
+import com.angrysurfer.beats.util.UIHelper;
 import com.angrysurfer.beats.widget.Dial;
 import com.angrysurfer.beats.widget.NoteSelectionDial;
 import com.angrysurfer.beats.widget.TriggerButton;
@@ -103,11 +103,11 @@ public class MelodicSequencerGridPanel extends JPanel {
             switch (i) {
                 case 0 -> {
                     velocityDials.add(dial);
-                    dial.setKnobColor(UIUtils.getDialColor("velocity"));
+                    dial.setKnobColor(UIHelper.getDialColor("velocity"));
                 }
                 case 1 -> {
                     gateDials.add(dial);
-                    dial.setKnobColor(UIUtils.getDialColor("gate"));
+                    dial.setKnobColor(UIHelper.getDialColor("gate"));
                 }
                 case 4 -> {
                     dial.setPreferredSize(new Dimension(75, 75));
@@ -117,7 +117,7 @@ public class MelodicSequencerGridPanel extends JPanel {
                     dial.setMinimum(0);
                     dial.setMaximum(100);
                     dial.setValue(100); // Default to 100%
-                    dial.setKnobColor(UIUtils.getDialColor("probability"));
+                    dial.setKnobColor(UIHelper.getDialColor("probability"));
                     dial.addChangeListener(e -> {
                         if (!listenersEnabled)
                             return;
@@ -129,7 +129,7 @@ public class MelodicSequencerGridPanel extends JPanel {
                     dial.setMinimum(0);
                     dial.setMaximum(250);
                     dial.setValue(0); // Default to no nudge
-                    dial.setKnobColor(UIUtils.getDialColor("nudge"));
+                    dial.setKnobColor(UIHelper.getDialColor("nudge"));
                     dial.addChangeListener(e -> {
                         if (!listenersEnabled)
                             return;
@@ -239,16 +239,16 @@ public class MelodicSequencerGridPanel extends JPanel {
 
             if (newStep < 16) {
                 // First 16 steps - orange highlight
-                highlightColor = UIUtils.fadedOrange;
+                highlightColor = UIHelper.fadedOrange;
             } else if (newStep < 32) {
                 // Steps 17-32
-                highlightColor = UIUtils.coolBlue;
+                highlightColor = UIHelper.coolBlue;
             } else if (newStep < 48) {
                 // Steps 33-48
-                highlightColor = UIUtils.deepNavy;
+                highlightColor = UIHelper.deepNavy;
             } else {
                 // Steps 49-64
-                highlightColor = UIUtils.mutedOlive;
+                highlightColor = UIHelper.mutedOlive;
             }
 
             triggerButtons.get(newStep).setHighlighted(true);

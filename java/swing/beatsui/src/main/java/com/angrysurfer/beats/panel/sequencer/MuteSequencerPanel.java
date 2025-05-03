@@ -18,7 +18,7 @@ import javax.swing.SwingUtilities;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.angrysurfer.beats.UIUtils;
+import com.angrysurfer.beats.util.UIHelper;
 import com.angrysurfer.beats.widget.MuteButton;
 import com.angrysurfer.core.api.Command;
 import com.angrysurfer.core.api.CommandBus;
@@ -92,7 +92,7 @@ public class MuteSequencerPanel extends JPanel implements IBusListener {
     
     private void initialize() {
         setLayout(new BorderLayout(2, 2));
-        UIUtils.setWidgetPanelBorder(this, "Mutes");
+        UIHelper.setWidgetPanelBorder(this, "Mutes");
 
         // Set both preferred and maximum height to 40px
         setPreferredSize(new Dimension(800, 44));

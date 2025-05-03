@@ -2,10 +2,10 @@ package com.angrysurfer.beats.widget;
 
 import javax.swing.*;
 
+import com.angrysurfer.beats.util.UIHelper;
+
 import java.awt.*;
 import java.awt.geom.Rectangle2D;
-
-import com.angrysurfer.beats.UIUtils;
 
 /**
  * A simple VU meter to display audio levels

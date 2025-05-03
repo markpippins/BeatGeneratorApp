@@ -20,15 +20,15 @@ import javax.swing.SwingUtilities;
 
 import com.angrysurfer.beats.panel.player.ChannelComboPanel;
 import com.angrysurfer.beats.widget.*;
+import com.angrysurfer.core.event.MelodicSequencerEvent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.angrysurfer.beats.UIUtils;
-import com.angrysurfer.beats.event.MelodicScaleSelectionEvent;
 import com.angrysurfer.beats.panel.SessionControlPanel;
 import com.angrysurfer.beats.panel.player.SoundParametersPanel;
 import com.angrysurfer.beats.panel.sequencer.MuteSequencerPanel;
 import com.angrysurfer.beats.panel.sequencer.TiltSequencerPanel;
+import com.angrysurfer.beats.util.UIHelper;
 import com.angrysurfer.core.api.Command;
 import com.angrysurfer.core.api.CommandBus;
 import com.angrysurfer.core.api.Commands;
@@ -36,6 +36,7 @@ import com.angrysurfer.core.api.IBusListener;
 import com.angrysurfer.core.model.Player;
 import com.angrysurfer.core.redis.MelodicSequenceDataHelper;
 import com.angrysurfer.core.redis.RedisService;
+import com.angrysurfer.core.sequencer.MelodicScaleSelectionEvent;
 import com.angrysurfer.core.sequencer.MelodicSequenceData;
 import com.angrysurfer.core.sequencer.MelodicSequencer;
 import com.angrysurfer.core.sequencer.NoteEvent;
@@ -181,7 +182,7 @@ public class MelodicSequencerPanel extends JPanel implements IBusListener {
                 CommandBus.getInstance().publish(
                         Commands.MELODIC_SEQUENCE_LOADED,
                         this,
-                        new MelodicSequenceDataHelper.MelodicSequencerEvent(
+                        new MelodicSequencerEvent(
                                 sequencer.getId(),
                                 data.getId()));
 
@@ -204,7 +205,7 @@ public class MelodicSequencerPanel extends JPanel implements IBusListener {
         removeAll();
 
         setLayout(new BorderLayout(2, 2));
-        UIUtils.setPanelBorder(this);
+        UIHelper.setPanelBorder(this);
 
         JPanel westPanel = new JPanel(new BorderLayout(2, 2));
 
@@ -243,7 +244,7 @@ public class MelodicSequencerPanel extends JPanel implements IBusListener {
         // centerPanel.add(instrumentInfoLabel, gbc);
 
         // Add centerPanel to the top panel
-        UIUtils.addSafely(topPanel, centerPanel, BorderLayout.CENTER);
+        UIHelper.addSafely(topPanel, centerPanel, BorderLayout.CENTER);
 
         // Add panels to the top panel
         topPanel.add(westPanel, BorderLayout.WEST);
@@ -308,9 +309,9 @@ public class MelodicSequencerPanel extends JPanel implements IBusListener {
         JPanel leftPanel = new JPanel(new BorderLayout(2, 4));
 
         // Create instrument combo panel with add button
-        JPanel instrumentPanel = UIUtils.createSectionPanel("Instrument"); 
+        JPanel instrumentPanel = UIHelper.createSectionPanel("Instrument"); 
         // new JPanel(new BorderLayout(2, 0));
-        // UIUtils.setWidgetPanelBorder(instrumentPanel, "Instrument");
+        // UIHelper.setWidgetPanelBorder(instrumentPanel, "Instrument");
         
         // Create combo and button in sub-panel
         // JPanel instrumentComboPanel = new JPanel(new BorderLayout());
@@ -328,7 +329,7 @@ public class MelodicSequencerPanel extends JPanel implements IBusListener {
 
         // Create channel combo panel
         //JPanel channelPanel = new JPanel(new BorderLayout());
-        //UIUtils.setWidgetPanelBorder(channelPanel, "Channel");
+        //UIHelper.setWidgetPanelBorder(channelPanel, "Channel");
         //ChannelCombo channelCombo = new ChannelCombo();
         //channelCombo.setCurrentPlayer(sequencer.getPlayer());
         //channelPanel.add(channelCombo, BorderLayout.CENTER);
@@ -360,13 +361,13 @@ public class MelodicSequencerPanel extends JPanel implements IBusListener {
         String[] rangeOptions = { "1 Octave", "2 Octaves", "3 Octaves", "4 Octaves" };
         rangeCombo = new JComboBox<>(rangeOptions);
         rangeCombo.setSelectedIndex(1); // Default to 2 octaves
-        rangeCombo.setPreferredSize(new Dimension(UIUtils.LARGE_CONTROL_WIDTH, UIUtils.CONTROL_HEIGHT));
+        rangeCombo.setPreferredSize(new Dimension(UIHelper.LARGE_CONTROL_WIDTH, UIHelper.CONTROL_HEIGHT));
         rangeCombo.setToolTipText("Set the octave range for pattern generation");
 
         // Generate button with consistent styling
         JButton generateButton = new JButton("🎲");
         generateButton.setToolTipText("Generate a random pattern");
-        generateButton.setPreferredSize(new Dimension(UIUtils.SMALL_CONTROL_WIDTH, UIUtils.CONTROL_HEIGHT));
+        generateButton.setPreferredSize(new Dimension(UIHelper.SMALL_CONTROL_WIDTH, UIHelper.CONTROL_HEIGHT));
         generateButton.setMargin(new Insets(2, 2, 2, 2));
         generateButton.addActionListener(e -> {
             // Get selected octave range from the combo
@@ -379,7 +380,7 @@ public class MelodicSequencerPanel extends JPanel implements IBusListener {
         // Latch toggle button (moved from sequence parameters panel)
         latchToggleButton = new JToggleButton("L", false);
         latchToggleButton.setToolTipText("Generate new pattern each cycle");
-        latchToggleButton.setPreferredSize(new Dimension(UIUtils.SMALL_CONTROL_WIDTH, UIUtils.CONTROL_HEIGHT));
+        latchToggleButton.setPreferredSize(new Dimension(UIHelper.SMALL_CONTROL_WIDTH, UIHelper.CONTROL_HEIGHT));
         latchToggleButton.addActionListener(e -> {
             sequencer.setLatchEnabled(latchToggleButton.isSelected());
             logger.info("Latch mode set to: {}", latchToggleButton.isSelected());
@@ -480,7 +481,7 @@ public class MelodicSequencerPanel extends JPanel implements IBusListener {
                     Commands.MELODIC_SEQUENCE_SELECTED,
                     Commands.MELODIC_SEQUENCE_UPDATED -> {
                 // Check if this event applies to our sequencer
-                if (action.getData() instanceof MelodicSequenceDataHelper.MelodicSequencerEvent event) {
+                if (action.getData() instanceof MelodicSequencerEvent event) {
                     if (event.getSequencerId().equals(sequencer.getId())) {
                         logger.info("Updating UI for sequence event: {}", action.getCommand());
                         syncUIWithSequencer();

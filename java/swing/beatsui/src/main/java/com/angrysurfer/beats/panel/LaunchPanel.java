@@ -18,7 +18,7 @@ import javax.swing.Timer;
 import javax.swing.border.EmptyBorder;
 import javax.swing.plaf.basic.BasicButtonUI;
 
-import com.angrysurfer.beats.UIUtils;
+import com.angrysurfer.beats.util.UIHelper;
 import com.angrysurfer.core.api.*;
 
 public class LaunchPanel extends JPanel implements IBusListener {
@@ -36,6 +36,7 @@ public class LaunchPanel extends JPanel implements IBusListener {
 
     public LaunchPanel() {
         super(new BorderLayout());
+        UIHelper.setPanelBorder(this);
         commandBus.register(this);
         setup();
     }
@@ -71,10 +72,10 @@ public class LaunchPanel extends JPanel implements IBusListener {
         // gridPanel.setBorder(new EmptyBorder(5, 5, 5, 5));
 
         Color[] quadrantColors = {
-            UIUtils.mutedRed, // Top-left
-            UIUtils.mutedOlive, // Top-right
-            UIUtils.warmMustard, // Bottom-left
-            UIUtils.fadedOrange // Bottom-right
+            UIHelper.mutedRed, // Top-left
+            UIHelper.mutedOlive, // Top-right
+            UIHelper.warmMustard, // Bottom-left
+            UIHelper.fadedOrange // Bottom-right
         };
 
         int[] count = {1, 1, 1, 1};

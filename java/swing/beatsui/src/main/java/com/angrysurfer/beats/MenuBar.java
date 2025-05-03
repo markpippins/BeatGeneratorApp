@@ -12,6 +12,7 @@ import javax.sound.midi.*;
 import javax.swing.*;
 
 import com.angrysurfer.beats.diagnostic.DiagnosticLogBuilder;
+import com.angrysurfer.beats.diagnostic.DiagnosticsSplashScreen;
 import com.angrysurfer.beats.diagnostic.RedisDiagnosticsHelper;
 import com.angrysurfer.beats.visualization.IVisualizationHandler;
 import com.angrysurfer.beats.visualization.VisualizationCategory;
@@ -148,60 +149,79 @@ public class MenuBar extends JMenuBar {
         JMenu diagnosticsMenu = new JMenu("Diagnostics");
         diagnosticsMenu.setMnemonic(KeyEvent.VK_D);
 
+        // Initialize DiagnosticsManager
+        DiagnosticsManager diagnosticsManager = DiagnosticsManager.getInstance(parentFrame, commandBus);
+
+        // All diagnostics
+        JMenuItem allDiagnostics = new JMenuItem("Run All Diagnostics");
+        allDiagnostics.addActionListener(e -> diagnosticsManager.runAllDiagnostics());
+        diagnosticsMenu.add(allDiagnostics);
+
+        diagnosticsMenu.addSeparator();
+
         // Redis diagnostics
-        JMenuItem redisDiagnostics = new JMenuItem("Run Redis Diagnostics");
+        JMenuItem redisDiagnostics = new JMenuItem("Redis Diagnostics");
         redisDiagnostics.addActionListener(e -> {
-            try {
-                System.out.println("Running Redis Diagnostics...");
-                RedisDiagnosticsHelper.main(new String[0]);
-                JOptionPane.showMessageDialog(
-                        parentFrame,
-                        "Redis diagnostics completed. Check console for details.",
-                        "Redis Diagnostics",
-                        JOptionPane.INFORMATION_MESSAGE);
-            } catch (Exception ex) {
-                RedisDiagnosticsHelper.showError("Redis Diagnostics",
+            // Create splash screen
+            DiagnosticsSplashScreen splash = new DiagnosticsSplashScreen("Redis Diagnostics", "Running Redis tests...");
+            splash.setVisible(true);
+            
+            // Run in background thread
+            new Thread(() -> {
+                try {
+                    DiagnosticLogBuilder log = RedisDiagnosticsHelper.runAllRedisDiagnostics();
+                    splash.setVisible(false);
+                    diagnosticsManager.showDiagnosticLogDialog(log);
+                } catch (Exception ex) {
+                    splash.setVisible(false);
+                    DiagnosticsManager.showError("Redis Diagnostics",
                         "Error running Redis diagnostics: " + ex.getMessage());
-                ex.printStackTrace();
-            }
+                }
+            }).start();
         });
         diagnosticsMenu.add(redisDiagnostics);
 
         // DrumSequencer diagnostics
         JMenuItem drumSequencerDiagnostics = new JMenuItem("Drum Sequencer Diagnostics");
         drumSequencerDiagnostics.addActionListener(e -> {
-            try {
-                System.out.println("Running Drum Sequencer Diagnostics...");
-                runDrumSequencerDiagnostics();
-                JOptionPane.showMessageDialog(
-                        parentFrame,
-                        "Drum Sequencer diagnostics completed. Check console for details.",
-                        "Drum Sequencer Diagnostics",
-                        JOptionPane.INFORMATION_MESSAGE);
-            } catch (Exception ex) {
-                RedisDiagnosticsHelper.showError("Drum Sequencer Diagnostics",
-                        "Error running diagnostics: " + ex.getMessage());
-                ex.printStackTrace();
-            }
+            // Create splash screen
+            DiagnosticsSplashScreen splash = new DiagnosticsSplashScreen("Drum Sequencer Diagnostics", "Analyzing sequencer...");
+            splash.setVisible(true);
+            
+            // Run in background thread
+            new Thread(() -> {
+                try {
+                    DiagnosticLogBuilder log = diagnosticsManager.testDrumSequencer();
+                    splash.setVisible(false);
+                    diagnosticsManager.showDiagnosticLogDialog(log);
+                } catch (Exception ex) {
+                    splash.setVisible(false);
+                    DiagnosticsManager.showError("Drum Sequencer Diagnostics",
+                        "Error diagnosing sequencer: " + ex.getMessage());
+                }
+            }).start();
         });
         diagnosticsMenu.add(drumSequencerDiagnostics);
 
         // MIDI Connection Test
         JMenuItem midiConnectionTest = new JMenuItem("Test MIDI Connections");
         midiConnectionTest.addActionListener(e -> {
-            try {
-                System.out.println("Testing MIDI connections...");
-                testMidiConnections();
-                JOptionPane.showMessageDialog(
-                        parentFrame,
-                        "MIDI connection test completed. Check console for details.",
-                        "MIDI Connection Test",
-                        JOptionPane.INFORMATION_MESSAGE);
-            } catch (Exception ex) {
-                RedisDiagnosticsHelper.showError("MIDI Connection Test",
+            // Create splash screen
+            DiagnosticsSplashScreen splash = new DiagnosticsSplashScreen("MIDI Connection Test", "Scanning MIDI devices...");
+            splash.setVisible(true);
+            
+            // Run in background thread
+            new Thread(() -> {
+                try {
+                    DiagnosticLogBuilder log = diagnosticsManager.testMidiConnections();
+                    splash.setVisible(false);
+                    diagnosticsManager.showDiagnosticLogDialog(log);
+                } catch (Exception ex) {
+                    splash.setVisible(false);
+                    DiagnosticsManager.showError("MIDI Connection Test",
                         "Error testing MIDI connections: " + ex.getMessage());
-                ex.printStackTrace();
-            }
+                }
+            }).start();
         });
         diagnosticsMenu.add(midiConnectionTest);
 
@@ -209,12 +229,11 @@ public class MenuBar extends JMenuBar {
         JMenuItem soundTest = new JMenuItem("MIDI Sound Test");
         soundTest.addActionListener(e -> {
             try {
-                System.out.println("Running sound test...");
-                testMidiSound();
+                DiagnosticLogBuilder log = diagnosticsManager.testMidiSound();
+                diagnosticsManager.showDiagnosticLogDialog(log);
             } catch (Exception ex) {
-                RedisDiagnosticsHelper.showError("Sound Test",
-                        "Error running sound test: " + ex.getMessage());
-                ex.printStackTrace();
+                DiagnosticsManager.showError("Sound Test",
+                    "Error running sound test: " + ex.getMessage());
             }
         });
         diagnosticsMenu.add(soundTest);
@@ -222,25 +241,27 @@ public class MenuBar extends JMenuBar {
         // Player/Instrument Test
         JMenuItem playerInstrumentTest = new JMenuItem("Player/Instrument Integrity Test");
         playerInstrumentTest.addActionListener(e -> {
-            try {
-                System.out.println("Testing player and instrument integrity...");
-                testPlayerInstrumentIntegrity();
-                JOptionPane.showMessageDialog(
-                        parentFrame,
-                        "Player/Instrument integrity test completed. Check console for details.",
-                        "Player/Instrument Test",
-                        JOptionPane.INFORMATION_MESSAGE);
-            } catch (Exception ex) {
-                RedisDiagnosticsHelper.showError("Player/Instrument Test",
+            // Create splash screen
+            DiagnosticsSplashScreen splash = new DiagnosticsSplashScreen("Player/Instrument Test", "Analyzing database relationships...");
+            splash.setVisible(true);
+            
+            // Run in background thread
+            new Thread(() -> {
+                try {
+                    DiagnosticLogBuilder log = diagnosticsManager.testPlayerInstrumentIntegrity();
+                    splash.setVisible(false);
+                    diagnosticsManager.showDiagnosticLogDialog(log);
+                } catch (Exception ex) {
+                    splash.setVisible(false);
+                    DiagnosticsManager.showError("Player/Instrument Test",
                         "Error testing player/instrument integrity: " + ex.getMessage());
-                ex.printStackTrace();
-            }
+                }
+            }).start();
         });
         diagnosticsMenu.add(playerInstrumentTest);
 
         // Add the diagnostics menu to the menu bar
-        optionsMenu.add(diagnosticsMenu);
-
+        add(diagnosticsMenu);
 
         // Register visualization listener
         commandBus.register(new IBusListener() {
@@ -572,7 +593,7 @@ public class MenuBar extends JMenuBar {
 
                             Receiver receiver = null;
                             try {
-                                receiver = instrument.getDevice().getReceiver();
+                                receiver = instrument.getReceiver();
                                 log.addIndentedLine("Receiver: " + (receiver != null ? "OK" : "NULL"), 2);
                             } catch (MidiUnavailableException e) {
                                 log.addIndentedLine("Receiver: ERROR - " + e.getMessage(), 2);

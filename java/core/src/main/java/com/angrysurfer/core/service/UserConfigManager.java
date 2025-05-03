@@ -468,50 +468,6 @@ public class UserConfigManager {
     }
 
     /**
-     * Add or update a device configuration
-     * 
-     * @param deviceConfig The device configuration
-     * @return True if successful
-     */
-    public boolean updateDeviceConfig(UserConfig.InstrumentConfig deviceConfig) {
-        return updateConfigInTransaction(config -> {
-            try {
-                // Remove any existing config for the same device
-                config.getConfigs().removeIf(c -> 
-                    c.getDevice().equals(deviceConfig.getDevice()) && 
-                    c.getPort().equals(deviceConfig.getPort()));
-                
-                // Add the new config
-                config.getConfigs().add(deviceConfig);
-                logger.info("Updated device configuration: {}", deviceConfig.getDevice());
-                return true;
-            } catch (Exception e) {
-                logger.error("Error updating device config: {}", e.getMessage(), e);
-                return false;
-            }
-        });
-    }
-
-    /**
-     * Find device configuration
-     * 
-     * @param deviceName The device name
-     * @param port The port name (optional)
-     * @return The matching configuration or null
-     */
-    public UserConfig.InstrumentConfig findDeviceConfig(String deviceName, String port) {
-        if (deviceName == null || currentConfig == null || currentConfig.getConfigs() == null) {
-            return null;
-        }
-        
-        return currentConfig.getConfigs().stream()
-            .filter(c -> deviceName.equals(c.getDevice()) && 
-                        (port == null || port.equals(c.getPort())))
-            .findFirst()
-            .orElse(null);
-    }
-
-    /**
      * Handle Redis connection status changes
      */
     public void onRedisConnectionChanged(boolean connected) {

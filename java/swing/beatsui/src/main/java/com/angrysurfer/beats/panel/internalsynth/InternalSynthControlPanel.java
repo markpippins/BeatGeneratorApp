@@ -30,7 +30,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.angrysurfer.beats.widget.Dial;
-import com.angrysurfer.beats.widget.UIHelper;
+import com.angrysurfer.beats.util.UIHelper;
 import com.angrysurfer.core.service.InternalSynthManager;
 
 import lombok.Getter;

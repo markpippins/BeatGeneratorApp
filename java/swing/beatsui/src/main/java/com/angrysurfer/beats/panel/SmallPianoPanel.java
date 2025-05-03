@@ -31,7 +31,7 @@ package com.angrysurfer.beats.panel;
 // import org.slf4j.LoggerFactory;
 
 // import com.angrysurfer.beats.widget.ColorAnimator;
-// import com.angrysurfer.beats.widget.UIUtils;
+// import com.angrysurfer.beats.widget.UIHelper;
 // import com.angrysurfer.core.api.Command;
 // import com.angrysurfer.core.api.CommandBus;
 // import com.angrysurfer.core.api.Commands;
@@ -65,7 +65,7 @@ package com.angrysurfer.beats.panel;
 //         setMinimumSize(new Dimension(265, 80));
 //         setBorder(BorderFactory.createLineBorder(Color.lightGray, 1));
 //         setOpaque(true);
-//         setBackground(UIUtils.fadedOrange);
+//         setBackground(UIHelper.fadedOrange);
 
 //         // Add three colored buttons on the right side
 //         int buttonWidth = 25;
@@ -76,18 +76,18 @@ package com.angrysurfer.beats.panel;
 
 //         followScaleBtn = new JButton();
 //         followScaleBtn.setBounds(startX, startY, buttonWidth, buttonHeight);
-//         followScaleBtn.setBackground(UIUtils.coolBlue);
+//         followScaleBtn.setBackground(UIHelper.coolBlue);
 
 //         configureToggleButton(followScaleBtn);
 
 //         JButton button2 = new JButton();
 //         button2.setBounds(startX, startY + buttonHeight + spacing, buttonWidth, buttonHeight);
-//         button2.setBackground(UIUtils.warmMustard);
+//         button2.setBackground(UIHelper.warmMustard);
 //         configureToggleButton(button2);
 
 //         JButton button3 = new JButton();
 //         button3.setBounds(startX, startY + (buttonHeight + spacing) * 2, buttonWidth, buttonHeight);
-//         button3.setBackground(UIUtils.fadedOrange);
+//         button3.setBackground(UIHelper.fadedOrange);
 //         configureToggleButton(button3);
 
 //         add(followScaleBtn);

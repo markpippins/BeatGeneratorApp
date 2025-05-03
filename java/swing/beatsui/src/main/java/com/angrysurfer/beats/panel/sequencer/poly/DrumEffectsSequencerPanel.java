@@ -29,10 +29,10 @@ import javax.swing.JScrollPane;
 import javax.swing.SwingUtilities;
 import javax.swing.border.EmptyBorder;
 
-import com.angrysurfer.beats.UIUtils;
 import com.angrysurfer.beats.panel.MainPanel;
 import com.angrysurfer.beats.panel.player.SoundParametersPanel;
 import com.angrysurfer.beats.panel.sequencer.MuteSequencerPanel;
+import com.angrysurfer.beats.util.UIHelper;
 import com.angrysurfer.beats.widget.Dial;
 import com.angrysurfer.beats.widget.DrumButton;
 import com.angrysurfer.beats.widget.TriggerButton;
@@ -179,7 +179,7 @@ public class DrumEffectsSequencerPanel extends JPanel implements IBusListener {
 
         // REDUCED: from 5,5 to 2,2
         setLayout(new BorderLayout(2, 2));
-        UIUtils.setPanelBorder(this);
+        UIHelper.setPanelBorder(this);
 
         // Create west panel to hold navigation
         JPanel westPanel = new JPanel(new BorderLayout(2, 2));
@@ -316,7 +316,7 @@ public class DrumEffectsSequencerPanel extends JPanel implements IBusListener {
                     dial.setMinimum(0);
                     dial.setMaximum(127);
                     dial.setValue(64); // Default value (centered)
-                    dial.setKnobColor(UIUtils.getDialColor("pan"));
+                    dial.setKnobColor(UIHelper.getDialColor("pan"));
 
                     // Add change listener
                     dial.addChangeListener(e -> {
@@ -331,7 +331,7 @@ public class DrumEffectsSequencerPanel extends JPanel implements IBusListener {
                     dial.setMinimum(1);
                     dial.setMaximum(200);
                     dial.setValue(60); // Default value
-                    dial.setKnobColor(UIUtils.getDialColor("delay"));
+                    dial.setKnobColor(UIHelper.getDialColor("delay"));
 
                     // Add change listener
                     dial.addChangeListener(e -> {
@@ -346,7 +346,7 @@ public class DrumEffectsSequencerPanel extends JPanel implements IBusListener {
                     dial.setMinimum(0);
                     dial.setMaximum(127);
                     dial.setValue(0); // Default to 0 (off)
-                    dial.setKnobColor(UIUtils.getDialColor("chorus"));
+                    dial.setKnobColor(UIHelper.getDialColor("chorus"));
 
                     // Add change listener
                     dial.addChangeListener(e -> {
@@ -361,7 +361,7 @@ public class DrumEffectsSequencerPanel extends JPanel implements IBusListener {
                     dial.setMinimum(0);
                     dial.setMaximum(127);
                     dial.setValue(0); // Default to 0 (off)
-                    dial.setKnobColor(UIUtils.getDialColor("reverb"));
+                    dial.setKnobColor(UIHelper.getDialColor("reverb"));
 
                     // Add change listener
                     dial.addChangeListener(e -> {

@@ -404,7 +404,7 @@ public class DrumSequencer implements IBusListener {
                             new DrumStepUpdateEvent(drumIndex, -1, currentStep[drumIndex]));
                 }
             }
-
+            
             // Publish event to notify UI components
             CommandBus.getInstance().publish(
                     Commands.DRUM_SEQUENCE_LOADED,
@@ -937,11 +937,20 @@ public class DrumSequencer implements IBusListener {
     /**
      * Stop playback
      */
+    public void start() {
+        if (!isPlaying) {
+            reset();
+            isPlaying = true;
+        }
+    }
+
+    /**
+     * Stop playback
+     */
     public void stop() {
         if (isPlaying) {
             isPlaying = false;
             reset();
-            CommandBus.getInstance().publish(Commands.TRANSPORT_STOP, this);
         }
     }
 
@@ -1725,7 +1734,7 @@ public class DrumSequencer implements IBusListener {
                         channel,
                         cc,
                         value);
-                instrument.getDevice().getReceiver().send(reuseableMessage, -1);
+                instrument.getReceiver().send(reuseableMessage, -1);
             }
             return true;
         } catch (Exception e) {

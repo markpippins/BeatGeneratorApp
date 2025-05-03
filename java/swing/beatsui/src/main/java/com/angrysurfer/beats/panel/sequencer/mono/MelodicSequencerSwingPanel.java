@@ -14,7 +14,7 @@ import javax.swing.border.TitledBorder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.angrysurfer.beats.UIUtils;
+import com.angrysurfer.beats.util.UIHelper;
 import com.angrysurfer.core.sequencer.MelodicSequencer;
 
 /**
@@ -40,7 +40,7 @@ public class MelodicSequencerSwingPanel extends JPanel {
         // Reduce layout spacing
         setLayout(new FlowLayout(FlowLayout.LEFT, 1, 0));
 
-        UIUtils.setWidgetPanelBorder(this, "Swing");
+        UIHelper.setWidgetPanelBorder(this, "Swing");
 
         // Swing on/off toggle
         swingToggle = new JToggleButton("On", sequencer.isSwingEnabled());

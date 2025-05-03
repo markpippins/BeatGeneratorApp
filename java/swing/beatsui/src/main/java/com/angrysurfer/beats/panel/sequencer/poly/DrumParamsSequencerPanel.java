@@ -21,10 +21,10 @@ import javax.swing.JScrollPane;
 import javax.swing.SwingUtilities;
 import javax.swing.border.EmptyBorder;
 
-import com.angrysurfer.beats.UIUtils;
 import com.angrysurfer.beats.panel.MainPanel;
 import com.angrysurfer.beats.panel.player.SoundParametersPanel;
 import com.angrysurfer.beats.panel.sequencer.MuteSequencerPanel;
+import com.angrysurfer.beats.util.UIHelper;
 import com.angrysurfer.beats.widget.Dial;
 import com.angrysurfer.beats.widget.TriggerButton;
 import com.angrysurfer.core.api.Command;
@@ -180,7 +180,7 @@ public class DrumParamsSequencerPanel extends JPanel implements IBusListener {
 
         // REDUCED: from 5,5 to 2,2
         setLayout(new BorderLayout(2, 2));
-        UIUtils.setPanelBorder(this);
+        UIHelper.setPanelBorder(this);
 
         // Create west panel to hold navigation
         JPanel westPanel = new JPanel(new BorderLayout(2, 2));
@@ -193,7 +193,7 @@ public class DrumParamsSequencerPanel extends JPanel implements IBusListener {
         JPanel topPanel = new JPanel(new BorderLayout(2, 2));
 
         // Navigation panel goes NORTH-WEST
-        UIUtils.addSafely(westPanel, navigationPanel, BorderLayout.NORTH);
+        UIHelper.addSafely(westPanel, navigationPanel, BorderLayout.NORTH);
 
         // Create center panel for the info label with GridBagLayout for proper
         // centering
@@ -210,12 +210,12 @@ public class DrumParamsSequencerPanel extends JPanel implements IBusListener {
         infoLabelPanel.add(instrumentInfoLabel, gbc);
 
         // Add panels to the top panel
-        UIUtils.addSafely(topPanel, westPanel, BorderLayout.WEST);
-        UIUtils.addSafely(topPanel, infoLabelPanel, BorderLayout.CENTER); // Put info label in CENTER of top panel
-        UIUtils.addSafely(topPanel, eastPanel, BorderLayout.EAST);
+        UIHelper.addSafely(topPanel, westPanel, BorderLayout.WEST);
+        UIHelper.addSafely(topPanel, infoLabelPanel, BorderLayout.CENTER); // Put info label in CENTER of top panel
+        UIHelper.addSafely(topPanel, eastPanel, BorderLayout.EAST);
 
         // Add top panel to main layout
-        UIUtils.addSafely(this, topPanel, BorderLayout.NORTH);
+        UIHelper.addSafely(this, topPanel, BorderLayout.NORTH);
 
         // Create panel for the 16 columns
         // REDUCED: from 5,0 to 2,0
@@ -226,14 +226,14 @@ public class DrumParamsSequencerPanel extends JPanel implements IBusListener {
         // Create 16 columns
         for (int i = 0; i < 16; i++) {
             JPanel columnPanel = createSequenceColumn(i);
-            UIUtils.addSafely(sequencePanel, columnPanel);
+            UIHelper.addSafely(sequencePanel, columnPanel);
         }
 
         // Create a panel to hold both the sequence panel and drum buttons
         JPanel centerPanel = new JPanel(new BorderLayout());
 
         // Add sequence panel directly to CENTER
-        UIUtils.addSafely(centerPanel, sequencePanel, BorderLayout.CENTER);
+        UIHelper.addSafely(centerPanel, sequencePanel, BorderLayout.CENTER);
 
         // Create drum pad panel with callback
         drumPadPanel = new DrumButtonsPanel(sequencer, this::handleDrumPadSelected);
@@ -244,10 +244,10 @@ public class DrumParamsSequencerPanel extends JPanel implements IBusListener {
         drumSection.add(drumPadPanel, BorderLayout.CENTER);
 
         // Add the drum section to the SOUTH of the centerPanel
-        UIUtils.addSafely(centerPanel, drumSection, BorderLayout.SOUTH);
+        UIHelper.addSafely(centerPanel, drumSection, BorderLayout.SOUTH);
 
         // Add the center panel to the main layout
-        UIUtils.addSafely(this, centerPanel, BorderLayout.CENTER);
+        UIHelper.addSafely(this, centerPanel, BorderLayout.CENTER);
 
         // Create a panel for the bottom controls
         // REDUCED: from 5,5 to 2,2
@@ -305,7 +305,7 @@ public class DrumParamsSequencerPanel extends JPanel implements IBusListener {
                     dial.setMinimum(0);
                     dial.setMaximum(127);
                     dial.setValue(100); // Default value
-                    dial.setKnobColor(UIUtils.getDialColor("velocity")); // Set knob color
+                    dial.setKnobColor(UIHelper.getDialColor("velocity")); // Set knob color
                     // dial.setColors(new Color(0, 180, 255), new Color(0, 100, 200), Color.WHITE);
                     // Add to collection and event listener
                     velocityDials.add(dial);
@@ -320,7 +320,7 @@ public class DrumParamsSequencerPanel extends JPanel implements IBusListener {
                     dial.setMinimum(0);
                     dial.setMaximum(1000);
                     dial.setValue(250); // Default value
-                    dial.setKnobColor(UIUtils.getDialColor("decay")); // Set knob color
+                    dial.setKnobColor(UIHelper.getDialColor("decay")); // Set knob color
                     // Add to collection and event listener
                     decayDials.add(dial);
                     dial.addChangeListener(e -> {
@@ -334,7 +334,7 @@ public class DrumParamsSequencerPanel extends JPanel implements IBusListener {
                     dial.setMinimum(0);
                     dial.setMaximum(100);
                     dial.setValue(100); // Default value
-                    dial.setKnobColor(UIUtils.getDialColor("probability")); // Set knob color
+                    dial.setKnobColor(UIHelper.getDialColor("probability")); // Set knob color
                     // Add to collection and event listener
                     probabilityDials.add(dial);
                     dial.addChangeListener(e -> {
@@ -348,7 +348,7 @@ public class DrumParamsSequencerPanel extends JPanel implements IBusListener {
                     dial.setMinimum(-50);
                     dial.setMaximum(50);
                     dial.setValue(0); // Default value
-                    dial.setKnobColor(UIUtils.getDialColor("nudge")); // Set knob color
+                    dial.setKnobColor(UIHelper.getDialColor("nudge")); // Set knob color
                     // Color.WHITE);
                     // Add to collection and event listener
                     nudgeDials.add(dial);

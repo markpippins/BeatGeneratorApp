@@ -1,11 +1,11 @@
 package com.angrysurfer.beats.panel.sequencer.mono;
 
-import com.angrysurfer.beats.UIUtils;
 import com.angrysurfer.core.model.Direction;
+import com.angrysurfer.core.sequencer.MelodicScaleSelectionEvent;
 import com.angrysurfer.core.sequencer.MelodicSequencer;
 import com.angrysurfer.core.sequencer.Scale;
 import com.angrysurfer.core.sequencer.TimingDivision;
-import com.angrysurfer.beats.event.MelodicScaleSelectionEvent;
+import com.angrysurfer.beats.util.UIHelper;
 import com.angrysurfer.core.api.CommandBus;
 import com.angrysurfer.core.api.Commands;
 
@@ -50,7 +50,7 @@ public class MelodicSequenceParametersPanel extends JPanel {
      */
     private void initialize() {
         setLayout(new BorderLayout(0, 0)); // No gaps between components
-        UIUtils.setWidgetPanelBorder(this,"Sequence Parameters");
+        UIHelper.setWidgetPanelBorder(this,"Sequence Parameters");
 
         // Reduce spacing in the controls panel
         JPanel controlsPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 1, 0));
@@ -83,7 +83,7 @@ public class MelodicSequenceParametersPanel extends JPanel {
         // Create spinner model with range 1-16, default 16
         SpinnerNumberModel lastStepModel = new SpinnerNumberModel(16, 1, 64, 1);
         lastStepSpinner = new JSpinner(lastStepModel);
-        lastStepSpinner.setPreferredSize(new Dimension(UIUtils.MEDIUM_CONTROL_WIDTH - 5, UIUtils.CONTROL_HEIGHT)); // Reduced
+        lastStepSpinner.setPreferredSize(new Dimension(UIHelper.MEDIUM_CONTROL_WIDTH - 5, UIHelper.CONTROL_HEIGHT)); // Reduced
                                                                                                                    // width
         lastStepSpinner.setToolTipText("Set the last step for the pattern (1-16)");
         lastStepSpinner.addChangeListener(e -> {
@@ -104,7 +104,7 @@ public class MelodicSequenceParametersPanel extends JPanel {
         JPanel directionPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 2, 0)); // REDUCED: from 5,0 to 2,0
 
         directionCombo = new JComboBox<>(new String[] { "Forward", "Backward", "Bounce", "Random" });
-        directionCombo.setPreferredSize(new Dimension(UIUtils.LARGE_CONTROL_WIDTH, UIUtils.CONTROL_HEIGHT));
+        directionCombo.setPreferredSize(new Dimension(UIHelper.LARGE_CONTROL_WIDTH, UIHelper.CONTROL_HEIGHT));
         directionCombo.setToolTipText("Set the playback direction of the pattern");
         directionCombo.addActionListener(e -> {
             if (!updatingUI) {
@@ -131,7 +131,7 @@ public class MelodicSequenceParametersPanel extends JPanel {
         JPanel timingPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 2, 0)); // REDUCED: from 5,0 to 2,0
 
         timingCombo = new JComboBox<>(TimingDivision.getValuesAlphabetically());
-        timingCombo.setPreferredSize(new Dimension(UIUtils.LARGE_CONTROL_WIDTH, UIUtils.CONTROL_HEIGHT));
+        timingCombo.setPreferredSize(new Dimension(UIHelper.LARGE_CONTROL_WIDTH, UIHelper.CONTROL_HEIGHT));
         timingCombo.setToolTipText("Set the timing division for this pattern");
         timingCombo.addActionListener(e -> {
             if (!updatingUI) {
@@ -153,7 +153,7 @@ public class MelodicSequenceParametersPanel extends JPanel {
     private void createLoopButton(JPanel parentPanel) {
         loopToggleButton = new JToggleButton("🔁", true); // Default to looping enabled
         loopToggleButton.setToolTipText("Loop this pattern");
-        loopToggleButton.setPreferredSize(new Dimension(UIUtils.SMALL_CONTROL_WIDTH, UIUtils.CONTROL_HEIGHT));
+        loopToggleButton.setPreferredSize(new Dimension(UIHelper.SMALL_CONTROL_WIDTH, UIHelper.CONTROL_HEIGHT));
         loopToggleButton.setMargin(new Insets(2, 2, 2, 2)); // Reduce internal padding
         loopToggleButton.addActionListener(e -> {
             if (!updatingUI) {
@@ -173,7 +173,7 @@ public class MelodicSequenceParametersPanel extends JPanel {
         // Rotate Left button
         JButton rotateLeftButton = new JButton("⟵");
         rotateLeftButton.setToolTipText("Rotate pattern one step left");
-        rotateLeftButton.setPreferredSize(new Dimension(UIUtils.SMALL_CONTROL_WIDTH, UIUtils.CONTROL_HEIGHT));
+        rotateLeftButton.setPreferredSize(new Dimension(UIHelper.SMALL_CONTROL_WIDTH, UIHelper.CONTROL_HEIGHT));
         rotateLeftButton.setMargin(new Insets(2, 2, 2, 2));
         rotateLeftButton.addActionListener(e -> {
             sequencer.rotatePatternLeft();
@@ -188,7 +188,7 @@ public class MelodicSequenceParametersPanel extends JPanel {
         // Rotate Right button
         JButton rotateRightButton = new JButton("⟶");
         rotateRightButton.setToolTipText("Rotate pattern one step right");
-        rotateRightButton.setPreferredSize(new Dimension(UIUtils.SMALL_CONTROL_WIDTH, UIUtils.CONTROL_HEIGHT));
+        rotateRightButton.setPreferredSize(new Dimension(UIHelper.SMALL_CONTROL_WIDTH, UIHelper.CONTROL_HEIGHT));
         rotateRightButton.setMargin(new Insets(2, 2, 2, 2));
         rotateRightButton.addActionListener(e -> {
             sequencer.rotatePatternRight();
@@ -215,7 +215,7 @@ public class MelodicSequenceParametersPanel extends JPanel {
     private JButton createClearButton() {
         JButton clearButton = new JButton("🗑️");
         clearButton.setToolTipText("Clear pattern");
-        clearButton.setPreferredSize(new Dimension(UIUtils.SMALL_CONTROL_WIDTH, UIUtils.CONTROL_HEIGHT));
+        clearButton.setPreferredSize(new Dimension(UIHelper.SMALL_CONTROL_WIDTH, UIHelper.CONTROL_HEIGHT));
         clearButton.setMargin(new Insets(2, 2, 2, 2));
         clearButton.addActionListener(e -> {
             sequencer.clearPattern();

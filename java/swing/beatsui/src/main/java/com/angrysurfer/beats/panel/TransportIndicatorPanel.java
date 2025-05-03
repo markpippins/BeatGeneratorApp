@@ -10,9 +10,9 @@ import javax.swing.border.CompoundBorder;
 import javax.swing.border.EmptyBorder;
 import javax.swing.border.MatteBorder;
 
-import com.angrysurfer.beats.widget.UIHelper;
+import com.angrysurfer.beats.util.UIHelper;
+import com.angrysurfer.beats.util.UIHelper;
 import com.angrysurfer.beats.widget.VuMeter;
-import com.angrysurfer.beats.UIUtils;
 import com.angrysurfer.beats.widget.LEDIndicator;
 import com.angrysurfer.core.api.Command;
 import com.angrysurfer.core.api.CommandBus;
@@ -146,7 +146,7 @@ public class TransportIndicatorPanel extends JPanel implements IBusListener {
     }
     
     private JPanel createSessionSection() {
-        JPanel panel = UIUtils.createSectionPanel("Session");
+        JPanel panel = UIHelper.createSectionPanel("Session");
         panel.setLayout(new GridBagLayout());
         GridBagConstraints gbc = new GridBagConstraints();
         
@@ -238,7 +238,7 @@ public class TransportIndicatorPanel extends JPanel implements IBusListener {
     }
     
     private JPanel createPlayerSection() {
-        JPanel panel = UIUtils.createSectionPanel("Active Player");
+        JPanel panel = UIHelper.createSectionPanel("Active Player");
         panel.setLayout(new FlowLayout(FlowLayout.LEFT, 5, 0));
         
         // Player name
@@ -266,7 +266,7 @@ public class TransportIndicatorPanel extends JPanel implements IBusListener {
     }
     
     private JPanel createMonitoringSection() {
-        JPanel panel = UIUtils.createSectionPanel("System");
+        JPanel panel = UIHelper.createSectionPanel("System");
         panel.setLayout(new GridBagLayout());
         GridBagConstraints gbc = new GridBagConstraints();
         
@@ -322,7 +322,7 @@ public class TransportIndicatorPanel extends JPanel implements IBusListener {
     }
     
     private JPanel createMessageSection() {
-        JPanel panel = UIUtils.createSectionPanel("Status");
+        JPanel panel = UIHelper.createSectionPanel("Status");
         panel.setLayout(new BorderLayout(1, 0));
         
         messageLabel = new JLabel("Message:");
@@ -353,7 +353,7 @@ public class TransportIndicatorPanel extends JPanel implements IBusListener {
         field.setForeground(UIHelper.FIELD_FOREGROUND);
         
         if (width > 0) {
-            Dimension size = new Dimension(width, UIUtils.CONTROL_HEIGHT);
+            Dimension size = new Dimension(width, UIHelper.CONTROL_HEIGHT);
             field.setPreferredSize(size);
             field.setMinimumSize(size);
         }

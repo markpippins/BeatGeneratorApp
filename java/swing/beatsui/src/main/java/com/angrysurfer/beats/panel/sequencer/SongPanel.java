@@ -33,7 +33,7 @@ import javax.swing.SwingUtilities;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.angrysurfer.beats.UIUtils;
+import com.angrysurfer.beats.util.UIHelper;
 import com.angrysurfer.core.api.Command;
 import com.angrysurfer.core.api.CommandBus;
 import com.angrysurfer.core.api.Commands;
@@ -659,7 +659,7 @@ public class SongPanel extends JPanel implements IBusListener {
 
         public TimelinePanel() {
             setLayout(null); // Absolute positioning for pattern blocks
-            setBackground(Color.WHITE);// UIUtils.getBackgroundColor());
+            setBackground(Color.WHITE);// UIHelper.getBackgroundColor());
 
             // Track total components (1 drum track + melodic sequencers)
             int trackCount = 1 + melodicSequencers.size();
@@ -733,15 +733,15 @@ public class SongPanel extends JPanel implements IBusListener {
             g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 
             // Draw track headers background
-            g2d.setColor(UIUtils.getAccentColor());
+            g2d.setColor(UIHelper.getAccentColor());
             g2d.fillRect(0, HEADER_HEIGHT, TRACK_HEADER_WIDTH, getHeight());
 
             // Draw timeline header background
-            g2d.setColor(UIUtils.getAccentColor().darker());
+            g2d.setColor(UIHelper.getAccentColor().darker());
             g2d.fillRect(0, 0, getWidth(), HEADER_HEIGHT);
 
             // Draw bar numbers
-            g2d.setColor(UIUtils.getTextColor());
+            g2d.setColor(UIHelper.getTextColor());
             g2d.setFont(new Font("Dialog", Font.PLAIN, 12));
             for (int i = 0; i < songLength; i++) {
                 int x = TRACK_HEADER_WIDTH + (i * BAR_WIDTH) + (BAR_WIDTH / 2) - 10;
@@ -749,7 +749,7 @@ public class SongPanel extends JPanel implements IBusListener {
             }
 
             // Draw bar dividers
-            g2d.setColor(UIUtils.getTextColor().darker());
+            g2d.setColor(UIHelper.getTextColor().darker());
             for (int i = 0; i <= songLength; i++) {
                 int x = TRACK_HEADER_WIDTH + (i * BAR_WIDTH);
                 g2d.drawLine(x, 0, x, getHeight());
@@ -757,7 +757,7 @@ public class SongPanel extends JPanel implements IBusListener {
 
             // Draw track names
             int trackY = HEADER_HEIGHT;
-            g2d.setColor(UIUtils.getTextColor());
+            g2d.setColor(UIHelper.getTextColor());
 
             // Drum track
             g2d.drawString("Drums", 10, trackY + (TRACK_HEIGHT / 2));
@@ -770,7 +770,7 @@ public class SongPanel extends JPanel implements IBusListener {
             }
 
             // Draw track dividers
-            g2d.setColor(UIUtils.getTextColor().darker());
+            g2d.setColor(UIHelper.getTextColor().darker());
             trackY = HEADER_HEIGHT;
             for (int i = 0; i <= 1 + melodicSequencers.size(); i++) {
                 g2d.drawLine(0, trackY, getWidth(), trackY);
@@ -781,7 +781,7 @@ public class SongPanel extends JPanel implements IBusListener {
             if (currentBar >= 0) { // Remove session running check to always show position
                 // g2d.setColor(new Color(255, 0, 0, 80)); // Semi-transparent red for better
                 // visibility
-                g2d.setColor(UIUtils.coolBlue);
+                g2d.setColor(UIHelper.coolBlue);
                 // Calculate bar position (account for 1-based vs 0-based indexing)
                 int barX = TRACK_HEADER_WIDTH + ((currentBar > 0 ? currentBar - 1 : 0) * BAR_WIDTH);
                 g2d.fillRect(barX, HEADER_HEIGHT, BAR_WIDTH, getHeight() - HEADER_HEIGHT);
@@ -793,14 +793,14 @@ public class SongPanel extends JPanel implements IBusListener {
 
             // Draw drum pattern slots
             trackY = HEADER_HEIGHT;
-            drawPatternSlots(g2d, drumPatternSlots, trackY, UIUtils.warmMustard);
+            drawPatternSlots(g2d, drumPatternSlots, trackY, UIHelper.warmMustard);
 
             // Draw melodic pattern slots
             trackY += TRACK_HEIGHT;
             for (MelodicSequencer sequencer : melodicSequencers) {
                 List<PatternSlot> slots = melodicPatternSlots.get(sequencer.getId());
                 if (slots != null) {
-                    drawPatternSlots(g2d, slots, trackY, UIUtils.coolBlue);
+                    drawPatternSlots(g2d, slots, trackY, UIHelper.coolBlue);
                 }
                 trackY += TRACK_HEIGHT;
             }
@@ -816,7 +816,7 @@ public class SongPanel extends JPanel implements IBusListener {
                     int dragX = mousePos.x - dragOffset.x;
 
                     // Draw semi-transparent dragging slot
-                    Color slotColor = "DRUM".equals(draggingSlot.getType()) ? UIUtils.warmMustard : UIUtils.coolBlue;
+                    Color slotColor = "DRUM".equals(draggingSlot.getType()) ? UIHelper.warmMustard : UIHelper.coolBlue;
 
                     g2d.setColor(new Color(slotColor.getRed(), slotColor.getGreen(),
                             slotColor.getBlue(), 128));

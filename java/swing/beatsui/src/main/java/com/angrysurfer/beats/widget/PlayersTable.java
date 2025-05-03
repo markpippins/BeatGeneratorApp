@@ -25,10 +25,11 @@ import javax.swing.event.TableColumnModelListener;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.TableRowSorter;
 
+import com.angrysurfer.beats.util.UIHelper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.angrysurfer.beats.UIUtils;
+import com.angrysurfer.beats.util.UIHelper;
 import com.angrysurfer.core.Constants;
 import com.angrysurfer.core.api.Command;
 import com.angrysurfer.core.api.CommandBus;
@@ -45,7 +46,7 @@ public class PlayersTable extends JTable {
     private final PlayersTableModel tableModel;
     private final Set<Long> flashingPlayerIds = new HashSet<>();
     private Timer flashTimer;
-    private final Color FLASH_COLOR = UIUtils.coolBlue; // new Color(255, 255, 200); // Light yellow flash
+    private final Color FLASH_COLOR = UIHelper.coolBlue; // new Color(255, 255, 200); // Light yellow flash
     private final int FLASH_DURATION_MS = 500; // Flash duration in milliseconds
     private int lastSelectedRow = -1;
     private ListSelectionListener selectionListener;
@@ -152,7 +153,7 @@ public class PlayersTable extends JTable {
                                 if (isPlayerFlashing(player)) {
                                     bgColor = isSelected ? FLASH_COLOR.darker() : FLASH_COLOR;
                                 } else if (player != null && player.isPlaying()) {
-                                    bgColor = isSelected ? UIUtils.mutedRed.darker() : UIUtils.fadedLime;
+                                    bgColor = isSelected ? UIHelper.mutedRed.darker() : UIHelper.fadedLime;
                                 } else if (isSelected) {
                                     bgColor = table.getSelectionBackground();
                                 }

@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
+import com.angrysurfer.core.event.MelodicSequencerEvent;
 import com.angrysurfer.core.model.InstrumentWrapper;
 import com.angrysurfer.core.model.Player;
 import com.angrysurfer.core.service.PlayerManager;
@@ -438,31 +439,6 @@ public class MelodicSequenceDataHelper {
                     .min(Long::compareTo)
                     .orElse(null);
         }
-    }
-
-    /**
-     * Class to hold sequencer ID and sequence ID for events
-     */
-    public static class MelodicSequencerEvent {
-        private final Integer sequencerId;
-        private final Long sequenceId;
-
-        public MelodicSequencerEvent(Integer sequencerId, Long sequenceId) {
-            this.sequencerId = sequencerId;
-            this.sequenceId = sequenceId;
-        }
-
-        public Integer getSequencerId() {
-            return sequencerId;
-        }
-
-        public Long getSequenceId() {
-            return sequenceId;
-        }
-    }
-
-    static void showError(String testName, String message) {
-        JOptionPane.showMessageDialog(null, testName + "\n\nERROR: " + message);
     }
 
 }

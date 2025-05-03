@@ -10,10 +10,10 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.border.TitledBorder;
 
-import com.angrysurfer.beats.UIUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.angrysurfer.beats.util.UIHelper;
 import com.angrysurfer.core.api.CommandBus;
 import com.angrysurfer.core.api.Commands;
 import com.angrysurfer.core.sequencer.DrumSequencer;
@@ -38,7 +38,7 @@ public class DrumSequencerMaxLengthPanel extends JPanel {
     public DrumSequencerMaxLengthPanel(DrumSequencer sequencer) {
         this.sequencer = sequencer;
         // In DrumSequencerMaxLengthPanel's constructor
-        UIUtils.setWidgetPanelBorder(this, "Sequencer");
+        UIHelper.setWidgetPanelBorder(this, "Sequencer");
 
         // REDUCED: from 5,2 to 2,1
         setLayout(new FlowLayout(FlowLayout.CENTER, 2, 1));
@@ -61,7 +61,7 @@ public class DrumSequencerMaxLengthPanel extends JPanel {
         maxLengthCombo.setSelectedItem(sequencer.getMaxPatternLength());
         
         // REDUCED: width from MEDIUM_CONTROL_WIDTH to SMALL_CONTROL_WIDTH + 10
-        maxLengthCombo.setPreferredSize(new Dimension(UIUtils.MEDIUM_CONTROL_WIDTH + 10, UIUtils.CONTROL_HEIGHT));
+        maxLengthCombo.setPreferredSize(new Dimension(UIHelper.MEDIUM_CONTROL_WIDTH + 10, UIHelper.CONTROL_HEIGHT));
         maxLengthCombo.setToolTipText("Set maximum pattern length");
 
         maxLengthCombo.addActionListener(e -> {

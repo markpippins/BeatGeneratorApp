@@ -10,7 +10,8 @@ import javax.swing.border.CompoundBorder;
 import javax.swing.border.EmptyBorder;
 import javax.swing.border.MatteBorder;
 
-import com.angrysurfer.beats.widget.UIHelper;
+import com.angrysurfer.beats.util.UIHelper;
+import com.angrysurfer.beats.util.UIHelper;
 import com.angrysurfer.beats.widget.VuMeter;
 import com.angrysurfer.beats.widget.LEDIndicator;
 import com.angrysurfer.core.api.Command;
@@ -137,7 +138,7 @@ public class StatusBar extends JPanel implements IBusListener {
     }
     
     private JPanel createSessionSection() {
-        JPanel panel = UIUtils.createSectionPanel("Session");
+        JPanel panel = UIHelper.createSectionPanel("Session");
         panel.setLayout(new GridBagLayout());
         GridBagConstraints gbc = new GridBagConstraints();
         
@@ -196,7 +197,7 @@ public class StatusBar extends JPanel implements IBusListener {
     }
     
     private JPanel createTransportSection() {
-        JPanel panel = UIUtils.createSectionPanel("Transport");
+        JPanel panel = UIHelper.createSectionPanel("Transport");
         panel.setLayout(new FlowLayout(FlowLayout.LEFT, 5, 0));
         
         // Create a wrapper panel for LEDs to control height
@@ -205,7 +206,7 @@ public class StatusBar extends JPanel implements IBusListener {
         ledPanel.setAlignmentY(Component.CENTER_ALIGNMENT);
         
         // Set preferred height for LED panel to match text fields
-        ledPanel.setPreferredSize(new Dimension(ledPanel.getPreferredSize().width, UIUtils.CONTROL_HEIGHT));
+        ledPanel.setPreferredSize(new Dimension(ledPanel.getPreferredSize().width, UIHelper.CONTROL_HEIGHT));
         
         playingLed = new LEDIndicator(Color.GREEN, "PLAY");
         playingLed.setOffColor(Color.RED);
@@ -237,7 +238,7 @@ public class StatusBar extends JPanel implements IBusListener {
     }
     
     private JPanel createPlayerSection() {
-        JPanel panel = UIUtils.createSectionPanel("Active Player");
+        JPanel panel = UIHelper.createSectionPanel("Active Player");
         
         // Use FlowLayout with vertical centering
         panel.setLayout(new FlowLayout(FlowLayout.LEFT, 5, 0));
@@ -268,7 +269,7 @@ public class StatusBar extends JPanel implements IBusListener {
     }
     
     private JPanel createMonitoringSection() {
-        JPanel panel = UIUtils.createSectionPanel("System");
+        JPanel panel = UIHelper.createSectionPanel("System");
         panel.setLayout(new GridBagLayout());
         GridBagConstraints gbc = new GridBagConstraints();
         
@@ -324,12 +325,12 @@ public class StatusBar extends JPanel implements IBusListener {
     }
     
     private JPanel createMessageSection() {
-        JPanel panel = UIUtils.createSectionPanel("Status");
+        JPanel panel = UIHelper.createSectionPanel("Status");
         panel.setLayout(new BorderLayout(5, 0));
         
         // Create a wrapper panel for the label to vertically center it
         JPanel labelPanel = new JPanel(new BorderLayout());
-        labelPanel.setPreferredSize(new Dimension(labelPanel.getPreferredSize().width, UIUtils.CONTROL_HEIGHT));
+        labelPanel.setPreferredSize(new Dimension(labelPanel.getPreferredSize().width, UIHelper.CONTROL_HEIGHT));
         messageLabel = new JLabel("Message:");
         labelPanel.add(messageLabel, BorderLayout.CENTER);
         
@@ -360,15 +361,15 @@ public class StatusBar extends JPanel implements IBusListener {
         field.setBackground(UIHelper.FIELD_BACKGROUND);
         field.setForeground(UIHelper.FIELD_FOREGROUND);
         
-        // Always set the height to UIUtils.CONTROL_HEIGHT
+        // Always set the height to UIHelper.CONTROL_HEIGHT
         if (width > 0) {
-            Dimension size = new Dimension(width, UIUtils.CONTROL_HEIGHT);
+            Dimension size = new Dimension(width, UIHelper.CONTROL_HEIGHT);
             field.setPreferredSize(size);
             field.setMinimumSize(size);
         } else {
             // For fields with dynamic width, still set the height
-            field.setPreferredSize(new Dimension(field.getPreferredSize().width, UIUtils.CONTROL_HEIGHT));
-            field.setMinimumSize(new Dimension(0, UIUtils.CONTROL_HEIGHT));
+            field.setPreferredSize(new Dimension(field.getPreferredSize().width, UIHelper.CONTROL_HEIGHT));
+            field.setMinimumSize(new Dimension(0, UIHelper.CONTROL_HEIGHT));
         }
         
         return field;

@@ -20,10 +20,10 @@ import javax.swing.event.ChangeListener;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.angrysurfer.beats.UIUtils;
 import com.angrysurfer.beats.widget.Dial;
 import com.angrysurfer.beats.widget.NoteSelectionDial;
-import com.angrysurfer.beats.widget.UIHelper;
+import com.angrysurfer.beats.util.UIHelper;
+import com.angrysurfer.beats.util.UIHelper;
 import com.angrysurfer.core.api.Command;
 import com.angrysurfer.core.api.CommandBus;
 import com.angrysurfer.core.api.Commands;
@@ -165,43 +165,43 @@ public class ControlPanel extends JPanel {
 
         panDial = createDial("pan", 64, 0, 127, 1);
         panDial.setCommand(Commands.NEW_VALUE_PAN);
-        panDial.setKnobColor(UIUtils.mutedRed);
+        panDial.setKnobColor(UIHelper.mutedRed);
         panDial.setGradientStartColor(panDial.getKnobColor().brighter());
         panDial.setGradientEndColor(panDial.getKnobColor().darker());
         
         velocityMinDial = createDial("minVelocity", 64, 0, 127, 1);
         velocityMinDial.setCommand(Commands.NEW_VALUE_VELOCITY_MIN);
-        velocityMinDial.setKnobColor(UIUtils.warmGray);
+        velocityMinDial.setKnobColor(UIHelper.warmGray);
         velocityMinDial.setGradientStartColor(velocityMinDial.getKnobColor().brighter());
         velocityMinDial.setGradientEndColor(velocityMinDial.getKnobColor().darker());
         
         velocityMaxDial = createDial("maxVelocity", 127, 0, 127, 1);
         velocityMaxDial.setCommand(Commands.NEW_VALUE_VELOCITY_MAX);
-        velocityMaxDial.setKnobColor(UIUtils.warmGray);
+        velocityMaxDial.setKnobColor(UIHelper.warmGray);
         velocityMaxDial.setGradientStartColor(velocityMaxDial.getKnobColor().brighter());
         velocityMaxDial.setGradientEndColor(velocityMaxDial.getKnobColor().darker());
 
         swingDial = createDial("swing", 50, 0, 100, 1);
         swingDial.setCommand(Commands.NEW_VALUE_SWING);
-        swingDial.setKnobColor(UIUtils.slateGray);
+        swingDial.setKnobColor(UIHelper.slateGray);
         swingDial.setGradientStartColor(swingDial.getKnobColor().brighter());
         swingDial.setGradientEndColor(swingDial.getKnobColor().darker());
 
         probabilityDial = createDial("probability", 100, 0, 100, 1);
         probabilityDial.setCommand(Commands.NEW_VALUE_PROBABILITY);
-        probabilityDial.setKnobColor(UIUtils.deepNavy);
+        probabilityDial.setKnobColor(UIHelper.deepNavy);
         probabilityDial.setGradientStartColor(probabilityDial.getKnobColor().brighter());
         probabilityDial.setGradientEndColor(probabilityDial.getKnobColor().darker());
 
         randomDial = createDial("random", 0, 0, 100, 1);
         randomDial.setCommand(Commands.NEW_VALUE_RANDOM);
-        randomDial.setKnobColor(UIUtils.mutedOlive);
+        randomDial.setKnobColor(UIHelper.mutedOlive);
         randomDial.setGradientStartColor(randomDial.getKnobColor().brighter());
         randomDial.setGradientEndColor(randomDial.getKnobColor().darker());
 
         sparseDial = createDial("sparse", 0, 0, 100, 1);
         sparseDial.setCommand(Commands.NEW_VALUE_SPARSE);
-        sparseDial.setKnobColor(UIUtils.deepTeal);
+        sparseDial.setKnobColor(UIHelper.deepTeal);
         sparseDial.setGradientStartColor(sparseDial.getKnobColor().brighter());
         sparseDial.setGradientEndColor(sparseDial.getKnobColor().darker());
 
@@ -425,7 +425,7 @@ public class ControlPanel extends JPanel {
         dial.setPreferredSize(new Dimension(50, 50));
         dial.setMinimumSize(new Dimension(50, 50));
         dial.setMaximumSize(new Dimension(50, 50));
-        dial.setBackground(UIUtils.getDialColor(propertyName));
+        dial.setBackground(UIHelper.getDialColor(propertyName));
         // Store the property name in the dial
         dial.setName(propertyName);
 

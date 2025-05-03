@@ -3,7 +3,7 @@ package com.angrysurfer.beats.widget;
 import java.awt.*;
 import javax.swing.JToggleButton;
 
-import com.angrysurfer.beats.UIUtils;
+import com.angrysurfer.beats.util.UIHelper;
 
 public class MuteButton extends JToggleButton {
     private static final long serialVersionUID = 1L;
@@ -50,7 +50,7 @@ public class MuteButton extends JToggleButton {
         
         // Base color based on state
         if (highlighted) {
-            g2d.setColor(UIUtils.fadedOrange);
+            g2d.setColor(UIHelper.fadedOrange);
         } else {
             g2d.setColor(isSelected() ? activeColor : baseColor);
         }

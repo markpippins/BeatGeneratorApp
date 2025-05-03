@@ -19,8 +19,8 @@ import javax.swing.SwingUtilities;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.angrysurfer.beats.UIUtils;
 import com.angrysurfer.beats.panel.player.SoundParametersPanel;
+import com.angrysurfer.beats.util.UIHelper;
 import com.angrysurfer.beats.visualization.Visualizer;
 import com.angrysurfer.core.api.Command;
 import com.angrysurfer.core.api.CommandBus;
@@ -146,7 +146,7 @@ public class DrumSequencerPanel extends JPanel implements IBusListener {
         removeAll();
 
         setLayout(new BorderLayout(2, 2));
-        UIUtils.setPanelBorder(this);
+        UIHelper.setPanelBorder(this);
 
         // Create west panel to hold navigation
         // REDUCED: from 5,5 to 2,2

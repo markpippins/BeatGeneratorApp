@@ -14,7 +14,7 @@ import javax.swing.SwingUtilities;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.angrysurfer.beats.UIUtils;
+import com.angrysurfer.beats.util.UIHelper;
 import com.angrysurfer.core.api.Command;
 import com.angrysurfer.core.api.CommandBus;
 import com.angrysurfer.core.api.Commands;
@@ -47,8 +47,8 @@ public class InstrumentCombo extends JComboBox<InstrumentWrapper> implements IBu
         super();
         configureRenderer();
         commandBus.register(this);
-        setPreferredSize(new Dimension(UIUtils.LARGE_CONTROL_WIDTH * 2, UIUtils.CONTROL_HEIGHT));
-        setMinimumSize(new Dimension(UIUtils.LARGE_CONTROL_WIDTH * 2, UIUtils.CONTROL_HEIGHT));
+        setPreferredSize(new Dimension(UIHelper.LARGE_CONTROL_WIDTH * 2, UIHelper.CONTROL_HEIGHT));
+        setMinimumSize(new Dimension(UIHelper.LARGE_CONTROL_WIDTH * 2, UIHelper.CONTROL_HEIGHT));
         // Add action listener to handle selection changes
         addActionListener(e -> {
             if (isInitializing || isUpdatingSelection) return;

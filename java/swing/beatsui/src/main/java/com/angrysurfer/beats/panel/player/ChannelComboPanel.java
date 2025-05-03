@@ -10,12 +10,12 @@ import javax.swing.JPanel;
 import javax.swing.JToggleButton;
 
 import com.angrysurfer.beats.Symbols;
+import com.angrysurfer.beats.util.UIHelper;
 import com.angrysurfer.beats.widget.ChannelCombo;
 import com.angrysurfer.core.model.Player;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.angrysurfer.beats.UIUtils;
 import com.angrysurfer.core.api.CommandBus;
 import com.angrysurfer.core.api.Commands;
 
@@ -35,7 +35,7 @@ public class ChannelComboPanel extends JPanel {
      * 
      */
     public ChannelComboPanel() {
-        UIUtils.setWidgetPanelBorder(this, "Channel");
+        UIHelper.setWidgetPanelBorder(this, "Channel");
         setLayout(new FlowLayout(FlowLayout.LEFT, 2, 1));
         initializeComponents();
     }
@@ -45,12 +45,12 @@ public class ChannelComboPanel extends JPanel {
      */
     private void initializeComponents() {
         channelCombo = new ChannelCombo();
-        //channelCombo.setPreferredSize(new Dimension(UIUtils.MEDIUM_CONTROL_WIDTH, UIUtils.CONTROL_HEIGHT));
+        //channelCombo.setPreferredSize(new Dimension(UIHelper.MEDIUM_CONTROL_WIDTH, UIHelper.CONTROL_HEIGHT));
         channelCombo.setToolTipText("Player MIDI Channel");
 
         editButton = new JButton(Symbols.getSymbol(Symbols.GRID));
         editButton.setToolTipText("Edit..");
-        editButton.setPreferredSize(new Dimension(UIUtils.SMALL_CONTROL_WIDTH, UIUtils.CONTROL_HEIGHT));
+        editButton.setPreferredSize(new Dimension(UIHelper.SMALL_CONTROL_WIDTH, UIHelper.CONTROL_HEIGHT));
         editButton.setMargin(new Insets(2, 2, 2, 2));
         editButton.addActionListener(e -> {
 

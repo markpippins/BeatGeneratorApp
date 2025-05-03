@@ -15,7 +15,7 @@ import javax.swing.border.TitledBorder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.angrysurfer.beats.UIUtils;
+import com.angrysurfer.beats.util.UIHelper;
 import com.angrysurfer.core.api.CommandBus;
 import com.angrysurfer.core.api.Commands;
 import com.angrysurfer.core.redis.RedisService;
@@ -52,15 +52,15 @@ public class DrumSequenceNavigationPanel extends JPanel {
         // REDUCED: from 5,2 to 2,1
         setLayout(new FlowLayout(FlowLayout.LEFT, 2, 1));
 
-        UIUtils.setWidgetPanelBorder(this, "Sequence");
+        UIHelper.setWidgetPanelBorder(this, "Sequence");
 
         // Make ID label slightly smaller
         sequenceIdLabel = new JLabel(getFormattedIdText(), SwingConstants.CENTER);
         // REDUCED: from ID_LABEL_WIDTH to ID_LABEL_WIDTH - 10
-        sequenceIdLabel.setPreferredSize(new Dimension(UIUtils.ID_LABEL_WIDTH - 5, UIUtils.CONTROL_HEIGHT));
+        sequenceIdLabel.setPreferredSize(new Dimension(UIHelper.ID_LABEL_WIDTH - 5, UIHelper.CONTROL_HEIGHT));
         sequenceIdLabel.setOpaque(true);
-        sequenceIdLabel.setBackground(UIUtils.darkGray);
-        sequenceIdLabel.setForeground(UIUtils.coolBlue);
+        sequenceIdLabel.setBackground(UIHelper.darkGray);
+        sequenceIdLabel.setForeground(UIHelper.coolBlue);
         sequenceIdLabel.setFont(sequenceIdLabel.getFont().deriveFont(12f));
 
         // Create new sequence button with plus icon
@@ -94,7 +94,7 @@ public class DrumSequenceNavigationPanel extends JPanel {
         button.setFocusable(false);
 
         // Set consistent size and margins to match other panels
-        button.setPreferredSize(new Dimension(UIUtils.SMALL_CONTROL_WIDTH, UIUtils.CONTROL_HEIGHT));
+        button.setPreferredSize(new Dimension(UIHelper.SMALL_CONTROL_WIDTH, UIHelper.CONTROL_HEIGHT));
         button.setMargin(new Insets(2, 2, 2, 2));
 
         return button;

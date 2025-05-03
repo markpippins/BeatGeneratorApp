@@ -25,7 +25,7 @@ import javax.swing.JToggleButton;
 import javax.swing.SwingConstants;
 import javax.swing.SwingUtilities;
 
-import com.angrysurfer.beats.UIUtils;
+import com.angrysurfer.beats.util.UIHelper;
 import com.angrysurfer.core.sequencer.DrumSequencer;
 import com.angrysurfer.core.sequencer.MelodicSequencer;
 import com.angrysurfer.core.service.MelodicSequencerManager;
@@ -367,7 +367,7 @@ public class PopupMixerPanel extends JPanel {
         muteButton.setToolTipText("Mute Drum " + (drumIndex + 1));
         muteButton.setPreferredSize(new Dimension(30, 30));
         muteButton.setMargin(new Insets(2, 2, 2, 2));
-        muteButton.setBackground(UIUtils.charcoalGray);
+        muteButton.setBackground(UIHelper.charcoalGray);
         muteButton.setForeground(Color.WHITE);
         
         // Store the original velocity to restore it when unmuting
@@ -381,11 +381,11 @@ public class PopupMixerPanel extends JPanel {
                 // Save current velocity before muting
                 originalVelocity[0] = drumSequencer.getVelocity(drumIndex);
                 drumSequencer.setVelocity(drumIndex, 0);
-                muteButton.setBackground(UIUtils.mutedRed);
+                muteButton.setBackground(UIHelper.mutedRed);
             } else {
                 // Restore original velocity
                 drumSequencer.setVelocity(drumIndex, originalVelocity[0]);
-                muteButton.setBackground(UIUtils.charcoalGray);
+                muteButton.setBackground(UIHelper.charcoalGray);
             }
             
             // Update the slider to match
@@ -404,7 +404,7 @@ public class PopupMixerPanel extends JPanel {
         soloButton.setToolTipText("Solo Drum " + (drumIndex + 1));
         soloButton.setPreferredSize(new Dimension(30, 30));
         soloButton.setMargin(new Insets(2, 2, 2, 2));
-        soloButton.setBackground(UIUtils.charcoalGray);
+        soloButton.setBackground(UIHelper.charcoalGray);
         soloButton.setForeground(Color.WHITE);
         
         // Store original velocities for all channels to restore when un-soloing
@@ -423,9 +423,9 @@ public class PopupMixerPanel extends JPanel {
                     drumSoloActive = true;
                 }
                 
-                soloButton.setBackground(UIUtils.warmMustard);
+                soloButton.setBackground(UIHelper.warmMustard);
             } else {
-                soloButton.setBackground(UIUtils.charcoalGray);
+                soloButton.setBackground(UIHelper.charcoalGray);
                 
                 // Check if any other solos are active
                 boolean anySoloActive = false;
@@ -454,7 +454,7 @@ public class PopupMixerPanel extends JPanel {
         muteButton.setToolTipText("Mute " + sequencer.getPlayer().getName());
         muteButton.setPreferredSize(new Dimension(30, 30));
         muteButton.setMargin(new Insets(2, 2, 2, 2));
-        muteButton.setBackground(UIUtils.charcoalGray);
+        muteButton.setBackground(UIHelper.charcoalGray);
         muteButton.setForeground(Color.WHITE);
         
         // Store the original level to restore it when unmuting
@@ -468,11 +468,11 @@ public class PopupMixerPanel extends JPanel {
                 // Save current level before muting
                 originalLevel[0] = sequencer.getPlayer().getLevel().intValue();
                 sequencer.getPlayer().setLevel(0);
-                muteButton.setBackground(UIUtils.mutedRed);
+                muteButton.setBackground(UIHelper.mutedRed);
             } else {
                 // Restore original level
                 sequencer.getPlayer().setLevel(originalLevel[0]);
-                muteButton.setBackground(UIUtils.charcoalGray);
+                muteButton.setBackground(UIHelper.charcoalGray);
             }
             
             // Update the slider to match
@@ -492,7 +492,7 @@ public class PopupMixerPanel extends JPanel {
         soloButton.setToolTipText("Solo " + sequencer.getPlayer().getName());
         soloButton.setPreferredSize(new Dimension(30, 30));
         soloButton.setMargin(new Insets(2, 2, 2, 2));
-        soloButton.setBackground(UIUtils.charcoalGray);
+        soloButton.setBackground(UIHelper.charcoalGray);
         soloButton.setForeground(Color.WHITE);
         
         // Store original levels for all sequencers to restore when un-soloing
@@ -511,9 +511,9 @@ public class PopupMixerPanel extends JPanel {
                     melodicSoloActive = true;
                 }
                 
-                soloButton.setBackground(UIUtils.warmMustard);
+                soloButton.setBackground(UIHelper.warmMustard);
             } else {
-                soloButton.setBackground(UIUtils.charcoalGray);
+                soloButton.setBackground(UIHelper.charcoalGray);
                 
                 // Check if any other solos are active
                 boolean anySoloActive = false;

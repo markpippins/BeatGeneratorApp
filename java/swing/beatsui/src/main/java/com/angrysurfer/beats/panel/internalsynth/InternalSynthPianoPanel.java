@@ -34,7 +34,7 @@ import javax.swing.plaf.basic.BasicButtonUI;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.angrysurfer.beats.UIUtils;
+import com.angrysurfer.beats.util.UIHelper;
 import com.angrysurfer.beats.widget.ColorAnimator;
 import com.angrysurfer.core.api.Command;
 import com.angrysurfer.core.api.CommandBus;
@@ -78,7 +78,7 @@ public class InternalSynthPianoPanel extends JPanel {
         setMinimumSize(new Dimension(totalWidth, 100));
         setBorder(BorderFactory.createEmptyBorder(5, 2, 5, 2));
         setOpaque(true);
-        setBackground(UIUtils.fadedOrange);
+        setBackground(UIHelper.fadedOrange);
         
         // Add control buttons
         setupControlButtons();
@@ -172,13 +172,13 @@ public class InternalSynthPianoPanel extends JPanel {
         
         followScaleBtn = new JButton();
         followScaleBtn.setBounds(startX, startY, buttonWidth, buttonHeight);
-        followScaleBtn.setBackground(UIUtils.coolBlue);
+        followScaleBtn.setBackground(UIHelper.coolBlue);
         followScaleBtn.setToolTipText("Follow current scale");
         configureToggleButton(followScaleBtn);
         
         JButton octaveDownBtn = new JButton();
         octaveDownBtn.setBounds(startX, startY + buttonHeight + spacing, buttonWidth, buttonHeight);
-        octaveDownBtn.setBackground(UIUtils.warmMustard);
+        octaveDownBtn.setBackground(UIHelper.warmMustard);
         octaveDownBtn.setToolTipText("Octave down (Left Arrow)");
         configureToggleButton(octaveDownBtn);
         
@@ -186,7 +186,7 @@ public class InternalSynthPianoPanel extends JPanel {
         
         JButton octaveUpBtn = new JButton();
         octaveUpBtn.setBounds(startX, startY + (buttonHeight + spacing) * 2, buttonWidth, buttonHeight);
-        octaveUpBtn.setBackground(UIUtils.fadedOrange);
+        octaveUpBtn.setBackground(UIHelper.fadedOrange);
         octaveUpBtn.setToolTipText("Octave up (Right Arrow)");
         configureToggleButton(octaveUpBtn);
         

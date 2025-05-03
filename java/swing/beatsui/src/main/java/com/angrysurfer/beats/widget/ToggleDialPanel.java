@@ -245,7 +245,7 @@ public class ToggleDialPanel extends JPanel {
 // toggleDial.setMaximum(127);
 // toggleDial.setValue(64);
 // toggleDial.setLabel("Rev");
-// toggleDial.setKnobColor(UIUtils.getDialColor("reverb"));
+// toggleDial.setKnobColor(UIHelper.getDialColor("reverb"));
 
 // // Set up the toggle button properties
 // toggleDial.setToggleTooltip("Toggle Reverb On/Off");

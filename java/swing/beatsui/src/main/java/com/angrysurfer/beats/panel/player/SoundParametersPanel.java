@@ -11,7 +11,7 @@ import com.angrysurfer.core.service.InternalSynthManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.angrysurfer.beats.UIUtils;
+import com.angrysurfer.beats.util.UIHelper;
 import com.angrysurfer.core.api.Command;
 import com.angrysurfer.core.api.CommandBus;
 import com.angrysurfer.core.api.Commands;
@@ -82,7 +82,7 @@ public class SoundParametersPanel extends JPanel implements IBusListener {
         JPanel contentPanel = new JPanel();
         contentPanel.setLayout(new BoxLayout(contentPanel, BoxLayout.X_AXIS));
         //contentPanel.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
-        UIUtils.setPanelBorder(this);
+        UIHelper.setPanelBorder(this);
         // Create sub-panels for each control group
         JPanel soundbankPanel = new JPanel(new BorderLayout(0, 3));
         JPanel bankPanel = new JPanel(new BorderLayout(0, 3));
@@ -113,9 +113,9 @@ public class SoundParametersPanel extends JPanel implements IBusListener {
         contentPanel.add(presetPanel);
         
         // Set consistent preferred sizes for better UI
-        soundbankCombo.setPreferredSize(new Dimension(UIUtils.LARGE_CONTROL_WIDTH, UIUtils.CONTROL_HEIGHT));
-        bankCombo.setPreferredSize(new Dimension(UIUtils.MEDIUM_CONTROL_WIDTH, UIUtils.CONTROL_HEIGHT));
-        presetCombo.setPreferredSize(new Dimension(UIUtils.LARGE_CONTROL_WIDTH, UIUtils.CONTROL_HEIGHT));
+        soundbankCombo.setPreferredSize(new Dimension(UIHelper.LARGE_CONTROL_WIDTH, UIHelper.CONTROL_HEIGHT));
+        bankCombo.setPreferredSize(new Dimension(UIHelper.MEDIUM_CONTROL_WIDTH, UIHelper.CONTROL_HEIGHT));
+        presetCombo.setPreferredSize(new Dimension(UIHelper.LARGE_CONTROL_WIDTH, UIHelper.CONTROL_HEIGHT));
         
         // Button panel for the edit button
         JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
@@ -247,7 +247,7 @@ public class SoundParametersPanel extends JPanel implements IBusListener {
 
         isInitializing = true;
         try {
-            UIUtils.setWidgetPanelBorder(this,
+            UIHelper.setWidgetPanelBorder(this,
                     player.getName() + " [" + player.getId().toString() + "]");
 
             boolean isDrumChannel = player.getChannel() == 9;

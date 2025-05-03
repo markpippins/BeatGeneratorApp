@@ -14,7 +14,7 @@ import javax.swing.border.TitledBorder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.angrysurfer.beats.UIUtils;
+import com.angrysurfer.beats.util.UIHelper;
 import com.angrysurfer.core.sequencer.DrumSequencer;
 
 /**
@@ -40,7 +40,7 @@ public class DrumSequencerSwingPanel extends JPanel {
         
         // ALREADY OPTIMIZED: using 2,1
         setLayout(new FlowLayout(FlowLayout.LEFT, 2, 1));
-        UIUtils.setWidgetPanelBorder(this, "Swing");
+        UIHelper.setWidgetPanelBorder(this, "Swing");
             
         // Use compact toggle button
         swingToggle = new JToggleButton("On", sequencer.isSwingEnabled());

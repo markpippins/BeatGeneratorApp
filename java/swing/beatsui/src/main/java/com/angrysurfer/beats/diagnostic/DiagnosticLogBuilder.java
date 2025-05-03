@@ -13,6 +13,7 @@ import java.util.List;
 public class DiagnosticLogBuilder {
     private final StringBuilder log = new StringBuilder();
     private final List<String> errors = new ArrayList<>();
+    private final List<String> warnings = new ArrayList<>();
     private final DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
     private final String title;
     
@@ -108,6 +109,7 @@ public class DiagnosticLogBuilder {
      */
     public DiagnosticLogBuilder addWarning(String warningMessage) {
         log.append("WARNING: ").append(warningMessage).append("\n");
+        warnings.add(warningMessage);
         return this;
     }
     
@@ -120,11 +122,27 @@ public class DiagnosticLogBuilder {
     }
     
     /**
+     * Check if the log contains any warnings
+     * @return True if warnings are present
+     */
+    public boolean hasWarnings() {
+        return !warnings.isEmpty();
+    }
+    
+    /**
      * Get all errors found during diagnostics
      * @return List of error messages
      */
     public List<String> getErrors() {
         return new ArrayList<>(errors);
+    }
+    
+    /**
+     * Get all warnings found during diagnostics
+     * @return List of warning messages
+     */
+    public List<String> getWarnings() {
+        return new ArrayList<>(warnings);
     }
     
     /**
@@ -134,19 +152,42 @@ public class DiagnosticLogBuilder {
     public String build() {
         StringBuilder result = new StringBuilder(log);
         
-        // Add summary of errors, if any
-        if (!errors.isEmpty()) {
-            result.append("\n=== ERROR SUMMARY ===\n");
-            result.append("Found ").append(errors.size()).append(" errors:\n");
-            for (int i = 0; i < errors.size(); i++) {
-                result.append(i + 1).append(". ").append(errors.get(i)).append("\n");
+        // Add summary of errors and warnings
+        boolean hasIssues = !errors.isEmpty() || !warnings.isEmpty();
+        
+        if (hasIssues) {
+            result.append("\n=== ISSUE SUMMARY ===\n");
+            
+            if (!errors.isEmpty()) {
+                result.append("Found ").append(errors.size()).append(" errors:\n");
+                for (int i = 0; i < errors.size(); i++) {
+                    result.append(i + 1).append(". ").append(errors.get(i)).append("\n");
+                }
+            }
+            
+            if (!warnings.isEmpty()) {
+                if (!errors.isEmpty()) {
+                    result.append("\n");
+                }
+                result.append("Found ").append(warnings.size()).append(" warnings:\n");
+                for (int i = 0; i < warnings.size(); i++) {
+                    result.append(i + 1).append(". ").append(warnings.get(i)).append("\n");
+                }
             }
         } else {
             result.append("\n=== DIAGNOSTICS COMPLETED SUCCESSFULLY ===\n");
-            result.append("No errors found.\n");
+            result.append("No issues found.\n");
         }
         
         return result.toString();
+    }
+    
+    /**
+     * Build the log without the header and summary
+     * @return The log content without header and summary
+     */
+    public String buildWithoutHeader() {
+        return log.toString();
     }
     
     /**

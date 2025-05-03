@@ -9,10 +9,11 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.SwingConstants;
 
+import com.angrysurfer.core.event.MelodicSequencerEvent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.angrysurfer.beats.UIUtils;
+import com.angrysurfer.beats.util.UIHelper;
 import com.angrysurfer.core.api.CommandBus;
 import com.angrysurfer.core.api.Commands;
 import com.angrysurfer.core.model.Direction;
@@ -59,14 +60,14 @@ public class MelodicSequenceNavigationPanel extends JPanel {
     private void initializeUI() {
         // Set layout and border with more compact spacing
         setLayout(new FlowLayout(FlowLayout.LEFT, 5, 2));
-        UIUtils.setWidgetPanelBorder(this, "Sequence");
+        UIHelper.setWidgetPanelBorder(this, "Sequence");
 
         // Create ID label
         sequenceIdLabel = new JLabel(getFormattedIdText(), SwingConstants.CENTER);
-        sequenceIdLabel.setPreferredSize(new Dimension(LABEL_WIDTH, UIUtils.CONTROL_HEIGHT));
+        sequenceIdLabel.setPreferredSize(new Dimension(LABEL_WIDTH, UIHelper.CONTROL_HEIGHT));
         sequenceIdLabel.setOpaque(true);
-        sequenceIdLabel.setBackground(UIUtils.darkGray);
-        sequenceIdLabel.setForeground(UIUtils.coolBlue);
+        sequenceIdLabel.setBackground(UIHelper.darkGray);
+        sequenceIdLabel.setForeground(UIHelper.coolBlue);
         sequenceIdLabel.setFont(sequenceIdLabel.getFont().deriveFont(12f));
 
         // Create new sequence button with plus icon
@@ -101,7 +102,7 @@ public class MelodicSequenceNavigationPanel extends JPanel {
         button.setFocusable(false);
 
         // Set consistent size and margins to match other panels
-        button.setPreferredSize(new Dimension(UIUtils.SMALL_CONTROL_WIDTH, UIUtils.CONTROL_HEIGHT));
+        button.setPreferredSize(new Dimension(UIHelper.SMALL_CONTROL_WIDTH, UIHelper.CONTROL_HEIGHT));
         button.setMargin(new Insets(2, 2, 2, 2));
 
         return button;
@@ -164,7 +165,7 @@ public class MelodicSequenceNavigationPanel extends JPanel {
             }
 
             // Create a new sequence with an assigned ID right away
-            MelodicSequenceDataHelper.MelodicSequencerEvent event = new MelodicSequenceDataHelper.MelodicSequencerEvent(
+            MelodicSequencerEvent event = new MelodicSequencerEvent(
                     sequencer.getId(), 0L); // Use 0 to indicate new sequence
 
             // Reset the sequencer and clear pattern
@@ -212,7 +213,7 @@ public class MelodicSequenceNavigationPanel extends JPanel {
             CommandBus.getInstance().publish(
                     Commands.MELODIC_SEQUENCE_LOADED,
                     this,
-                    new MelodicSequenceDataHelper.MelodicSequencerEvent(
+                    new MelodicSequencerEvent(
                             sequencer.getId(),
                             sequencer.getSequenceData().getId()));
 
@@ -290,7 +291,7 @@ public class MelodicSequenceNavigationPanel extends JPanel {
         CommandBus.getInstance().publish(
                 Commands.MELODIC_SEQUENCE_SAVED,
                 this,
-                new MelodicSequenceDataHelper.MelodicSequencerEvent(
+                new MelodicSequencerEvent(
                         sequencer.getId(),
                         sequencer.getSequenceData().getId()));
 

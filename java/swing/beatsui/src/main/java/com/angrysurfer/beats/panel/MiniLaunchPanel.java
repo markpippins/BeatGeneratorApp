@@ -23,7 +23,7 @@ import javax.swing.plaf.basic.BasicButtonUI;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.angrysurfer.beats.UIUtils;
+import com.angrysurfer.beats.util.UIHelper;
 import com.angrysurfer.core.api.CommandBus;
 import com.angrysurfer.core.api.Commands;
 import com.angrysurfer.core.api.IBusListener;
@@ -119,7 +119,7 @@ public class MiniLaunchPanel extends JPanel implements IBusListener {
 
     private PadButton createPadButton(int midiNote) {
         PadButton button = new PadButton(midiNote);
-        Color baseColor = UIUtils.mutedRed;
+        Color baseColor = UIHelper.mutedRed;
         Color flashColor = new Color(
                 Math.min(baseColor.getRed() + 100, 255),
                 Math.min(baseColor.getGreen() + 100, 255),

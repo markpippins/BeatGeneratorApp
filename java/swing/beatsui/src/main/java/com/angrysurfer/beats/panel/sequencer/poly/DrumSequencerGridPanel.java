@@ -14,7 +14,7 @@ import com.angrysurfer.core.service.DrumSequencerManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.angrysurfer.beats.UIUtils;
+import com.angrysurfer.beats.util.UIHelper;
 import com.angrysurfer.beats.widget.DrumSequencerGridButton;
 import com.angrysurfer.beats.widget.DrumSequencerGridPanelContextHandler;
 import com.angrysurfer.core.sequencer.DrumSequencer;
@@ -160,7 +160,7 @@ public class DrumSequencerGridPanel extends JPanel {
                 if (isSelected) {
                     // Highlight the selected row's border
                     button.setBorder(BorderFactory.createLineBorder(
-                            UIUtils.dustyAmber, 1));
+                            UIHelper.dustyAmber, 1));
                 } else {
                     // Normal border for other rows
                     button.setBorder(BorderFactory.createLineBorder(
@@ -205,12 +205,12 @@ public class DrumSequencerGridPanel extends JPanel {
 
                 // Style based on whether step is active and in pattern
                 if (!isInPattern) {
-                    button.setBackground(UIUtils.charcoalGray);
+                    button.setBackground(UIHelper.charcoalGray);
                 } else {
                     if (isActive) {
-                        button.setBackground(UIUtils.deepOrange);
+                        button.setBackground(UIHelper.deepOrange);
                     } else {
-                        button.setBackground(UIUtils.slateGray);
+                        button.setBackground(UIHelper.slateGray);
                     }
                 }
 
@@ -252,16 +252,16 @@ public class DrumSequencerGridPanel extends JPanel {
                 
                 if (newStep < 16) {
                     // First 16 steps - orange
-                    highlightColor = UIUtils.fadedOrange;
+                    highlightColor = UIHelper.fadedOrange;
                 } else if (newStep < 32) {
                     // Steps 17-32 - blue
-                    highlightColor = UIUtils.coolBlue;
+                    highlightColor = UIHelper.coolBlue;
                 } else if (newStep < 48) {
                     // Steps 33-48 - navy
-                    highlightColor = UIUtils.deepNavy;
+                    highlightColor = UIHelper.deepNavy;
                 } else {
                     // Steps 49-64 - olive
-                    highlightColor = UIUtils.mutedOlive;
+                    highlightColor = UIHelper.mutedOlive;
                 }
                 
                 newButton.setHighlighted(true);

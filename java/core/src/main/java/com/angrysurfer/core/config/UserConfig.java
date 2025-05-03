@@ -21,15 +21,15 @@ public class UserConfig {
     private int configVersion = 1;
     private Date lastUpdated;
     private String name;
-    @Data
-    public static class InstrumentConfig {
-        private String port;
-        private String device;
-        private boolean available;
-        private int channels;
-        private int low;
-        private int high;
-    }
+     @Data
+     public static class InstrumentConfig {
+         private String port;
+         private String device;
+         private boolean available;
+         private int channels;
+         private int low;
+         private int high;
+     }
 }
 
 

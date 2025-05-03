@@ -14,7 +14,7 @@ import javax.swing.JPanel;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.angrysurfer.beats.UIUtils;
+import com.angrysurfer.beats.util.UIHelper;
 import com.angrysurfer.beats.widget.Dial;
 import com.angrysurfer.beats.widget.ScaleDegreeSelectionDial;
 import com.angrysurfer.core.api.Command;
@@ -43,7 +43,7 @@ public class TiltSequencerPanel extends JPanel implements IBusListener {
     public TiltSequencerPanel(MelodicSequencer sequencer) {
         this.sequencer = sequencer;
         setLayout(new BorderLayout());
-        UIUtils.setWidgetPanelBorder(this, "Harmonic Tilt");
+        UIHelper.setWidgetPanelBorder(this, "Harmonic Tilt");
         setPreferredSize(new Dimension(getPreferredSize().width, 100));
 
         JPanel dialsPanel = new JPanel(new GridLayout(1, DIAL_COUNT, 2, 0));
@@ -163,7 +163,7 @@ public class TiltSequencerPanel extends JPanel implements IBusListener {
             if (i == dialToHighlight) {
                 // Highlight the current step
                 // container.setBorder(BorderFactory.createLoweredSoftBevelBorder()); //
-                container.setBorder(BorderFactory.createLineBorder(UIUtils.coolBlue, 1));
+                container.setBorder(BorderFactory.createLineBorder(UIHelper.coolBlue, 1));
             } else {
                 // Reset highlighting
                 container.setBorder(null);

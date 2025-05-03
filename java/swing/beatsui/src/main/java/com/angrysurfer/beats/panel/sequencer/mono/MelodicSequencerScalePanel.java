@@ -18,10 +18,10 @@ import javax.swing.border.TitledBorder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.angrysurfer.beats.UIUtils;
-import com.angrysurfer.beats.event.MelodicScaleSelectionEvent;
+import com.angrysurfer.beats.util.UIHelper;
 import com.angrysurfer.core.api.CommandBus;
 import com.angrysurfer.core.api.Commands;
+import com.angrysurfer.core.sequencer.MelodicScaleSelectionEvent;
 import com.angrysurfer.core.sequencer.MelodicSequencer;
 import com.angrysurfer.core.sequencer.Scale;
 
@@ -57,7 +57,7 @@ public class MelodicSequencerScalePanel extends JPanel {
      * Initialize the panel with all controls
      */
     private void initialize() {
-        UIUtils.setWidgetPanelBorder(this,"Scale Parameters");
+        UIHelper.setWidgetPanelBorder(this,"Scale Parameters");
 
         // Use BorderLayout for the main panel instead of FlowLayout
         setLayout(new BorderLayout(0, 0));
@@ -83,7 +83,7 @@ public class MelodicSequencerScalePanel extends JPanel {
 
         String[] noteNames = { "C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B" };
         rootNoteCombo = new JComboBox<>(noteNames);
-        rootNoteCombo.setPreferredSize(new Dimension(UIUtils.MEDIUM_CONTROL_WIDTH, UIUtils.CONTROL_HEIGHT));
+        rootNoteCombo.setPreferredSize(new Dimension(UIHelper.MEDIUM_CONTROL_WIDTH, UIHelper.CONTROL_HEIGHT));
         rootNoteCombo.setToolTipText("Set the root note");
         rootNoteCombo.addItemListener(e -> {
             if (e.getStateChange() == ItemEvent.SELECTED && !updatingUI) {
@@ -112,7 +112,7 @@ public class MelodicSequencerScalePanel extends JPanel {
     private void createQuantizeControls(JPanel parentPanel) {
         quantizeToggle = new JToggleButton("Q", true);
         quantizeToggle.setToolTipText("Quantize notes to scale");
-        quantizeToggle.setPreferredSize(new Dimension(UIUtils.SMALL_CONTROL_WIDTH - 2, UIUtils.CONTROL_HEIGHT));
+        quantizeToggle.setPreferredSize(new Dimension(UIHelper.SMALL_CONTROL_WIDTH - 2, UIHelper.CONTROL_HEIGHT));
         quantizeToggle.addActionListener(e -> {
             if (!updatingUI) {
                 sequencer.setQuantizeEnabled(quantizeToggle.isSelected());
@@ -128,7 +128,7 @@ public class MelodicSequencerScalePanel extends JPanel {
     private void createScaleControls(JPanel parentPanel) {
         String[] scaleNames = Scale.getScales();
         scaleCombo = new JComboBox<>(scaleNames);
-        scaleCombo.setPreferredSize(new Dimension((UIUtils.LARGE_CONTROL_WIDTH * 2) - 10, UIUtils.CONTROL_HEIGHT));
+        scaleCombo.setPreferredSize(new Dimension((UIHelper.LARGE_CONTROL_WIDTH * 2) - 10, UIHelper.CONTROL_HEIGHT));
         scaleCombo.setToolTipText("Set the scale");
         scaleCombo.addItemListener(e -> {
             if (e.getStateChange() == ItemEvent.SELECTED && !updatingUI) {

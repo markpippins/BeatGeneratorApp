@@ -14,8 +14,8 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.border.TitledBorder;
 
+import com.angrysurfer.beats.util.UIHelper;
 import com.angrysurfer.beats.widget.Dial;
-import com.angrysurfer.beats.widget.UIHelper;
 
 import lombok.Getter;
 import lombok.Setter;
@@ -178,7 +178,7 @@ public class InternalSynthMixerPanel extends JPanel {
      * @return Configured dial
      */
     private Dial createStandardDial(String tooltip, int initialValue) {
-        return UIHelper.createStandardDial(tooltip, initialValue); 
+        return UIHelper.createStandardDial(tooltip, initialValue);
     }
     
     // Getters and setters for individual control values

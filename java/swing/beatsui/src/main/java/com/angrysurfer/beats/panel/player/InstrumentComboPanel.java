@@ -12,7 +12,7 @@ import javax.swing.JToggleButton;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.angrysurfer.beats.UIUtils;
+import com.angrysurfer.beats.util.UIHelper;
 import com.angrysurfer.core.api.CommandBus;
 import com.angrysurfer.core.api.Commands;
 import com.angrysurfer.core.sequencer.DrumSequencer;
@@ -37,7 +37,7 @@ public class InstrumentComboPanel extends JPanel {
      */
     public InstrumentComboPanel(DrumSequencer sequencer) {
         this.sequencer = sequencer;
-        UIUtils.setWidgetPanelBorder(this, "Generate");
+        UIHelper.setWidgetPanelBorder(this, "Generate");
 
         // REDUCED: from 5,2 to 2,1
         setLayout(new FlowLayout(FlowLayout.LEFT, 2, 1));
@@ -55,13 +55,13 @@ public class InstrumentComboPanel extends JPanel {
         densityCombo.setSelectedIndex(1); // Default to 50%
 
         // REDUCED: from LARGE_CONTROL_WIDTH to MEDIUM_CONTROL_WIDTH + 10
-        densityCombo.setPreferredSize(new Dimension(UIUtils.MEDIUM_CONTROL_WIDTH + 10, UIUtils.CONTROL_HEIGHT));
+        densityCombo.setPreferredSize(new Dimension(UIHelper.MEDIUM_CONTROL_WIDTH + 10, UIHelper.CONTROL_HEIGHT));
         densityCombo.setToolTipText("Set pattern density");
 
         // Generate button with dice icon
         generateButton = new JButton("🎲");
         generateButton.setToolTipText("Generate a random pattern");
-        generateButton.setPreferredSize(new Dimension(UIUtils.SMALL_CONTROL_WIDTH, UIUtils.CONTROL_HEIGHT));
+        generateButton.setPreferredSize(new Dimension(UIHelper.SMALL_CONTROL_WIDTH, UIHelper.CONTROL_HEIGHT));
         generateButton.setMargin(new Insets(2, 2, 2, 2));
         generateButton.addActionListener(e -> {
             // Get selected density from the combo
@@ -81,7 +81,7 @@ public class InstrumentComboPanel extends JPanel {
         // Latch toggle button (moved from sequence parameters panel)
         JToggleButton latchToggleButton = new JToggleButton("L", false);
         latchToggleButton.setToolTipText("Generate new pattern each cycle");
-        latchToggleButton.setPreferredSize(new Dimension(UIUtils.SMALL_CONTROL_WIDTH, UIUtils.CONTROL_HEIGHT));
+        latchToggleButton.setPreferredSize(new Dimension(UIHelper.SMALL_CONTROL_WIDTH, UIHelper.CONTROL_HEIGHT));
         latchToggleButton.addActionListener(e -> {
             // sequencer.setLatchEnabled(latchToggleButton.isSelected());
             logger.info("Latch mode set to: {}", latchToggleButton.isSelected());

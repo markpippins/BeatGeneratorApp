@@ -1,5 +1,5 @@
 // Create this class in the appropriate package
-package com.angrysurfer.beats.event;
+package com.angrysurfer.core.sequencer;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;

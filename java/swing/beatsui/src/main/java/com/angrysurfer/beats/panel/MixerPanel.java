@@ -29,9 +29,9 @@ import javax.swing.border.TitledBorder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.angrysurfer.beats.UIUtils;
 import com.angrysurfer.beats.widget.Dial;
-import com.angrysurfer.beats.widget.UIHelper;
+import com.angrysurfer.beats.util.UIHelper;
+import com.angrysurfer.beats.util.UIHelper;
 import com.angrysurfer.core.api.Command;
 import com.angrysurfer.core.api.CommandBus;
 import com.angrysurfer.core.api.Commands;
@@ -201,14 +201,14 @@ public class MixerPanel extends JPanel implements IBusListener {
         // Track name with stylized border
         JPanel namePanel = new JPanel(new BorderLayout());
         namePanel.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createLineBorder(UIUtils.deepNavy),
+                BorderFactory.createLineBorder(UIHelper.deepNavy),
                 BorderFactory.createEmptyBorder(1, 2, 1, 2)));
 
         JLabel nameLabel = new JLabel(name, JLabel.CENTER);
         nameLabel.setPreferredSize(new Dimension(80, 20));
         nameLabel.setFont(new Font("Arial", Font.BOLD, isMaster ? 12 : 11));
         if (isMaster) {
-            nameLabel.setForeground(UIUtils.mutedRed);
+            nameLabel.setForeground(UIHelper.mutedRed);
         }
         namePanel.add(nameLabel);
         panel.add(namePanel);
@@ -239,7 +239,7 @@ public class MixerPanel extends JPanel implements IBusListener {
         volumeDial.setPreferredSize(new Dimension(50, 50));
         volumeDial.setValue(100); // Default volume
         volumeDial.setToolTipText("Volume");
-        volumeDial.setKnobColor(UIUtils.getDialColor("volume"));
+        volumeDial.setKnobColor(UIHelper.getDialColor("volume"));
         volumeDials.add(volumeDial);
         panel.add(wrapInCenteredPanel(volumeDial));
 
@@ -249,7 +249,7 @@ public class MixerPanel extends JPanel implements IBusListener {
         panDial.setEnabled(!isMaster); // Master has no pan
         panDial.setToolTipText("Pan");
         panDial.setPreferredSize(new Dimension(50, 50));
-        panDial.setKnobColor(UIUtils.getDialColor("pan"));
+        panDial.setKnobColor(UIHelper.getDialColor("pan"));
         panDials.add(panDial);
         panel.add(wrapInCenteredPanel(panDial));
 
@@ -258,7 +258,7 @@ public class MixerPanel extends JPanel implements IBusListener {
         reverbDial.setValue(0);
         reverbDial.setToolTipText("Reverb Send");
         reverbDial.setPreferredSize(new Dimension(50, 50));
-        reverbDial.setKnobColor(UIUtils.getDialColor("reverb"));
+        reverbDial.setKnobColor(UIHelper.getDialColor("reverb"));
         reverbDials.add(reverbDial);
         panel.add(wrapInCenteredPanel(reverbDial));
 
@@ -267,7 +267,7 @@ public class MixerPanel extends JPanel implements IBusListener {
         chorusDial.setValue(0);
         chorusDial.setToolTipText("Chorus Send");
         chorusDial.setPreferredSize(new Dimension(50, 50));
-        chorusDial.setKnobColor(UIUtils.getDialColor("chorus"));
+        chorusDial.setKnobColor(UIHelper.getDialColor("chorus"));
         chorusDials.add(chorusDial);
         panel.add(wrapInCenteredPanel(chorusDial));
 
@@ -276,7 +276,7 @@ public class MixerPanel extends JPanel implements IBusListener {
         delayDial.setValue(0);
         delayDial.setToolTipText("Delay Send");
         delayDial.setPreferredSize(new Dimension(50, 50));
-        delayDial.setKnobColor(UIUtils.getDialColor("delay"));
+        delayDial.setKnobColor(UIHelper.getDialColor("delay"));
         delayDials.add(delayDial);
         panel.add(wrapInCenteredPanel(delayDial));
 
@@ -300,12 +300,12 @@ public class MixerPanel extends JPanel implements IBusListener {
         panel.setLayout(new BoxLayout(panel, BoxLayout.X_AXIS));
         panel.setBorder(BorderFactory.createCompoundBorder(
                 BorderFactory.createTitledBorder(
-                        BorderFactory.createLineBorder(UIUtils.deepNavy),
+                        BorderFactory.createLineBorder(UIHelper.deepNavy),
                         "Master Effects",
                         TitledBorder.LEFT,
                         TitledBorder.TOP,
                         new Font("Arial", Font.BOLD, 12),
-                        UIUtils.deepNavy),
+                        UIHelper.deepNavy),
                 BorderFactory.createEmptyBorder(2, 5, 2, 5)));
 
         // Add global effect dials: reverb time, delay time, delay feedback

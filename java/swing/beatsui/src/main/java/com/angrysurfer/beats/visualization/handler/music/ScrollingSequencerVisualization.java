@@ -8,7 +8,7 @@ import java.util.concurrent.TimeUnit;
 
 import javax.swing.SwingUtilities;
 
-import com.angrysurfer.beats.UIUtils;
+import com.angrysurfer.beats.util.UIHelper;
 import com.angrysurfer.beats.visualization.IVisualizationHandler;
 import com.angrysurfer.beats.visualization.LockHandler;
 import com.angrysurfer.beats.visualization.VisualizationCategory;
@@ -30,7 +30,7 @@ public class ScrollingSequencerVisualization extends LockHandler implements IVis
     private static final int FRAMES_PER_SECOND = 60;
     
     // Updated colors as requested
-    private static final Color BEAT_MARKER_COLOR =  UIUtils.charcoalGray;
+    private static final Color BEAT_MARKER_COLOR =  UIHelper.charcoalGray;
     private static final Color BAR_MARKER_COLOR =  Color.BLUE;
     private static final Color POSITION_INDICATOR = Color.WHITE;
     private static final Color BACKGROUND_COLOR = Color.BLACK;
