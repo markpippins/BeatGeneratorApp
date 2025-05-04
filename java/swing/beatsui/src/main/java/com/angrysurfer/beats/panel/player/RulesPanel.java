@@ -426,7 +426,7 @@ public class RulesPanel extends JPanel {
                                 } else {
                                     logger.info("No rules left after deletion");
                                     // Publish rule unselected event since no rules remain
-                                    CommandBus.getInstance().publish(Commands.RULE_UNSELECTED, this);
+                                    CommandBus.getInstance().publish(Commands.RULE_UNSELECTED, this, SessionManager.getInstance().getActiveSession());
                                 }
                             } else {
                                 clearRules();

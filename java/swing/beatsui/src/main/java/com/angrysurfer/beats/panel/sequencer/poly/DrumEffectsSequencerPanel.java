@@ -157,8 +157,13 @@ public class DrumEffectsSequencerPanel extends JPanel implements IBusListener {
         // initializeDrumPads()
         // which will execute after all buttons are created
         SwingUtilities.invokeLater(() -> {
+            Player player = PlayerManager.getInstance().getActivePlayer();
+
             drumPadPanel.selectDrumPad(0);
             handleDrumPadSelected(0);
+
+            if (player != null)
+                CommandBus.getInstance().publish(Commands.PLAYER_SELECTED, this, player);
         });
 
     }

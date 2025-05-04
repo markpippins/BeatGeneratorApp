@@ -42,7 +42,7 @@ public class DrumButtonsPanel extends JPanel {
         setLayout(new GridLayout(1, 16, 5, 0));
         
         // IMPORTANT: Match border exactly to sequence panel
-        setBorder(new EmptyBorder(10, 10, 10, 10));
+        setBorder(new EmptyBorder(10, 0, 10, 0));
         
         // Create 16 drum buttons
         for (int i = 0; i < 16; i++) {

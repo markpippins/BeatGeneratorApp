@@ -74,7 +74,7 @@ public class ToolBar extends JToolBar {
             if (currentSession != null) {
                 commandBus.publish(Commands.SESSION_SELECTED, this, currentSession);
             } else {
-                commandBus.publish(Commands.SESSION_REQUEST, this);
+                commandBus.publish(Commands.SESSION_REQUEST, this, null);
             }
         });
     }

@@ -110,7 +110,7 @@ public class PlayersPanel extends JPanel {
         saveButton.setEnabled(true);
         saveButton.addActionListener(e -> {
             if (SessionManager.getInstance().getActiveSession() != null) {
-                CommandBus.getInstance().publish(Commands.SAVE_SESSION, this);
+                CommandBus.getInstance().publish(Commands.SAVE_SESSION, this, SessionManager.getInstance().getActiveSession() );
             }
         });
 
@@ -119,7 +119,7 @@ public class PlayersPanel extends JPanel {
         refreshButton.setEnabled(true);
         refreshButton.addActionListener(e -> {
             if (SessionManager.getInstance().getActiveSession() != null) {
-                CommandBus.getInstance().publish(Commands.PLAYER_TABLE_REFRESH_REQUEST, this);
+                CommandBus.getInstance().publish(Commands.PLAYER_TABLE_REFRESH_REQUEST, this, SessionManager.getInstance().getActiveSession());
             }
         });
 
@@ -128,7 +128,7 @@ public class PlayersPanel extends JPanel {
         copyButton.setEnabled(true);
         copyButton.addActionListener(e -> {
             if (SessionManager.getInstance().getActiveSession() != null) {
-                CommandBus.getInstance().publish(Commands.PLAYER_COPY_EDIT_REQUEST, this);
+                CommandBus.getInstance().publish(Commands.PLAYER_COPY_EDIT_REQUEST, this, SessionManager.getInstance().getActiveSession());
             }
         });
 

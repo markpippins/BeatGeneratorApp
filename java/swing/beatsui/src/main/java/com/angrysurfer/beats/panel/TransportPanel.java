@@ -121,7 +121,7 @@ public class TransportPanel extends JPanel {
 
         // Special action for pause button - send ALL_NOTES_OFF
         pauseButton.addActionListener(e -> {
-            commandBus.publish(Commands.ALL_NOTES_OFF, this);
+            commandBus.publish(Commands.ALL_NOTES_OFF, this, null);
         });
 
         // Rest of existing code...
@@ -154,7 +154,7 @@ public class TransportPanel extends JPanel {
         button.setEnabled(true);
         button.setActionCommand(command);
         button.addActionListener(e -> {
-            commandBus.publish(command, button);
+            commandBus.publish(command, button, null);
             updatePlayButtonAppearance();
             updateRecordButtonAppearance();
         });
@@ -220,9 +220,9 @@ public class TransportPanel extends JPanel {
 
         // Publish the appropriate command
         if (isRecording) {
-            commandBus.publish(Commands.TRANSPORT_RECORD_START, this);
+            commandBus.publish(Commands.TRANSPORT_RECORD_START, this, null);
         } else {
-            commandBus.publish(Commands.TRANSPORT_RECORD_STOP, this);
+            commandBus.publish(Commands.TRANSPORT_RECORD_STOP, this, null);
         }
     }
 
@@ -308,7 +308,7 @@ public class TransportPanel extends JPanel {
                             if (!isRecording) {
                                 isRecording = true;
                                 updateRecordButtonAppearance();
-                                commandBus.publish(Commands.TRANSPORT_RECORD_START, TransportPanel.this);
+                                commandBus.publish(Commands.TRANSPORT_RECORD_START, TransportPanel.this, null);
                             }
                         }
                     }

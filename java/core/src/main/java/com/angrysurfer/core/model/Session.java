@@ -448,7 +448,7 @@ public class Session implements Serializable, IBusListener {
         System.out.println("Session: Session marked as active");
 
         // Publish session starting event
-        commandBus.publish(Commands.SESSION_STARTING, this);
+        CommandBus.getInstance().publish(Commands.SESSION_STARTING, this, null);
         System.out.println("Session: Published SESSION_STARTING event");
     }
 

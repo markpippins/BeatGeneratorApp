@@ -2,7 +2,6 @@ package com.angrysurfer.core.service;
 
 import java.util.ArrayList;
 import java.util.Date;
-import java.util.HashSet;
 import java.util.List;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -255,8 +254,7 @@ public class UserConfigManager {
         try {
             UserConfig restoredConfig = configHelper.loadConfigFromJSON(backupPath);
             if (restoredConfig != null) {
-                // Validate and migrate the restored config
-                restoredConfig = migrateConfigIfNeeded(restoredConfig);
+                // Validate the restored config
                 if (validateConfig(restoredConfig)) {
                     // Save to persistent storage
                     configHelper.saveConfig(restoredConfig);
@@ -307,35 +305,7 @@ public class UserConfigManager {
             }
         }
         
-        // Validate device configs
-        if (config.getConfigs() == null) {
-            logger.warn("Device configs set is null, initializing empty set");
-            config.setConfigs(new HashSet<>());
-        }
-        
         return allValid;
-    }
-
-    /**
-     * Check if configuration requires migration and perform if needed
-     *
-     * @param config The configuration to check
-     * @return The migrated configuration
-     */
-    private UserConfig migrateConfigIfNeeded(UserConfig config) {
-        if (config == null) return new UserConfig();
-
-        // Check version and migrate as needed
-        if (config.getConfigVersion() < 1) {
-            // logger.info("Migrating configuration from legacy format");
-            // Apply migration steps
-            config.setConfigVersion(1);
-        }
-
-        // Add future version migrations here
-
-        config.setLastUpdated(new Date());
-        return config;
     }
 
     /**

@@ -110,9 +110,9 @@ public class TransportIndicatorPanel extends JPanel implements IBusListener {
 
     private void requestInitialData() {
         SwingUtilities.invokeLater(() -> {
-            commandBus.publish(Commands.SESSION_REQUEST, this);
-            commandBus.publish(Commands.TRANSPORT_STATE_REQUEST, this);
-            commandBus.publish(Commands.ACTIVE_PLAYER_REQUEST, this);
+            commandBus.publish(Commands.SESSION_REQUEST, this, null);
+            commandBus.publish(Commands.TRANSPORT_STATE_REQUEST, this, null);
+            commandBus.publish(Commands.ACTIVE_PLAYER_REQUEST, this, null);
         });
     }
 

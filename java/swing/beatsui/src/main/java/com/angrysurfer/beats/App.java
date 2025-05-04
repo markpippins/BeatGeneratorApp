@@ -6,14 +6,11 @@ import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
 import javax.swing.UIManager;
 
+import com.angrysurfer.core.api.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.angrysurfer.core.Constants;
-import com.angrysurfer.core.api.Command;
-import com.angrysurfer.core.api.CommandBus;
-import com.angrysurfer.core.api.Commands;
-import com.angrysurfer.core.api.IBusListener;
 import com.angrysurfer.core.config.FrameState;
 import com.angrysurfer.core.model.InstrumentWrapper;
 import com.angrysurfer.core.redis.InstrumentHelper;
@@ -23,23 +20,52 @@ import com.angrysurfer.core.service.InstrumentManager;
 import com.angrysurfer.core.service.InternalSynthManager;
 import com.angrysurfer.core.service.SessionManager;
 import com.angrysurfer.core.service.SoundbankManager;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.angrysurfer.core.service.PlayerManager;
 import com.formdev.flatlaf.FlatLightLaf;
 
+// Add this annotation to tell Jackson to use our custom deserializer
+@JsonDeserialize(using = TimingBusDeserializer.class)
 public class App implements IBusListener {
 
     private static final Logger logger = LoggerFactory.getLogger(App.class.getName());
+    
+    // Test singleton instance before static field initialization
+    static {
+        System.out.println("App static initializer - Testing bus singletons:");
+        CommandBus.testSingleton();
+        TimingBus.testSingleton();
+    }
 
+    // Access CommandBus only once
     private static final CommandBus commandBus = CommandBus.getInstance();
+    
+    // Store the instance ID for verification
+    private static final String commandBusId = commandBus.getInstanceId();
 
     private static final boolean showSplash = false;
-
     private Frame frame;
     private static SplashScreen splash;
 
+    static {
+        // Initialize registry before anything else
+        AppRegistry.initialize();
+        System.out.println("App static initializer - Registry initialized");
+    }
+    
     public static void main(String[] args) {
         // Configure logging first
         System.setProperty("java.util.logging.config.file", "src/main/resources/logging.properties");
+
+        // Verify the CommandBus instance hasn't changed since static initialization
+        CommandBus currentCommandBus = CommandBus.getInstance();
+        if (!commandBusId.equals(currentCommandBus.getInstanceId())) {
+            System.err.println("WARNING: CommandBus instance changed between static init and main!");
+            System.err.println("Original ID: " + commandBusId + ", Current ID: " + 
+                             currentCommandBus.getInstanceId());
+        } else {
+            System.out.println("CommandBus instance verified - still the same since static init");
+        }
 
         try {
             logger.info("Starting application...");

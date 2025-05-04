@@ -109,9 +109,9 @@ public class StatusBar extends JPanel implements IBusListener {
 
     private void requestInitialData() {
         SwingUtilities.invokeLater(() -> {
-            commandBus.publish(Commands.SESSION_REQUEST, this);
-            commandBus.publish(Commands.TRANSPORT_STATE_REQUEST, this);
-            commandBus.publish(Commands.ACTIVE_PLAYER_REQUEST, this);
+            commandBus.publish(Commands.SESSION_REQUEST, this, null);
+            commandBus.publish(Commands.TRANSPORT_STATE_REQUEST, this, null);
+            commandBus.publish(Commands.ACTIVE_PLAYER_REQUEST, this, null);
         });
     }
 
@@ -378,7 +378,7 @@ public class StatusBar extends JPanel implements IBusListener {
     private JProgressBar createProgressBar() {
         JProgressBar bar = new JProgressBar(0, 100);
         bar.setStringPainted(true);
-        bar.setPreferredSize(new Dimension(100, 15));
+        bar.setPreferredSize(new Dimension(50, 15));
         bar.setBorderPainted(true);
         return bar;
     }

@@ -156,7 +156,7 @@ public class SessionManager implements IBusListener {
                         // Also stop recording when transport stops
                         if (isRecording()) {
                             setRecording(false);
-                            CommandBus.getInstance().publish(Commands.RECORDING_STOPPED, this);
+                            CommandBus.getInstance().publish(Commands.RECORDING_STOPPED, this, null);
                         }
                     }
                     case Commands.TRANSPORT_RECORD -> {
@@ -178,12 +178,12 @@ public class SessionManager implements IBusListener {
                     case Commands.TRANSPORT_RECORD_START -> {
                         setRecording(true);
                         // Optionally notify UI or start recording-specific behaviors
-                        CommandBus.getInstance().publish(Commands.RECORDING_STARTED, this);
+                        CommandBus.getInstance().publish(Commands.RECORDING_STARTED, this, null);
                     }
                     case Commands.TRANSPORT_RECORD_STOP -> {
                         setRecording(false);
                         // Optionally finalize recording or perform cleanup
-                        CommandBus.getInstance().publish(Commands.RECORDING_STOPPED, this);
+                        CommandBus.getInstance().publish(Commands.RECORDING_STOPPED, this, null);
                     }
                     case Commands.TRANSPOSE_UP -> {
                         if (getActiveSession() != null) {
@@ -252,7 +252,7 @@ public class SessionManager implements IBusListener {
                     if (getActiveSession().getPlayers().remove(player)) {
                         redisService.deletePlayer(player);
                         logger.info("Player deleted: " + player.getId());
-                        commandBus.publish(Commands.PLAYER_DELETED, this);
+                        commandBus.publish(Commands.PLAYER_DELETED, this, null);
                     }
                 }
             }
@@ -561,7 +561,7 @@ public class SessionManager implements IBusListener {
             redisService.saveSession(activeSession);
 
             // Notify listeners about the deletions
-            commandBus.publish(Commands.PLAYER_DELETED, this);
+            commandBus.publish(Commands.PLAYER_DELETED, this, null);
             logger.info("Successfully deleted " + deletedCount + " players");
         }
     }

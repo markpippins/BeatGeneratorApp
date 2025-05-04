@@ -24,7 +24,7 @@ public class DiagnosticsSplashScreen extends JWindow {
         // Create panel with border
         JPanel contentPane = new JPanel(new BorderLayout());
         contentPane.setBorder(new EmptyBorder(20, 20, 20, 20));
-        contentPane.setBackground(new Color(248, 248, 248));
+        // contentPane.setBackground(new Color(248, 248, 248));
         
         // Title label
         titleLabel = new JLabel(title);

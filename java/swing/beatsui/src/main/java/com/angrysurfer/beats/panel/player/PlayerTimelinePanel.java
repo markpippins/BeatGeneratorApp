@@ -11,6 +11,7 @@ import java.awt.Point;
 import java.awt.Rectangle;
 import java.awt.RenderingHints;
 import java.awt.event.ComponentAdapter;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
@@ -32,8 +33,8 @@ import com.angrysurfer.core.model.Player;
 import com.angrysurfer.core.model.Rule;
 import com.angrysurfer.core.model.Session;
 import com.angrysurfer.core.service.InternalSynthManager;
-
 import com.angrysurfer.core.service.SoundbankManager;
+
 import lombok.Getter;
 import lombok.Setter;
 
@@ -414,9 +415,11 @@ public class PlayerTimelinePanel extends JPanel implements IBusListener {
      * Update the timeline with fixed row heights for consistency
      */
     private void updateTimelineWithFixedRowHeights() {
-        if (player == null || player.getSession() == null) {
+        if (player == null)
             return;
-        }
+
+        if (player.getSession() == null)
+            return;
 
         // Clear existing content
         clearGrid();
@@ -531,7 +534,7 @@ public class PlayerTimelinePanel extends JPanel implements IBusListener {
         results[ROW_PART_COUNT] = new boolean[1];
 
         // Get all player rules
-        Set<Rule> allRules = player.getRules();
+        Set<Rule> allRules = player != null ? player.getRules() : Collections.emptySet();
 
         // Process standard position rules
         for (int tickIndex = 0; tickIndex < totalTicks; tickIndex++) {
@@ -731,7 +734,8 @@ public class PlayerTimelinePanel extends JPanel implements IBusListener {
                 case Commands.PLAYER_SELECTED -> {
                     if (action.getData() instanceof Player p) {
                         player = p;
-                        updateTimelineWithFixedRowHeights();
+                        if (p != null)
+                            updateTimelineWithFixedRowHeights();
                     }
                 }
                 case Commands.PLAYER_UNSELECTED -> {
@@ -745,7 +749,8 @@ public class PlayerTimelinePanel extends JPanel implements IBusListener {
                     if (player != null && action.getData() instanceof Player p && Objects.nonNull(p.getId())
                             && p.getId().equals(player.getId())) {
                         player = p;
-                        updateTimelineWithFixedRowHeights();
+                        if (p != null)
+                            updateTimelineWithFixedRowHeights();
                     }
                 }
                 // Add handler for note changes

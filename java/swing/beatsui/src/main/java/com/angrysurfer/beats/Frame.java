@@ -146,7 +146,7 @@ public class Frame extends JFrame implements AutoCloseable {
         addComponentListener(new java.awt.event.ComponentAdapter() {
             public void componentResized(java.awt.event.ComponentEvent e) {
                 if (isShowing()) { // Only handle if window is visible
-                    CommandBus.getInstance().publish(Commands.WINDOW_RESIZED, this);
+                    CommandBus.getInstance().publish(Commands.WINDOW_RESIZED, this,null);
                     saveFrameState();
                 }
             }
@@ -209,7 +209,7 @@ public class Frame extends JFrame implements AutoCloseable {
                     }
                     
                     logger.info("Spacebar pressed - Toggling transport");
-                    CommandBus.getInstance().publish(Commands.TOGGLE_TRANSPORT, this);
+                    CommandBus.getInstance().publish(Commands.TOGGLE_TRANSPORT, this, null);
                     e.consume();
                     return true;
                 }
@@ -392,7 +392,7 @@ public class Frame extends JFrame implements AutoCloseable {
         addWindowListener(new java.awt.event.WindowAdapter() {
             @Override
             public void windowClosing(java.awt.event.WindowEvent e) {
-                CommandBus.getInstance().publish(Commands.WINDOW_CLOSING, this);
+                CommandBus.getInstance().publish(Commands.WINDOW_CLOSING, this, null);
                 saveFrameState();
             }
         });

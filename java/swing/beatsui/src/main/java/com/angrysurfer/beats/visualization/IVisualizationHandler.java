@@ -21,11 +21,11 @@ public interface IVisualizationHandler {
     }
 
     default void lockDisplay() {
-        CommandBus.getInstance().publish(Commands.LOCK_CURRENT_VISUALIZATION);
+        CommandBus.getInstance().publish(Commands.LOCK_CURRENT_VISUALIZATION, this, null);
     }
 
     default void unlockDisplay() {
-        CommandBus.getInstance().publish(Commands.UNLOCK_CURRENT_VISUALIZATION);
+        CommandBus.getInstance().publish(Commands.UNLOCK_CURRENT_VISUALIZATION, this, null);
     }
 
     default Color [] getRainbowColors() {

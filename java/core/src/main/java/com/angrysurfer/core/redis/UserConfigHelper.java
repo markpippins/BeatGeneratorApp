@@ -5,13 +5,19 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.angrysurfer.core.config.UserConfig;
+import com.angrysurfer.core.model.InstrumentWrapper;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
+import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 
 import lombok.Getter;
 import redis.clients.jedis.Jedis;
@@ -34,10 +40,12 @@ public class UserConfigHelper {
         try (Jedis jedis = jedisPool.getResource()) {
             String json = jedis.get("userconfig");
             if (json != null) {
-                return objectMapper.readValue(json, UserConfig.class);
+                UserConfig config = loadAndMigrateFromJson(json);
+                return config;
             }
         } catch (Exception e) {
-            JOptionPane.showMessageDialog(null,  "Error loading config from Redis: " + e.getMessage());
+            logger.error("Error loading config from Redis: " + e.getMessage(), e);
+            JOptionPane.showMessageDialog(null, "Error loading config from Redis: " + e.getMessage());
         }
         return null;
     }
@@ -50,25 +58,100 @@ public class UserConfigHelper {
      */
     public UserConfig loadConfigFromJSON(String filePath) {
         try {
-            ObjectMapper mapper = new ObjectMapper();
             File file = new File(filePath);
             
             if (!file.exists()) {
-                JOptionPane.showMessageDialog(null,  "Configuration file not found: " + filePath);
+                logger.warn("Configuration file not found: {}", filePath);
+                JOptionPane.showMessageDialog(null, "Configuration file not found: " + filePath);
                 return null;
             }
             
-            UserConfig config = mapper.readValue(file, UserConfig.class);
-            
-            // Perform validation or migration if needed
-            config = validateAndMigrate(config);
+            String json = objectMapper.readTree(file).toString();
+            UserConfig config = loadAndMigrateFromJson(json);
             
             logger.info("Configuration successfully loaded from: {}", filePath);
             return config;
         } catch (IOException e) {
-            JOptionPane.showMessageDialog(null,  "Error loading configuration from file: "  + e.getMessage());
+            logger.error("Error loading configuration from file: " + e.getMessage(), e);
+            JOptionPane.showMessageDialog(null, "Error loading configuration from file: " + e.getMessage());
             return null;
         }
+    }
+
+    /**
+     * Load and migrate configuration from JSON string
+     */
+    private UserConfig loadAndMigrateFromJson(String json) throws IOException {
+        // First, parse as JsonNode to check version and presence of configs
+        JsonNode rootNode = objectMapper.readTree(json);
+        int version = rootNode.has("configVersion") ? rootNode.get("configVersion").asInt() : 1;
+        
+        // If version < 2, we need to migrate from old format to new format
+        if (version < 2 && rootNode.has("configs")) {
+            logger.info("Migrating UserConfig from version {} to version 2", version);
+            return migrateFromVersion1(rootNode);
+        } else {
+            // No migration needed, parse normally
+            return objectMapper.readValue(json, UserConfig.class);
+        }
+    }
+    
+    /**
+     * Migrate from version 1 (with InstrumentConfig) to version 2 (without InstrumentConfig)
+     */
+    private UserConfig migrateFromVersion1(JsonNode rootNode) throws IOException {
+        // Create a modifiable copy of the root node
+        ObjectNode mutableRoot = rootNode.deepCopy();
+        
+        // Get the configs array if it exists
+        if (mutableRoot.has("configs") && mutableRoot.get("configs").isArray()) {
+            ArrayNode configsArray = (ArrayNode) mutableRoot.get("configs");
+            
+            // Create instruments array if it doesn't exist
+            if (!mutableRoot.has("instruments") || mutableRoot.get("instruments").isNull()) {
+                mutableRoot.putArray("instruments");
+            }
+            
+            // Get the existing instruments array
+            ArrayNode instrumentsArray = (ArrayNode) mutableRoot.get("instruments");
+            
+            // Convert each config to an instrumentWrapper and add to instruments array
+            for (JsonNode configNode : configsArray) {
+                ObjectNode instrumentNode = objectMapper.createObjectNode();
+                
+                // Generate a unique ID
+                instrumentNode.put("id", System.currentTimeMillis() + instrumentsArray.size());
+                
+                // Set name and deviceName from the device field
+                String device = configNode.has("device") ? configNode.get("device").asText("") : "Unknown Device";
+                instrumentNode.put("name", device);
+                instrumentNode.put("deviceName", device);
+                
+                // Set other properties
+                instrumentNode.put("channel", 9); // Default to GM drum channel (10, but zero-indexed as 9)
+                instrumentNode.put("available", configNode.has("available") ? configNode.get("available").asBoolean(false) : false);
+                
+                // Port
+                if (configNode.has("port")) {
+                    instrumentNode.put("port", configNode.get("port").asText(""));
+                }
+                
+                // Add the new instrument to the array
+                instrumentsArray.add(instrumentNode);
+            }
+            
+            // Remove the configs field
+            mutableRoot.remove("configs");
+            
+            // Set the new version
+            mutableRoot.put("configVersion", 2);
+            
+            // Set last updated to now
+            mutableRoot.put("lastUpdated", new Date().getTime());
+        }
+        
+        // Convert back to UserConfig
+        return objectMapper.treeToValue(mutableRoot, UserConfig.class);
     }
 
     /**
@@ -80,13 +163,14 @@ public class UserConfigHelper {
             config.setInstruments(new ArrayList<>());
         }
         
-        if (config.getConfigs() == null) {
-            config.setConfigs(new HashSet<>());
-        }
-        
         // Set timestamps if missing
         if (config.getLastUpdated() == null) {
             config.setLastUpdated(new Date());
+        }
+        
+        // Make sure config version is set to latest
+        if (config.getConfigVersion() < 2) {
+            config.setConfigVersion(2);
         }
         
         return config;
@@ -94,11 +178,15 @@ public class UserConfigHelper {
 
     public void saveConfig(UserConfig config) {
         try (Jedis jedis = jedisPool.getResource()) {
+            // Ensure config is validated before saving
+            config = validateAndMigrate(config);
+            
             String json = objectMapper.writeValueAsString(config);
             jedis.set("userconfig", json);
             logger.info("Saved UserConfig to Redis");
         } catch (Exception e) {
-            JOptionPane.showMessageDialog(null,  "Error saving config to Redis: " + e.getMessage());
+            logger.error("Error saving config to Redis: " + e.getMessage(), e);
+            JOptionPane.showMessageDialog(null, "Error saving config to Redis: " + e.getMessage());
             throw new RuntimeException("Failed to save config", e);
         }
     }
@@ -112,11 +200,15 @@ public class UserConfigHelper {
      */
     public boolean saveConfigToJSON(UserConfig config, String filePath) {
         if (config == null) {
-            JOptionPane.showMessageDialog(null,  "Cannot save null configuration to file");
+            logger.warn("Cannot save null configuration to file");
+            JOptionPane.showMessageDialog(null, "Cannot save null configuration to file");
             return false;
         }
         
         try {
+            // Ensure config is validated before saving
+            config = validateAndMigrate(config);
+            
             ObjectMapper mapper = new ObjectMapper();
             // Enable pretty printing for readable JSON
             mapper.enable(SerializationFeature.INDENT_OUTPUT);
@@ -131,10 +223,11 @@ public class UserConfigHelper {
             
             // Write the config to file
             mapper.writeValue(file, config);
-            logger.info("Configuration successfully saved to:" + filePath);
+            logger.info("Configuration successfully saved to: {}", filePath);
             return true;
         } catch (IOException e) {
-            JOptionPane.showMessageDialog(null,  "Error saving configuration to file: " + e.getMessage());
+            logger.error("Error saving configuration to file: " + e.getMessage(), e);
+            JOptionPane.showMessageDialog(null, "Error saving configuration to file: " + e.getMessage());
             return false;
         }
     }

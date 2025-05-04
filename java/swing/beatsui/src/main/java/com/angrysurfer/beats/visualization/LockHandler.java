@@ -16,12 +16,12 @@ public class LockHandler {
     }
 
     public void lockDisplay() {
-        CommandBus.getInstance().publish(Commands.LOCK_CURRENT_VISUALIZATION);
+        CommandBus.getInstance().publish(Commands.LOCK_CURRENT_VISUALIZATION, this, null);
         locked = true;
     }
 
     public void unlockDisplay() {
-        CommandBus.getInstance().publish(Commands.UNLOCK_CURRENT_VISUALIZATION);
+        CommandBus.getInstance().publish(Commands.UNLOCK_CURRENT_VISUALIZATION,this, null);
         locked = false;
     }
 }

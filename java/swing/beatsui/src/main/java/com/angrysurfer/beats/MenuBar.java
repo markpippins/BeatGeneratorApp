@@ -88,7 +88,7 @@ public class MenuBar extends JMenuBar {
                     JOptionPane.WARNING_MESSAGE);
 
             if (result == JOptionPane.YES_OPTION) {
-                commandBus.publish(Commands.CLEAR_DATABASE, this);
+                commandBus.publish(Commands.CLEAR_DATABASE, this, null);
             }
         });
 
@@ -102,7 +102,7 @@ public class MenuBar extends JMenuBar {
                     JOptionPane.WARNING_MESSAGE);
 
             if (result == JOptionPane.YES_OPTION) {
-                commandBus.publish(Commands.CLEAR_INVALID_SESSIONS, this);
+                commandBus.publish(Commands.CLEAR_INVALID_SESSIONS, this, null);
             }
         });
 
@@ -117,7 +117,7 @@ public class MenuBar extends JMenuBar {
                     JOptionPane.WARNING_MESSAGE);
 
             if (result == JOptionPane.YES_OPTION) {
-                commandBus.publish(Commands.DELETE_UNUSED_INSTRUMENTS, this);
+                commandBus.publish(Commands.DELETE_UNUSED_INSTRUMENTS, this, null);
             }
         });
 
@@ -129,7 +129,7 @@ public class MenuBar extends JMenuBar {
 
         JMenuItem loadConfig = new JMenuItem("Load Configuration...");
         loadConfig.addActionListener(e -> {
-            commandBus.publish(Commands.LOAD_CONFIG, this);
+            commandBus.publish(Commands.LOAD_CONFIG, this, null);
         });
         dbMenu.add(loadConfig);
         optionsMenu.add(dbMenu);
@@ -137,7 +137,7 @@ public class MenuBar extends JMenuBar {
         // Add Load Config
         JMenuItem saveConfig = new JMenuItem("Save Configuration");
         saveConfig.addActionListener(e -> {
-            commandBus.publish(Commands.SAVE_CONFIG, this);
+            commandBus.publish(Commands.SAVE_CONFIG, this, null);
         });
         dbMenu.add(saveConfig);
         optionsMenu.add(dbMenu);
@@ -258,10 +258,11 @@ public class MenuBar extends JMenuBar {
                 }
             }).start();
         });
+        
         diagnosticsMenu.add(playerInstrumentTest);
 
         // Add the diagnostics menu to the menu bar
-        add(diagnosticsMenu);
+        optionsMenu.add(diagnosticsMenu);
 
         // Register visualization listener
         commandBus.register(new IBusListener() {
@@ -416,7 +417,7 @@ public class MenuBar extends JMenuBar {
 
                     case Commands.LOCK_CURRENT_VISUALIZATION:
                         // The lock command was sent - follow up with the locked event
-                        commandBus.publish(Commands.VISUALIZATION_LOCKED, this);
+                        commandBus.publish(Commands.VISUALIZATION_LOCKED, this, null);
                         break;
 
                     case Commands.VISUALIZATION_LOCKED:
@@ -428,7 +429,7 @@ public class MenuBar extends JMenuBar {
 
                     case Commands.UNLOCK_CURRENT_VISUALIZATION:
                         // The unlock command was sent - follow up with the unlocked event
-                        commandBus.publish(Commands.VISUALIZATION_UNLOCKED, this);
+                        commandBus.publish(Commands.VISUALIZATION_UNLOCKED, this, null);
                         break;
 
                     case Commands.VISUALIZATION_UNLOCKED:
@@ -476,7 +477,7 @@ public class MenuBar extends JMenuBar {
     private void addMenuItem(JMenu menu, String name, String command, ActionListener extraAction) {
         JMenuItem item = new JMenuItem(name);
         item.addActionListener(e -> {
-            commandBus.publish(command, this);
+            commandBus.publish(command, this, null);
             if (extraAction != null) {
                 extraAction.actionPerformed(e);
             }

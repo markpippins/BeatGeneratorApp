@@ -54,7 +54,7 @@ public class DrumButton extends JButton implements IBusListener {
             if (exclusive) {
                 setSelected(true);
                 // Notify other buttons in group
-                CommandBus.getInstance().publish(Commands.DRUM_BUTTON_SELECTED, this);
+                CommandBus.getInstance().publish(Commands.DRUM_BUTTON_SELECTED, this, null);
             } else {
                 // Toggle selection if not exclusive
                 setSelected(!isSelected());

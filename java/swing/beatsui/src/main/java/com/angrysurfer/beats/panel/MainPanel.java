@@ -637,11 +637,11 @@ public class MainPanel extends JPanel implements AutoCloseable, IBusListener {
                 if (SessionManager.getInstance().getActiveSession().isRunning()) {
                     // If currently playing, publish stop command
                     logger.info("Publishing TRANSPORT_STOP command");
-                    CommandBus.getInstance().publish(Commands.TRANSPORT_STOP, this);
+                    CommandBus.getInstance().publish(Commands.TRANSPORT_STOP, this, null);
                 } else {
                     // If currently stopped, publish start command
                     logger.info("Publishing TRANSPORT_START command");
-                    CommandBus.getInstance().publish(Commands.TRANSPORT_START, this);
+                    CommandBus.getInstance().publish(Commands.TRANSPORT_START, this, null);
                 }
 
                 // The state will be updated when we receive TRANSPORT_STARTED or
@@ -674,7 +674,7 @@ public class MainPanel extends JPanel implements AutoCloseable, IBusListener {
         metronomeButton.addActionListener(e -> {
             boolean isSelected = metronomeButton.isSelected();
             logger.info("Metronome toggled: " + (isSelected ? "ON" : "OFF"));
-            CommandBus.getInstance().publish(isSelected ? Commands.METRONOME_START : Commands.METRONOME_STOP, this);
+            CommandBus.getInstance().publish(isSelected ? Commands.METRONOME_START : Commands.METRONOME_STOP, this, null);
         });
 
         CommandBus.getInstance().register(new IBusListener() {
@@ -758,7 +758,7 @@ public class MainPanel extends JPanel implements AutoCloseable, IBusListener {
             // Publish command for other components to respond to
             CommandBus.getInstance().publish(
                     isLooping ? Commands.GLOBAL_LOOPING_ENABLED : Commands.GLOBAL_LOOPING_DISABLED,
-                    this);
+                    this, null);
         });
 
         // Initial button color - green for enabled looping
@@ -790,7 +790,7 @@ public class MainPanel extends JPanel implements AutoCloseable, IBusListener {
 
         notesOffButton.addActionListener(e -> {
             logger.info("All Notes Off button pressed");
-            CommandBus.getInstance().publish(Commands.ALL_NOTES_OFF, this);
+            CommandBus.getInstance().publish(Commands.ALL_NOTES_OFF, this, null);
         });
 
         return notesOffButton;

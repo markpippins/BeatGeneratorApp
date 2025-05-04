@@ -6,117 +6,140 @@ import com.angrysurfer.core.sequencer.TimingUpdate;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.atomic.AtomicBoolean;
 
-public class TimingBus extends AbstractBus {
-    private static TimingBus instance;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-    // Initialize field BEFORE constructor is called
+public final class TimingBus extends AbstractBus {
+    private static final Logger logger = LoggerFactory.getLogger(TimingBus.class);
+    
+    // Use a holder pattern for thread-safe lazy initialization
+    private static class InstanceHolder {
+        private static final TimingBus INSTANCE = new TimingBus();
+        
+        static {
+            System.out.println("TimingBus InstanceHolder initialized - Instance ID: " + 
+                             System.identityHashCode(INSTANCE));
+        }
+    }
+    
+    // Track initialization state
+    private static final AtomicBoolean INITIALIZED = new AtomicBoolean(false);
+
     private final ConcurrentLinkedQueue<IBusListener> timingListeners = new ConcurrentLinkedQueue<>();
-
-    private final ExecutorService timingExecutor = Executors.newSingleThreadExecutor(r -> {
-        Thread t = new Thread(r, "TimingBus-Thread");
-        t.setPriority(Thread.MAX_PRIORITY);
-        return t;
-    });
-
-    // Add this field for reusing the same Command object
+    private final ExecutorService timingExecutor;
     private final Command sharedCommand = new Command(null, null, null);
+    private final String instanceId;
 
-    // Diagnostic counter for timing events
     private int eventCount = 0;
-
     private boolean diagnostic = false;
 
-    // Constructor must be after field initialization
     private TimingBus() {
-        // We'll handle registration ourselves instead of relying on parent
-        // Don't call super() which calls register() before fields are initialized
 
-        // Add diagnostic message
-        System.out.println("TimingBus initialized with " + timingListeners.size() + " listeners");
+        // The super() call must be the first statement
+        super();
+        
+        // Guard against reflection-based instantiation (after super call)
+        if (INITIALIZED.getAndSet(true)) {
+            throw new IllegalStateException("TimingBus already initialized");
+        }
+        
+        // Generate unique ID for this instance
+        instanceId = String.valueOf(System.identityHashCode(this));
+        
+        // Initialize executor for high-priority timing events
+        timingExecutor = Executors.newSingleThreadExecutor(r -> {
+            Thread t = new Thread(r, "TimingBus-Thread");
+            t.setPriority(Thread.MAX_PRIORITY);
+            return t;
+        });
 
-        // Start a diagnostic thread to monitor timing events
-        if (diagnostic)
-            new Thread(() -> {
-                long lastReport = System.currentTimeMillis();
-                int eventCount = 0;
+        // Add initialization logging
+        logger.info("TimingBus instance initialized - ID: {}", instanceId);
+        System.out.println("TimingBus instance initialized - ID: " + instanceId);
 
-                while (true) {
-                    try {
-                        Thread.sleep(5000); // Check every 5 seconds
-                        long now = System.currentTimeMillis();
-                        System.out.println("TimingBus health: " + eventCount + " events in " +
-                                ((now - lastReport) / 1000) + " seconds");
-                        lastReport = now;
-                        eventCount = 0;
-                    } catch (Exception e) {
-                        // Ignore
-                    }
-                }
-            }, "TimingBus-Monitor").start();
+        // Perform validation checks
+        if (timingListeners == null) {
+            String error = "CRITICAL ERROR: timingListeners is null in constructor";
+            logger.error(error);
+            System.err.println(error);
+            throw new IllegalStateException(error);
+        }
+
+        // Register with our own listeners collection
+        register(this);
+
+        // Start diagnostic thread if needed
+        if (diagnostic) {
+            startDiagnosticThread();
+        }
     }
 
     public static TimingBus getInstance() {
-        if (instance == null) {
-            instance = new TimingBus();
-        }
-        return instance;
+        return InstanceHolder.INSTANCE;
+    }
+    
+    public String getInstanceId() {
+        return instanceId;
+    }
+
+    private void startDiagnosticThread() {
+        new Thread(() -> {
+            long lastReport = System.currentTimeMillis();
+            int lastEventCount = 0;
+
+            while (true) {
+                try {
+                    Thread.sleep(5000);
+                    long now = System.currentTimeMillis();
+                    long eventsDelta = eventCount - lastEventCount;
+                    logger.debug("TimingBus health: {} events in {} seconds",
+                            eventsDelta, ((now - lastReport) / 1000));
+                    lastReport = now;
+                    lastEventCount = eventCount;
+                } catch (Exception e) {
+                    // Ignore
+                }
+            }
+        }, "TimingBus-Monitor-" + instanceId).start();
     }
 
     @Override
     public void publish(String commandName, Object source, Object data) {
-        // Add immediate diagnostic output
-        // System.out.println("TimingBus: Publishing " + commandName + ", listeners: " +
-        // timingListeners.size());
-
         if (Commands.TIMING_UPDATE.equals(commandName)) {
-            // DON'T reuse the shared command for timing - create a new one for thread
-            // safety
             Command cmd = new Command(commandName, source, data);
 
-            // Fast path for timing updates
             for (IBusListener listener : timingListeners) {
                 if (listener != source) // Avoid sending to self
                     try {
-                        // Simple direct call to onAction
                         listener.onAction(cmd);
                     } catch (Exception e) {
-                        // Log exceptions but continue with other listeners
                         System.err.println("Error in timing listener: " + e.getMessage());
                         e.printStackTrace();
                     }
             }
 
-            // Increment diagnostic counter
             eventCount++;
-            // return;
         }
-
-        // For non-timing events, use parent implementation
-        // super.publish(commandName, source, data);
     }
 
-    // Add a method to check registration
     public boolean isRegistered(IBusListener listener) {
         return timingListeners.contains(listener);
     }
 
-    // Add method to update shared command without creating new objects
     private void updateSharedCommand(String commandName, Object source, Object data) {
         sharedCommand.setCommand(commandName);
         sharedCommand.setSender(source);
         sharedCommand.setData(data);
     }
 
-    // Add a specialized method for highest performance timing events
     public void publishTimingUpdate(TimingUpdate update) {
-        // Even more optimized path for timing updates
         Command command = new Command(Commands.TIMING_UPDATE, this, update);
         for (IBusListener listener : timingListeners) {
             try {
-                ((Player) listener).onTick(update); // Direct call to avoid command overhead
+                ((Player) listener).onTick(update);
             } catch (ClassCastException e) {
-                // Fall back to standard method if not a Player
                 listener.onAction(command);
             } catch (Exception e) {
                 // Minimal error handling
@@ -134,8 +157,6 @@ public class TimingBus extends AbstractBus {
 
             if (!timingListeners.contains(listener)) {
                 timingListeners.add(listener);
-                // System.out.println("TimingBus: Registered listener: " + (listener.getClass()
-                // != null ? listener.getClass().getSimpleName() : "null"));
             }
         }
     }
@@ -144,9 +165,28 @@ public class TimingBus extends AbstractBus {
     public void unregister(IBusListener listener) {
         if (listener != null && timingListeners != null) {
             timingListeners.remove(listener);
-            // System.out.println("TimingBus: Unregistered listener: " +
-            // (listener.getClass() != null ? listener.getClass().getSimpleName() :
-            // "null"));
         }
+    }
+
+    public void addTimingListener(IBusListener listener) {
+        if (listener == null) return;
+
+        if (timingListeners == null) {
+            System.err.println("TimingBus: timingListeners is null!");
+            logger.error("TimingBus: timingListeners is null!");
+            return;
+        }
+
+        timingListeners.add(listener);
+        logger.debug("Added timing listener - now has {} listeners", timingListeners.size());
+    }
+
+    public static void testSingleton() {
+        TimingBus instance1 = getInstance();
+        TimingBus instance2 = getInstance();
+        boolean same = instance1 == instance2;
+
+        System.out.println("TimingBus singleton test: instances are " +
+                (same ? "THE SAME" : "DIFFERENT"));
     }
 }

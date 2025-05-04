@@ -402,14 +402,14 @@ public class SongPanel extends JPanel implements IBusListener {
                 }
             }
 
-            CommandBus.getInstance().publish(Commands.TRANSPORT_START, this);
+            CommandBus.getInstance().publish(Commands.TRANSPORT_START, this, null);
         }
     }
 
     private void stopSong() {
         // Stop session playback
         if (SessionManager.getInstance().getActiveSession().isRunning()) {
-            CommandBus.getInstance().publish(Commands.TRANSPORT_STOP, this);
+            CommandBus.getInstance().publish(Commands.TRANSPORT_STOP, this, null);
         }
     }
 
