@@ -232,12 +232,9 @@ public class RedisService implements IBusListener {
     }
 
     // Player operations
-    public Player findPlayerById(Long id) {
-        return playerHelper.findPlayerById(id, Player.class.getSimpleName().toLowerCase());
-    }
-
     /**
      * Save player to Redis
+     * This handles instrument references and session updates
      */
     public void savePlayer(Player player) {
         try {
@@ -259,7 +256,7 @@ public class RedisService implements IBusListener {
                         player.getInstrumentId(), player.getInstrument().getName());
             }
 
-            // Save the player - only call this once
+            // Save the player with all its rules
             playerHelper.savePlayer(player);
 
             // If the player belongs to a session, update the session as well
@@ -688,4 +685,9 @@ public InstrumentWrapper getInstrumentById(Long id) {
     // Delegate to the InstrumentHelper 
     return instrumentHelper.findInstrumentById(id);
 }
+
+
+    public Player findPlayerById(Long id) {
+        playerHelper.findPlayerById(id);
+    }
 }

@@ -404,32 +404,24 @@ public class SessionManager implements IBusListener {
     private void processPlayerEdit(Player player) {
         logger.info("Processing player edit/add: " + player.getName());
 
-        RedisService redis = RedisService.getInstance();
+        // Use PlayerManager for consistent player saving
+        PlayerManager playerManager = PlayerManager.getInstance();
 
         if (player.getId() == null) {
-            redis.savePlayer(player);
+            // New player - save through PlayerManager
+            playerManager.savePlayerProperties(player);
 
             // Add to session
             getActiveSession().getPlayers().add(player);
 
+            // Register for event buses
             CommandBus.getInstance().register(player);
             TimingBus.getInstance().register(player);
 
-            // TODO: don't save session here
-
-            // redis.saveSession(getActiveSession());
-
-            // Get fresh session state
-            // activeSession = redis.findSessionById(activeSession.getId());
-
             logger.info("Added new player and updated session");
         } else {
-            // TODO: don't save player here, just update the active session
-
-            // Existing player update
-            redis.savePlayer(player);
-            // activeSession = redis.findSessionById(activeSession.getId());
-            // redis.saveSession(getActiveSession());
+            // Existing player update - save through PlayerManager
+            playerManager.savePlayerProperties(player);
             logger.info("Updated existing player and session");
         }
 

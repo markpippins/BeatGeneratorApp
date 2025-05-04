@@ -247,6 +247,7 @@ public class PlayerManager implements IBusListener {
 
     /**
      * Save player properties to persistent storage with complete consistency
+     * This is the primary method applications should use to save player data
      */
     public void savePlayerProperties(Player player) {
         if (player == null) {
@@ -260,7 +261,7 @@ public class PlayerManager implements IBusListener {
             // Ensure instrument consistency
             if (player.getInstrument() != null) {
                 // Save instrument first
-                redisService.saveInstrument(player.getInstrument());
+                RedisService.getInstance().saveInstrument(player.getInstrument());
 
                 // Ensure the reference is maintained
                 player.setInstrumentId(player.getInstrument().getId());
@@ -271,13 +272,14 @@ public class PlayerManager implements IBusListener {
                         player.getInstrument().getPreset());
             }
 
-            // Save the player
-            redisService.savePlayer(player);
+            // Save player using RedisService (which handles session references)
+            // This internally calls playerHelper.savePlayer() for persistence
+            RedisService.getInstance().savePlayer(player);
 
-            // Update cache
+            // Update cache AFTER successful save to ensure consistency
             playerCache.put(player.getId(), player);
 
-            // If this is the active player, update the reference
+            // Update active player reference if needed
             if (activePlayer != null && activePlayer.getId().equals(player.getId())) {
                 activePlayer = player;
             }

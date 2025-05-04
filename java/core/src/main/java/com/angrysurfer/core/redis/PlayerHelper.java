@@ -41,6 +41,39 @@ public class PlayerHelper {
         return String.format("player:%s:%d", className.toLowerCase(), id);
     }
 
+    /**
+     * Find a player by ID, automatically determining the player type
+     * 
+     * @param id The player ID to look up
+     * @return The player with the specified ID, or null if not found
+     */
+    public Player findPlayerById(Long id) {
+        if (id == null) {
+            logger.warn("findPlayerById called with null ID");
+            return null;
+        }
+
+        logger.debug("Looking up player by ID: {}", id);
+
+        // Try to find the player as a Note first
+        Player player = findPlayerById(id, "Note");
+
+        // If not found, try as a Strike
+        if (player == null) {
+            player = findPlayerById(id, "Strike");
+        }
+
+        // Log result
+        if (player != null) {
+            logger.debug("Found player: {} (ID: {}, Type: {})",
+                    player.getName(), player.getId(), player.getPlayerClassName());
+        } else {
+            logger.debug("No player found with ID: {}", id);
+        }
+
+        return player;
+    }
+
     public Player findPlayerById(Long id, String className) {
         try (Jedis jedis = jedisPool.getResource()) {
             // Normalize the class name (capitalize first letter for consistency)
@@ -202,7 +235,7 @@ public class PlayerHelper {
             throw new RuntimeException("Failed to delete player", e);
         }
     }
-    
+
     public void deletePlayer(Player player) {
         try (Jedis jedis = jedisPool.getResource()) {
             // Remove player's rules

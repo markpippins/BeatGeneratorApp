@@ -166,17 +166,23 @@ public class PlayerEditPanel extends JPanel implements IBusListener {
      * Apply all changes from UI components to player model
      */
     public void applyAllChanges() {
+        // Save the owner reference which might be lost during editing
+        Object ownerReference = player.getOwner();
+        
         // Apply changes from all sub-panels
         basicPropertiesPanel.applyChanges();
         detailPanel.applyChanges();
-
+    
+        // Restore owner reference
+        player.setOwner(ownerReference);
+        
         // Special handling for drum players
         handleDrumPlayerChanges();
-
-        // Then request a player update through command bus
-        commandBus.publish(Commands.PLAYER_UPDATE_REQUEST, this, player);
+    
+        // Save through PlayerManager for consistency
+        PlayerManager.getInstance().savePlayerProperties(player);
     }
-
+    
     /**
      * Handle changes for drum players
      */
