@@ -33,7 +33,7 @@ public class App implements IBusListener {
 
     private static final CommandBus commandBus = CommandBus.getInstance();
 
-    private static final boolean showSplash = false;
+    private static final boolean showSplash = true;
 
     private Frame frame;
     private static SplashScreen splash;

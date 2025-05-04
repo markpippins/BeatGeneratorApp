@@ -35,116 +35,66 @@ public class ReceiverManager {
     }
     
     /**
-     * Get or create a receiver for the specified device with error handling and recovery
-     * 
-     * @param deviceName The name of the MIDI device
-     * @param device Current device reference (may be null)
-     * @return A valid receiver or null if unavailable
+     * Add an improved version of getOrCreateReceiver that handles
+     * error cases better
      */
-    public synchronized Receiver getOrCreateReceiver(String deviceName, MidiDevice device) {
-        // Skip validation entirely for Gervill
-        if ("Gervill".equals(deviceName)) {
-            try {
-                // For internal synth, just get fresh receiver each time - it's fast
-                if (device != null && device.isOpen()) {
-                    return device.getReceiver();
-                }
-            } catch (MidiUnavailableException e) {
-                // Fall through to regular handling
-            }
-        }
-        
-        // logger.debug("getOrCreateReceiver for device: {}", deviceName);
-        
-        // Check if we have a cached receiver that is still valid
-        Receiver cachedReceiver = receiverCache.get(deviceName);
-        if (cachedReceiver != null) {
-            // Only validate periodically, not on every call
-            Long lastValidated = lastValidationTime.getOrDefault(deviceName, 0L);
-            if (System.currentTimeMillis() - lastValidated < VALIDATION_INTERVAL_MS) {
-                return cachedReceiver; // Skip validation most of the time
-            }
-            
-            if (isReceiverValid(cachedReceiver)) {
-                lastValidationTime.put(deviceName, System.currentTimeMillis());
-                return cachedReceiver;
-            }
-            
-            // Remove invalid receiver from cache
-            logger.debug("Removing invalid cached receiver for: {}", deviceName);
-            receiverCache.remove(deviceName);
-            try {
-                cachedReceiver.close();
-            } catch (Exception e) {
-                logger.debug("Error closing invalid receiver: {}", e.getMessage());
-            }
-        }
-        
-        // Check if current device reference is valid and open
-        if (device != null && device.isOpen()) {
-            try {
-                logger.debug("Creating receiver from provided device: {}", deviceName);
-                Receiver newReceiver = device.getReceiver();
-                if (isReceiverValid(newReceiver)) {
-                    receiverCache.put(deviceName, newReceiver);
-                    return newReceiver;
-                }
-            } catch (Exception e) {
-                logger.warn("Failed to get receiver from provided device: {}", e.getMessage());
-            }
-        }
-        
-        // Need to get a fresh device
-        if (reconnectionInProgress.getOrDefault(deviceName, false)) {
-            logger.debug("Reconnection already in progress for: {}", deviceName);
+    public Receiver getOrCreateReceiver(String deviceName, MidiDevice device) {
+        if (deviceName == null || deviceName.isEmpty()) {
+            logger.warn("Cannot get receiver for null or empty device name");
             return null;
         }
         
+        // Check if we already have a receiver for this device
+        Receiver receiver = receiverCache.get(deviceName);
+        if (receiver != null) {
+            // Already have a cached receiver - verify it's still valid
+            try {
+                // Try to send a dummy message to test if receiver is still valid
+                ShortMessage msg = new ShortMessage();
+                msg.setMessage(ShortMessage.CONTROL_CHANGE, 0, 7, 127);
+                receiver.send(msg, -1);
+                return receiver; // Receiver is valid
+            } catch (Exception e) {
+                // Receiver is invalid, remove it and continue to create a new one
+                logger.debug("Cached receiver for {} is invalid, creating new one", deviceName);
+                closeReceiver(deviceName);
+            }
+        }
+        
+        // If device wasn't provided, try to get it
+        if (device == null) {
+            device = DeviceManager.getMidiDevice(deviceName);
+        }
+        
+        if (device == null) {
+            logger.warn("Could not find device: {}", deviceName);
+            return null;
+        }
+        
+        // Make sure device is open
         try {
-            reconnectionInProgress.put(deviceName, true);
-            
-            // Get a fresh device instance from DeviceManager
-            MidiDevice freshDevice = DeviceManager.getMidiDevice(deviceName);
-            
-            if (freshDevice != null) {
-                try {
-                    if (!freshDevice.isOpen()) {
-                        freshDevice.open();
-                    }
-                    
-                    if (freshDevice.isOpen()) {
-                        Receiver newReceiver = freshDevice.getReceiver();
-                        if (isReceiverValid(newReceiver)) {
-                            logger.info("Successfully created receiver for: {}", deviceName);
-                            receiverCache.put(deviceName, newReceiver);
-                            return newReceiver;
-                        }
-                    }
-                } catch (Exception e) {
-                    logger.error("Error creating receiver from fresh device: {}", e.getMessage());
-                }
+            if (!device.isOpen()) {
+                device.open();
             }
-            
-            // Special handling for Gervill
-            if ("Gervill".equals(deviceName)) {
-                return handleGervillReconnection();
-            }
-            
-            // Try default system receiver as last resort
-            try {
-                Receiver defaultReceiver = MidiSystem.getReceiver();
-                if (isReceiverValid(defaultReceiver)) {
-                    logger.info("Using default system receiver as fallback for: {}", deviceName);
-                    receiverCache.put(deviceName, defaultReceiver);
-                    return defaultReceiver;
-                }
-            } catch (Exception e) {
-                logger.error("Failed to get default system receiver: {}", e.getMessage());
-            }
-            
+        } catch (Exception e) {
+            logger.error("Failed to open device {}: {}", deviceName, e.getMessage());
             return null;
-        } finally {
-            reconnectionInProgress.put(deviceName, false);
+        }
+        
+        // Get receiver from device
+        try {
+            if (device.getMaxReceivers() != 0) {
+                receiver = device.getReceiver();
+                receiverCache.put(deviceName, receiver);
+                logger.debug("Created new receiver for device: {}", deviceName);
+                return receiver;
+            } else {
+                logger.warn("Device does not support receivers: {}", deviceName);
+                return null;
+            }
+        } catch (Exception e) {
+            logger.error("Failed to get receiver for {}: {}", deviceName, e.getMessage());
+            return null;
         }
     }
     

@@ -10,10 +10,12 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 
 import javax.sound.midi.MidiDevice;
+import javax.sound.midi.Receiver;
 
 import com.angrysurfer.core.redis.MelodicSequenceDataHelper;
 import com.angrysurfer.core.redis.RedisService;
 
+import com.angrysurfer.core.service.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -28,10 +30,6 @@ import com.angrysurfer.core.event.PatternSwitchEvent;
 import com.angrysurfer.core.model.Direction;
 import com.angrysurfer.core.model.InstrumentWrapper;
 import com.angrysurfer.core.model.Player;
-import com.angrysurfer.core.service.DrumSequencerManager;
-import com.angrysurfer.core.service.InternalSynthManager;
-import com.angrysurfer.core.service.PlayerManager;
-import com.angrysurfer.core.service.SessionManager;
 
 import lombok.Getter;
 import lombok.Setter;
@@ -1566,6 +1564,12 @@ public class DrumSequencer implements IBusListener {
             return;
         }
 
+        // Add this new command before other checks
+        if (Commands.REPAIR_MIDI_CONNECTIONS.equals(cmd.getCommand())) {
+            repairMidiConnections();
+            return;
+        }
+
         // Add this before any other checks - ensure timing updates are processed
         if (Commands.TIMING_UPDATE.equals(cmd.getCommand()) && cmd.getData() instanceof TimingUpdate) {
             // CRITICAL: Process the tick without additional filtering
@@ -1579,6 +1583,9 @@ public class DrumSequencer implements IBusListener {
                 isPlaying = true;
                 masterTempo = SessionManager.getInstance().getActiveSession().getTicksPerBeat();
                 reset();
+                
+                // Add this line to ensure connections when playback starts
+                ensureDeviceConnections();
             }
             case Commands.TRANSPORT_STOP -> {
                 isPlaying = false;
@@ -1846,4 +1853,168 @@ public class DrumSequencer implements IBusListener {
         }
     }
 
+    /**
+     * Ensure all drum players have valid device connections.
+     * This should be called during initialization and whenever
+     * the device configuration changes.
+     */
+    public void ensureDeviceConnections() {
+        logger.info("Ensuring all drum pads have valid device connections");
+        InternalSynthManager synthManager = InternalSynthManager.getInstance();
+        
+        // Make sure the internal synth is initialized
+        if (!synthManager.checkInternalSynthAvailable()) {
+            synthManager.initializeSynthesizer();
+            this.usingInternalSynth = true;
+            logger.info("Initialized internal synth for drum sequencer");
+        }
+        
+        // Connect each drum pad to a valid device
+        for (int i = 0; i < DRUM_PAD_COUNT; i++) {
+            Player player = players[i];
+            if (player == null) {
+                continue;
+            }
+            
+            // Ensure channel is set correctly
+            player.setChannel(MIDI_DRUM_CHANNEL);
+            
+            // Ensure instrument is set
+            if (player.getInstrument() == null) {
+                player.setInstrument(instruments[i]);
+                if (player.getInstrument() != null) {
+                    player.getInstrument().setChannel(MIDI_DRUM_CHANNEL);
+                    player.getInstrument().setReceivedChannels(new Integer[] { MIDI_DRUM_CHANNEL });
+                }
+            }
+            
+            // Ensure instrument has a valid device
+            if (player.getInstrument() != null && 
+                (player.getInstrument().getDevice() == null || 
+                 !player.getInstrument().getDevice().isOpen())) {
+                
+                // Try to get the device specified by the instrument
+                MidiDevice device = null;
+                if (player.getInstrument().getDeviceName() != null) {
+                    device = DeviceManager.getInstance().acquireDevice(
+                        player.getInstrument().getDeviceName());
+                }
+                
+                // If that fails, try to get the default device
+                if (device == null || !device.isOpen()) {
+                    device = DeviceManager.getInstance().getDefaultOutputDevice();
+                    if (device != null) {
+                        player.getInstrument().setDeviceName(device.getDeviceInfo().getName());
+                        logger.debug("Connected drum {} to default device {}", 
+                            i, device.getDeviceInfo().getName());
+                    }
+                }
+                
+                // If we have a device, set it on the instrument
+                if (device != null) {
+                    player.getInstrument().setDevice(device);
+                    // Also ensure the instrument has a receiver
+                    if (device.isOpen())
+                    try {
+                        if (player.getInstrument().getReceiver() == null) {
+                            // player.getInstrument().setReceiver(device.getReceiver());
+                            logger.info("Found receiver for drum {}", i);
+                        }
+                    } catch (Exception e) {
+                        logger.error("Failed to get receiver for drum {}: {}", i, e.getMessage());
+                    }
+                    else {
+                        logger.error("device not open for for drum {}", i);
+                    }
+                } else {
+                    // If we still don't have a device, try the Gervill synth specifically
+                    try {
+                        device = DeviceManager.getInstance().getMidiDevice("Gervill");
+                        if (device != null) {
+                            if (!device.isOpen()) {
+                                device.open();
+                            }
+                            player.getInstrument().setDevice(device);
+                            player.getInstrument().setDeviceName("Gervill");
+                            // player.getInstrument().setReceiver(device.getReceiver());
+                            logger.info("Connected drum {} to Gervill synthesizer", i);
+                        } else {
+                            logger.warn("Could not find Gervill synthesizer for drum {}", i);
+                        }
+                    } catch (Exception e) {
+                        logger.error("Failed to connect to Gervill for drum {}: {}", i, e.getMessage());
+                    }
+                }
+            }
+            
+            // Save the player to persist these changes
+            PlayerManager.getInstance().savePlayerProperties(player);
+        }
+        
+        logger.info("Finished ensuring device connections for drum pads");
+    }
+
+    /**
+     * Attempts to repair MIDI connections if they have been lost
+     * This can be called when playback is not producing sound
+     */
+    public void repairMidiConnections() {
+        logger.info("Attempting to repair MIDI connections for drum players");
+        
+        // First clear all existing receivers
+        ReceiverManager.getInstance().clearAllReceivers();
+        
+        // Then try to reconnect all devices
+        for (int i = 0; i < DRUM_PAD_COUNT; i++) {
+            Player player = players[i];
+            if (player == null || player.getInstrument() == null) {
+                continue;
+            }
+            
+            InstrumentWrapper instrument = player.getInstrument();
+            String deviceName = instrument.getDeviceName();
+            
+            if (deviceName == null || deviceName.isEmpty()) {
+                // Try to assign a device name
+                deviceName = "Gervill"; // Default to Gervill
+                instrument.setDeviceName(deviceName);
+            }
+            
+            try {
+                // Get a fresh device and receiver
+                MidiDevice device = DeviceManager.getMidiDevice(deviceName);
+                if (device != null) {
+                    if (!device.isOpen()) {
+                        device.open();
+                    }
+                    instrument.setDevice(device);
+                    
+                    // Get a fresh receiver from the ReceiverManager
+                    Receiver receiver = ReceiverManager.getInstance()
+                        .getOrCreateReceiver(deviceName, device);
+                    if (receiver != null) {
+                        // instrument.setReceiver(receiver);
+                        logger.info("Successfully reconnected drum {} to device {}", 
+                            i, deviceName);
+                    } else {
+                        logger.warn("Failed to get receiver for drum {}", i);
+                    }
+                } else {
+                    logger.warn("Could not get device {} for drum {}", deviceName, i);
+                }
+            } catch (Exception e) {
+                logger.error("Error reconnecting drum {}: {}", i, e.getMessage());
+            }
+        }
+        
+        // Force update instrument settings
+        for (int i = 0; i < DRUM_PAD_COUNT; i++) {
+            if (players[i] != null && players[i].getInstrument() != null) {
+                // Apply instrument settings (will send program change)
+                PlayerManager.getInstance().applyInstrumentPreset(players[i]);
+            }
+        }
+        
+        logger.info("MIDI connection repair completed");
+    }
 }

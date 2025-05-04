@@ -9,7 +9,9 @@ import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 import javax.sound.midi.MidiDevice;
+import javax.sound.midi.Receiver;
 
+import com.angrysurfer.core.service.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -27,10 +29,6 @@ import com.angrysurfer.core.model.Note;
 import com.angrysurfer.core.model.Player;
 import com.angrysurfer.core.model.Session;
 import com.angrysurfer.core.redis.RedisService;
-import com.angrysurfer.core.service.DeviceManager;
-import com.angrysurfer.core.service.InstrumentManager;
-import com.angrysurfer.core.service.PlayerManager;
-import com.angrysurfer.core.service.SessionManager;
 
 import lombok.Getter;
 import lombok.Setter;
@@ -928,6 +926,11 @@ public class MelodicSequencer implements IBusListener {
             return;
         }
 
+        if (Commands.REPAIR_MIDI_CONNECTIONS.equals(action.getCommand())) {
+            repairMidiConnections();
+            return;
+        }
+
         switch (action.getCommand()) {
             case Commands.TIMING_UPDATE -> {
                 if (isPlaying && action.getData() instanceof TimingUpdate update) {
@@ -984,5 +987,73 @@ public class MelodicSequencer implements IBusListener {
                 result.size(), rawValues.length);
 
         return result;
+    }
+
+    /**
+     * Attempts to repair MIDI connections if they have been lost
+     * This can be called when playback is not producing sound
+     */
+    public void repairMidiConnections() {
+        logger.info("Attempting to repair MIDI connections for melodic sequencer {}", id);
+        
+        try {
+            if (player == null) {
+                logger.warn("No player for sequencer {}, creating", id);
+                initializePlayer();
+                return;
+            }
+            
+            if (player.getInstrument() == null) {
+                logger.warn("Player has no instrument, initializing...");
+                PlayerManager.getInstance().initializeInternalInstrument(player, true);
+            }
+            
+            InstrumentWrapper instrument = player.getInstrument();
+            if (instrument == null) {
+                logger.error("Failed to initialize instrument");
+                return;
+            }
+            
+            String deviceName = instrument.getDeviceName();
+            if (deviceName == null || deviceName.isEmpty()) {
+                deviceName = "Gervill"; // Default to Gervill
+                instrument.setDeviceName(deviceName);
+            }
+            
+            // Try to get a fresh device and receiver
+            MidiDevice device = DeviceManager.getMidiDevice(deviceName);
+            if (device == null) {
+                device = DeviceManager.getInstance().getDefaultOutputDevice();
+                if (device != null) {
+                    deviceName = device.getDeviceInfo().getName();
+                    instrument.setDeviceName(deviceName);
+                }
+            }
+            
+            if (device != null) {
+                if (!device.isOpen()) {
+                    device.open();
+                }
+                instrument.setDevice(device);
+                
+                Receiver receiver = ReceiverManager.getInstance().getOrCreateReceiver(deviceName, device);
+                if (receiver != null) {
+                    //instrument.setReceiver(receiver);
+                    logger.info("Successfully reconnected sequencer {} to device {}", id, deviceName);
+                    
+                    // Apply instrument settings
+                    PlayerManager.getInstance().applyInstrumentPreset(player);
+                } else {
+                    logger.warn("Failed to get receiver for sequencer {}", id);
+                }
+            } else {
+                logger.warn("Could not get device for sequencer {}", id);
+            }
+            
+            // Save changes
+            PlayerManager.getInstance().savePlayerProperties(player);
+        } catch (Exception e) {
+            logger.error("Error repairing melodic sequencer {}: {}", id, e.getMessage());
+        }
     }
 }

@@ -5,7 +5,13 @@ import java.awt.Component;
 import java.awt.FlowLayout;
 import java.awt.Font;
 import java.util.Arrays;
+import java.util.List;
 
+import javax.sound.midi.MidiDevice;
+import javax.sound.midi.MidiSystem;
+import javax.sound.midi.Receiver;
+import javax.sound.midi.ShortMessage;
+import javax.sound.midi.Synthesizer;
 import javax.swing.BorderFactory;
 import javax.swing.JButton;
 import javax.swing.JDialog;
@@ -19,6 +25,9 @@ import javax.swing.SwingUtilities;
 
 import com.angrysurfer.beats.diagnostic.*;
 import com.angrysurfer.core.api.CommandBus;
+import com.angrysurfer.core.api.Commands;
+import com.angrysurfer.core.service.DeviceManager;
+import com.angrysurfer.core.service.ReceiverManager;
 
 /**
  * Singleton manager for application diagnostics
@@ -38,6 +47,12 @@ public class DiagnosticsManager {
     private final InstrumentDiagnosticsHelper instrumentHelper;
     private final SessionDiagnosticsHelper sessionHelper;
     private final UserConfigDiagnosticsHelper configHelper;
+    private final ChannelManagerDiagnosticsHelper channelHelper;
+    private final DeviceManagerDiagnosticsHelper deviceHelper;
+    private final ReceiverManagerDiagnosticsHelper receiverHelper;
+    private final PlayerManagerDiagnosticsHelper playerManagerHelper;
+    private final SessionManagerDiagnosticsHelper sessionManagerHelper;
+    private final UserConfigManagerDiagnosticsHelper userConfigManagerHelper;
     
     /**
      * Private constructor for singleton pattern
@@ -53,6 +68,12 @@ public class DiagnosticsManager {
         this.instrumentHelper = new InstrumentDiagnosticsHelper();
         this.sessionHelper = new SessionDiagnosticsHelper();
         this.configHelper = new UserConfigDiagnosticsHelper();
+        this.channelHelper = new ChannelManagerDiagnosticsHelper();
+        this.deviceHelper = new DeviceManagerDiagnosticsHelper();
+        this.receiverHelper = new ReceiverManagerDiagnosticsHelper();
+        this.playerManagerHelper = new PlayerManagerDiagnosticsHelper();
+        this.sessionManagerHelper = new SessionManagerDiagnosticsHelper();
+        this.userConfigManagerHelper = new UserConfigManagerDiagnosticsHelper();
     }
     
     /**
@@ -158,7 +179,7 @@ public class DiagnosticsManager {
     public void runAllDiagnostics() {
         // Create splash screen for progress reporting
         DiagnosticsSplashScreen splash = new DiagnosticsSplashScreen("Running Diagnostics", "Initializing...");
-        splash.setMaxProgress(7); // 7 major test categories
+        splash.setMaxProgress(13); // Updated for new tests
         splash.setVisible(true);
         
         // Create a comprehensive log builder
@@ -217,11 +238,50 @@ public class DiagnosticsManager {
                 masterLog.addSection("7. MIDI Sound Test");
                 masterLog.addLine(soundLog.buildWithoutHeader());
                 
+                // Channel Manager test
+                splash.setProgress(7, "Testing Channel Manager...");
+                DiagnosticLogBuilder channelLog = testChannelManager();
+                masterLog.addSection("8. Channel Manager Diagnostics");
+                masterLog.addLine(channelLog.buildWithoutHeader());
+                
+                // Device Manager test
+                splash.setProgress(8, "Testing Device Manager...");
+                DiagnosticLogBuilder deviceLog = testDeviceManager();
+                masterLog.addSection("9. Device Manager Diagnostics");
+                masterLog.addLine(deviceLog.buildWithoutHeader());
+                
+                // Receiver Manager test
+                splash.setProgress(9, "Testing Receiver Manager...");
+                DiagnosticLogBuilder receiverLog = testReceiverManager();
+                masterLog.addSection("10. Receiver Manager Diagnostics");
+                masterLog.addLine(receiverLog.buildWithoutHeader());
+                
+                // PlayerManager test
+                splash.setProgress(10, "Testing PlayerManager...");
+                DiagnosticLogBuilder playerManagerLog = testPlayerManager();
+                masterLog.addSection("11. PlayerManager Diagnostics");
+                masterLog.addLine(playerManagerLog.buildWithoutHeader());
+                
+                // SessionManager test
+                splash.setProgress(11, "Testing SessionManager...");
+                DiagnosticLogBuilder sessionManagerLog = testSessionManager();
+                masterLog.addSection("12. SessionManager Diagnostics");
+                masterLog.addLine(sessionManagerLog.buildWithoutHeader());
+                
+                // UserConfigManager test
+                splash.setProgress(12, "Testing UserConfigManager...");
+                DiagnosticLogBuilder userConfigManagerLog = testUserConfigManager();
+                masterLog.addSection("13. UserConfigManager Diagnostics");
+                masterLog.addLine(userConfigManagerLog.buildWithoutHeader());
+                
                 // Complete
-                splash.setProgress(7, "Completed all diagnostics");
+                splash.setProgress(13, "Completed all diagnostics");
                 
                 // Compile errors and warnings from all logs
-                for (DiagnosticLogBuilder log : Arrays.asList(redisLog, midiLog, sessionLog, configLog, sequencerLog, playerLog, soundLog)) {
+                for (DiagnosticLogBuilder log : Arrays.asList(
+                        redisLog, midiLog, sessionLog, configLog, sequencerLog, 
+                        playerLog, soundLog, channelLog, deviceLog, receiverLog,
+                        playerManagerLog, sessionManagerLog, userConfigManagerLog)) {
                     if (log != null) {
                         for (String error : log.getErrors()) {
                             masterLog.addError(error);
@@ -325,5 +385,204 @@ public class DiagnosticsManager {
      */
     public DiagnosticLogBuilder testUserConfig() {
         return configHelper.testUserConfigDiagnostics();
+    }
+    
+    /**
+     * Test channel manager functionality
+     */
+    public DiagnosticLogBuilder testChannelManager() {
+        return channelHelper.testChannelManager();
+    }
+
+    /**
+     * Test device manager functionality
+     */
+    public DiagnosticLogBuilder testDeviceManager() {
+        return deviceHelper.testDeviceManager();
+    }
+
+    /**
+     * Test a specific MIDI device
+     */
+    public DiagnosticLogBuilder testSpecificDevice(String deviceName) {
+        return deviceHelper.testSpecificDevice(deviceName);
+    }
+
+    /**
+     * Test receiver manager functionality
+     */
+    public DiagnosticLogBuilder testReceiverManager() {
+        return receiverHelper.testReceiverManager();
+    }
+
+    /**
+     * Test receiver reliability under load
+     */
+    public DiagnosticLogBuilder testReceiverReliability() {
+        return receiverHelper.testReceiverReliability();
+    }
+
+    /**
+     * Test PlayerManager functionality
+     */
+    public DiagnosticLogBuilder testPlayerManager() {
+        return playerManagerHelper.testPlayerManager();
+    }
+
+    /**
+     * Test a specific player
+     */
+    public DiagnosticLogBuilder testSpecificPlayer(Long playerId) {
+        return playerManagerHelper.testSpecificPlayer(playerId);
+    }
+
+    /**
+     * Test SessionManager functionality
+     */
+    public DiagnosticLogBuilder testSessionManager() {
+        return sessionManagerHelper.testSessionManager();
+    }
+
+    /**
+     * Test session persistence
+     */
+    public DiagnosticLogBuilder testSessionPersistence() {
+        return sessionManagerHelper.testSessionPersistence();
+    }
+
+    /**
+     * Test UserConfigManager functionality
+     */
+    public DiagnosticLogBuilder testUserConfigManager() {
+        return userConfigManagerHelper.testUserConfigManager();
+    }
+
+    /**
+     * Test config transaction support
+     */
+    public DiagnosticLogBuilder testConfigTransactions() {
+        return userConfigManagerHelper.testConfigTransactions();
+    }
+
+    /**
+     * Diagnoses and attempts to repair MIDI device connections
+     * across the entire application
+     */
+    public DiagnosticLogBuilder repairMidiConnections() {
+        DiagnosticLogBuilder log = new DiagnosticLogBuilder("MIDI Repair Utility");
+        
+        try {
+            log.addSection("MIDI Device Check");
+            
+            // Check available devices
+            DeviceManager deviceManager = DeviceManager.getInstance();
+            List<String> deviceNames = deviceManager.getAvailableOutputDeviceNames();
+            
+            if (deviceNames.isEmpty()) {
+                log.addWarning("No MIDI output devices found");
+                
+                // Try to initialize the Gervill synthesizer
+                log.addLine("Attempting to initialize Gervill synthesizer...");
+                boolean success = deviceManager.ensureGervillAvailable();
+                log.addLine("Gervill initialization " + (success ? "successful" : "failed"));
+                
+                // Check again
+                deviceNames = deviceManager.getAvailableOutputDeviceNames();
+                log.addLine("Available devices after initialization: " + deviceNames.size());
+            } else {
+                log.addLine("Found " + deviceNames.size() + " MIDI output devices:");
+                for (String name : deviceNames) {
+                    log.addIndentedLine(name, 1);
+                }
+            }
+            
+            // Check Gervill specifically
+            log.addSection("Checking Gervill Status");
+            MidiDevice gervill = DeviceManager.getMidiDevice("Gervill");
+            if (gervill != null) {
+                log.addLine("Gervill synthesizer found");
+                if (!gervill.isOpen()) {
+                    try {
+                        gervill.open();
+                        log.addLine("Opened Gervill synthesizer");
+                    } catch (Exception e) {
+                        log.addError("Failed to open Gervill: " + e.getMessage());
+                    }
+                } else {
+                    log.addLine("Gervill is already open");
+                }
+            } else {
+                log.addWarning("Gervill synthesizer not found");
+                log.addLine("Attempting to initialize the synthesizer...");
+                try {
+                    Synthesizer synth = MidiSystem.getSynthesizer();
+                    synth.open();
+                    log.addLine("Synthesizer initialized");
+                    
+                    // Check again
+                    gervill = DeviceManager.getMidiDevice("Gervill");
+                    if (gervill != null) {
+                        log.addLine("Gervill synthesizer is now available");
+                    } else {
+                        log.addWarning("Gervill still not available after initialization");
+                    }
+                } catch (Exception e) {
+                    log.addError("Failed to initialize synthesizer: " + e.getMessage());
+                }
+            }
+            
+            // Clear receiver cache
+            log.addSection("Clearing Receiver Cache");
+            ReceiverManager receiverManager = ReceiverManager.getInstance();
+            receiverManager.clearAllReceivers();
+            log.addLine("Receiver cache cleared");
+            
+            // Test a receiver
+            log.addSection("Testing Receiver Creation");
+            MidiDevice device = deviceManager.getDefaultOutputDevice();
+            if (device != null) {
+                log.addLine("Got default device: " + device.getDeviceInfo().getName());
+                try {
+                    Receiver receiver = receiverManager.getOrCreateReceiver(
+                        device.getDeviceInfo().getName(), device);
+                    if (receiver != null) {
+                        log.addLine("Successfully created receiver");
+                        
+                        // Test the receiver with a note-on message
+                        try {
+                            ShortMessage msg = new ShortMessage();
+                            msg.setMessage(ShortMessage.NOTE_ON, 0, 60, 64);
+                            receiver.send(msg, -1);
+                            log.addLine("Successfully sent test message to receiver");
+                            
+                            // Send note-off after a short delay
+                            Thread.sleep(500);
+                            msg.setMessage(ShortMessage.NOTE_OFF, 0, 60, 0);
+                            receiver.send(msg, -1);
+                        } catch (Exception e) {
+                            log.addError("Failed to send test message: " + e.getMessage());
+                        }
+                    } else {
+                        log.addError("Failed to create receiver");
+                    }
+                } catch (Exception e) {
+                    log.addError("Error testing receiver: " + e.getMessage());
+                }
+            } else {
+                log.addError("No default device available for testing");
+            }
+            
+            // Send command to repair connections
+            log.addSection("Repairing Instrument Connections");
+            log.addLine("Sending repair command to sequencers...");
+            CommandBus.getInstance().publish(Commands.REPAIR_MIDI_CONNECTIONS, this);
+            log.addLine("Repair command sent");
+            
+            log.addLine("\nRepair process complete. If MIDI issues persist, try restarting the application.");
+        } catch (Exception e) {
+            log.addException(e);
+        }
+        
+        return log;
     }
 }

@@ -35,6 +35,7 @@ public class DetailedDiagnosticPanel extends JPanel {
         
         // Create the log area with monospaced font for better readability
         logArea = new JTextArea(25, 80);
+        logArea.setBackground(Color.WHITE);
         logArea.setFont(new Font(Font.MONOSPACED, Font.PLAIN, 12));
         logArea.setEditable(false);
         logArea.setLineWrap(true);

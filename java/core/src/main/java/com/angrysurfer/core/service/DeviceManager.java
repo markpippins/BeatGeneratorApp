@@ -14,6 +14,7 @@ import javax.sound.midi.MidiSystem;
 import javax.sound.midi.MidiUnavailableException;
 import javax.sound.midi.Receiver;
 import javax.sound.midi.ShortMessage;
+import javax.sound.midi.Synthesizer;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -305,6 +306,106 @@ public class DeviceManager implements IBusListener {
                 device.close();
             }
             activeDevices.remove(name);
+        }
+    }
+
+    /**
+     * Try to ensure the Gervill synthesizer is available
+     * @return true if Gervill is available and open
+     */
+    public boolean ensureGervillAvailable() {
+        logger.info("Ensuring Gervill synthesizer is available");
+        try {
+            MidiDevice gervill = getMidiDevice("Gervill");
+            if (gervill == null) {
+                // Try to create the Gervill synthesizer
+                try {
+                    MidiSystem.getSynthesizer().open();
+                    gervill = getMidiDevice("Gervill");
+                    logger.info("Initialized Gervill synthesizer");
+                } catch (Exception e) {
+                    logger.error("Failed to initialize Gervill synthesizer: {}", e.getMessage());
+                    return false;
+                }
+            }
+            
+            if (gervill != null && !gervill.isOpen()) {
+                try {
+                    gervill.open();
+                    logger.info("Opened Gervill synthesizer");
+                } catch (Exception e) {
+                    logger.error("Failed to open Gervill synthesizer: {}", e.getMessage());
+                    return false;
+                }
+            }
+            
+            return gervill != null && gervill.isOpen();
+        } catch (Exception e) {
+            logger.error("Error ensuring Gervill is available: {}", e.getMessage());
+            return false;
+        }
+    }
+
+    /**
+     * Gets a default MIDI output device, with preference for Gervill.
+     * @return A MIDI device, or null if none available
+     */
+    public MidiDevice getDefaultOutputDevice() {
+        try {
+            // First, try to get Gervill
+            MidiDevice device = getMidiDevice("Gervill");
+            if (device != null) {
+                if (!device.isOpen()) {
+                    try {
+                        device.open();
+                    } catch (Exception e) {
+                        logger.warn("Could not open Gervill: {}", e.getMessage());
+                    }
+                }
+                if (device.isOpen()) {
+                    return device;
+                }
+            }
+            
+            // If Gervill not available, try any other device
+            List<String> devices = getAvailableOutputDeviceNames();
+            for (String name : devices) {
+                try {
+                    device = getMidiDevice(name);
+                    if (device != null && 
+                        device.getMaxReceivers() != 0 &&
+                        !name.contains("Real Time Sequencer")) {
+                        
+                        if (!device.isOpen()) {
+                            device.open();
+                        }
+                        
+                        if (device.isOpen()) {
+                            logger.info("Using {} as default MIDI device", name);
+                            return device;
+                        }
+                    }
+                } catch (Exception e) {
+                    logger.debug("Failed to open device {}: {}", name, e.getMessage());
+                }
+            }
+            
+            // Last resort - try to get the Java Synthesizer
+            try {
+                Synthesizer synth = MidiSystem.getSynthesizer();
+                if (!synth.isOpen()) {
+                    synth.open();
+                }
+                logger.info("Using Java Synthesizer as fallback device");
+                return synth;
+            } catch (Exception e) {
+                logger.error("Could not open Java Synthesizer: {}", e.getMessage());
+            }
+            
+            return null;
+        } catch (Exception e) {
+            logger.error("Error getting default output device: {}", e.getMessage());
+            return null;
         }
     }
 }

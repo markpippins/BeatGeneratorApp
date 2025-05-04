@@ -260,6 +260,228 @@ public class MenuBar extends JMenuBar {
         });
         diagnosticsMenu.add(playerInstrumentTest);
 
+        // Add channel manager diagnostics
+        JMenuItem channelManagerTest = new JMenuItem("Channel Manager Test");
+        channelManagerTest.addActionListener(e -> {
+            // Create splash screen
+            DiagnosticsSplashScreen splash = new DiagnosticsSplashScreen("Channel Manager Test", "Testing channel allocation...");
+            splash.setVisible(true);
+            
+            // Run in background thread
+            new Thread(() -> {
+                try {
+                    DiagnosticLogBuilder log = diagnosticsManager.testChannelManager();
+                    splash.setVisible(false);
+                    diagnosticsManager.showDiagnosticLogDialog(log);
+                } catch (Exception ex) {
+                    splash.setVisible(false);
+                    DiagnosticsManager.showError("Channel Manager Test",
+                        "Error testing channel manager: " + ex.getMessage());
+                }
+            }).start();
+        });
+        diagnosticsMenu.add(channelManagerTest);
+
+        // Add device manager diagnostics
+        JMenuItem deviceManagerTest = new JMenuItem("Device Manager Test");
+        deviceManagerTest.addActionListener(e -> {
+            // Create splash screen
+            DiagnosticsSplashScreen splash = new DiagnosticsSplashScreen("Device Manager Test", "Testing MIDI devices...");
+            splash.setVisible(true);
+            
+            // Run in background thread
+            new Thread(() -> {
+                try {
+                    DiagnosticLogBuilder log = diagnosticsManager.testDeviceManager();
+                    splash.setVisible(false);
+                    diagnosticsManager.showDiagnosticLogDialog(log);
+                } catch (Exception ex) {
+                    splash.setVisible(false);
+                    DiagnosticsManager.showError("Device Manager Test",
+                        "Error testing device manager: " + ex.getMessage());
+                }
+            }).start();
+        });
+        diagnosticsMenu.add(deviceManagerTest);
+
+        // Add receiver manager diagnostics
+        JMenuItem receiverManagerTest = new JMenuItem("Receiver Manager Test");
+        receiverManagerTest.addActionListener(e -> {
+            // Create splash screen
+            DiagnosticsSplashScreen splash = new DiagnosticsSplashScreen("Receiver Manager Test", "Testing MIDI receivers...");
+            splash.setVisible(true);
+            
+            // Run in background thread
+            new Thread(() -> {
+                try {
+                    DiagnosticLogBuilder log = diagnosticsManager.testReceiverManager();
+                    splash.setVisible(false);
+                    diagnosticsManager.showDiagnosticLogDialog(log);
+                } catch (Exception ex) {
+                    splash.setVisible(false);
+                    DiagnosticsManager.showError("Receiver Manager Test",
+                        "Error testing receiver manager: " + ex.getMessage());
+                }
+            }).start();
+        });
+        diagnosticsMenu.add(receiverManagerTest);
+
+        // Add receiver reliability test
+        JMenuItem receiverReliabilityTest = new JMenuItem("Receiver Reliability Test");
+        receiverReliabilityTest.addActionListener(e -> {
+            // Create splash screen
+            DiagnosticsSplashScreen splash = new DiagnosticsSplashScreen("Receiver Reliability", "Testing MIDI message throughput...");
+            splash.setVisible(true);
+            
+            // Run in background thread
+            new Thread(() -> {
+                try {
+                    DiagnosticLogBuilder log = diagnosticsManager.testReceiverReliability();
+                    splash.setVisible(false);
+                    diagnosticsManager.showDiagnosticLogDialog(log);
+                } catch (Exception ex) {
+                    splash.setVisible(false);
+                    DiagnosticsManager.showError("Receiver Reliability Test",
+                        "Error testing receiver reliability: " + ex.getMessage());
+                }
+            }).start();
+        });
+        diagnosticsMenu.add(receiverReliabilityTest);
+
+        diagnosticsMenu.addSeparator();
+
+        // Add player manager diagnostics
+        JMenuItem playerManagerTest = new JMenuItem("Player Manager Test");
+        playerManagerTest.addActionListener(e -> {
+            // Create splash screen
+            DiagnosticsSplashScreen splash = new DiagnosticsSplashScreen("Player Manager Test", "Analyzing player database...");
+            splash.setVisible(true);
+            
+            // Run in background thread
+            new Thread(() -> {
+                try {
+                    DiagnosticLogBuilder log = diagnosticsManager.testPlayerManager();
+                    splash.setVisible(false);
+                    diagnosticsManager.showDiagnosticLogDialog(log);
+                } catch (Exception ex) {
+                    splash.setVisible(false);
+                    DiagnosticsManager.showError("Player Manager Test",
+                        "Error testing player manager: " + ex.getMessage());
+                }
+            }).start();
+        });
+        diagnosticsMenu.add(playerManagerTest);
+
+        // Add session manager diagnostics
+        JMenuItem sessionManagerTest = new JMenuItem("Session Manager Test");
+        sessionManagerTest.addActionListener(e -> {
+            // Create splash screen
+            DiagnosticsSplashScreen splash = new DiagnosticsSplashScreen("Session Manager Test", "Analyzing session database...");
+            splash.setVisible(true);
+            
+            // Run in background thread
+            new Thread(() -> {
+                try {
+                    DiagnosticLogBuilder log = diagnosticsManager.testSessionManager();
+                    splash.setVisible(false);
+                    diagnosticsManager.showDiagnosticLogDialog(log);
+                } catch (Exception ex) {
+                    splash.setVisible(false);
+                    DiagnosticsManager.showError("Session Manager Test",
+                        "Error testing session manager: " + ex.getMessage());
+                }
+            }).start();
+        });
+        diagnosticsMenu.add(sessionManagerTest);
+
+        // Add session persistence diagnostics
+        JMenuItem sessionPersistenceTest = new JMenuItem("Session Persistence Test");
+        sessionPersistenceTest.addActionListener(e -> {
+            // Create splash screen
+            DiagnosticsSplashScreen splash = new DiagnosticsSplashScreen("Session Persistence Test", "Testing session save/load...");
+            splash.setVisible(true);
+            
+            // Run in background thread
+            new Thread(() -> {
+                try {
+                    DiagnosticLogBuilder log = diagnosticsManager.testSessionPersistence();
+                    splash.setVisible(false);
+                    diagnosticsManager.showDiagnosticLogDialog(log);
+                } catch (Exception ex) {
+                    splash.setVisible(false);
+                    DiagnosticsManager.showError("Session Persistence Test",
+                        "Error testing session persistence: " + ex.getMessage());
+                }
+            }).start();
+        });
+        diagnosticsMenu.add(sessionPersistenceTest);
+
+        // Add user config manager diagnostics
+        JMenuItem userConfigManagerTest = new JMenuItem("User Config Manager Test");
+        userConfigManagerTest.addActionListener(e -> {
+            // Create splash screen
+            DiagnosticsSplashScreen splash = new DiagnosticsSplashScreen("User Config Manager Test", "Testing configuration manager...");
+            splash.setVisible(true);
+            
+            // Run in background thread
+            new Thread(() -> {
+                try {
+                    DiagnosticLogBuilder log = diagnosticsManager.testUserConfigManager();
+                    splash.setVisible(false);
+                    diagnosticsManager.showDiagnosticLogDialog(log);
+                } catch (Exception ex) {
+                    splash.setVisible(false);
+                    DiagnosticsManager.showError("User Config Manager Test",
+                        "Error testing user config manager: " + ex.getMessage());
+                }
+            }).start();
+        });
+        diagnosticsMenu.add(userConfigManagerTest);
+
+        // Add config transaction diagnostics
+        JMenuItem configTransactionTest = new JMenuItem("Config Transaction Test");
+        configTransactionTest.addActionListener(e -> {
+            // Create splash screen
+            DiagnosticsSplashScreen splash = new DiagnosticsSplashScreen("Config Transaction Test", "Testing configuration transactions...");
+            splash.setVisible(true);
+            
+            // Run in background thread
+            new Thread(() -> {
+                try {
+                    DiagnosticLogBuilder log = diagnosticsManager.testConfigTransactions();
+                    splash.setVisible(false);
+                    diagnosticsManager.showDiagnosticLogDialog(log);
+                } catch (Exception ex) {
+                    splash.setVisible(false);
+                    DiagnosticsManager.showError("Config Transaction Test",
+                        "Error testing config transactions: " + ex.getMessage());
+                }
+            }).start();
+        });
+        diagnosticsMenu.add(configTransactionTest);
+
+        // Add MIDI repair utility
+        JMenuItem repairMidiItem = new JMenuItem("Repair MIDI Connections");
+        repairMidiItem.addActionListener(e -> {
+            // Create splash screen
+            DiagnosticsSplashScreen splash = new DiagnosticsSplashScreen("MIDI Repair Utility", "Repairing MIDI connections...");
+            splash.setVisible(true);
+            
+            // Run in background thread
+            new Thread(() -> {
+                try {
+                    DiagnosticLogBuilder log = diagnosticsManager.repairMidiConnections();
+                    splash.setVisible(false);
+                    diagnosticsManager.showDiagnosticLogDialog(log);
+                } catch (Exception ex) {
+                    splash.setVisible(false);
+                    DiagnosticsManager.showError("MIDI Repair", 
+                        "Error repairing MIDI connections: " + ex.getMessage());
+                }
+            }).start();
+        });
+        diagnosticsMenu.add(repairMidiItem);
+
         // Add the diagnostics menu to the menu bar
         optionsMenu.add(diagnosticsMenu);
 
