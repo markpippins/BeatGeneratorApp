@@ -21,7 +21,7 @@ import org.slf4j.LoggerFactory;
 import com.angrysurfer.beats.util.UIHelper;
 import com.angrysurfer.core.api.CommandBus;
 import com.angrysurfer.core.api.Commands;
-import com.angrysurfer.core.sequencer.MelodicScaleSelectionEvent;
+import com.angrysurfer.core.event.MelodicScaleSelectionEvent;
 import com.angrysurfer.core.sequencer.MelodicSequencer;
 import com.angrysurfer.core.sequencer.Scale;
 

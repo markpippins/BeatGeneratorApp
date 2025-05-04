@@ -26,11 +26,11 @@ import com.angrysurfer.core.api.Command;
 import com.angrysurfer.core.api.CommandBus;
 import com.angrysurfer.core.api.Commands;
 import com.angrysurfer.core.api.IBusListener;
+import com.angrysurfer.core.event.NoteEvent;
 import com.angrysurfer.core.model.Player;
 import com.angrysurfer.core.sequencer.DrumPadSelectionEvent;
 import com.angrysurfer.core.sequencer.DrumSequenceModifier;
 import com.angrysurfer.core.sequencer.DrumSequencer;
-import com.angrysurfer.core.sequencer.NoteEvent;
 import com.angrysurfer.core.sequencer.TimingDivision;
 import com.angrysurfer.core.service.DrumSequencerManager;
 

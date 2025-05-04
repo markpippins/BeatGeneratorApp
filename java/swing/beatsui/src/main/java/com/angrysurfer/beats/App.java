@@ -9,6 +9,7 @@ import javax.swing.UIManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.angrysurfer.beats.util.UIErrorHandler;
 import com.angrysurfer.core.Constants;
 import com.angrysurfer.core.api.Command;
 import com.angrysurfer.core.api.CommandBus;
@@ -21,9 +22,9 @@ import com.angrysurfer.core.redis.RedisService;
 import com.angrysurfer.core.service.DeviceManager;
 import com.angrysurfer.core.service.InstrumentManager;
 import com.angrysurfer.core.service.InternalSynthManager;
+import com.angrysurfer.core.service.PlayerManager;
 import com.angrysurfer.core.service.SessionManager;
 import com.angrysurfer.core.service.SoundbankManager;
-import com.angrysurfer.core.service.PlayerManager;
 import com.formdev.flatlaf.FlatLightLaf;
 
 public class App implements IBusListener {
@@ -117,8 +118,12 @@ public class App implements IBusListener {
 
     private void createAndShowGUI() {
         frame = new Frame();
+        
+        UIErrorHandler.initialize(frame);
+        
         frame.loadFrameState();
         frame.setVisible(true);
+        UIErrorHandler.initialize(frame);
     }
 
     @Override

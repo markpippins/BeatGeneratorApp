@@ -20,7 +20,10 @@ import javax.swing.SwingUtilities;
 
 import com.angrysurfer.beats.panel.player.ChannelComboPanel;
 import com.angrysurfer.beats.widget.*;
+import com.angrysurfer.core.event.MelodicScaleSelectionEvent;
 import com.angrysurfer.core.event.MelodicSequencerEvent;
+import com.angrysurfer.core.event.NoteEvent;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -36,10 +39,8 @@ import com.angrysurfer.core.api.IBusListener;
 import com.angrysurfer.core.model.Player;
 import com.angrysurfer.core.redis.MelodicSequenceDataHelper;
 import com.angrysurfer.core.redis.RedisService;
-import com.angrysurfer.core.sequencer.MelodicScaleSelectionEvent;
 import com.angrysurfer.core.sequencer.MelodicSequenceData;
 import com.angrysurfer.core.sequencer.MelodicSequencer;
-import com.angrysurfer.core.sequencer.NoteEvent;
 import com.angrysurfer.core.sequencer.TimingDivision;
 import com.angrysurfer.core.service.MelodicSequencerManager;
 import com.angrysurfer.core.service.PlayerManager;

@@ -5,6 +5,7 @@ import java.util.Set;
 import java.util.Arrays;
 
 import com.angrysurfer.core.sequencer.*;
+import com.angrysurfer.core.util.ErrorHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -258,11 +259,11 @@ public class RedisService implements IBusListener {
                         player.getInstrumentId(), player.getInstrument().getName());
             }
 
-            // Save the player
+            // Save the player - only call this once
             playerHelper.savePlayer(player);
 
             // If the player belongs to a session, update the session as well
-            Session session = sessionHelper.findSessionForPlayer(player); // Pass player, not player.getId()
+            Session session = sessionHelper.findSessionForPlayer(player);
             if (session != null) {
                 // Sets don't have index-based access, so we need to:
                 // 1. Remove the existing player with the same ID
@@ -276,6 +277,8 @@ public class RedisService implements IBusListener {
             }
         } catch (Exception e) {
             logger.error("Error saving player: {}", e.getMessage(), e);
+            // Use ErrorHandler instead of throwing exceptions directly
+            ErrorHandler.logError("RedisService", "Failed to save player", e);
         }
     }
 

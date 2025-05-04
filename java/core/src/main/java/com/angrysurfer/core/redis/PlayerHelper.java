@@ -5,19 +5,16 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import javax.swing.JOptionPane;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.angrysurfer.core.model.InstrumentWrapper;
 import com.angrysurfer.core.model.Note;
 import com.angrysurfer.core.model.Player;
 import com.angrysurfer.core.model.Rule;
 import com.angrysurfer.core.model.Session;
 import com.angrysurfer.core.model.Strike;
 import com.angrysurfer.core.service.SessionManager;
-import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.angrysurfer.core.util.ErrorHandler;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import lombok.Getter;
@@ -92,6 +89,7 @@ public class PlayerHelper {
             return null;
         } catch (Exception e) {
             logger.error("Error finding player: " + e.getMessage(), e);
+            ErrorHandler.logError("PlayerHelper", "Failed to find player", e);
             throw new RuntimeException("Failed to find player", e);
         }
     }
@@ -194,6 +192,17 @@ public class PlayerHelper {
         }
     }
 
+    public void deletePlayerById(Long id, String className) {
+        try (Jedis jedis = jedisPool.getResource()) {
+            String playerKey = getPlayerKey(className, id);
+            jedis.del(playerKey);
+            logger.info("Deleted player with ID: " + id);
+        } catch (Exception e) {
+            logger.error("Error deleting player: " + e.getMessage());
+            throw new RuntimeException("Failed to delete player", e);
+        }
+    }
+    
     public void deletePlayer(Player player) {
         try (Jedis jedis = jedisPool.getResource()) {
             // Remove player's rules

@@ -14,10 +14,10 @@ import com.angrysurfer.core.api.CommandBus;
 import com.angrysurfer.core.api.Commands;
 import com.angrysurfer.core.api.IBusListener;
 import com.angrysurfer.core.event.DrumStepUpdateEvent;
+import com.angrysurfer.core.event.NoteEvent;
 import com.angrysurfer.core.redis.RedisService;
 import com.angrysurfer.core.sequencer.DrumSequenceData;
 import com.angrysurfer.core.sequencer.DrumSequencer;
-import com.angrysurfer.core.sequencer.NoteEvent;
 
 /**
  * Manager for DrumSequencer instances.

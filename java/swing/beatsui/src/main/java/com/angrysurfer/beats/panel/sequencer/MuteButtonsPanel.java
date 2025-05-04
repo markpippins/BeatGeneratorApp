@@ -27,9 +27,9 @@ import com.angrysurfer.core.api.CommandBus;
 import com.angrysurfer.core.api.Commands;
 import com.angrysurfer.core.api.IBusListener;
 import com.angrysurfer.core.api.TimingBus;
+import com.angrysurfer.core.event.NoteEvent;
 import com.angrysurfer.core.sequencer.DrumSequencer;
 import com.angrysurfer.core.sequencer.MelodicSequencer;
-import com.angrysurfer.core.sequencer.NoteEvent;
 import com.angrysurfer.core.service.MelodicSequencerManager;
 
 /**

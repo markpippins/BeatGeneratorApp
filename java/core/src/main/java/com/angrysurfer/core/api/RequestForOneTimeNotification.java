@@ -1,4 +1,4 @@
-package com.angrysurfer.core.event;
+package com.angrysurfer.core.api;
 
 import lombok.Getter;
 import lombok.Setter;

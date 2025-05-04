@@ -10,14 +10,13 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.angrysurfer.core.config.UserConfig;
+import com.angrysurfer.core.util.ErrorHandler;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 
 import lombok.Getter;
 import redis.clients.jedis.Jedis;
 import redis.clients.jedis.JedisPool;
-
-import javax.swing.*;
 
 @Getter
 public class UserConfigHelper {
@@ -37,7 +36,7 @@ public class UserConfigHelper {
                 return objectMapper.readValue(json, UserConfig.class);
             }
         } catch (Exception e) {
-            JOptionPane.showMessageDialog(null,  "Error loading config from Redis: " + e.getMessage());
+            ErrorHandler.logError("UserConfigHelper", "Error loading config from Redis: " + e.getMessage(), e);
         }
         return null;
     }
@@ -54,7 +53,7 @@ public class UserConfigHelper {
             File file = new File(filePath);
             
             if (!file.exists()) {
-                JOptionPane.showMessageDialog(null,  "Configuration file not found: " + filePath);
+                ErrorHandler.logError("UserConfigHelper", "Configuration file not found: " + filePath);
                 return null;
             }
             
@@ -66,7 +65,7 @@ public class UserConfigHelper {
             logger.info("Configuration successfully loaded from: {}", filePath);
             return config;
         } catch (IOException e) {
-            JOptionPane.showMessageDialog(null,  "Error loading configuration from file: "  + e.getMessage());
+            ErrorHandler.logError("UserConfigHelper", "Error loading configuration from file: " + e.getMessage(), e);
             return null;
         }
     }
@@ -98,7 +97,7 @@ public class UserConfigHelper {
             jedis.set("userconfig", json);
             logger.info("Saved UserConfig to Redis");
         } catch (Exception e) {
-            JOptionPane.showMessageDialog(null,  "Error saving config to Redis: " + e.getMessage());
+            ErrorHandler.logError("UserConfigHelper", "Error saving config to Redis: " + e.getMessage(), e);
             throw new RuntimeException("Failed to save config", e);
         }
     }
@@ -112,7 +111,7 @@ public class UserConfigHelper {
      */
     public boolean saveConfigToJSON(UserConfig config, String filePath) {
         if (config == null) {
-            JOptionPane.showMessageDialog(null,  "Cannot save null configuration to file");
+            ErrorHandler.logError("UserConfigHelper", "Cannot save null configuration to file");
             return false;
         }
         
@@ -134,7 +133,7 @@ public class UserConfigHelper {
             logger.info("Configuration successfully saved to:" + filePath);
             return true;
         } catch (IOException e) {
-            JOptionPane.showMessageDialog(null,  "Error saving configuration to file: " + e.getMessage());
+            ErrorHandler.logError("UserConfigHelper", "Error saving configuration to file: " + e.getMessage(), e);
             return false;
         }
     }

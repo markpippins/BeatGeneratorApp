@@ -261,7 +261,7 @@ public class MenuBar extends JMenuBar {
         diagnosticsMenu.add(playerInstrumentTest);
 
         // Add the diagnostics menu to the menu bar
-        add(diagnosticsMenu);
+        optionsMenu.add(diagnosticsMenu);
 
         // Register visualization listener
         commandBus.register(new IBusListener() {
