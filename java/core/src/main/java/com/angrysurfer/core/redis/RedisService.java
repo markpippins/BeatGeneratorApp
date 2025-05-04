@@ -688,6 +688,6 @@ public InstrumentWrapper getInstrumentById(Long id) {
 
 
     public Player findPlayerById(Long id) {
-        playerHelper.findPlayerById(id);
+        return playerHelper.findPlayerById(id);
     }
 }
