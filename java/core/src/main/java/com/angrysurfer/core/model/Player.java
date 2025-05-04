@@ -32,6 +32,7 @@ import com.angrysurfer.core.sequencer.TimingUpdate;
 import com.angrysurfer.core.util.Cycler;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
+import jakarta.persistence.Transient;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -164,8 +165,12 @@ public abstract class Player implements Callable<Boolean>, Serializable, IBusLis
     @JsonIgnore
     private transient Object owner;
 
-    // Add TimingBus
+    @JsonIgnore
+    @Transient
     private final TimingBus timingBus = TimingBus.getInstance();
+
+    @JsonIgnore
+    @Transient
     private final CommandBus commandBus = CommandBus.getInstance();
 
     // Add these fields to Player class

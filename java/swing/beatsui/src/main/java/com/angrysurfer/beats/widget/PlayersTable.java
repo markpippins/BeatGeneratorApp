@@ -387,7 +387,7 @@ public class PlayersTable extends JTable {
             if (player != null) {
                 CommandBus.getInstance().publish(Commands.PLAYER_SELECTED, this, player);
             } else {
-                CommandBus.getInstance().publish(Commands.PLAYER_UNSELECTED, this, null);
+                // CommandBus.getInstance().publish(Commands.PLAYER_UNSELECTED, this, null);
             }
         } catch (Exception ex) {
             logger.error("Error in player selection: " + ex.getMessage());
