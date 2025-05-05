@@ -72,18 +72,14 @@ public class TransportPanel extends JPanel {
         JPanel transportButtonsPanel = setupTransportButtons();
         add(transportButtonsPanel, BorderLayout.CENTER);
 
-        JPanel indicatorPanel = createIndicatorSection();
-        add(indicatorPanel, BorderLayout.NORTH);
+        // JPanel indicatorPanel = new TransportIndicatorPanel();
+        // add(indicatorPanel, BorderLayout.SOUTH);
 
         setupCommandBusListener();
 
         // Set initial button states
         playButton.setEnabled(true);
         stopButton.setEnabled(false);
-    }
-
-    private JPanel createIndicatorSection() {
-        return new JPanel();
     }
 
     /**

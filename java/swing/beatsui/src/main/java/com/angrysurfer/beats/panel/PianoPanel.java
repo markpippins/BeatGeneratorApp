@@ -35,6 +35,7 @@ import javax.swing.plaf.basic.BasicButtonUI;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.angrysurfer.beats.panel.session.SessionPanel;
 import com.angrysurfer.beats.util.UIHelper;
 import com.angrysurfer.beats.widget.ColorAnimator;
 import com.angrysurfer.core.api.Command;
@@ -191,7 +192,7 @@ public class PianoPanel extends JPanel {
                     }
 
                     // Add these new cases
-                    case Commands.PLAYER_SELECTED -> {
+                    case Commands.PLAYER_ACTIVATED -> {
                         if (action.getData() instanceof Player player && player.getRootNote() != null) {
                             int note = player.getRootNote().intValue();
                             logger.info("Piano panel: Player selected with note " + note);
@@ -585,8 +586,8 @@ public class PianoPanel extends JPanel {
             @Override
             public void onAction(Command action) {
                 switch (action.getCommand()) {
-                    case Commands.PLAYER_SELECTED:
-                    case Commands.PLAYER_UNSELECTED:
+                    case Commands.PLAYER_ACTIVATED:
+                    // case Commands.PLAYER_UNSELECTED:
                         updatePlayerStatusIndicator();
                         break;
                 }

@@ -15,7 +15,6 @@ import javax.swing.BoxLayout;
 import javax.swing.JButton;
 import javax.swing.JComponent;
 import javax.swing.JDialog;
-import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JSplitPane;
@@ -23,9 +22,9 @@ import javax.swing.JTabbedPane;
 import javax.swing.JToggleButton;
 import javax.swing.SwingConstants;
 import javax.swing.SwingUtilities;
-import javax.swing.border.EmptyBorder;
 
 import com.angrysurfer.beats.panel.instrument.InstrumentsPanel;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -39,8 +38,8 @@ import com.angrysurfer.beats.panel.sequencer.mono.MelodicSequencerPanel;
 import com.angrysurfer.beats.panel.sequencer.poly.DrumEffectsSequencerPanel;
 import com.angrysurfer.beats.panel.sequencer.poly.DrumParamsSequencerPanel;
 import com.angrysurfer.beats.panel.sequencer.poly.DrumSequencerPanel;
+import com.angrysurfer.beats.panel.session.SessionPanel;
 import com.angrysurfer.beats.widget.Dial;
-import com.angrysurfer.beats.panel.XYPadPanel;
 import com.angrysurfer.core.api.Command;
 import com.angrysurfer.core.api.CommandBus;
 import com.angrysurfer.core.api.Commands;
@@ -50,7 +49,6 @@ import com.angrysurfer.core.sequencer.DrumSequencer;
 import com.angrysurfer.core.sequencer.MelodicSequencer;
 import com.angrysurfer.core.service.ChannelManager;
 import com.angrysurfer.core.service.InternalSynthManager;
-import com.angrysurfer.core.service.PlayerManager;
 import com.angrysurfer.core.service.SessionManager;
 import com.angrysurfer.core.model.Player;
 
@@ -149,6 +147,7 @@ public class MainPanel extends JPanel implements AutoCloseable, IBusListener {
 
         // Add the mute buttons toolbar
         add(muteButtonsToolbar, BorderLayout.NORTH);
+        // add(new SoundParametersPanel(), BorderLayout.SOUTH);
 
         tabToolbar.add(Box.createHorizontalStrut(10));
 
@@ -213,7 +212,7 @@ public class MainPanel extends JPanel implements AutoCloseable, IBusListener {
                 Player player = drumSequencerPanel.getSequencer().getPlayer(drumSequencerPanel.getDrumSelectorPanel().getSelectedDrumPadIndex());
                 if (player != null) {
                     CommandBus.getInstance().publish(
-                            Commands.PLAYER_SELECTED,
+                            Commands.PLAYER_ACTIVATION_REQUEST,
                             this,
                             player);
 
@@ -229,7 +228,7 @@ public class MainPanel extends JPanel implements AutoCloseable, IBusListener {
                 Player player = drumParamsSequencerPanel.getSequencer().getPlayer(drumParamsSequencerPanel.getSelectedPadIndex());
                 if (player != null) {
                     CommandBus.getInstance().publish(
-                            Commands.PLAYER_SELECTED,
+                            Commands.PLAYER_ACTIVATION_REQUEST,
                             this,
                             player);
 
@@ -245,7 +244,7 @@ public class MainPanel extends JPanel implements AutoCloseable, IBusListener {
                 Player player = drumEffectsSequencerPanel.getSequencer().getPlayer(drumEffectsSequencerPanel.getSelectedPadIndex());
                 if (player != null) {
                     CommandBus.getInstance().publish(
-                            Commands.PLAYER_SELECTED,
+                            Commands.PLAYER_ACTIVATION_REQUEST,
                             this,
                             player);
 
@@ -259,7 +258,7 @@ public class MainPanel extends JPanel implements AutoCloseable, IBusListener {
                 Player player = ((MelodicSequencerPanel) selectedComponent).getSequencer().getPlayer();
                 if (player != null) {
                     CommandBus.getInstance().publish(
-                            Commands.PLAYER_SELECTED,
+                            Commands.PLAYER_ACTIVATION_REQUEST,
                             this,
                             player);
 
@@ -289,7 +288,7 @@ public class MainPanel extends JPanel implements AutoCloseable, IBusListener {
 
                 if (player != null) {
                     CommandBus.getInstance().publish(
-                            Commands.PLAYER_SELECTED,
+                            Commands.PLAYER_ACTIVATION_REQUEST,
                             this,
                             player);
                 }
@@ -307,7 +306,7 @@ public class MainPanel extends JPanel implements AutoCloseable, IBusListener {
                     Player player = melodicPanel.getSequencer().getPlayer();
                     if (player != null) {
                         CommandBus.getInstance().publish(
-                                Commands.PLAYER_SELECTED,
+                                Commands.PLAYER_ACTIVATION_REQUEST,
                                 this,
                                 player);
 
@@ -526,8 +525,8 @@ public class MainPanel extends JPanel implements AutoCloseable, IBusListener {
         return modulationTabbedPane;
     }
 
-    private XYPadPanel createXYPadPanel() {
-        return new XYPadPanel();
+    private QuadXYPadPanel createXYPadPanel() {
+        return new QuadXYPadPanel();
     }
 
     private Component createMixerPanel() {

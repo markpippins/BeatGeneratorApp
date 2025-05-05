@@ -9,7 +9,7 @@ import java.util.List;
 /**
  * Panel containing multiple XY control pads
  */
-public class XYPadPanel extends JPanel {
+public class QuadXYPadPanel extends JPanel {
     private static final int PAD_COUNT = 4; // Number of XY pads
     private static final int PAD_SIZE = 150; // Size of each pad in pixels
     private static final int PAD_MARGIN = 20; // Margin between pads
@@ -83,7 +83,7 @@ public class XYPadPanel extends JPanel {
     /**
      * Constructor
      */
-    public XYPadPanel() {
+    public QuadXYPadPanel() {
         positions = new XYPadPositions(PAD_COUNT);
         
         // Set up the panel
@@ -310,7 +310,7 @@ public class XYPadPanel extends JPanel {
     public static void main(String[] args) {
         SwingUtilities.invokeLater(() -> {
             JFrame frame = new JFrame("XY Pad Controller");
-            XYPadPanel xyPadPanel = new XYPadPanel();
+            QuadXYPadPanel xyPadPanel = new QuadXYPadPanel();
             
             // Add listener for demonstration
             xyPadPanel.addXYPadListener((padIndex, x, y) -> {

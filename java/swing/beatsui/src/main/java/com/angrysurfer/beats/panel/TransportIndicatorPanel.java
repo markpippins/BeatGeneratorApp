@@ -1,19 +1,25 @@
 package com.angrysurfer.beats.panel;
 
-import java.awt.*;
+import java.awt.BorderLayout;
+import java.awt.Color;
+import java.awt.Dimension;
+import java.awt.FlowLayout;
+import java.awt.Font;
 import java.text.SimpleDateFormat;
-import java.util.*;
+import java.util.Random;
 
-import javax.swing.*;
+import javax.swing.BorderFactory;
+import javax.swing.BoxLayout;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.JProgressBar;
+import javax.swing.JTextField;
+import javax.swing.SwingUtilities;
 import javax.swing.Timer;
-import javax.swing.border.CompoundBorder;
-import javax.swing.border.EmptyBorder;
-import javax.swing.border.MatteBorder;
 
 import com.angrysurfer.beats.util.UIHelper;
-import com.angrysurfer.beats.util.UIHelper;
-import com.angrysurfer.beats.widget.VuMeter;
 import com.angrysurfer.beats.widget.LEDIndicator;
+import com.angrysurfer.beats.widget.VuMeter;
 import com.angrysurfer.core.api.Command;
 import com.angrysurfer.core.api.CommandBus;
 import com.angrysurfer.core.api.Commands;
@@ -119,84 +125,13 @@ public class TransportIndicatorPanel extends JPanel implements IBusListener {
     private void setup() {
         // Global panel setup
         setLayout(new FlowLayout());
-        // setBorder(new CompoundBorder(
-        //     new MatteBorder(1, 0, 0, 0, SECTION_BORDER_COLOR),
-        //     new EmptyBorder(3, 6, 3, 6)
-        // ));
-        
-        setBorder(BorderFactory.createEmptyBorder(2, 2, 2, 2))
-;
-        // Create main panel with horizontal layout
+        setBorder(BorderFactory.createEmptyBorder(2, 2, 2, 2));
         JPanel mainPanel = new JPanel();
         mainPanel.setLayout(new BoxLayout(mainPanel, BoxLayout.X_AXIS));
-        
-        // Create and add all sections
-        // mainPanel.add(createSessionSection());
-        // mainPanel.add(Box.createHorizontalStrut(SECTION_SPACING));
         mainPanel.add(createTransportSection());
-        // mainPanel.add(Box.createHorizontalStrut(SECTION_SPACING));
-        // mainPanel.add(createPlayerSection());
-        // mainPanel.add(Box.createHorizontalStrut(SECTION_SPACING));
-        // mainPanel.add(createMonitoringSection());
-        // mainPanel.add(Box.createHorizontalStrut(SECTION_SPACING));
-        // mainPanel.add(createMessageSection());
-        
-        // Add main panel to status bar
         add(mainPanel, BorderLayout.CENTER);
     }
     
-    private JPanel createSessionSection() {
-        JPanel panel = UIHelper.createSectionPanel("Session");
-        panel.setLayout(new GridBagLayout());
-        GridBagConstraints gbc = new GridBagConstraints();
-        
-        // Session ID
-        gbc.gridx = 0;
-        gbc.gridy = 0;
-        gbc.anchor = GridBagConstraints.WEST;
-        sessionIdLabel = new JLabel("ID:");
-        panel.add(sessionIdLabel, gbc);
-        
-        gbc.gridx = 1;
-        gbc.weightx = 1.0;
-        gbc.fill = GridBagConstraints.HORIZONTAL;
-        gbc.insets = new Insets(0, 2, 0, 8);
-        sessionIdField = createStatusField(SMALL_FIELD_WIDTH);
-        panel.add(sessionIdField, gbc);
-        
-        // BPM
-        gbc.gridx = 2;
-        gbc.weightx = 0;
-        gbc.fill = GridBagConstraints.NONE;
-        gbc.insets = new Insets(0, 0, 0, 2);
-        bpmLabel = new JLabel("BPM:");
-        panel.add(bpmLabel, gbc);
-        
-        gbc.gridx = 3;
-        gbc.weightx = 1.0;
-        gbc.fill = GridBagConstraints.HORIZONTAL;
-        gbc.insets = new Insets(0, 2, 0, 8);
-        bpmField = createStatusField(SMALL_FIELD_WIDTH);
-        bpmField.setText("120");
-        panel.add(bpmField, gbc);
-        
-        // Player count
-        gbc.gridx = 4;
-        gbc.weightx = 0;
-        gbc.fill = GridBagConstraints.NONE;
-        gbc.insets = new Insets(0, 0, 0, 2);
-        playerCountLabel = new JLabel("Players:");
-        panel.add(playerCountLabel, gbc);
-        
-        gbc.gridx = 5;
-        gbc.weightx = 1.0;
-        gbc.fill = GridBagConstraints.HORIZONTAL;
-        gbc.insets = new Insets(0, 2, 0, 0);
-        playerCountField = createStatusField(SMALL_FIELD_WIDTH);
-        panel.add(playerCountField, gbc);
-        
-        return panel;
-    }
     
     private JPanel createTransportSection() {
         JPanel panel = new JPanel();
@@ -236,116 +171,7 @@ public class TransportIndicatorPanel extends JPanel implements IBusListener {
         
         return panel;
     }
-    
-    private JPanel createPlayerSection() {
-        JPanel panel = UIHelper.createSectionPanel("Active Player");
-        panel.setLayout(new FlowLayout(FlowLayout.LEFT, 5, 0));
         
-        // Player name
-        playerLabel = new JLabel("ID:");
-        panel.add(playerLabel);
-        
-        playerNameField = createStatusField(MEDIUM_FIELD_WIDTH);
-        panel.add(playerNameField);
-        
-        // Channel
-        channelLabel = new JLabel("Ch:");
-        panel.add(channelLabel);
-        
-        channelField = createStatusField(SMALL_FIELD_WIDTH);
-        panel.add(channelField);
-        
-        // Instrument
-        instrumentLabel = new JLabel("Inst:");
-        panel.add(instrumentLabel);
-        
-        instrumentField = createStatusField(MEDIUM_FIELD_WIDTH);
-        panel.add(instrumentField);
-        
-        return panel;
-    }
-    
-    private JPanel createMonitoringSection() {
-        JPanel panel = UIHelper.createSectionPanel("System");
-        panel.setLayout(new GridBagLayout());
-        GridBagConstraints gbc = new GridBagConstraints();
-        
-        // CPU usage
-        gbc.gridx = 0;
-        gbc.gridy = 0;
-        gbc.anchor = GridBagConstraints.WEST;
-        cpuLabel = new JLabel("CPU:");
-        panel.add(cpuLabel, gbc);
-        
-        gbc.gridx = 1;
-        gbc.weightx = 1.0;
-        gbc.fill = GridBagConstraints.HORIZONTAL;
-        gbc.insets = new Insets(0, 2, 2, 0);
-        cpuUsageBar = createProgressBar();
-        panel.add(cpuUsageBar, gbc);
-        
-        // Memory usage
-        gbc.gridx = 0;
-        gbc.gridy = 1;
-        gbc.weightx = 0;
-        gbc.fill = GridBagConstraints.NONE;
-        gbc.insets = new Insets(0, 0, 0, 2);
-        memoryLabel = new JLabel("Mem:");
-        panel.add(memoryLabel, gbc);
-        
-        gbc.gridx = 1;
-        gbc.weightx = 1.0;
-        gbc.fill = GridBagConstraints.HORIZONTAL;
-        gbc.insets = new Insets(0, 2, 0, 0);
-        memoryUsageBar = createProgressBar();
-        panel.add(memoryUsageBar, gbc);
-        
-        // Audio levels
-        gbc.gridx = 2;
-        gbc.gridy = 0;
-        gbc.gridheight = 2;
-        gbc.anchor = GridBagConstraints.CENTER;
-        gbc.insets = new Insets(0, 8, 0, 0);
-        
-        JPanel meterPanel = new JPanel();
-        meterPanel.setLayout(new BoxLayout(meterPanel, BoxLayout.Y_AXIS));
-        leftMeter = new VuMeter(VuMeter.Orientation.HORIZONTAL);
-        rightMeter = new VuMeter(VuMeter.Orientation.HORIZONTAL);
-        meterPanel.add(leftMeter);
-        meterPanel.add(Box.createVerticalStrut(4));
-       
-        meterPanel.add(rightMeter);
-        
-        panel.add(meterPanel, gbc);
-        
-        return panel;
-    }
-    
-    private JPanel createMessageSection() {
-        JPanel panel = UIHelper.createSectionPanel("Status");
-        panel.setLayout(new BorderLayout(1, 0));
-        
-        messageLabel = new JLabel("Message:");
-        panel.add(messageLabel, BorderLayout.WEST);
-        
-        messageField = createStatusField(0); // Will expand to fill space
-        panel.add(messageField, BorderLayout.CENTER);
-        
-        // Add current time display
-        JTextField timeField = createStatusField(SMALL_FIELD_WIDTH);
-        timeField.setText(TIME_FORMAT.format(new Date()));
-        
-        // Update time every second
-        Timer timer = new Timer(1000, e -> {
-            timeField.setText(TIME_FORMAT.format(new Date()));
-        });
-        timer.start();
-        
-        panel.add(timeField, BorderLayout.EAST);
-        
-        return panel;
-    }
-    
     private JTextField createStatusField(int width) {
         JTextField field = new JTextField();
         field.setEditable(false);
@@ -360,15 +186,7 @@ public class TransportIndicatorPanel extends JPanel implements IBusListener {
         
         return field;
     }
-    
-    private JProgressBar createProgressBar() {
-        JProgressBar bar = new JProgressBar(0, 100);
-        bar.setStringPainted(true);
-        bar.setPreferredSize(new Dimension(100, 15));
-        bar.setBorderPainted(true);
-        return bar;
-    }
-    
+        
     private void startPerformanceMonitoring() {
         performanceMonitorTimer = new Timer(1000, e -> {
             updatePerformanceMetrics();
@@ -429,30 +247,12 @@ public class TransportIndicatorPanel extends JPanel implements IBusListener {
 
         try {
             switch (action.getCommand()) {
-                case Commands.STATUS_UPDATE -> {
-                    if (action.getData() instanceof StatusUpdate update) {
-                        handleStatusUpdate(update);
-                    }
-                }
-                case Commands.SESSION_SELECTED, Commands.SESSION_UPDATED, Commands.SESSION_LOADED -> {
-                    if (action.getData() instanceof Session session) {
-                        updateSessionInfo(session);
-                    }
-                }
-                case Commands.PLAYER_SELECTED -> {
-                    if (action.getData() instanceof Player player) {
-                        updatePlayerInfo(player);
-                    }
-                }
                 case Commands.PLAYER_UPDATED -> {
                     if (action.getData() instanceof Player player && 
                         currentPlayer != null && 
                         player.getId().equals(currentPlayer.getId())) {
                         updatePlayerInfo(player);
                     }
-                }
-                case Commands.PLAYER_UNSELECTED -> {
-                    clearPlayerInfo();
                 }
                 case Commands.TIMING_UPDATE -> {
                     if (action.getData() instanceof TimingUpdate update) {
@@ -493,14 +293,6 @@ public class TransportIndicatorPanel extends JPanel implements IBusListener {
                     isPlaying = false;
                     updateTransportState("Paused");
                 }
-                case Commands.INSTRUMENT_UPDATED -> {
-                    if (currentPlayer != null && 
-                        action.getData() instanceof InstrumentWrapper instrument &&
-                        currentPlayer.getInstrumentId() != null &&
-                        currentPlayer.getInstrumentId().equals(instrument.getId())) {
-                        updateInstrumentInfo(instrument);
-                    }
-                }
                 default -> {
                     // No action needed for other commands
                 }
@@ -510,16 +302,7 @@ public class TransportIndicatorPanel extends JPanel implements IBusListener {
             e.printStackTrace();
         }
     }
-    
-    private void handleStatusUpdate(StatusUpdate update) {
-        // Update only the fields that are provided (non-null)
-        if (update.message() != null) {
-            messageField.setText(update.message());
-        }
-        
-        // Other status update fields can be mapped as needed
-    }
-    
+
     private void handleTimingUpdate(TimingUpdate update) {
         // Update timing values from the TimingUpdate record
         if (update.tick() != null) {

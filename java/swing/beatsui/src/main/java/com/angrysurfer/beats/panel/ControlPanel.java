@@ -447,8 +447,8 @@ public class ControlPanel extends JPanel {
                     return;
 
                 switch (action.getCommand()) {
-                case Commands.PLAYER_SELECTED -> dial.setEnabled(true);
-                case Commands.PLAYER_UNSELECTED -> dial.setEnabled(false);
+                case Commands.PLAYER_ACTIVATED -> dial.setEnabled(true);
+                // case Commands.PLAYER_UNSELECTED -> dial.setEnabled(false);
                 }
             }
         });
@@ -513,7 +513,7 @@ public class ControlPanel extends JPanel {
                 String cmd = action.getCommand();
 
                 try {
-                    if (Commands.PLAYER_SELECTED.equals(cmd)) {
+                    if (Commands.PLAYER_ACTIVATED.equals(cmd)) {
                         if (action.getData() instanceof Player player) {
                             logger.info("ControlPanel updating controls for player: " + player.getName() + " (ID: "
                                     + player.getId() + ")");
@@ -528,12 +528,13 @@ public class ControlPanel extends JPanel {
                                 updateVerticalAdjustButtons(true);
                             });
                         }
-                    } else if (Commands.PLAYER_UNSELECTED.equals(cmd)) {
-                        logger.info("ControlPanel received PLAYER_UNSELECTED");
-                        activePlayer = null;
-                        disableDials();
-                        updateVerticalAdjustButtons(false);
-                    }
+                    } 
+                    // else if (Commands.PLAYER_UNSELECTED.equals(cmd)) {
+                    //     logger.info("ControlPanel received PLAYER_UNSELECTED");
+                    //     activePlayer = null;
+                    //     disableDials();
+                    //     updateVerticalAdjustButtons(false);
+                    // }
                 } catch (Exception e) {
                     logger.error("Error in command handler: " + e.getMessage());
                     e.printStackTrace();
