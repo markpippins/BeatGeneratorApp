@@ -234,7 +234,7 @@ public class DialogManager implements IBusListener {
                         }
 
                         // CRITICAL STEP: Activate player and request update through command bus
-                        commandBus.publish(Commands.PLAYER_SELECTED, this, updatedPlayer);
+                        commandBus.publish(Commands.PLAYER_ACTIVATION_REQUEST, this, updatedPlayer);
                         commandBus.publish(Commands.PLAYER_UPDATE_REQUEST, this, updatedPlayer);
 
                         // Publish dialog-specific completion event
@@ -266,7 +266,7 @@ public class DialogManager implements IBusListener {
 
                             // Re-select the player to update rules display
                             commandBus.publish(Commands.RULE_ADDED, this, player);
-                            commandBus.publish(Commands.PLAYER_SELECTED, this, player);
+                            commandBus.publish(Commands.PLAYER_ACTIVATION_REQUEST, this, player);
                             CommandBus.getInstance().publish(Commands.PLAYER_ROW_REFRESH, this, player);
                             // commandBus.publish(Commands.SESSION_UPDATED, this, session);
                         } else {
@@ -297,7 +297,7 @@ public class DialogManager implements IBusListener {
                         // Player refreshedPlayer = redisService.findPlayerById(player.getId());
                         commandBus.publish(Commands.RULE_EDITED, this, updatedRule);
                         // commandBus.publish(Commands.PLAYER_UPDATED, this, player);
-                        commandBus.publish(Commands.PLAYER_SELECTED, this, player);
+                        commandBus.publish(Commands.PLAYER_ACTIVATION_REQUEST, this, player);
                         // commandBus.publish(Commands.RULE_SELECTED, this, updatedRule);
                         CommandBus.getInstance().publish(Commands.PLAYER_ROW_REFRESH, this, player);
                     }

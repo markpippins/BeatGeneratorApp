@@ -6,11 +6,8 @@ import java.util.*;
 
 import javax.swing.*;
 import javax.swing.Timer;
-import javax.swing.border.CompoundBorder;
-import javax.swing.border.EmptyBorder;
-import javax.swing.border.MatteBorder;
 
-import com.angrysurfer.beats.util.UIHelper;
+import com.angrysurfer.beats.panel.player.SoundParametersPanel;
 import com.angrysurfer.beats.util.UIHelper;
 import com.angrysurfer.beats.widget.VuMeter;
 import com.angrysurfer.beats.widget.LEDIndicator;
@@ -20,7 +17,6 @@ import com.angrysurfer.core.api.Commands;
 import com.angrysurfer.core.api.IBusListener;
 import com.angrysurfer.core.api.StatusUpdate;
 import com.angrysurfer.core.api.TimingBus;
-import com.angrysurfer.core.model.InstrumentWrapper;
 import com.angrysurfer.core.model.Player;
 import com.angrysurfer.core.model.Session;
 import com.angrysurfer.core.sequencer.TimingUpdate;
@@ -34,34 +30,9 @@ public class StatusBar extends JPanel implements IBusListener {
 
     // Constants for UI sizing and formatting
     private static final int SECTION_SPACING = 4;
-    private static final int FIELD_HEIGHT = 20;
     private static final int SMALL_FIELD_WIDTH = 50;
-    private static final int MEDIUM_FIELD_WIDTH = 100;
-    private static final Color SECTION_BORDER_COLOR = new Color(180, 180, 180);
     private static final SimpleDateFormat TIME_FORMAT = new SimpleDateFormat("HH:mm:ss");
 
-    // Session information
-    private JLabel sessionIdLabel;
-    private JTextField sessionIdField;
-    private JLabel bpmLabel;
-    private JTextField bpmField;
-    private JLabel playerCountLabel;
-    private JTextField playerCountField;
-
-    // Transport section
-    private LEDIndicator playingLed;
-    private LEDIndicator recordingLed;
-    private JLabel timeSignatureLabel;
-    private JTextField timeSignatureField;
-
-    // Player information
-    private JLabel playerLabel;
-    private JTextField playerNameField;
-    private JLabel channelLabel;
-    private JTextField channelField;
-    private JLabel instrumentLabel;
-    private JTextField instrumentField;
-    
     // Performance monitors
     private JLabel cpuLabel;
     private JProgressBar cpuUsageBar;
@@ -125,149 +96,16 @@ public class StatusBar extends JPanel implements IBusListener {
         mainPanel.setLayout(new BoxLayout(mainPanel, BoxLayout.X_AXIS));
         
         // Create and add all sections
-        mainPanel.add(createPlayerSection());
-        mainPanel.add(Box.createHorizontalStrut(SECTION_SPACING));
-        mainPanel.add(Box.createHorizontalStrut(SECTION_SPACING));
-        mainPanel.add(createMessageSection());
-        mainPanel.add(createTransportSection());
+        mainPanel.add(new SoundParametersPanel());
         mainPanel.add(Box.createHorizontalStrut(SECTION_SPACING));
         mainPanel.add(createMonitoringSection());
-        
+        mainPanel.add(Box.createHorizontalStrut(SECTION_SPACING));
+        mainPanel.add(createMessageSection());
+
         // Add main panel to status bar
         add(mainPanel, BorderLayout.CENTER);
     }
-    
-    private JPanel createSessionSection() {
-        JPanel panel = UIHelper.createSectionPanel("Session");
-        panel.setLayout(new GridBagLayout());
-        GridBagConstraints gbc = new GridBagConstraints();
-        
-        // Set vertical centering for all GridBagConstraints
-        gbc.fill = GridBagConstraints.HORIZONTAL;
-        gbc.anchor = GridBagConstraints.CENTER; // Center vertically
-        gbc.insets = new Insets(2, 2, 2, 2);   // Even padding
-        gbc.weighty = 1.0;                     // Allow vertical growth
-        
-        // Session ID
-        gbc.gridx = 0;
-        gbc.gridy = 0;
-        gbc.anchor = GridBagConstraints.WEST;
-        sessionIdLabel = new JLabel("ID:");
-        panel.add(sessionIdLabel, gbc);
-        
-        gbc.gridx = 1;
-        gbc.weightx = 1.0;
-        gbc.fill = GridBagConstraints.HORIZONTAL;
-        gbc.insets = new Insets(0, 2, 0, 8);
-        sessionIdField = createStatusField(SMALL_FIELD_WIDTH);
-        panel.add(sessionIdField, gbc);
-        
-        // BPM
-        gbc.gridx = 2;
-        gbc.weightx = 0;
-        gbc.fill = GridBagConstraints.NONE;
-        gbc.insets = new Insets(0, 0, 0, 2);
-        bpmLabel = new JLabel("BPM:");
-        panel.add(bpmLabel, gbc);
-        
-        gbc.gridx = 3;
-        gbc.weightx = 1.0;
-        gbc.fill = GridBagConstraints.HORIZONTAL;
-        gbc.insets = new Insets(0, 2, 0, 8);
-        bpmField = createStatusField(SMALL_FIELD_WIDTH);
-        bpmField.setText("120");
-        panel.add(bpmField, gbc);
-        
-        // Player count
-        gbc.gridx = 4;
-        gbc.weightx = 0;
-        gbc.fill = GridBagConstraints.NONE;
-        gbc.insets = new Insets(0, 0, 0, 2);
-        playerCountLabel = new JLabel("Players:");
-        panel.add(playerCountLabel, gbc);
-        
-        gbc.gridx = 5;
-        gbc.weightx = 1.0;
-        gbc.fill = GridBagConstraints.HORIZONTAL;
-        gbc.insets = new Insets(0, 2, 0, 0);
-        playerCountField = createStatusField(SMALL_FIELD_WIDTH);
-        panel.add(playerCountField, gbc);
-        
-        return panel;
-    }
-    
-    private JPanel createTransportSection() {
-        JPanel panel = UIHelper.createSectionPanel("Transport");
-        panel.setLayout(new FlowLayout(FlowLayout.LEFT, 5, 0));
-        
-        // Create a wrapper panel for LEDs to control height
-        JPanel ledPanel = new JPanel();
-        ledPanel.setLayout(new BoxLayout(ledPanel, BoxLayout.X_AXIS));
-        ledPanel.setAlignmentY(Component.CENTER_ALIGNMENT);
-        
-        // Set preferred height for LED panel to match text fields
-        ledPanel.setPreferredSize(new Dimension(ledPanel.getPreferredSize().width, UIHelper.CONTROL_HEIGHT));
-        
-        playingLed = new LEDIndicator(Color.GREEN, "PLAY");
-        playingLed.setOffColor(Color.RED);
-        recordingLed = new LEDIndicator(Color.RED, "REC");
-        recordingLed.setOffColor(Color.RED);
-        
-        // Add LEDs to panel with centering
-        ledPanel.add(Box.createVerticalGlue());
-        ledPanel.add(playingLed);
-        ledPanel.add(Box.createHorizontalStrut(3));
-        ledPanel.add(recordingLed);
-        ledPanel.add(Box.createVerticalGlue());
-        
-        panel.add(ledPanel);
-        
-        // Add time signature with vertical alignment
-        panel.add(createLabelFieldPair(timeSignatureLabel = new JLabel("Time:"),
-                                      timeSignatureField = createStatusField(SMALL_FIELD_WIDTH)));
-        
-        // Add position with vertical alignment
-        panel.add(createLabelFieldPair(positionLabel = new JLabel("Pos:"),
-                                      positionField = createStatusField(MEDIUM_FIELD_WIDTH)));
-        
-        // Set monospaced font for position display
-        // positionField.setFont(new Font(Font.MONOSPACED, Font.PLAIN, 12));
-        updateTimeDisplay();
-        
-        return panel;
-    }
-    
-    private JPanel createPlayerSection() {
-        JPanel panel = UIHelper.createSectionPanel("Active Player");
-        
-        // Use FlowLayout with vertical centering
-        panel.setLayout(new FlowLayout(FlowLayout.LEFT, 5, 0));
-        
-        // Wrap each label and field in a panel for consistent height
-        JPanel[] components = new JPanel[] {
-            createLabelFieldPair(playerLabel = new JLabel("ID:"), 
-                                playerNameField = createStatusField(MEDIUM_FIELD_WIDTH)),
-            createLabelFieldPair(channelLabel = new JLabel("Ch:"), 
-                                channelField = createStatusField(SMALL_FIELD_WIDTH)),
-            createLabelFieldPair(instrumentLabel = new JLabel("Inst:"), 
-                                instrumentField = createStatusField(MEDIUM_FIELD_WIDTH))
-        };
-        
-        for (JPanel comp : components) {
-            panel.add(comp);
-        }
-        
-        return panel;
-    }
 
-    // Helper method to create vertically aligned label-field pairs
-    private JPanel createLabelFieldPair(JLabel label, JTextField field) {
-        JPanel pair = new JPanel(new BorderLayout(5, 0));
-        pair.add(label, BorderLayout.WEST);
-        pair.add(field, BorderLayout.CENTER);
-        return pair;
-    }
-    
     private JPanel createMonitoringSection() {
         JPanel panel = UIHelper.createSectionPanel("System");
         panel.setLayout(new GridBagLayout());
@@ -341,9 +179,14 @@ public class StatusBar extends JPanel implements IBusListener {
         panel.add(messageField, BorderLayout.CENTER);
         
         // Add current time display
-        JTextField timeField = createStatusField(SMALL_FIELD_WIDTH);
+        JTextField timeField = createStatusField((int) (1.2 * SMALL_FIELD_WIDTH));
         timeField.setText(TIME_FORMAT.format(new Date()));
-        
+        timeField.setBackground(Color.BLACK);
+        timeField.setForeground(Color.WHITE);
+        timeField.setEditable(false);
+        timeField.setAlignmentY(JTextField.CENTER);
+        timeField.setFocusable(false);
+
         // Update time every second
         Timer timer = new Timer(1000, e -> {
             timeField.setText(TIME_FORMAT.format(new Date()));
@@ -418,7 +261,7 @@ public class StatusBar extends JPanel implements IBusListener {
     }
     
     private long getSystemCpuUsage() {
-        // Mock implementation - replace with actual JMX or other system monitoring
+
         try {
             com.sun.management.OperatingSystemMXBean osBean = 
                 (com.sun.management.OperatingSystemMXBean) java.lang.management.ManagementFactory.getOperatingSystemMXBean();
@@ -448,73 +291,6 @@ public class StatusBar extends JPanel implements IBusListener {
                         handleStatusUpdate(update);
                     }
                 }
-                case Commands.SESSION_SELECTED, Commands.SESSION_UPDATED, Commands.SESSION_LOADED -> {
-                    if (action.getData() instanceof Session session) {
-                        // updateSessionInfo(session);
-                    }
-                }
-                case Commands.PLAYER_SELECTED -> {
-                    if (action.getData() instanceof Player player) {
-                        updatePlayerInfo(player);
-                    }
-                }
-                case Commands.PLAYER_UPDATED -> {
-                    if (action.getData() instanceof Player player && 
-                        currentPlayer != null && 
-                        player.getId().equals(currentPlayer.getId())) {
-                        updatePlayerInfo(player);
-                    }
-                }
-                case Commands.PLAYER_UNSELECTED -> {
-                    clearPlayerInfo();
-                }
-                case Commands.TIMING_UPDATE -> {
-                    if (action.getData() instanceof TimingUpdate update) {
-                        handleTimingUpdate(update);
-                    }
-                }
-                case Commands.TEMPO_CHANGE -> {
-                    if (action.getData() instanceof Number newTempo) {
-                        tempo = newTempo.floatValue();
-                        bpmField.setText(String.format("%.1f", tempo));
-                    }
-                }
-                case Commands.TIME_SIGNATURE_CHANGE -> {
-                    if (action.getData() instanceof String newTimeSignature) {
-                        timeSignature = newTimeSignature;
-                        timeSignatureField.setText(timeSignature);
-                    }
-                }
-                case Commands.TIMING_RESET -> {
-                    resetTimingCounters();
-                }
-                case Commands.TRANSPORT_START -> {
-                    isPlaying = true;
-                    isRecording = false;
-                    updateTransportState("Playing");
-                }
-                case Commands.TRANSPORT_STOP -> {
-                    isPlaying = false;
-                    isRecording = false;
-                    updateTransportState("Stopped");
-                }
-                case Commands.TRANSPORT_RECORD -> {
-                    isPlaying = true;
-                    isRecording = true;
-                    updateTransportState("Recording");
-                }
-                case Commands.TRANSPORT_PAUSE -> {
-                    isPlaying = false;
-                    updateTransportState("Paused");
-                }
-                case Commands.INSTRUMENT_UPDATED -> {
-                    if (currentPlayer != null && 
-                        action.getData() instanceof InstrumentWrapper instrument &&
-                        currentPlayer.getInstrumentId() != null &&
-                        currentPlayer.getInstrumentId().equals(instrument.getId())) {
-                        updateInstrumentInfo(instrument);
-                    }
-                }
                 default -> {
                     // No action needed for other commands
                 }
@@ -534,103 +310,6 @@ public class StatusBar extends JPanel implements IBusListener {
         // Other status update fields can be mapped as needed
     }
     
-    private void handleTimingUpdate(TimingUpdate update) {
-        // Update timing values from the TimingUpdate record
-        if (update.tick() != null) {
-            tickCount = update.tick().intValue();
-        }
-        if (update.beat() != null) {
-            beatCount = update.beat().intValue();
-        }
-        if (update.bar() != null) {
-            barCount = update.bar().intValue();
-        }
-        if (update.part() != null) {
-            partCount = update.part().intValue();
-        }
-        
-        // Update the time display with all values
-        updateTimeDisplay();
-    }
-
-    private void updateSessionInfo(Session session) {
-        if (session != null) {
-            sessionIdField.setText(String.valueOf(session.getId()));
-            playerCountField.setText(String.valueOf(session.getPlayers().size()));
-            
-            // Update tempo if available
-            if (session.getTempoInBPM() != null) {
-                tempo = session.getTempoInBPM();
-                bpmField.setText(String.format("%.1f", tempo));
-            }
-        } else {
-            clearSessionInfo();
-        }
-    }
-
-    private void updatePlayerInfo(Player player) {
-        if (player != null) {
-            currentPlayer = player;
-            playerNameField.setText(player.getName());
-            channelField.setText(player.getChannel() != null ? String.valueOf(player.getChannel()) : "");
-            
-            if (player.getInstrument() != null) {
-                updateInstrumentInfo(player.getInstrument());
-            } else {
-                instrumentField.setText("None");
-            }
-        } else {
-            clearPlayerInfo();
-        }
-    }
-    
-    private void updateInstrumentInfo(InstrumentWrapper instrument) {
-        if (instrument != null) {
-            String instName = instrument.getName();
-            
-            // If available, add preset information
-            if (instrument.getPreset() != null) {
-                instName += " (" + instrument.getPreset() + ")";
-            }
-            
-            instrumentField.setText(instName);
-        } else {
-            instrumentField.setText("None");
-        }
-    }
-    
-    private void updateTransportState(String state) {
-        // transportStateField.setText(state);
-        
-        // Update LED indicators
-        playingLed.setOn(isPlaying);
-        recordingLed.setOn(isRecording);
-        
-        // Additional visual feedback
-        // transportStateField.setForeground(isRecording ? Color.RED : (isPlaying ? new Color(0, 150, 0) : Color.BLACK));
-    }
-
-    private void clearSessionInfo() {
-        sessionIdField.setText("");
-        playerCountField.setText("");
-        bpmField.setText("120");
-    }
-
-    private void clearPlayerInfo() {
-        currentPlayer = null;
-        playerNameField.setText("");
-        channelField.setText("");
-        instrumentField.setText("");
-    }
-
-    private void resetTimingCounters() {
-        tickCount = 0;
-        beatCount = 0;
-        barCount = 0;
-        partCount = 0;
-        updateTimeDisplay();
-    }
-
     private void updateTimeDisplay() {
         String formattedTime = String.format("%02d:%02d:%02d:%02d", partCount, barCount, beatCount, tickCount);
         positionField.setText(formattedTime);
@@ -639,13 +318,5 @@ public class StatusBar extends JPanel implements IBusListener {
     public void setMessage(String text) {
         messageField.setText(text);
     }
-    
-    /**
-     * Must be called when application is closing to prevent memory leaks
-     */
-    public void cleanup() {
-        if (performanceMonitorTimer != null) {
-            performanceMonitorTimer.stop();
-        }
-    }
+
 }

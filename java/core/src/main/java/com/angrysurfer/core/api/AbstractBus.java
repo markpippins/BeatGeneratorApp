@@ -10,7 +10,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import com.angrysurfer.core.service.LogManager;
 
-public abstract class AbstractBus implements IBusListener {
+public abstract class AbstractBus {
 
     private final List<IBusListener> listeners = new CopyOnWriteArrayList<>();
     private final LogManager logManager = LogManager.getInstance();
@@ -79,8 +79,7 @@ public abstract class AbstractBus implements IBusListener {
         // listeners.size() + " listeners");
         Command cmd = new Command(command, sender, data);
         for (IBusListener listener : listeners) {
-            // System.out.println("AbstractBus: Sending " + command + " to " +
-            // listener.getClass().getName());
+            // System.out.println("AbstractBus: Sending " + command + " to " +  listener.getClass().getName());
             if (listener != sender)
                 listener.onAction(cmd);
         }
@@ -169,24 +168,24 @@ public abstract class AbstractBus implements IBusListener {
         }
     }
 
-    @Override
-    public void onAction(Command action) {
-        // Handle logging commands
-        if (action.getData() instanceof LogMessage msg) {
-            switch (action.getCommand()) {
-                case Commands.LOG_DEBUG -> logManager.debug(msg.source(), msg.message());
-                case Commands.LOG_INFO -> logManager.info(msg.source(), msg.message());
-                case Commands.LOG_WARN -> logManager.warn(msg.source(), msg.message());
-                case Commands.LOG_ERROR -> {
-                    if (msg.throwable() != null) {
-                        logManager.error(msg.source(), msg.message(), msg.throwable());
-                    } else {
-                        logManager.error(msg.source(), msg.message());
-                    }
-                }
-            }
-        }
-    }
+//    @Override
+//    public void onAction(Command action) {
+//        // Handle logging commands
+//        if (action.getData() instanceof LogMessage msg) {
+//            switch (action.getCommand()) {
+//                case Commands.LOG_DEBUG -> logManager.debug(msg.source(), msg.message());
+//                case Commands.LOG_INFO -> logManager.info(msg.source(), msg.message());
+//                case Commands.LOG_WARN -> logManager.warn(msg.source(), msg.message());
+//                case Commands.LOG_ERROR -> {
+//                    if (msg.throwable() != null) {
+//                        logManager.error(msg.source(), msg.message(), msg.throwable());
+//                    } else {
+//                        logManager.error(msg.source(), msg.message());
+//                    }
+//                }
+//            }
+//        }
+//    }
 
     // Helper record for log messages
     public record LogMessage(String source, String message, Throwable throwable) {

@@ -33,7 +33,7 @@ public class App implements IBusListener {
 
     private static final CommandBus commandBus = CommandBus.getInstance();
 
-    private static final boolean showSplash = true;
+    private static final boolean showSplash = false;
 
     private Frame frame;
     private static SplashScreen splash;
@@ -188,11 +188,13 @@ public class App implements IBusListener {
 
             // Initialize SoundbankManager BEFORE InternalSynthManager
             SoundbankManager.getInstance().initializeSoundbanks();
+            SoundbankManager.getInstance().ensureSoundbanksLoaded();
             splash.completeTask("Loaded soundbanks");
 
             // Initialize synth engine - now using InternalSynthManager
             InternalSynthManager.getInstance().initializeSynthesizer();
-            InternalSynthManager.getInstance().loadDefaultSoundbank();
+            SoundbankManager.getInstance().ensureSoundbanksLoaded();
+            // InternalSynthManager.getInstance().loadDefaultSoundbank();
             splash.completeTask("Loaded internal synthesizer");
 
             // Initialize instrument management

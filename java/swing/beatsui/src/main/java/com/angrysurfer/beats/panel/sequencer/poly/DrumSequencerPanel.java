@@ -1,12 +1,14 @@
 package com.angrysurfer.beats.panel.sequencer.poly;
 
 import java.awt.BorderLayout;
-import java.awt.Component;
 import java.awt.FlowLayout;
+import java.awt.event.ComponentAdapter;
+import java.awt.event.ComponentEvent;
+import java.awt.event.FocusAdapter;
+import java.awt.event.FocusEvent;
 import java.util.List;
 import java.util.function.Consumer;
 
-import javax.swing.BorderFactory;
 import javax.swing.JButton;
 import javax.swing.JComboBox;
 import javax.swing.JOptionPane;
@@ -27,7 +29,6 @@ import com.angrysurfer.core.api.CommandBus;
 import com.angrysurfer.core.api.Commands;
 import com.angrysurfer.core.api.IBusListener;
 import com.angrysurfer.core.event.NoteEvent;
-import com.angrysurfer.core.model.Player;
 import com.angrysurfer.core.sequencer.DrumPadSelectionEvent;
 import com.angrysurfer.core.sequencer.DrumSequenceModifier;
 import com.angrysurfer.core.sequencer.DrumSequencer;
@@ -136,6 +137,23 @@ public class DrumSequencerPanel extends JPanel implements IBusListener {
 
         // Initialize UI components
         initialize();
+
+        // When the panel gains focus or becomes visible, request focus
+        addFocusListener(new FocusAdapter() {
+            @Override
+            public void focusGained(FocusEvent e) {
+                requestFocusInWindow();
+                selectDrumPad(DrumSequencerManager.getInstance().getSelectedPadIndex());
+            }
+        });
+
+        // Request focus when the panel becomes visible
+        addComponentListener(new ComponentAdapter() {
+            @Override
+            public void componentShown(ComponentEvent e) {
+                requestFocusInWindow();
+            }
+        });
     }
 
     /**
@@ -148,41 +166,26 @@ public class DrumSequencerPanel extends JPanel implements IBusListener {
         setLayout(new BorderLayout(2, 2));
         UIHelper.setPanelBorder(this);
 
-        // Create west panel to hold navigation
-        // REDUCED: from 5,5 to 2,2
         JPanel westPanel = new JPanel(new BorderLayout(2, 2));
-
-        // Create east panel for sound parameters
-        // REDUCED: from 5,5 to 2,2
         JPanel eastPanel = new JPanel(new BorderLayout(2, 2));
 
-        // Create top panel to hold west and east panels
-        // REDUCED: from 5,5 to 2,2
         JPanel topPanel = new JPanel(new BorderLayout(2, 2));
 
-        // Create sequence navigation panel
         DrumSequenceNavigationPanel navigationPanel = new DrumSequenceNavigationPanel(sequencer);
 
-        // Navigation panel goes NORTH-WEST
         westPanel.add(navigationPanel, BorderLayout.NORTH);
 
-        // Sound parameters go NORTH-EAST
-        eastPanel.add(createSoundParametersPanel(), BorderLayout.NORTH);
+        eastPanel.add(new SoundParametersPanel(), BorderLayout.NORTH);
 
-        // Add panels to the top panel
         topPanel.add(westPanel, BorderLayout.WEST);
         topPanel.add(eastPanel, BorderLayout.EAST);
 
-        // Add top panel to main layout
         add(topPanel, BorderLayout.NORTH);
 
-        // Create drum selector panel and add to WEST of main layout
         JPanel drumPadsPanel = createDrumPadsPanel();
         add(drumPadsPanel, BorderLayout.WEST);
 
-        // Create the center grid panel with sequence buttons
         sequencePanel = createSequenceGridPanel();
-        // visualizer = new Visualizer(sequencePanel, gridPanel);
 
         // Wrap in scroll pane
         scrollPane = new JScrollPane(sequencePanel);
@@ -191,35 +194,22 @@ public class DrumSequencerPanel extends JPanel implements IBusListener {
         scrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_NEVER);
 
         add(scrollPane, BorderLayout.CENTER);
-
-        // Create a panel for the bottom controls
-        // REDUCED: from 5,5 to 2,2
         JPanel bottomPanel = new JPanel(new BorderLayout(2, 2));
         bottomPanel.add(new DrumSequencerMaxLengthPanel(sequencer), BorderLayout.WEST);
 
-        // Create and add the sequence parameters panel using our new class
         sequenceParamsPanel = new DrumSequencerParametersPanel(sequencer);
 
         bottomPanel.add(sequenceParamsPanel, BorderLayout.CENTER);
 
-        // Create a container for the right-side panels
-        // REDUCED: from 5,0 to 2,0
         JPanel rightPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 2, 0));
-
-        // Create and add generate panel
         generatorPanel = new DrumSequenceGeneratorPanel(sequencer);
         rightPanel.add(generatorPanel);
 
-        // Use the existing DrumSequencerSwingPanel class instead
         DrumSequencerSwingPanel swingPanel = new DrumSequencerSwingPanel(sequencer);
-        // Apply consistent reduced spacing to the swing panel
         swingPanel.setLayout(new FlowLayout(FlowLayout.LEFT, 2, 1));
         rightPanel.add(swingPanel);
 
-        // Add the right panel container to the east position
         bottomPanel.add(rightPanel, BorderLayout.EAST);
-
-        // Add the bottom panel to the main panel
         add(bottomPanel, BorderLayout.SOUTH);
     }
 
@@ -277,13 +267,12 @@ public class DrumSequencerPanel extends JPanel implements IBusListener {
             }
 
             // Update sound parameters panel
-            updateSoundParametersPanel(padIndex);
+            // updateSoundParametersPanel(padIndex);
 
             CommandBus.getInstance().publish(
-                Commands.PLAYER_SELECTED,
-                this,
-                sequencer.getPlayers()[padIndex]
-            );
+                    Commands.PLAYER_ACTIVATION_REQUEST,
+                    this,
+                    sequencer.getPlayers()[padIndex]);
 
             // IMPORTANT: Notify other panels through the command bus
             CommandBus.getInstance().publish(
@@ -495,74 +484,6 @@ public class DrumSequencerPanel extends JPanel implements IBusListener {
             if (drumIndex == DrumSequencerManager.getInstance().getSelectedPadIndex()) {
                 updateParameterControls();
             }
-        }
-    }
-
-    /**
-     * Creates the sound parameters panel with drum kit selection and sound editing
-     */
-    private JPanel createSoundParametersPanel() {
-        // Get the currently selected player
-        int selectedDrum = DrumSequencerManager.getInstance().getSelectedPadIndex();
-        Player player = null;
-
-        // Get the selected drum's Player object if available
-        if (selectedDrum >= 0 && selectedDrum < sequencer.getPlayers().length) {
-            player = sequencer.getPlayers()[selectedDrum];
-        }
-
-        // Create the standardized SoundParametersPanel
-        SoundParametersPanel panel = new SoundParametersPanel();
-
-        // Return the panel
-        return panel;
-    }
-
-    /**
-     * Update sound parameters panel when a different drum pad is selected
-     */
-    // public void updateSoundParametersForSelectedDrum() {
-    // int selectedDrum = DrumSequencerManager.getInstance().getSelectedPadIndex();
-    // if (selectedDrum >= 0 && selectedDrum < sequencer.getPlayers().length) {
-    // Player player = sequencer.getPlayers()[selectedDrum];
-
-    // // Find the SoundParametersPanel and update its player
-    // Component[] components = getComponents();
-    // for (Component component : components) {
-    // if (component instanceof JPanel) {
-    // findAndUpdateSoundPanel((JPanel)component, player);
-    // }
-    // }
-    // }
-    // }
-
-    /**
-     * Helper method to find and update SoundParametersPanel recursively
-     */
-    private void findAndUpdateSoundPanel(JPanel panel, Player player) {
-        if (panel instanceof SoundParametersPanel) {
-            ((SoundParametersPanel) panel).setPlayer(player);
-            return;
-        }
-
-        // Search children
-        Component[] components = panel.getComponents();
-        for (Component component : components) {
-            if (component instanceof JPanel) {
-                findAndUpdateSoundPanel((JPanel) component, player);
-            }
-        }
-    }
-
-    /**
-     * Updates the sound parameters panel with the selected drum's player
-     */
-    private void updateSoundParametersPanel(int padIndex) {
-        if (padIndex >= 0 && padIndex < sequencer.getPlayers().length) {
-            Player player = sequencer.getPlayers()[padIndex];
-
-            // Find and update the SoundParametersPanel
-            findAndUpdateSoundPanel(this, player);
         }
     }
 

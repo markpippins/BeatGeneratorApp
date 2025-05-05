@@ -728,19 +728,19 @@ public class PlayerTimelinePanel extends JPanel implements IBusListener {
 
         SwingUtilities.invokeLater(() -> {
             switch (action.getCommand()) {
-                case Commands.PLAYER_SELECTED -> {
+                case Commands.PLAYER_ACTIVATED -> {
                     if (action.getData() instanceof Player p) {
                         player = p;
                         updateTimelineWithFixedRowHeights();
                     }
                 }
-                case Commands.PLAYER_UNSELECTED -> {
-                    player = null;
-                    clearGrid();
-                    nameLabel.setText("Select a player to view timeline");
-                    // Add this line to redraw the empty grid structure when player is unselected
-                    drawEmptyTimelineGrid();
-                }
+                // case Commands.PLAYER_UNSELECTED -> {
+                //     player = null;
+                //     clearGrid();
+                //     nameLabel.setText("Select a player to view timeline");
+                //     // Add this line to redraw the empty grid structure when player is unselected
+                //     drawEmptyTimelineGrid();
+                // }
                 case Commands.PLAYER_UPDATED -> {
                     if (player != null && action.getData() instanceof Player p && Objects.nonNull(p.getId())
                             && p.getId().equals(player.getId())) {

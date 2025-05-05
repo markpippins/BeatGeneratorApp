@@ -55,8 +55,9 @@ public class Commands {
     // Player selection commands
     public static final String PLAYER = "PLAYER";
 
-    public static final String PLAYER_SELECTED = "PLAYER_SELECTED";
-    public static final String PLAYER_UNSELECTED = "PLAYER_UNSELECTED";
+    public static final String PLAYER_ACTIVATION_REQUEST = "PLAYER_ACTIVATION_REQUEST";
+    public static final String PLAYER_ACTIVATED = "PLAYER_ACTIVATED";
+    
     public static final String PLAYER_ADDED = "PLAYER_ADDED";
     public static final String PLAYER_UPDATED = "PLAYER_UPDATED";
     public static final String PLAYER_DELETED = "PLAYER_DELETED";

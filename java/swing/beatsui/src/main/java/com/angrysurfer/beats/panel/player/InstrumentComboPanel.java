@@ -6,6 +6,7 @@ import java.awt.Insets;
 
 import javax.swing.JButton;
 import javax.swing.JComboBox;
+import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JToggleButton;
 
@@ -31,7 +32,7 @@ public class InstrumentComboPanel extends JPanel {
     private final DrumSequencer sequencer;
 
     /**
-     * Create a new DrumSequenceGeneratorPanel
+     * Create a new DrumSequenceGeneratorPanel with standardized layout
      * 
      * @param sequencer The drum sequencer
      */
@@ -39,14 +40,14 @@ public class InstrumentComboPanel extends JPanel {
         this.sequencer = sequencer;
         UIHelper.setWidgetPanelBorder(this, "Generate");
 
-        // REDUCED: from 5,2 to 2,1
+        // Use compact spacing like other panels
         setLayout(new FlowLayout(FlowLayout.LEFT, 2, 1));
 
         initializeComponents();
     }
 
     /**
-     * Initialize UI components
+     * Initialize UI components with standardized sizing
      */
     private void initializeComponents() {
         // Create density combo without a label
@@ -54,15 +55,16 @@ public class InstrumentComboPanel extends JPanel {
         densityCombo = new JComboBox<>(densityOptions);
         densityCombo.setSelectedIndex(1); // Default to 50%
 
-        // REDUCED: from LARGE_CONTROL_WIDTH to MEDIUM_CONTROL_WIDTH + 10
-        densityCombo.setPreferredSize(new Dimension(UIHelper.MEDIUM_CONTROL_WIDTH + 10, UIHelper.CONTROL_HEIGHT));
+        // Standardize control size to match other panels
+        densityCombo.setPreferredSize(new Dimension(UIHelper.MEDIUM_CONTROL_WIDTH + 5, UIHelper.CONTROL_HEIGHT));
         densityCombo.setToolTipText("Set pattern density");
 
-        // Generate button with dice icon
+        // Generate button with dice icon - standardize size
         generateButton = new JButton("🎲");
         generateButton.setToolTipText("Generate a random pattern");
         generateButton.setPreferredSize(new Dimension(UIHelper.SMALL_CONTROL_WIDTH, UIHelper.CONTROL_HEIGHT));
-        generateButton.setMargin(new Insets(2, 2, 2, 2));
+        generateButton.setMargin(new Insets(2, 2, 2, 2)); // Match margins used in nav panel
+        
         generateButton.addActionListener(e -> {
             // Get selected density from the combo
             int density = (densityCombo.getSelectedIndex() + 1) * 25;
@@ -82,14 +84,20 @@ public class InstrumentComboPanel extends JPanel {
         JToggleButton latchToggleButton = new JToggleButton("L", false);
         latchToggleButton.setToolTipText("Generate new pattern each cycle");
         latchToggleButton.setPreferredSize(new Dimension(UIHelper.SMALL_CONTROL_WIDTH, UIHelper.CONTROL_HEIGHT));
+        latchToggleButton.setMargin(new Insets(2, 2, 2, 2)); // Standardize margins
+        
         latchToggleButton.addActionListener(e -> {
             // sequencer.setLatchEnabled(latchToggleButton.isSelected());
             logger.info("Latch mode set to: {}", latchToggleButton.isSelected());
         });
         latchToggleButton.setEnabled(false);
 
-        // Add components to panel
+        // Add density label for consistency with other panels
+        JLabel densityLabel = new JLabel("D:");
+
+        // Add components to panel with consistent spacing
         add(generateButton);
+        add(densityLabel);
         add(densityCombo);
         add(latchToggleButton);
     }

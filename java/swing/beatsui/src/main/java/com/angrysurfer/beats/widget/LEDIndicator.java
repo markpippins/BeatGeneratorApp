@@ -21,6 +21,7 @@ public class LEDIndicator extends JPanel {
     public LEDIndicator(Color onColor, String label) {
         this.onColor = onColor;
         this.label = label;
+        setMinimumSize(new Dimension(40, 16));
         setPreferredSize(new Dimension(40, 16));
         setOpaque(false);
     }

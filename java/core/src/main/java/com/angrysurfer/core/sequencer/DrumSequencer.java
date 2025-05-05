@@ -1890,8 +1890,8 @@ public class DrumSequencer implements IBusListener {
             
             // Ensure instrument has a valid device
             if (player.getInstrument() != null && 
-                (player.getInstrument().getDevice() == null || 
-                 !player.getInstrument().getDevice().isOpen())) {
+                (player.getDevice() == null || 
+                 !player.getDevice().isOpen())) {
                 
                 // Try to get the device specified by the instrument
                 MidiDevice device = null;

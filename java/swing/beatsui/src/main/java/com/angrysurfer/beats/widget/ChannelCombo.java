@@ -111,7 +111,7 @@ public class ChannelCombo extends JComboBox<Integer> implements IBusListener {
         }
         
         switch (action.getCommand()) {
-            case Commands.PLAYER_SELECTED:
+            case Commands.PLAYER_ACTIVATED:
                 if (action.getData() instanceof Player player) {
                     setCurrentPlayer(player);
                 }

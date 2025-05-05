@@ -140,6 +140,7 @@ public class MainPanel extends JPanel implements AutoCloseable, IBusListener {
         buttonPanel.add(createAllNotesOffButton());
         buttonPanel.add(createLoopToggleButton()); // Add the new loop toggle button
         buttonPanel.add(createMetronomeToggleButton());
+        
         // buttonPanel.add(createRestartButton());
 
         // Create mute buttons toolbar early
@@ -191,130 +192,149 @@ public class MainPanel extends JPanel implements AutoCloseable, IBusListener {
         updateMuteButtonSequencers();
     }
 
+    /**
+     * Recursively adds listeners to all tabbedPanes and their nested components
+     * to ensure focus handling and player activation work correctly
+     * 
+     * @param component The component to process (starts with main tabbedPane)
+     */
+    private void addListenersRecursive(Component component) {
+        // Process JTabbedPane components
+        if (component instanceof JTabbedPane) {
+            JTabbedPane tabbedPane = (JTabbedPane) component;
+            
+            // Add change listener to this tabbed pane
+            tabbedPane.addChangeListener(e -> {
+                // Get the selected component
+                Component selectedComponent = tabbedPane.getSelectedComponent();
+                handleComponentSelection(selectedComponent, tabbedPane);
+            });
+            
+            // Process each child component in the tabbedPane
+            for (int i = 0; i < tabbedPane.getTabCount(); i++) {
+                Component tabComponent = tabbedPane.getComponentAt(i);
+                // Recursively process this component
+                addListenersRecursive(tabComponent);
+            }
+        } 
+        // Process any container that might contain other components
+        else if (component instanceof Container) {
+            Container container = (Container) component;
+            
+            // Process all child components
+            for (Component child : container.getComponents()) {
+                addListenersRecursive(child);
+            }
+        }
+    }
+
+    /**
+     * Unified method to handle component selection in any tabbed pane
+     * 
+     * @param selectedComponent The component that was selected
+     * @param sourceTabbedPane The tabbed pane where selection occurred
+     */
+    private void handleComponentSelection(Component selectedComponent, JTabbedPane sourceTabbedPane) {
+        if (selectedComponent == null) return;
+        
+        // Request focus on the newly selected tab component
+        SwingUtilities.invokeLater(selectedComponent::requestFocusInWindow);
+
+        // Case 1: DrumSequencerPanel direct selection
+        if (selectedComponent == drumSequencerPanel && 
+            drumSequencerPanel.getDrumSelectorPanel().getSelectedDrumPadIndex() != null) {
+            Player player = drumSequencerPanel.getSequencer().getPlayer(
+                drumSequencerPanel.getDrumSelectorPanel().getSelectedDrumPadIndex());
+            activatePlayer(player, "drum sequencer");
+        }
+
+        // Case 2: DrumParamsSequencerPanel direct selection
+        else if (selectedComponent == drumParamsSequencerPanel) {
+            Player player = drumParamsSequencerPanel.getSequencer().getPlayer(
+                drumParamsSequencerPanel.getSelectedPadIndex());
+            activatePlayer(player, "drum params");
+        }
+
+        // Case 3: DrumEffectsSequencerPanel direct selection
+        else if (selectedComponent == drumEffectsSequencerPanel) {
+            Player player = drumEffectsSequencerPanel.getSequencer().getPlayer(
+                drumEffectsSequencerPanel.getSelectedPadIndex());
+            activatePlayer(player, "drum effects");
+        }
+
+        // Case 4: MelodicSequencerPanel direct selection
+        else if (selectedComponent instanceof MelodicSequencerPanel) {
+            Player player = ((MelodicSequencerPanel) selectedComponent).getSequencer().getPlayer();
+            activatePlayer(player, "melodic");
+        }
+
+        // Case 5: Drums tabbed pane selection
+        else if (selectedComponent == drumsTabbedPane) {
+            Component selectedDrumsTab = drumsTabbedPane.getSelectedComponent();
+            Player player = null;
+
+            if (selectedDrumsTab instanceof DrumSequencerPanel) {
+                int playerIndex = ((DrumSequencerPanel) selectedDrumsTab)
+                    .getDrumSelectorPanel().getSelectedDrumPadIndex();
+                player = ((DrumSequencerPanel) selectedDrumsTab).getSequencer().getPlayer(playerIndex);
+            }
+            else if (selectedDrumsTab instanceof DrumEffectsSequencerPanel) {
+                int playerIndex = ((DrumEffectsSequencerPanel) selectedDrumsTab).getSelectedPadIndex();
+                player = ((DrumEffectsSequencerPanel) selectedDrumsTab).getSequencer().getPlayer(playerIndex);
+            }
+            else if (selectedDrumsTab instanceof DrumParamsSequencerPanel) {
+                int playerIndex = ((DrumParamsSequencerPanel) selectedDrumsTab).getSelectedPadIndex();
+                player = ((DrumParamsSequencerPanel) selectedDrumsTab).getSequencer().getPlayer(playerIndex);
+            }
+
+            activatePlayer(player, "drums tabbed pane");
+        }
+
+        // Case 6: Melodic tabbed pane selection
+        else if (selectedComponent == melodicTabbedPane) {
+            Component selectedMelodicTab = melodicTabbedPane.getSelectedComponent();
+            MelodicSequencerPanel melodicPanel = findMelodicSequencerPanel(selectedMelodicTab);
+
+            if (melodicPanel != null && melodicPanel.getSequencer() != null) {
+                Player player = melodicPanel.getSequencer().getPlayer();
+                activatePlayer(player, "melodic tabbed pane");
+            }
+        }
+        
+        // Handle more specialized tab selections that might need additional processing
+        else if (sourceTabbedPane == tabbedPane) {
+            // Handle main tabbed pane selection for specific tab indices
+            int selectedIndex = tabbedPane.getSelectedIndex();
+            String tabName = tabbedPane.getTitleAt(selectedIndex);
+            logger.debug("Main tab selected: {} (index: {})", tabName, selectedIndex);
+            
+            // Additional custom handling for specific tabs could go here
+        }
+    }
+
+    /**
+     * Helper method to activate a player and publish event
+     * 
+     * @param player The player to activate
+     * @param source Description of the source for logging
+     */
+    private void activatePlayer(Player player, String source) {
+        if (player != null) {
+            CommandBus.getInstance().publish(
+                Commands.PLAYER_ACTIVATION_REQUEST,
+                this,
+                player);
+            logger.debug("Tab switched to {} - set player '{}' as active", 
+                source, player.getName());
+        }
+    }
+
+    /**
+     * Update the addListeners method to use the recursive implementation
+     */
     private void addListeners(JTabbedPane tabbedPane) {
-        tabbedPane.addChangeListener(e -> {
-            // Get the selected component
-            Component selectedComponent = tabbedPane.getSelectedComponent();
-
-            // Request focus on the newly selected tab component
-            if (selectedComponent != null) {
-                SwingUtilities.invokeLater(() -> {
-                    selectedComponent.requestFocusInWindow();
-                });
-            }
-
-            if (selectedComponent == drumSequencerPanel && drumSequencerPanel.getDrumSelectorPanel().getSelectedDrumPadIndex() != null) {
-                // Get the currently selected drum effects sequencer panel
-                 DrumSequencerPanel drumSequencerPanel = (DrumSequencerPanel) selectedComponent;
-
-
-                // Set the player as active
-                Player player = drumSequencerPanel.getSequencer().getPlayer(drumSequencerPanel.getDrumSelectorPanel().getSelectedDrumPadIndex());
-                if (player != null) {
-                    CommandBus.getInstance().publish(
-                            Commands.PLAYER_ACTIVATION_REQUEST,
-                            this,
-                            player);
-
-                    logger.debug("Main tab switched to drum effects - set player '{}' as active", player.getName());
-                }
-            }
-
-            if (selectedComponent == drumParamsSequencerPanel) {
-                // Get the currently selected drum effects sequencer panel
-                // DrumParamsSequencerPanel drumEffectsPanel = (DrumParamsSequencerPanel) selectedComponent;
-
-                // Set the player as active
-                Player player = drumParamsSequencerPanel.getSequencer().getPlayer(drumParamsSequencerPanel.getSelectedPadIndex());
-                if (player != null) {
-                    CommandBus.getInstance().publish(
-                            Commands.PLAYER_ACTIVATION_REQUEST,
-                            this,
-                            player);
-
-                    logger.debug("Main tab switched to drum effects - set player '{}' as active", player.getName());
-                }
-            }
-
-            if (selectedComponent == drumEffectsSequencerPanel) {
-                // Get the currently selected drum effects sequencer panel
-                // DrumEffectsSequencerPanel drumEffectsPanel = (DrumEffectsSequencerPanel) selectedComponent;
-
-                // Set the player as active
-                Player player = drumEffectsSequencerPanel.getSequencer().getPlayer(drumEffectsSequencerPanel.getSelectedPadIndex());
-                if (player != null) {
-                    CommandBus.getInstance().publish(
-                            Commands.PLAYER_ACTIVATION_REQUEST,
-                            this,
-                            player);
-
-                    logger.debug("Main tab switched to drum effects - set player '{}' as active", player.getName());
-                }
-            }
-
-            if (selectedComponent instanceof MelodicSequencerPanel) {
-
-                // Set the player as active
-                Player player = ((MelodicSequencerPanel) selectedComponent).getSequencer().getPlayer();
-                if (player != null) {
-                    CommandBus.getInstance().publish(
-                            Commands.PLAYER_ACTIVATION_REQUEST,
-                            this,
-                            player);
-
-                    logger.debug("Main tab switched to drum effects - set player '{}' as active", player.getName());
-                }
-            }
-
-            if (selectedComponent == drumsTabbedPane) {
-                Player player = null;
-
-                // Get the currently selected melodic tab
-                Component selectedDrumsTab = drumsTabbedPane.getSelectedComponent();
-
-                if (selectedDrumsTab instanceof  DrumSequencerPanel) {
-                    int playerIndex = ((DrumSequencerPanel) selectedDrumsTab).getDrumSelectorPanel().getSelectedDrumPadIndex();
-                    player = ((DrumSequencerPanel) selectedDrumsTab).getSequencer().getPlayer(playerIndex);
-                }
-                else if (selectedDrumsTab instanceof  DrumEffectsSequencerPanel) {
-                    int playerIndex = ((DrumEffectsSequencerPanel) selectedDrumsTab).getSelectedPadIndex();
-                    player = ((DrumSequencerPanel) selectedDrumsTab).getSequencer().getPlayer(playerIndex);
-                }
-                else if (selectedDrumsTab instanceof  DrumParamsSequencerPanel) {
-                    int playerIndex = ((DrumParamsSequencerPanel) selectedDrumsTab).getSelectedPadIndex();
-                    player = ((DrumParamsSequencerPanel) selectedDrumsTab).getSequencer().getPlayer(playerIndex);
-                }
-
-
-                if (player != null) {
-                    CommandBus.getInstance().publish(
-                            Commands.PLAYER_ACTIVATION_REQUEST,
-                            this,
-                            player);
-                }
-            }
-            // If selected component is the melodic tab pane
-            if (selectedComponent == melodicTabbedPane) {
-                // Get the currently selected melodic tab
-                Component selectedMelodicTab = melodicTabbedPane.getSelectedComponent();
-
-                // Find the MelodicSequencerPanel within the selected tab
-                MelodicSequencerPanel melodicPanel = findMelodicSequencerPanel(selectedMelodicTab);
-
-                if (melodicPanel != null && melodicPanel.getSequencer() != null) {
-                    // Set the player as active
-                    Player player = melodicPanel.getSequencer().getPlayer();
-                    if (player != null) {
-                        CommandBus.getInstance().publish(
-                                Commands.PLAYER_ACTIVATION_REQUEST,
-                                this,
-                                player);
-
-                        logger.debug("Main tab switched to melodic - set player '{}' as active", player.getName());
-                    }
-                }
-            }
-        });
+        // Call the recursive implementation
+        addListenersRecursive(tabbedPane);
     }
 
     private JTabbedPane createDrumSequencersPanel() {

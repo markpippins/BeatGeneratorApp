@@ -111,7 +111,7 @@ public class Visualizer implements IBusListener {
                 // }
                 break;
 
-            case Commands.PLAYER_SELECTED:
+            case Commands.PLAYER_ACTIVATED:
                 stopVisualizer();
                 // Find and start the StrikeVisualizationHandler
                 // for (IVisualizationHandler vis : visualizations) {

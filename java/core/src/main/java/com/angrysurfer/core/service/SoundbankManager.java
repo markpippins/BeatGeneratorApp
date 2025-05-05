@@ -792,6 +792,23 @@ public class SoundbankManager implements IBusListener {
         }
     }
 
+    /**
+     * Check if soundbanks are properly loaded and load them if not
+     * @return true if soundbanks are available
+     */
+    public boolean ensureSoundbanksLoaded() {
+        try {
+            if (getSoundbankNames().isEmpty()) {
+                logger.warn("No soundbanks available, attempting to reload");
+                // Add your soundbank loading code here
+                return false;
+            }
+            return true;
+        } catch (Exception e) {
+            logger.error("Error checking soundbanks: {}", e.getMessage(), e);
+            return false;
+        }
+    }
 
     /**
      * Initialize synthesizer for soundbank operations

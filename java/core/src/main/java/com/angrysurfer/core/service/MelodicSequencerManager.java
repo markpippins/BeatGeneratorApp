@@ -46,28 +46,6 @@ public class MelodicSequencerManager {
     }
 
     /**
-     * Create a new MelodicSequencer with the specified MIDI channel
-     * and add it to the manager.
-     *
-     * @param midiChannel The MIDI channel for the new sequencer
-     * @return The newly created MelodicSequencer
-     */
-    // public synchronized MelodicSequencer newSequencer(int midiChannel) {
-    // MelodicSequencer sequencer = new MelodicSequencer(midiChannel);
-    // sequencer.setId(sequencers.size() + 1); // Set a unique ID for the sequencer
-    // sequencer.setChannel(midiChannel);
-    // sequencers.add(sequencer);
-    // logger.info("Created new melodic sequencer with MIDI channel {} (index: {})",
-    // midiChannel, sequencers.size() - 1);
-    //
-    // // Notify listeners that a sequencer was added
-    // CommandBus.getInstance().publish(Commands.MELODIC_SEQUENCER_ADDED, this,
-    // sequencer);
-    //
-    // return sequencer;
-    // }
-
-    /**
      * Create a new sequencer with specified ID and channel
      * 
      * @param id      The sequencer ID

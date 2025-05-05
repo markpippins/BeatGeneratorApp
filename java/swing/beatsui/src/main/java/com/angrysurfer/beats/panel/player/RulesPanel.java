@@ -259,9 +259,9 @@ public class RulesPanel extends JPanel {
                 logger.info("RulesPanel received command: " + cmd);
 
                 try {
-                    if (Commands.PLAYER_SELECTED.equals(cmd)) {
+                    if (Commands.PLAYER_ACTIVATED.equals(cmd)) {
                         if (action.getData() instanceof Player selectedPlayer) {
-                            logger.info("RulesPanel processing PLAYER_SELECTED for: "
+                            logger.info("RulesPanel processing PLAYER_ACTIVATED for: "
                                     + selectedPlayer.getName() + " (ID: " + selectedPlayer.getId() + ")");
 
                             // Get a fresh copy of the player from SessionManager

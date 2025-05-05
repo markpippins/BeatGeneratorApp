@@ -6,12 +6,17 @@ import java.util.Objects;
 
 import javax.swing.*;
 
+import com.angrysurfer.beats.panel.PlayerAwarePanel;
+import com.angrysurfer.beats.widget.ChannelCombo;
+import com.angrysurfer.beats.widget.InstrumentCombo;
 import com.angrysurfer.core.sequencer.DrumItem;
 import com.angrysurfer.core.service.InternalSynthManager;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.angrysurfer.beats.util.UIHelper;
+import com.angrysurfer.beats.widget.AddInstrumentButton;
 import com.angrysurfer.core.api.Command;
 import com.angrysurfer.core.api.CommandBus;
 import com.angrysurfer.core.api.Commands;
@@ -29,14 +34,15 @@ import lombok.Setter;
  */
 @Getter
 @Setter
-public class SoundParametersPanel extends JPanel implements IBusListener {
+public class SoundParametersPanel extends PlayerAwarePanel implements IBusListener {
     private static final Logger logger = LoggerFactory.getLogger(SoundParametersPanel.class);
 
     // Player reference
-    private Player player;
-    private Long playerId;
 
     // UI Components
+    private JTextField nameTextField;
+    private ChannelCombo channelCombo;
+    private InstrumentCombo instrumentCombo;
     private JComboBox<String> soundbankCombo;
     private JComboBox<Integer> bankCombo;
     private JComboBox<PresetItem> presetCombo;
@@ -48,6 +54,9 @@ public class SoundParametersPanel extends JPanel implements IBusListener {
     // State management
     private boolean isInitializing = false;
 
+    private PresetItem currentPreset = null;
+
+
     // Services
     private final CommandBus commandBus = CommandBus.getInstance();
     private final PlayerManager playerManager = PlayerManager.getInstance();
@@ -57,7 +66,8 @@ public class SoundParametersPanel extends JPanel implements IBusListener {
      * Constructor with improved manager delegation
      */
     public SoundParametersPanel() {
-        super(new BorderLayout());
+        super();
+        setLayout(new BorderLayout());
 
         initComponents();
         layoutComponents();
@@ -75,55 +85,68 @@ public class SoundParametersPanel extends JPanel implements IBusListener {
     }
 
     /**
-     * Layout the components in a horizontal arrangement
+     * Layout the components in a horizontal arrangement with standardized sizing
      */
     private void layoutComponents() {
-        // Use BoxLayout for horizontal arrangement
-        JPanel contentPanel = new JPanel();
-        contentPanel.setLayout(new BoxLayout(contentPanel, BoxLayout.X_AXIS));
-        //contentPanel.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
-        UIHelper.setPanelBorder(this);
-        // Create sub-panels for each control group
-        JPanel soundbankPanel = new JPanel(new BorderLayout(0, 3));
-        JPanel bankPanel = new JPanel(new BorderLayout(0, 3));
-        JPanel presetPanel = new JPanel(new BorderLayout(0, 3));
-        
-        // Create labels for the components
-        soundbankLabel = new JLabel("Soundbank:");
-        bankLabel = new JLabel("Bank:");
-        presetLabel = new JLabel("Preset:");
-        
-        // Build soundbank section (label above combo)
-        soundbankPanel.add(soundbankLabel, BorderLayout.WEST);
-        soundbankPanel.add(soundbankCombo, BorderLayout.CENTER);
-        
-        // Build bank section (label above combo)
-        bankPanel.add(bankLabel, BorderLayout.WEST);
-        bankPanel.add(bankCombo, BorderLayout.CENTER);
-        
-        // Build preset section (label above combo)
-        presetPanel.add(presetLabel, BorderLayout.WEST);
-        presetPanel.add(presetCombo, BorderLayout.CENTER);
-        
-        // Add spacing between panels
-        contentPanel.add(soundbankPanel);
-        contentPanel.add(Box.createHorizontalStrut(10));
-        contentPanel.add(bankPanel);
-        contentPanel.add(Box.createHorizontalStrut(10));
-        contentPanel.add(presetPanel);
-        
-        // Set consistent preferred sizes for better UI
-        soundbankCombo.setPreferredSize(new Dimension(UIHelper.LARGE_CONTROL_WIDTH, UIHelper.CONTROL_HEIGHT));
-        bankCombo.setPreferredSize(new Dimension(UIHelper.MEDIUM_CONTROL_WIDTH, UIHelper.CONTROL_HEIGHT));
-        presetCombo.setPreferredSize(new Dimension(UIHelper.LARGE_CONTROL_WIDTH, UIHelper.CONTROL_HEIGHT));
-        
-        // Button panel for the edit button
-        JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
+        // Use compact FlowLayout instead of BoxLayout for more consistent spacing
+        JPanel contentPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 2, 1)); // REDUCED: Use 2,1 spacing like other
+                                                                                 // panels
+
+        UIHelper.setWidgetPanelBorder(this, "Player");
+
+        JPanel playerPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 2, 0));
+        // playerPanel.add(new JLabel("Player:"));
+        playerPanel.add(nameTextField);
+
+        JPanel instrumentPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 2, 0));
+        // instrumentPanel.add(new JLabel("Instrument:"));
+        instrumentPanel.add(instrumentCombo);
+
+        AddInstrumentButton addInstrumentButton = new AddInstrumentButton();
+        instrumentPanel.add(addInstrumentButton);
+
+        JPanel channelPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 2, 0));
+        channelPanel.add(new JLabel("Ch:"));
+        channelPanel.add(channelCombo);
+
+        // Standardize control sizes to match other panels
+        instrumentCombo.setPreferredSize(new Dimension(UIHelper.LARGE_CONTROL_WIDTH * 2, UIHelper.CONTROL_HEIGHT));
+        channelCombo.setPreferredSize(new Dimension(UIHelper.MEDIUM_CONTROL_WIDTH + 5, UIHelper.CONTROL_HEIGHT));
+        soundbankCombo.setPreferredSize(new Dimension(UIHelper.LARGE_CONTROL_WIDTH * 2, UIHelper.CONTROL_HEIGHT));
+        bankCombo.setPreferredSize(new Dimension(UIHelper.SMALL_CONTROL_WIDTH * 2, UIHelper.CONTROL_HEIGHT));
+        presetCombo.setPreferredSize(new Dimension(UIHelper.LARGE_CONTROL_WIDTH * 2, UIHelper.CONTROL_HEIGHT));
+
+        // Use standard small button size for edit button
+        editButton.setPreferredSize(new Dimension(UIHelper.SMALL_CONTROL_WIDTH, UIHelper.CONTROL_HEIGHT));
+        editButton.setMargin(new Insets(2, 2, 2, 2)); // Match other buttons' margins
+
+        // Simplify panel structure - inline labels instead of separate panels
+        JPanel soundbankPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 2, 0));
+        soundbankPanel.add(new JLabel("Soundbank:"));
+        soundbankPanel.add(soundbankCombo);
+
+        JPanel bankPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 2, 0));
+        bankPanel.add(new JLabel("Bank:"));
+        bankPanel.add(bankCombo);
+
+        JPanel presetPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 2, 0));
+        presetPanel.add(new JLabel("Preset:"));
+        presetPanel.add(presetCombo);
+
+        JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 2, 0));
         buttonPanel.add(editButton);
-        
-        // Add panels to main layout
+
+        // Add all panels to content panel
+        contentPanel.add(playerPanel);
+        contentPanel.add(channelPanel);
+        contentPanel.add(instrumentPanel);
+        contentPanel.add(soundbankPanel);
+        contentPanel.add(bankPanel);
+        contentPanel.add(presetPanel);
+        contentPanel.add(buttonPanel);
+
+        // Add to main layout
         add(contentPanel, BorderLayout.CENTER);
-        add(buttonPanel, BorderLayout.EAST);
     }
 
     /**
@@ -131,43 +154,43 @@ public class SoundParametersPanel extends JPanel implements IBusListener {
      */
     @Override
     public void onAction(Command action) {
+        super.onAction(action);
         if (action == null || action.getCommand() == null)
             return;
 
         // Only process relevant commands for efficiency
         switch (action.getCommand()) {
-            case Commands.PLAYER_SELECTED:
-                if (action.getData() instanceof Player activatedPlayer) {
-                    SwingUtilities.invokeLater(() -> {
-                        player = activatedPlayer;
-                        playerId = activatedPlayer.getId();
-                        updateUI();
-                    });
-                }
-                break;
-
-            case Commands.PLAYER_UPDATED:
-                if (action.getData() instanceof Player updatedPlayer &&
-                        playerId != null && playerId.equals(updatedPlayer.getId())) {
-                    SwingUtilities.invokeLater(() -> {
-                        player = updatedPlayer;
-                        updateUI();
-                    });
-                }
-                break;
 
             case Commands.SOUNDBANKS_REFRESHED:
-                if (player != null) {
+                if (getPlayer() != null) {
                     SwingUtilities.invokeLater(this::updateSoundbankCombo);
                 }
                 break;
         }
     }
 
+    @Override
+    public void handlePlayerActivated() {
+        updateUI();
+    }
+
+    @Override
+    public void handlePlayerUpdated() {
+        updateUI();
+    }
+
     /**
      * Initialize UI components with better manager delegation
      */
     private void initComponents() {
+        nameTextField = new JTextField(15);
+        nameTextField.setEditable(false);
+        nameTextField.setFocusable(false);
+        nameTextField.setBackground(Color.GRAY);
+
+        channelCombo = new ChannelCombo();
+        instrumentCombo = new InstrumentCombo();
+
         soundbankCombo = new JComboBox<>();
         bankCombo = new JComboBox<>();
         presetCombo = new JComboBox<>();
@@ -178,16 +201,16 @@ public class SoundParametersPanel extends JPanel implements IBusListener {
         soundbankCombo.addActionListener(e -> {
             if (!isInitializing && soundbankCombo.getSelectedItem() != null) {
                 String soundbank = (String) soundbankCombo.getSelectedItem();
-                if (player != null && player.getInstrument() != null) {
+                if (getPlayer() != null && getPlayer().getInstrument() != null) {
                     // Let SoundbankManager handle the change
-                    soundbankManager.applySoundbank(player.getInstrument(), soundbank);
+                    soundbankManager.applySoundbank(getPlayer().getInstrument(), soundbank);
 
                     // Update UI for the change
                     updateBankCombo();
 
                     // Notify system of player update
-                    playerManager.savePlayerProperties(player);
-                    commandBus.publish(Commands.PLAYER_UPDATED, this, player);
+                    playerManager.savePlayerProperties(getPlayer());
+                    commandBus.publish(Commands.PLAYER_UPDATED, this, getPlayer());
                 }
             }
         });
@@ -195,22 +218,22 @@ public class SoundParametersPanel extends JPanel implements IBusListener {
         bankCombo.addActionListener(e -> {
             if (!isInitializing && bankCombo.getSelectedItem() != null) {
                 Integer bank = (Integer) bankCombo.getSelectedItem();
-                if (player != null && player.getInstrument() != null) {
+                if (getPlayer() != null && getPlayer().getInstrument() != null) {
                     // Update instrument with bank
-                    player.getInstrument().setBankIndex(bank);
+                    getPlayer().getInstrument().setBankIndex(bank);
 
                     // Let SoundbankManager apply the change
                     soundbankManager.applyPresetChange(
-                            player.getInstrument(),
+                            getPlayer().getInstrument(),
                             bank,
-                            player.getInstrument().getPreset());
+                            getPlayer().getInstrument().getPreset());
 
                     // Update UI for the change
                     updatePresetCombo();
 
                     // Notify system of player update
-                    playerManager.savePlayerProperties(player);
-                    commandBus.publish(Commands.PLAYER_UPDATED, this, player);
+                    playerManager.savePlayerProperties(getPlayer());
+                    commandBus.publish(Commands.PLAYER_UPDATED, this, getPlayer());
                 }
             }
         });
@@ -218,19 +241,43 @@ public class SoundParametersPanel extends JPanel implements IBusListener {
         presetCombo.addActionListener(e -> {
             if (!isInitializing && presetCombo.getSelectedItem() != null) {
                 PresetItem preset = (PresetItem) presetCombo.getSelectedItem();
-                if (player != null) {
-                    // Delegate to PlayerManager through command bus
-                    commandBus.publish(
-                            Commands.PLAYER_PRESET_CHANGE_REQUEST,
-                            this,
-                            new Object[] { player.getId(), preset.getNumber() });
+                if (preset != null && currentPreset != null && preset.getNumber() == currentPreset.getNumber())
+                    return;
+        
+                currentPreset = preset;
+        
+                if (getPlayer() != null && getPlayer().getInstrument() != null) {
+                    // CRITICAL: Update the instrument's preset property directly
+                    getPlayer().getInstrument().setPreset(preset.getNumber());
+                    
+                    // Let SoundbankManager handle the preset change
+                    if (getPlayer().getChannel() == 9) {
+                        // Handle drum note change
+                        getPlayer().setRootNote(preset.getNumber());
+                        soundbankManager.applyPresetChange(getPlayer().getInstrument(),
+                                getPlayer().getInstrument().getBankIndex(),
+                                preset.getNumber());
+                    } else {
+                        // Handle melodic preset change
+                        soundbankManager.applyPresetChange(
+                            getPlayer().getInstrument(),
+                            getPlayer().getInstrument().getBankIndex(),
+                            preset.getNumber()
+                        );
+                    }
+                    
+                    // Save the changes
+                    playerManager.savePlayerProperties(getPlayer());
+                    
+                    // Notify system of player update
+                    commandBus.publish(Commands.PLAYER_UPDATED, this, getPlayer());
                 }
             }
         });
-
+        
         editButton.addActionListener(e -> {
-            if (player != null) {
-                commandBus.publish(Commands.PLAYER_EDIT_REQUEST, this, player);
+            if (getPlayer() != null) {
+                commandBus.publish(Commands.PLAYER_EDIT_REQUEST, this, getPlayer());
             }
         });
     }
@@ -242,17 +289,16 @@ public class SoundParametersPanel extends JPanel implements IBusListener {
     public void updateUI() {
         super.updateUI();
 
-        if (soundbankCombo == null || player == null)
+        if (soundbankCombo == null || getPlayer() == null)
             return;
 
         isInitializing = true;
         try {
-            UIHelper.setWidgetPanelBorder(this,
-                    player.getName() + " [" + player.getId().toString() + "]");
+            nameTextField.setText(getPlayer().getName());
 
-            boolean isDrumChannel = player.getChannel() == 9;
-            boolean isInternalSynth = player.getInstrument() != null &&
-                    InternalSynthManager.getInstance().isInternalSynthInstrument(player.getInstrument());
+            boolean isDrumChannel = getPlayer().getChannel() == 9;
+            boolean isInternalSynth = getPlayer().getInstrument() != null &&
+                    InternalSynthManager.getInstance().isInternalSynthInstrument(getPlayer().getInstrument());
 
             // Update UI according to instrument type
             updateControlVisibility(isInternalSynth, isDrumChannel);
@@ -261,10 +307,14 @@ public class SoundParametersPanel extends JPanel implements IBusListener {
                 // Let SoundbankManager handle populating drum sounds
                 updateDrumPresetCombo();
             } else if (isInternalSynth) {
-                // Update all components for internal synth
+                // Update all components for internal synth - ENSURE CORRECT SEQUENCE
                 updateSoundbankCombo();
-                updateBankCombo();
-                updatePresetCombo();
+                // Wait until soundbank is selected before updating banks
+                SwingUtilities.invokeLater(() -> {
+                    updateBankCombo();
+                    // Wait until bank is selected before updating presets
+                    SwingUtilities.invokeLater(this::updatePresetCombo);
+                });
             } else {
                 // For external synth, just populate generic presets
                 updateExternalPresetCombo();
@@ -281,22 +331,17 @@ public class SoundParametersPanel extends JPanel implements IBusListener {
     private void updateControlVisibility(boolean isInternalSynth, boolean isDrumChannel) {
         // For drum channel, hide soundbank and bank controls
         if (isDrumChannel) {
-            soundbankCombo.setVisible(false);
-            bankCombo.setVisible(false);
-            soundbankLabel.setVisible(false);
-            bankLabel.setVisible(false);
-            presetLabel.setText("Drum:");
+            soundbankCombo.getParent().setVisible(false);
+            bankCombo.getParent().setVisible(false);
+            ((JLabel) ((JPanel) presetCombo.getParent()).getComponent(0)).setText("Drum:");
         } else {
             // For melodic instruments, show/hide based on internal/external
-            presetCombo.setVisible(true);
-            presetLabel.setVisible(true);
-            presetLabel.setText("Preset:");
+            presetCombo.getParent().setVisible(true);
+            ((JLabel) ((JPanel) presetCombo.getParent()).getComponent(0)).setText("Preset:");
 
             // Only show soundbank/bank for internal instruments
-            soundbankCombo.setVisible(isInternalSynth);
-            bankCombo.setVisible(isInternalSynth);
-            soundbankLabel.setVisible(isInternalSynth);
-            bankLabel.setVisible(isInternalSynth);
+            soundbankCombo.getParent().setVisible(isInternalSynth);
+            bankCombo.getParent().setVisible(isInternalSynth);
         }
 
         // Update the panel layout
@@ -308,7 +353,7 @@ public class SoundParametersPanel extends JPanel implements IBusListener {
      * Update soundbank combo with data from SoundbankManager
      */
     private void updateSoundbankCombo() {
-        if (player == null || player.getInstrument() == null)
+        if (getPlayer() == null || getPlayer().getInstrument() == null)
             return;
 
         soundbankCombo.removeAllItems();
@@ -320,10 +365,14 @@ public class SoundParametersPanel extends JPanel implements IBusListener {
         }
 
         // Select current soundbank
-        String currentSoundbank = player.getInstrument().getSoundbankName();
-        if (currentSoundbank != null) {
+        String currentSoundbank = getPlayer().getInstrument().getSoundbankName();
+        if (currentSoundbank != null && !currentSoundbank.isEmpty()) {
             soundbankCombo.setSelectedItem(currentSoundbank);
         } else if (soundbankCombo.getItemCount() > 0) {
+            // If no soundbank is set, select the first one and update the instrument
+            String defaultSoundbank = soundbankCombo.getItemAt(0).toString();
+            getPlayer().getInstrument().setSoundbankName(defaultSoundbank);
+            logger.debug("Setting default soundbank: {}", defaultSoundbank);
             soundbankCombo.setSelectedIndex(0);
         }
     }
@@ -332,18 +381,21 @@ public class SoundParametersPanel extends JPanel implements IBusListener {
      * Update bank combo with data from SoundbankManager
      */
     private void updateBankCombo() {
-        if (player == null || player.getInstrument() == null)
+        if (getPlayer() == null || getPlayer().getInstrument() == null)
             return;
 
         bankCombo.removeAllItems();
 
         // Get banks from SoundbankManager for current soundbank
-        String soundbank = player.getInstrument().getSoundbankName();
-        if (soundbank == null && soundbankCombo.getSelectedItem() != null) {
+        String soundbank = getPlayer().getInstrument().getSoundbankName();
+        if ((soundbank == null || soundbank.isEmpty()) && soundbankCombo.getSelectedItem() != null) {
             soundbank = soundbankCombo.getSelectedItem().toString();
+            // Update the instrument with the selected soundbank
+            getPlayer().getInstrument().setSoundbankName(soundbank);
+            logger.debug("Updated instrument soundbank to: {}", soundbank);
         }
 
-        if (soundbank != null) {
+        if (soundbank != null && !soundbank.isEmpty()) {
             // Let SoundbankManager provide the bank list
             List<Integer> banks = soundbankManager.getAvailableBanksByName(soundbank);
             for (Integer bank : banks) {
@@ -352,10 +404,30 @@ public class SoundParametersPanel extends JPanel implements IBusListener {
         }
 
         // Select current bank
-        Integer currentBank = player.getInstrument().getBankIndex();
+        Integer currentBank = getPlayer().getInstrument().getBankIndex();
         if (currentBank != null) {
-            bankCombo.setSelectedItem(currentBank);
+            // Check if the current bank exists in the combo
+            boolean bankExists = false;
+            for (int i = 0; i < bankCombo.getItemCount(); i++) {
+                if (Objects.equals(bankCombo.getItemAt(i), currentBank)) {
+                    bankExists = true;
+                    bankCombo.setSelectedIndex(i);
+                    break;
+                }
+            }
+            
+            if (!bankExists && bankCombo.getItemCount() > 0) {
+                // Current bank not found, select first available
+                Integer defaultBank = (Integer) bankCombo.getItemAt(0);
+                getPlayer().getInstrument().setBankIndex(defaultBank);
+                logger.debug("Bank {} not found, setting default bank: {}", currentBank, defaultBank);
+                bankCombo.setSelectedIndex(0);
+            }
         } else if (bankCombo.getItemCount() > 0) {
+            // No bank set, select the first one
+            Integer defaultBank = (Integer) bankCombo.getItemAt(0);
+            getPlayer().getInstrument().setBankIndex(defaultBank);
+            logger.debug("Setting default bank: {}", defaultBank);
             bankCombo.setSelectedIndex(0);
         }
     }
@@ -364,46 +436,75 @@ public class SoundParametersPanel extends JPanel implements IBusListener {
      * Update preset combo with data from SoundbankManager
      */
     private void updatePresetCombo() {
-        if (player == null || player.getInstrument() == null)
+        if (getPlayer() == null || getPlayer().getInstrument() == null)
             return;
 
         presetCombo.removeAllItems();
 
         // Get parameters
-        String soundbank = player.getInstrument().getSoundbankName();
-        Integer bank = player.getInstrument().getBankIndex();
+        String soundbank = getPlayer().getInstrument().getSoundbankName();
+        Integer bank = getPlayer().getInstrument().getBankIndex();
 
-        if (soundbank == null && soundbankCombo.getSelectedItem() != null) {
+        if ((soundbank == null || soundbank.isEmpty()) && soundbankCombo.getSelectedItem() != null) {
             soundbank = soundbankCombo.getSelectedItem().toString();
+            getPlayer().getInstrument().setSoundbankName(soundbank);
+            logger.debug("Updating instrument soundbank for presets: {}", soundbank);
         }
 
         if (bank == null && bankCombo.getSelectedItem() != null) {
             bank = (Integer) bankCombo.getSelectedItem();
+            getPlayer().getInstrument().setBankIndex(bank);
+            logger.debug("Updating instrument bank for presets: {}", bank);
         }
 
-        if (soundbank != null && bank != null) {
+        if (soundbank != null && !soundbank.isEmpty() && bank != null) {
             // Let SoundbankManager provide the preset list
             List<String> presets = soundbankManager.getPresetNames(soundbank, bank);
+            logger.debug("Found {} presets for soundbank: {}, bank: {}", presets.size(), soundbank, bank);
+            
             for (int i = 0; i < presets.size(); i++) {
                 String preset = presets.get(i);
                 if (preset != null && !preset.isEmpty()) {
                     presetCombo.addItem(new PresetItem(i, preset));
                 }
             }
+        } else {
+            logger.warn("Cannot load presets - soundbank: {}, bank: {}", soundbank, bank);
         }
 
         // Select current preset
-        Integer currentPreset = player.getInstrument().getPreset();
+        Integer currentPreset = getPlayer().getInstrument().getPreset();
         if (currentPreset != null) {
+            boolean presetFound = false;
             for (int i = 0; i < presetCombo.getItemCount(); i++) {
                 PresetItem item = presetCombo.getItemAt(i);
                 if (item.getNumber() == currentPreset) {
                     presetCombo.setSelectedIndex(i);
+                    presetFound = true;
                     break;
                 }
             }
+            
+            if (!presetFound && presetCombo.getItemCount() > 0) {
+                // If preset not found, select first one
+                PresetItem firstPreset = presetCombo.getItemAt(0);
+                getPlayer().getInstrument().setPreset(firstPreset.getNumber());
+                logger.debug("Preset {} not found, setting default: {}", currentPreset, firstPreset.getNumber());
+                presetCombo.setSelectedIndex(0);
+            }
         } else if (presetCombo.getItemCount() > 0) {
+            // No preset set, select first one
+            PresetItem firstPreset = presetCombo.getItemAt(0);
+            getPlayer().getInstrument().setPreset(firstPreset.getNumber());
+            logger.debug("Setting default preset: {}", firstPreset.getNumber());
             presetCombo.setSelectedIndex(0);
+        }
+        
+        // If we still don't have a preset, there might be an issue with the SoundbankManager
+        if (presetCombo.getItemCount() == 0) {
+            logger.error("No presets available for soundbank: {}, bank: {}", soundbank, bank);
+            // Add a placeholder item to indicate the problem
+            presetCombo.addItem(new PresetItem(0, "[No Presets Available]"));
         }
     }
 
@@ -411,7 +512,7 @@ public class SoundParametersPanel extends JPanel implements IBusListener {
      * Update drum preset combo with data from SoundbankManager
      */
     private void updateDrumPresetCombo() {
-        if (player == null)
+        if (getPlayer() == null)
             return;
 
         presetCombo.removeAllItems();
@@ -423,10 +524,10 @@ public class SoundParametersPanel extends JPanel implements IBusListener {
         }
 
         // Select current drum note
-        if (player.getRootNote() != null) {
+        if (getPlayer().getRootNote() != null) {
             for (int i = 0; i < presetCombo.getItemCount(); i++) {
                 PresetItem item = presetCombo.getItemAt(i);
-                if (item.getNumber() == player.getRootNote()) {
+                if (item.getNumber() == getPlayer().getRootNote()) {
                     presetCombo.setSelectedIndex(i);
                     break;
                 }
@@ -440,7 +541,7 @@ public class SoundParametersPanel extends JPanel implements IBusListener {
      * Update external preset combo with generic program numbers
      */
     private void updateExternalPresetCombo() {
-        if (player == null)
+        if (getPlayer() == null)
             return;
 
         presetCombo.removeAllItems();
@@ -452,10 +553,10 @@ public class SoundParametersPanel extends JPanel implements IBusListener {
         }
 
         // Select current preset
-        if (player.getInstrument() != null && player.getInstrument().getPreset() != null) {
+        if (getPlayer().getInstrument() != null && getPlayer().getInstrument().getPreset() != null) {
             for (int i = 0; i < presetCombo.getItemCount(); i++) {
                 PresetItem item = presetCombo.getItemAt(i);
-                if (item.getNumber() == player.getInstrument().getPreset()) {
+                if (item.getNumber() == getPlayer().getInstrument().getPreset()) {
                     presetCombo.setSelectedIndex(i);
                     break;
                 }

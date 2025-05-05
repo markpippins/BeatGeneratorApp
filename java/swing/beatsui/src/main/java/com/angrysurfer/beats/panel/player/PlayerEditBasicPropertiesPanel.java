@@ -227,9 +227,9 @@ public class PlayerEditBasicPropertiesPanel extends JPanel {
 
                 // Apply soundbank change
                 Soundbank soundbank = SoundbankManager.getInstance().getSoundbankByName(soundbankName);
-                if (soundbank != null && player.getInstrument().getDevice() instanceof Synthesizer) {
+                if (soundbank != null && player.getDevice() instanceof Synthesizer) {
                     try {
-                        Synthesizer synth = (Synthesizer) player.getInstrument().getDevice();
+                        Synthesizer synth = (Synthesizer) player.getDevice();
                         synth.loadAllInstruments(soundbank);
                     } catch (Exception ex) {
                         logger.error("Error loading soundbank instruments: {}", ex.getMessage());

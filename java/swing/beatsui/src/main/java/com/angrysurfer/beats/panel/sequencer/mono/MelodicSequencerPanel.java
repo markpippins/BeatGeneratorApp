@@ -27,10 +27,10 @@ import com.angrysurfer.core.event.NoteEvent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.angrysurfer.beats.panel.SessionControlPanel;
 import com.angrysurfer.beats.panel.player.SoundParametersPanel;
 import com.angrysurfer.beats.panel.sequencer.MuteSequencerPanel;
 import com.angrysurfer.beats.panel.sequencer.TiltSequencerPanel;
+import com.angrysurfer.beats.panel.session.SessionControlPanel;
 import com.angrysurfer.beats.util.UIHelper;
 import com.angrysurfer.core.api.Command;
 import com.angrysurfer.core.api.CommandBus;
@@ -224,7 +224,7 @@ public class MelodicSequencerPanel extends JPanel implements IBusListener {
         westPanel.add(navigationPanel, BorderLayout.NORTH);
 
         // Sound parameters go NORTH-EAST
-        eastPanel.add(createSoundParametersPanel(), BorderLayout.NORTH);
+        eastPanel.add(new SoundParametersPanel(), BorderLayout.NORTH);
 
         // Create and add the center info panel with instrument info
         JPanel centerPanel = new JPanel(new GridBagLayout()); // Use GridBagLayout for true vertical centering
@@ -297,58 +297,6 @@ public class MelodicSequencerPanel extends JPanel implements IBusListener {
 
         // Register for command updates
         CommandBus.getInstance().register(this);
-    }
-
-    /**
-     * Creates the sound parameters panel with instrument and channel selectors
-     */
-    private JPanel createSoundParametersPanel() {
-        // Create main container with BorderLayout
-        JPanel containerPanel = new JPanel(new BorderLayout(4, 2));
-
-        // Create left panel to hold instrument and channel combos
-        JPanel leftPanel = new JPanel(new BorderLayout(2, 4));
-
-        // Create instrument combo panel with add button
-        JPanel instrumentPanel = UIHelper.createSectionPanel("Instrument"); 
-        // new JPanel(new BorderLayout(2, 0));
-        // UIHelper.setWidgetPanelBorder(instrumentPanel, "Instrument");
-        
-        // Create combo and button in sub-panel
-        // JPanel instrumentComboPanel = new JPanel(new BorderLayout());
-        InstrumentCombo instrumentCombo = new InstrumentCombo();
-        instrumentCombo.setCurrentPlayer(sequencer.getPlayer());
-        instrumentPanel.add(instrumentCombo, BorderLayout.CENTER);
-        
-        // Create add instrument button and add to the right of combo
-        AddInstrumentButton addInstrumentButton = new AddInstrumentButton();
-        addInstrumentButton.setCurrentPlayer(sequencer.getPlayer());
-        
-        // Add combo (center) and button (east) to the instrument panel
-        // instrumentPanel.add(instrumentComboPanel, BorderLayout.CENTER);
-        instrumentPanel.add(addInstrumentButton, BorderLayout.EAST);
-
-        // Create channel combo panel
-        //JPanel channelPanel = new JPanel(new BorderLayout());
-        //UIHelper.setWidgetPanelBorder(channelPanel, "Channel");
-        //ChannelCombo channelCombo = new ChannelCombo();
-        //channelCombo.setCurrentPlayer(sequencer.getPlayer());
-        //channelPanel.add(channelCombo, BorderLayout.CENTER);
-
-        // Add instrument panel at the top of left panel
-        leftPanel.add(instrumentPanel, BorderLayout.WEST);
-
-        // Add channel panel below instrument panel
-        leftPanel.add(new ChannelComboPanel(), BorderLayout.CENTER);
-
-        // Create the standardized SoundParametersPanel with the current player
-        SoundParametersPanel soundPanel = new SoundParametersPanel();
-
-        // Add left panel to the WEST and sound panel to the CENTER
-        containerPanel.add(leftPanel, BorderLayout.WEST);
-        containerPanel.add(soundPanel, BorderLayout.CENTER);
-
-        return containerPanel;
     }
 
     private JPanel createGeneratePanel() {

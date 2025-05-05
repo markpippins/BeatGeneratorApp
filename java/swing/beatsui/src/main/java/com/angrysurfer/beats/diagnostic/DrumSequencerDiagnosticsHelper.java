@@ -121,8 +121,8 @@ public class DrumSequencerDiagnosticsHelper {
                 for (int i = 0; i < DrumSequencer.DRUM_PAD_COUNT; i++) {
                     Player player = sequencer.getPlayer(i);
                     if (player != null && player.getInstrument() != null && 
-                        player.getInstrument().getDevice() != null &&
-                        player.getInstrument().getDevice().isOpen()) {
+                        player.getDevice() != null &&
+                        player.getDevice().isOpen()) {
                         
                         log.addIndentedLine("Triggering test note on drum " + i, 1);
                         sequencer.playDrumNote(i, 100);

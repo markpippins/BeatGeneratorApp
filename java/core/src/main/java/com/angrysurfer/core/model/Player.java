@@ -37,6 +37,7 @@ import lombok.Getter;
 import lombok.Setter;
 
 import javax.sound.midi.InvalidMidiDataException;
+import javax.sound.midi.MidiDevice;
 import javax.sound.midi.MidiUnavailableException;
 import javax.sound.midi.ShortMessage;
 
@@ -238,6 +239,12 @@ public abstract class Player implements Callable<Boolean>, Serializable, IBusLis
 
     public String getPlayerClassName() {
         return getClass().getSimpleName().toLowerCase();
+    }
+
+    @JsonIgnore
+    @Transient
+    public MidiDevice getDevice() {
+        return Objects.nonNull(getInstrument()) ? getInstrument().getDevice() : null; 
     }
 
     // public Long getSubPosition() {

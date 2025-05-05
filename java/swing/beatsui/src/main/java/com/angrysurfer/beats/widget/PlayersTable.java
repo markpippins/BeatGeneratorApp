@@ -319,7 +319,7 @@ public class PlayersTable extends JTable {
                         }
                         break;
 
-                    case Commands.PLAYER_SELECTED:
+                    case Commands.PLAYER_ACTIVATED:
                         if (action.getData() instanceof Player player) {
                             SwingUtilities.invokeLater(() -> {
                                 // Find the row for this player
@@ -385,7 +385,7 @@ public class PlayersTable extends JTable {
             }
 
             if (player != null) {
-                CommandBus.getInstance().publish(Commands.PLAYER_SELECTED, this, player);
+                CommandBus.getInstance().publish(Commands.PLAYER_ACTIVATION_REQUEST, this, player);
             } else {
                 // CommandBus.getInstance().publish(Commands.PLAYER_UNSELECTED, this, null);
             }

@@ -67,7 +67,7 @@ public class PlayerManager implements IBusListener {
 
         try {
             switch (action.getCommand()) {
-                case Commands.PLAYER_SELECTED -> handleActivatePlayerRequest(action);
+                case Commands.PLAYER_ACTIVATION_REQUEST -> handleActivatePlayerRequest(action);
                 case Commands.PLAYER_UPDATE_REQUEST -> handleUpdatePlayerRequest(action);
                 case Commands.PLAYER_PRESET_CHANGE_REQUEST -> handlePresetChangeRequest(action);
                 case Commands.PLAYER_INSTRUMENT_CHANGE_REQUEST -> handleInstrumentChangeRequest(action);
@@ -84,10 +84,13 @@ public class PlayerManager implements IBusListener {
     private void handleActivatePlayerRequest(Command action) {
         if (action.getData() instanceof Player player) {
             setActivePlayer(player);
+            commandBus.publish(Commands.PLAYER_ACTIVATED, this, player);
         } else if (action.getData() instanceof Long playerId) {
             Player player = getPlayerById(playerId);
             if (player != null) {
                 setActivePlayer(player);
+                // Broadcast successful update
+                commandBus.publish(Commands.PLAYER_ACTIVATED, this, player);
             }
         }
     }

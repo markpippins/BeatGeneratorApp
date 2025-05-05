@@ -113,10 +113,10 @@ public class SessionManager implements IBusListener {
         // != null ? activeSession.getId() : "null"));
 
         if (activeSession != null) {
-            // System.out.println("SessionManager: Session details:");
+            System.out.println("SessionManager: Session details:");
             // System.out.println(" - ID: " + activeSession.getId());
-            // System.out.println(" - Players: " + (activeSession.getPlayers() != null ?
-            // activeSession.getPlayers().size() : 0));
+            System.out.println(" - Players: " + (activeSession.getPlayers() != null ?
+            activeSession.getPlayers().size() : 0));
             // System.out.println(" - BPM: " + activeSession.getTempoInBPM());
             // System.out.println(" - PPQ: " + activeSession.getTicksPerBeat());
         }

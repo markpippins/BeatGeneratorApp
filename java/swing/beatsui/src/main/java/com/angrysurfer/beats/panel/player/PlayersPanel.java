@@ -132,11 +132,19 @@ public class PlayersPanel extends JPanel {
             }
         });
 
+        // Add this to your setupLayout method, right after the muteButton definition
+        JButton deleteUnusedButton = new JButton("Delete Unused");
+        deleteUnusedButton.setToolTipText("Delete all players with no rules");
+        deleteUnusedButton.addActionListener(e -> deletePlayersWithNoRules());
+
         // Add control button to the right of the button panel
         JPanel leftButtonPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
         leftButtonPanel.add(refreshButton);
         leftButtonPanel.add(saveButton);
         leftButtonPanel.add(copyButton);
+
+        leftButtonPanel.add(deleteUnusedButton);
+
         buttonWrapper.add(leftButtonPanel, BorderLayout.WEST);
 
         // Create control button
@@ -160,7 +168,7 @@ public class PlayersPanel extends JPanel {
         muteButton.addActionListener(e -> {
             Player player = getSelectedPlayer();
             if (player != null) {
-                logger.info("Forcing PLAYER_SELECTED event for: " + player.getName());
+                logger.info("Forcing PLAYER_ACTIVATION_REQUEST event for: " + player.getName());
 
                 // Update button states
                 player.setMuted(!player.isMuted());
@@ -199,6 +207,77 @@ public class PlayersPanel extends JPanel {
                 }
             }
         });
+    }
+
+    /**
+     * Deletes all players from the current session that have no rules
+     * and automatically saves the session afterward
+     */
+    private void deletePlayersWithNoRules() {
+        Session currentSession = SessionManager.getInstance().getActiveSession();
+        if (currentSession == null || currentSession.getPlayers() == null || currentSession.getPlayers().isEmpty()) {
+            return;
+        }
+
+        // Find players with no rules
+        List<Long> playersToDelete = new ArrayList<>();
+        int totalNoRulePlayers = 0;
+
+        for (Player player : currentSession.getPlayers()) {
+            if (player != null && player.getRules() != null && player.getRules().isEmpty()) {
+                playersToDelete.add(player.getId());
+                totalNoRulePlayers++;
+            }
+        }
+
+        if (playersToDelete.isEmpty()) {
+            JOptionPane.showMessageDialog(
+                    this,
+                    "No unused players found (all players have rules).",
+                    "Delete Unused Players",
+                    JOptionPane.INFORMATION_MESSAGE);
+            return;
+        }
+
+        // Confirm deletion
+        int confirm = JOptionPane.showConfirmDialog(
+                this,
+                "Delete " + totalNoRulePlayers + " unused player" + (totalNoRulePlayers > 1 ? "s" : "") +
+                        " (players with no rules)?\nThis action cannot be undone.",
+                "Confirm Delete Unused Players",
+                JOptionPane.YES_NO_OPTION,
+                JOptionPane.WARNING_MESSAGE);
+
+        if (confirm == JOptionPane.YES_OPTION) {
+            logger.info("Deleting " + playersToDelete.size() + " players with no rules");
+
+            // Delete the players in batches to avoid overwhelming the system
+            int batchSize = 20;
+            for (int i = 0; i < playersToDelete.size(); i += batchSize) {
+                int endIndex = Math.min(i + batchSize, playersToDelete.size());
+                List<Long> batch = playersToDelete.subList(i, endIndex);
+
+                CommandBus.getInstance().publish(
+                        Commands.PLAYER_DELETE_REQUEST,
+                        this,
+                        batch.toArray(Long[]::new));
+
+                // Brief pause between batches if there are many players
+                if (playersToDelete.size() > 100 && i + batchSize < playersToDelete.size()) {
+                    try {
+                        Thread.sleep(50);
+                    } catch (InterruptedException ex) {
+                        // Ignore
+                    }
+                }
+            }
+
+            // Save the session automatically after deleting
+            SwingUtilities.invokeLater(() -> {
+                logger.info("Auto-saving session after deleting unused players");
+                CommandBus.getInstance().publish(Commands.SAVE_SESSION, this);
+            });
+        }
     }
 
     private void setupContextMenu() {
@@ -337,8 +416,9 @@ public class PlayersPanel extends JPanel {
                                     table.setRowSelectionInterval(rowToSelect, rowToSelect);
                                     handlePlayerSelection(rowToSelect);
                                 } else {
-                                    CommandBus.getInstance().publish(Commands.PLAYER_UNSELECTED, PlayersPanel.this,
-                                            null);
+                                    // CommandBus.getInstance().publish(Commands.PLAYER_UNSELECTED,
+                                    // PlayersPanel.this,
+                                    // null);
                                 }
                             }
                             break;
@@ -451,7 +531,7 @@ public class PlayersPanel extends JPanel {
             table.setRowSelectionInterval(lastRow, lastRow);
             Player selectedPlayer = getSelectedPlayer();
             if (selectedPlayer != null) {
-                CommandBus.getInstance().publish(Commands.PLAYER_SELECTED, this, selectedPlayer);
+                CommandBus.getInstance().publish(Commands.PLAYER_ACTIVATION_REQUEST, this, selectedPlayer);
             }
         }
     }
@@ -609,9 +689,9 @@ public class PlayersPanel extends JPanel {
                 // Get player directly from table helper method (which now uses ID)
                 player = table.getPlayerAtRow(row);
                 if (player != null) {
-                    CommandBus.getInstance().publish(Commands.PLAYER_SELECTED, this, player);
+                    CommandBus.getInstance().publish(Commands.PLAYER_ACTIVATION_REQUEST, this, player);
                 } else {
-                    CommandBus.getInstance().publish(Commands.PLAYER_UNSELECTED, this, null);
+                    // CommandBus.getInstance().publish(Commands.PLAYER_UNSELECTED, this, null);
                 }
             }
         } catch (Exception ex) {

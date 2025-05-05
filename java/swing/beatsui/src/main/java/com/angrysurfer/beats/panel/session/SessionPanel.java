@@ -1,4 +1,4 @@
-package com.angrysurfer.beats.panel;
+package com.angrysurfer.beats.panel.session;
 
 import java.awt.BorderLayout;
 import java.awt.Dimension;
@@ -13,6 +13,8 @@ import javax.swing.SwingUtilities;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.angrysurfer.beats.panel.ControlPanel;
+import com.angrysurfer.beats.panel.PianoPanel;
 import com.angrysurfer.beats.panel.player.PlayerTimelinePanel;
 import com.angrysurfer.beats.panel.player.PlayersPanel;
 import com.angrysurfer.beats.panel.player.RulesPanel;
@@ -135,12 +137,12 @@ public class SessionPanel extends JPanel implements IBusListener {
         }
 
         switch (action.getCommand()) {
-        case Commands.PLAYER_SELECTED:
+        case Commands.PLAYER_ACTIVATED:
             handlePlayerSelected((Player) action.getData());
             break;
-        case Commands.PLAYER_UNSELECTED:
-            handlePlayerUnselected();
-            break;
+        // case Commands.PLAYER_UNSELECTED:
+        //     handlePlayerUnselected();
+        //     break;
         // Add handlers for session changes
         case Commands.SESSION_UPDATED:
         case Commands.SESSION_CHANGED:

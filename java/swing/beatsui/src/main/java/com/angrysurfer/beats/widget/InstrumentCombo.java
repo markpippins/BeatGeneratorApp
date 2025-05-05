@@ -123,7 +123,7 @@ public class InstrumentCombo extends JComboBox<InstrumentWrapper> implements IBu
         }
         
         switch (action.getCommand()) {
-            case Commands.PLAYER_SELECTED:
+            case Commands.PLAYER_ACTIVATED:
                 if (action.getData() instanceof Player player) {
                     setCurrentPlayer(player);
                 }

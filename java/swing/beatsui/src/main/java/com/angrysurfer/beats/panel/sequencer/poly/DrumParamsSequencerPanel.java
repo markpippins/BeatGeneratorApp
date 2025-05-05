@@ -12,6 +12,7 @@ import java.util.List;
 import java.util.function.Consumer;
 import java.util.logging.Logger;
 
+import javax.sound.midi.MidiDevice;
 import javax.swing.BorderFactory;
 import javax.swing.Box;
 import javax.swing.BoxLayout;
@@ -40,7 +41,9 @@ import com.angrysurfer.core.sequencer.DrumPadSelectionEvent;
 import com.angrysurfer.core.sequencer.DrumSequencer;
 import com.angrysurfer.core.sequencer.TimingDivision;
 import com.angrysurfer.core.sequencer.TimingUpdate;
+import com.angrysurfer.core.service.DeviceManager;
 import com.angrysurfer.core.service.DrumSequencerManager;
+import com.angrysurfer.core.service.InstrumentManager;
 import com.angrysurfer.core.service.PlayerManager;
 
 /**
@@ -160,7 +163,7 @@ public class DrumParamsSequencerPanel extends JPanel implements IBusListener {
         });
 
         // NOTE: Don't select the first drum here, it will be done in
-        // initializeDrumPads()
+        initializeDrumPads();
         // which will execute after all buttons are created
     }
 
@@ -187,7 +190,7 @@ public class DrumParamsSequencerPanel extends JPanel implements IBusListener {
 
         // Create east panel for sound parameters
         JPanel eastPanel = new JPanel(new BorderLayout(2, 2));
-        eastPanel.add(createSoundParametersPanel(), BorderLayout.NORTH);
+        eastPanel.add(new SoundParametersPanel(), BorderLayout.NORTH);
 
         // Create top panel to hold west, center and east panels
         JPanel topPanel = new JPanel(new BorderLayout(2, 2));
@@ -850,9 +853,14 @@ public class DrumParamsSequencerPanel extends JPanel implements IBusListener {
             if (padIndex >= 0 && padIndex < sequencer.getPlayers().length) {
                 Player player = sequencer.getPlayers()[padIndex];
 
-                if (player != null) {
+                if (player != null && player.getInstrument() != null) {
+                    player.getInstrument().setDevice(DeviceManager.getMidiDevice(player.getInstrument().getDeviceName()));
+                    PlayerManager.getInstance().ensureChannelConsistency();
+                    PlayerManager.getInstance().applyPlayerPreset(player);
+
+                    player.drumNoteOn(player.getRootNote());
                     CommandBus.getInstance().publish(
-                            Commands.PLAYER_SELECTED,
+                            Commands.PLAYER_ACTIVATION_REQUEST,
                             this,
                             player);
                 }
@@ -910,28 +918,10 @@ public class DrumParamsSequencerPanel extends JPanel implements IBusListener {
     }
 
     /**
-     * Creates the sound parameters panel
-     */
-    private JPanel createSoundParametersPanel() {
-        // Create the standardized SoundParametersPanel with null player initially
-        soundParamsPanel = new SoundParametersPanel();
-        return soundParamsPanel;
-    }
-
-    /**
      * Updates the sound parameters panel when a drum is selected
      */
     private void updateSoundParametersPanel() {
-        if (soundParamsPanel != null) {
-            // Get the selected drum's Player object
-            if (selectedPadIndex >= 0 && selectedPadIndex < sequencer.getPlayers().length) {
-                Player player = sequencer.getPlayers()[selectedPadIndex];
-                soundParamsPanel.setPlayer(player);
-            } else {
-                // No selection, clear the panel
-                soundParamsPanel.setPlayer(null);
-            }
-        }
+
     }
 
     /**
@@ -939,22 +929,6 @@ public class DrumParamsSequencerPanel extends JPanel implements IBusListener {
      * information
      */
     private void updateInstrumentInfoLabel() {
-        if (selectedPadIndex < 0 || selectedPadIndex >= sequencer.getPlayers().length) {
-            instrumentInfoLabel.setText("No drum selected");
-            return;
-        }
 
-        Player player = sequencer.getPlayers()[selectedPadIndex];
-        String playerName = player != null ? player.getName() : "Unknown";
-        String instrumentName = "No Instrument";
-        String channelInfo = "";
-
-        if (player != null && player.getInstrument() != null) {
-            instrumentName = player.getInstrument().getName();
-            int channel = player.getChannel() != null ? player.getChannel() : 9; // Default to 10 for display
-            channelInfo = " (Ch " + (channel + 1) + ")";
-        }
-
-        instrumentInfoLabel.setText(playerName + " - " + instrumentName + channelInfo);
     }
 }

@@ -151,7 +151,7 @@ public class MuteSequencerPanel extends JPanel implements IBusListener {
                     updateSelectedPad(event.getNewSelection());
                 }
             }
-            case Commands.PLAYER_SELECTED -> {
+            case Commands.PLAYER_ACTIVATED -> {
                 if (action.getData() instanceof Player player) {
                     updatePlayer(player);
                 }

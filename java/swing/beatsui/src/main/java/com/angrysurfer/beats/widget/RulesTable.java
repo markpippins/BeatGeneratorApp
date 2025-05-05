@@ -171,7 +171,7 @@ public class RulesTable extends JTable {
                         });
                         break;
                         
-                    case Commands.PLAYER_SELECTED:
+                    case Commands.PLAYER_ACTIVATED:
                         if (action.getData() instanceof Player player) {
                             SwingUtilities.invokeLater(() -> {
                                 // Update the table with the selected player's rules
@@ -184,12 +184,12 @@ public class RulesTable extends JTable {
                         }
                         break;
                         
-                    case Commands.PLAYER_UNSELECTED:
-                        SwingUtilities.invokeLater(() -> {
-                            // Clear the table when no player is selected
-                            tableModel.setRules(Set.of());
-                        });
-                        break;
+                    // case Commands.PLAYER_UNSELECTED:
+                    //     SwingUtilities.invokeLater(() -> {
+                    //         // Clear the table when no player is selected
+                    //         tableModel.setRules(Set.of());
+                    //     });
+                    //     break;
                 }
             }
         });

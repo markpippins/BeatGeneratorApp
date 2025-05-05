@@ -38,8 +38,8 @@ import lombok.Setter;
 public class MelodicSequencer implements IBusListener {
     private static final Logger logger = LoggerFactory.getLogger(MelodicSequencer.class);
 
-    public static final int[] SEQUENCER_CHANNELS = { 1, 2, 3, 4, 5, 6, 7, 8, 11, 12, 13, 14 }; // Default scale notes
-
+    public static final int[] SEQUENCER_CHANNELS = { 2, 3, 4, 5, 6, 7, 8, 11, 12, 13, 14, 15 };
+    
     private int channel = 0; // Current step in the pattern
 
     // Keep these as class fields for real-time playback

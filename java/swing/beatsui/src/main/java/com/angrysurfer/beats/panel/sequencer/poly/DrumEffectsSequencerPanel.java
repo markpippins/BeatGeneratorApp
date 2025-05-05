@@ -187,7 +187,7 @@ public class DrumEffectsSequencerPanel extends JPanel implements IBusListener {
         // Create east panel for sound parameters
         // REDUCED: from 5,5 to 2,2
         JPanel eastPanel = new JPanel(new BorderLayout(2, 2));
-        eastPanel.add(createSoundParametersPanel(), BorderLayout.NORTH);
+        eastPanel.add(new SoundParametersPanel(), BorderLayout.NORTH);
 
         // Create top panel to hold west and east panels
         // REDUCED: from 5,5 to 2,2
@@ -533,13 +533,10 @@ public class DrumEffectsSequencerPanel extends JPanel implements IBusListener {
                 if (sequenceParamsPanel != null) {
                     sequenceParamsPanel.updateControls(padIndex);
                 }
-
-                // Add after other UI updates:
-                updateSoundParametersPanel(padIndex);
-            } else {
-                // No valid selection - disable trigger buttons
-                setTriggerButtonsEnabled(false);
-            }
+                } else {
+                    // No valid selection - disable trigger buttons
+                    setTriggerButtonsEnabled(false);
+                }
         }
     }
 
@@ -561,7 +558,7 @@ public class DrumEffectsSequencerPanel extends JPanel implements IBusListener {
                 
                 if (player != null) {
                     CommandBus.getInstance().publish(
-                        Commands.PLAYER_SELECTED,
+                        Commands.PLAYER_ACTIVATION_REQUEST,
                         this, 
                         player
                     );
@@ -569,7 +566,6 @@ public class DrumEffectsSequencerPanel extends JPanel implements IBusListener {
             }
             
             // Update UI in a specific order
-            updateInstrumentInfoLabel();
             setTriggerButtonsEnabled(true);
             refreshTriggerButtonsForPad(selectedPadIndex);
             updateDialsForSelectedPad();
@@ -578,7 +574,6 @@ public class DrumEffectsSequencerPanel extends JPanel implements IBusListener {
             if (sequenceParamsPanel != null) {
                 sequenceParamsPanel.updateControls(padIndex);
             }
-            updateSoundParametersPanel();
             
             // Publish drum pad event LAST and only if we're handling a direct user selection
             CommandBus.getInstance().publish(
@@ -831,19 +826,12 @@ public class DrumEffectsSequencerPanel extends JPanel implements IBusListener {
                             drumPadPanel.selectDrumPadNoCallback(newSelection);
                             
                             // Update minimal UI elements
-                            updateInstrumentInfoLabel();
                             refreshTriggerButtonsForPad(newSelection);
                         });
                     }
                 }
             }
 
-            case Commands.PLAYER_UPDATED, Commands.INSTRUMENT_CHANGED -> {
-                // Update the info label if this affects our selected pad
-                if (selectedPadIndex >= 0) {
-                    SwingUtilities.invokeLater(this::updateInstrumentInfoLabel);
-                }
-            }
         }
     }
 
@@ -924,18 +912,6 @@ public class DrumEffectsSequencerPanel extends JPanel implements IBusListener {
     }
 
     /**
-     * Update sequence parameter controls based on the selected drum
-     */
-    private void updateSequenceParameterControls() {
-        if (selectedPadIndex < 0) {
-            return;
-        }
-
-        // Use the custom panel's method to update controls
-        sequenceParamsPanel.updateControls(selectedPadIndex);
-    }
-
-    /**
      * Get the currently selected drum pad index
      */
     public int getSelectedPadIndex() {
@@ -961,114 +937,4 @@ public class DrumEffectsSequencerPanel extends JPanel implements IBusListener {
         return null;
     }
 
-    /**
-     * Creates the sound parameters panel
-     */
-    private JPanel createSoundParametersPanel() {
-        // Get the currently selected player
-        int selectedPadIndex = getSelectedPadIndex();
-        Player player = null;
-
-        // Get the selected drum's Player object if available
-        if (selectedPadIndex >= 0 && selectedPadIndex < sequencer.getPlayers().length) {
-            player = sequencer.getPlayers()[selectedPadIndex];
-        }
-
-        // Create the standardized SoundParametersPanel
-        SoundParametersPanel panel = new SoundParametersPanel();
-
-        // Return the panel
-        return panel;
-    }
-
-    /**
-     * Updates the sound parameters panel with the selected drum's player
-     */
-    private void updateSoundParametersPanel(int padIndex) {
-        if (padIndex >= 0 && padIndex < sequencer.getPlayers().length) {
-            Player player = sequencer.getPlayers()[padIndex];
-
-            // Find and update the SoundParametersPanel
-            findAndUpdateSoundPanel(this, player);
-        }
-    }
-
-    /**
-     * Helper method to find and update SoundParametersPanel recursively
-     */
-    private void findAndUpdateSoundPanel(JPanel panel, Player player) {
-        if (panel instanceof SoundParametersPanel) {
-            ((SoundParametersPanel) panel).setPlayer(player);
-            return;
-        }
-
-        // Search children
-        Component[] components = panel.getComponents();
-        for (Component component : components) {
-            if (component instanceof JPanel) {
-                findAndUpdateSoundPanel((JPanel) component, player);
-            }
-        }
-    }
-
-    /**
-     * Updates the sound parameters panel when a drum is selected
-     */
-    private void updateSoundParametersPanel() {
-        // Find the SoundParametersPanel and update its player
-        Component[] components = getComponents();
-        for (Component component : components) {
-            if (component instanceof JPanel) {
-                findAndUpdateSoundPanel((JPanel) component);
-            }
-        }
-    }
-
-    /**
-     * Helper method to find and update SoundParametersPanel recursively
-     */
-    private void findAndUpdateSoundPanel(JPanel panel) {
-        if (panel instanceof SoundParametersPanel) {
-            // Get the selected drum's Player object
-            if (selectedPadIndex >= 0 && selectedPadIndex < sequencer.getPlayers().length) {
-                Player player = sequencer.getPlayers()[selectedPadIndex];
-                ((SoundParametersPanel) panel).setPlayer(player);
-            } else {
-                // No selection, clear the panel
-                ((SoundParametersPanel) panel).setPlayer(null);
-            }
-            return;
-        }
-
-        // Search children
-        Component[] components = panel.getComponents();
-        for (Component component : components) {
-            if (component instanceof JPanel) {
-                findAndUpdateSoundPanel((JPanel) component);
-            }
-        }
-    }
-
-    /**
-     * Update the instrument info label with current player and instrument information
-     */
-    private void updateInstrumentInfoLabel() {
-        if (selectedPadIndex < 0 || selectedPadIndex >= sequencer.getPlayers().length) {
-            instrumentInfoLabel.setText("No drum selected");
-            return;
-        }
-
-        Player player = sequencer.getPlayers()[selectedPadIndex];
-        String playerName = player != null ? player.getName() : "Unknown";
-        String instrumentName = "No Instrument";
-        String channelInfo = "";
-
-        if (player != null && player.getInstrument() != null) {
-            instrumentName = player.getInstrument().getName();
-            int channel = player.getChannel() != null ? player.getChannel() : 9; // Default to 10 for display
-            channelInfo = " (Ch " + (channel + 1) + ")";
-        }
-
-        instrumentInfoLabel.setText(playerName + " - " + instrumentName + channelInfo);
-    }
 }

@@ -5,9 +5,8 @@ import java.awt.FlowLayout;
 import java.awt.Insets;
 
 import javax.swing.JButton;
-import javax.swing.JComboBox;
+import javax.swing.JLabel;
 import javax.swing.JPanel;
-import javax.swing.JToggleButton;
 
 import com.angrysurfer.beats.Symbols;
 import com.angrysurfer.beats.util.UIHelper;
@@ -29,31 +28,24 @@ public class ChannelComboPanel extends JPanel {
     private ChannelCombo channelCombo;
     private JButton editButton;
 
-
-    /**
-     * Create a new DrumSequenceGeneratorPanel
-     * 
-     */
-    public ChannelComboPanel() {
-        UIHelper.setWidgetPanelBorder(this, "Channel");
-        setLayout(new FlowLayout(FlowLayout.LEFT, 2, 1));
-        initializeComponents();
-    }
-
     /**
      * Initialize UI components
      */
     private void initializeComponents() {
         channelCombo = new ChannelCombo();
-        //channelCombo.setPreferredSize(new Dimension(UIHelper.MEDIUM_CONTROL_WIDTH, UIHelper.CONTROL_HEIGHT));
+        
+        // Standardize size to match other controls
+        channelCombo.setPreferredSize(new Dimension(UIHelper.MEDIUM_CONTROL_WIDTH + 10, UIHelper.CONTROL_HEIGHT));
         channelCombo.setToolTipText("Player MIDI Channel");
 
         editButton = new JButton(Symbols.getSymbol(Symbols.GRID));
-        editButton.setToolTipText("Edit..");
+        editButton.setToolTipText("Edit...");
+        
+        // Match button size and margins to other panels
         editButton.setPreferredSize(new Dimension(UIHelper.SMALL_CONTROL_WIDTH, UIHelper.CONTROL_HEIGHT));
         editButton.setMargin(new Insets(2, 2, 2, 2));
+        
         editButton.addActionListener(e -> {
-
             // Publish event to refresh UI
             //CommandBus.getInstance().publish(
             //        Commands.DRUM_GRID_REFRESH_REQUESTED,
@@ -61,8 +53,24 @@ public class ChannelComboPanel extends JPanel {
             //        null);
         });
 
-        // Add components to panel
+        // Add label for better UI consistency
+        JLabel channelLabel = new JLabel("Ch:");
+        
+        // Add components to panel with compact spacing
+        add(channelLabel);
         add(channelCombo);
         add(editButton);
+    }
+
+    /**
+     * Create a new ChannelComboPanel with standardized layout
+     */
+    public ChannelComboPanel() {
+        UIHelper.setWidgetPanelBorder(this, "Channel");
+        
+        // Use compact spacing to match other panels
+        setLayout(new FlowLayout(FlowLayout.LEFT, 2, 1));
+        
+        initializeComponents();
     }
 }

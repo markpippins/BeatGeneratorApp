@@ -80,7 +80,7 @@ public class AddInstrumentButton extends JButton implements IBusListener {
         }
         
         switch (action.getCommand()) {
-            case Commands.PLAYER_SELECTED:
+            case Commands.PLAYER_ACTIVATED:
                 if (action.getData() instanceof Player player) {
                     currentPlayer = player;
                     setEnabled(player != null);
