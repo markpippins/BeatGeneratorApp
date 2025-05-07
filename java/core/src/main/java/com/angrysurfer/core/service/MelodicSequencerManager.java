@@ -270,6 +270,10 @@ public class MelodicSequencerManager {
                 return null;
             }
 
+            // Update instrument settings in the sequence data
+            sequencer.updateInstrumentSettingsInSequenceData();
+            
+            // Now save
             RedisService.getInstance().saveMelodicSequence(sequencer);
             logger.info("Saved melodic sequence with ID: {} for sequencer {}",
                     sequencer.getSequenceData().getId(), sequencer.getId());

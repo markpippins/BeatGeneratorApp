@@ -1,10 +1,19 @@
 package com.angrysurfer.core.redis;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
+
+import javax.sound.midi.MidiDevice;
+import javax.sound.midi.Receiver;
+
 import java.util.Arrays;
 
 import com.angrysurfer.core.sequencer.*;
+import com.angrysurfer.core.service.DeviceManager;
+import com.angrysurfer.core.service.InstrumentManager;
+import com.angrysurfer.core.service.PlayerManager;
+import com.angrysurfer.core.service.ReceiverManager;
 import com.angrysurfer.core.util.ErrorHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -565,65 +574,90 @@ public class RedisService implements IBusListener {
     }
 
     /**
-     * Apply a melodic sequence to a sequencer
-     * 
-     * @param data      The melodic sequence data to apply
-     * @param sequencer The sequencer to apply the data to
+     * Apply melodic sequence data to a sequencer
      */
     public void applyMelodicSequenceToSequencer(MelodicSequenceData data, MelodicSequencer sequencer) {
         if (data == null || sequencer == null) {
-            logger.error("Cannot apply null sequence or sequencer");
+            logger.warn("Cannot apply null data or sequencer");
             return;
         }
 
         try {
-            // Store current playback and step state before applying new data
+            // Store current playback state
             boolean wasPlaying = sequencer.isPlaying();
-            int currentStep = sequencer.getCurrentStep();
 
-            // Simply set the data reference - no need to copy properties individually
+            // Apply the sequence data
             sequencer.setSequenceData(data);
 
-            // Update sequencer state based on the new data
-            sequencer.updateQuantizer();
+            // Update instrument settings if possible
+            if (sequencer.getPlayer() != null) {
+                Player player = sequencer.getPlayer();
+                InstrumentWrapper instrument = player.getInstrument();
 
-            // Restore runtime state if needed
+                // If no instrument, try to get by ID
+                if (instrument == null && data.getInstrumentId() != null) {
+                    instrument = InstrumentManager.getInstance().getInstrumentById(data.getInstrumentId());
+                    if (instrument != null) {
+                        player.setInstrument(instrument);
+                        player.setInstrumentId(instrument.getId());
+                    }
+                }
+
+                // If we have an instrument, apply the saved settings
+                if (instrument != null) {
+                    // Update from saved data
+                    if (data.getPreset() != null) {
+                        instrument.setPreset(data.getPreset());
+                    }
+
+                    if (data.getBankIndex() != null) {
+                        instrument.setBankIndex(data.getBankIndex());
+                    }
+
+                    if (data.getSoundbankName() != null) {
+                        instrument.setSoundbankName(data.getSoundbankName());
+                    }
+
+                    if (data.getDeviceName() != null) {
+                        // Try to reconnect to saved device
+                        MidiDevice device = DeviceManager.getInstance().getMidiDevice(data.getDeviceName());
+                        if (device != null) {
+                            try {
+                                if (!device.isOpen()) {
+                                    device.open();
+                                }
+                                instrument.setDevice(device);
+                                instrument.setDeviceName(data.getDeviceName());
+
+                                // Get a receiver
+                                Receiver receiver = ReceiverManager.getInstance()
+                                        .getOrCreateReceiver(data.getDeviceName(), device);
+                                if (receiver != null) {
+                                    instrument.setReceiver(receiver);
+                                }
+                            } catch (Exception e) {
+                                logger.warn("Could not connect to device {}: {}",
+                                        data.getDeviceName(), e.getMessage());
+                            }
+                        }
+                    }
+
+                    // Apply the instrument settings
+                    PlayerManager.getInstance().applyInstrumentPreset(player);
+                }
+            }
+
+            // Restore playback state
             if (wasPlaying) {
-                sequencer.setPlaying(true);
+                sequencer.start();
             }
-            sequencer.setCurrentStep(Math.min(currentStep, data.getPatternLength() - 1));
 
-            // Log successful application
-            logger.info("Applied melodic sequence ID {} to sequencer {}",
-                    data.getId(), sequencer.getId());
-
-            // Publish event so UI components can update
-            CommandBus.getInstance().publish(
-                    Commands.MELODIC_PATTERN_SWITCHED,
-                    this,
-                    new PatternSwitchEvent(null, data.getId()));
-
-            // Add explicit debug about harmonic tilt values
-            if (data.getHarmonicTiltValuesRaw() != null) {
-                logger.info("Source data has {} harmonic tilt values",
-                        data.getHarmonicTiltValuesRaw().length);
-
-                // Make a copy of the harmonic tilt values array
-                int[] tiltArrayCopy = Arrays.copyOf(data.getHarmonicTiltValuesRaw(),
-                        data.getHarmonicTiltValuesRaw().length);
-
-                // Set explicitly on sequencer's data
-                sequencer.getSequenceData().setHarmonicTiltValues(tiltArrayCopy);
-
-                // Verify
-                logger.info("After setting, sequencer has {} harmonic tilt values",
-                        sequencer.getSequenceData().getHarmonicTiltValuesRaw().length);
-            } else {
-                logger.warn("Source data has NULL harmonic tilt values array");
-            }
+            // Notify that pattern has been updated
+            commandBus.publish(Commands.MELODIC_SEQUENCE_UPDATED, this,
+                    Map.of("sequencerId", sequencer.getId(), "sequenceId", data.getId()));
 
         } catch (Exception e) {
-            logger.error("Error applying melodic sequence: {}", e.getMessage(), e);
+            logger.error("Error applying melodic sequence data: " + e.getMessage(), e);
         }
     }
 
@@ -669,23 +703,22 @@ public class RedisService implements IBusListener {
     }
 
     /**
- * Get an instrument by ID
- * 
- * @param id The instrument ID to look up
- * @return The instrument with the specified ID, or null if not found
- */
-public InstrumentWrapper getInstrumentById(Long id) {
-    if (id == null) {
-        logger.warn("getInstrumentById called with null ID");
-        return null;
-    }
-    
-    logger.debug("Looking up instrument by ID: {}", id);
-    
-    // Delegate to the InstrumentHelper 
-    return instrumentHelper.findInstrumentById(id);
-}
+     * Get an instrument by ID
+     * 
+     * @param id The instrument ID to look up
+     * @return The instrument with the specified ID, or null if not found
+     */
+    public InstrumentWrapper getInstrumentById(Long id) {
+        if (id == null) {
+            logger.warn("getInstrumentById called with null ID");
+            return null;
+        }
 
+        logger.debug("Looking up instrument by ID: {}", id);
+
+        // Delegate to the InstrumentHelper
+        return instrumentHelper.findInstrumentById(id);
+    }
 
     public Player findPlayerById(Long id) {
         return playerHelper.findPlayerById(id);

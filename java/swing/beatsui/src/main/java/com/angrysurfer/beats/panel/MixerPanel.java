@@ -60,13 +60,15 @@ public class MixerPanel extends JPanel implements IBusListener {
             "Poly Drum", "Poly FX",
             "Mono 1", "Mono 2", "Mono 3", "Mono 4",
             "Mono 5", "Mono 6", "Mono 7", "Mono 8",
+            "Mono 9", "Mono 10", "Mono 11", "Mono 12",
             "Master"
     };
 
     private final int[] trackChannels = {
             DRUMS_CHANNEL, DRUMS_CHANNEL,
             CHANNEL_OFFSET, CHANNEL_OFFSET + 1, CHANNEL_OFFSET + 2, CHANNEL_OFFSET + 3,
-            CHANNEL_OFFSET + 4, CHANNEL_OFFSET + 5, CHANNEL_OFFSET + 6, CHANNEL_OFFSET + 7,
+            CHANNEL_OFFSET + 4, CHANNEL_OFFSET + 5, CHANNEL_OFFSET + 6, CHANNEL_OFFSET + 8,
+            CHANNEL_OFFSET + 9, CHANNEL_OFFSET + 10, CHANNEL_OFFSET + 11, CHANNEL_OFFSET + 12,
             -1 // Master
     };
 

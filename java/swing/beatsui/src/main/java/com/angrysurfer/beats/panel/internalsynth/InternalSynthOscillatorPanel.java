@@ -59,8 +59,8 @@ public class InternalSynthOscillatorPanel extends JPanel {
         this.oscillatorIndex = oscillatorIndex;
         this.baseCCForOsc = oscillatorIndex * 20 + 20; // Space out CC numbers
 
-        setPreferredSize(new Dimension(getPreferredSize().width, 100));
-        setMaximumSize(new Dimension(getMaximumSize().width, 100));
+        setPreferredSize(new Dimension(getPreferredSize().width, 140));
+        setMaximumSize(new Dimension(getMaximumSize().width, 140));
         
         setupUI();
     }
@@ -356,7 +356,7 @@ public class InternalSynthOscillatorPanel extends JPanel {
         Dial dial = UIHelper.createLabeledDial(label, tooltip, initialValue);
         
         // Make the dial slightly smaller to fit within our height constraint
-        dial.setPreferredSize(new Dimension(30, 30));
+        dial.setPreferredSize(new Dimension(50,50));
         
         return dial;
     }

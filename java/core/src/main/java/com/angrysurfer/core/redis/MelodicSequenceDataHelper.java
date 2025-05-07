@@ -2,29 +2,28 @@ package com.angrysurfer.core.redis;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
-import com.angrysurfer.core.event.MelodicSequencerEvent;
-import com.angrysurfer.core.model.InstrumentWrapper;
-import com.angrysurfer.core.model.Player;
-import com.angrysurfer.core.service.PlayerManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.angrysurfer.core.api.CommandBus;
 import com.angrysurfer.core.api.Commands;
+import com.angrysurfer.core.event.MelodicSequencerEvent;
 import com.angrysurfer.core.model.Direction;
+import com.angrysurfer.core.model.InstrumentWrapper;
+import com.angrysurfer.core.model.Player;
 import com.angrysurfer.core.sequencer.MelodicSequenceData;
 import com.angrysurfer.core.sequencer.MelodicSequencer;
 import com.angrysurfer.core.sequencer.TimingDivision;
+import com.angrysurfer.core.service.PlayerManager;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import lombok.Getter;
 import lombok.Setter;
 import redis.clients.jedis.Jedis;
 import redis.clients.jedis.JedisPool;
-
-import javax.swing.*;
 
 @Getter
 @Setter
@@ -172,127 +171,52 @@ public class MelodicSequenceDataHelper {
         }
     }
 
-    /**
-     * Save a melodic sequence including instrument settings
-     */
-    public void saveMelodicSequence(MelodicSequencer sequencer) {
-        try (Jedis jedis = jedisPool.getResource()) {
-            // Create a data transfer object
-            MelodicSequenceData data = new MelodicSequenceData();
-
-            // Set or generate ID
-            if (sequencer.getId() == 0) {
-                data.setId(jedis.incr("seq:melsequence:" + sequencer.getId()));
-            } else {
-                data.setSequencerId(sequencer.getId());
-            }
-
-            // Store the sequencer ID this belongs to
-            data.setSequencerId(sequencer.getId());
-
-            // Copy pattern parameters
-            data.setPatternLength(sequencer.getPatternLength());
-            data.setDirection(sequencer.getDirection());
-            data.setTimingDivision(sequencer.getTimingDivision());
-            data.setLooping(sequencer.isLooping());
-            data.setOctaveShift(sequencer.getOctaveShift());
-
-            // NEW: Save instrument settings from player
-            if (sequencer.getPlayer() != null && sequencer.getPlayer().getInstrument() != null) {
-                InstrumentWrapper instrument = sequencer.getPlayer().getInstrument();
-                // Save soundbank, bank, and preset settings
-                data.setSoundbankName(instrument.getSoundbankName());
-                data.setBankIndex(instrument.getBankIndex());
-                data.setPreset(instrument.getPreset());
-                
-                logger.info("Saving instrument settings: soundbank={}, bank={}, preset={}", 
-                    data.getSoundbankName(), data.getBankIndex(), data.getPreset());
-            }
-
-            // Copy quantization settings
-            data.setQuantizeEnabled(sequencer.isQuantizeEnabled());
-            data.setScale(sequencer.getScale());
-
-            // Copy pattern data (steps, notes, velocities, gates)
-            // Convert List<Boolean> to boolean[]
-            List<Boolean> activeStepsList = sequencer.getActiveSteps();
-            boolean[] activeStepsArray = new boolean[activeStepsList.size()];
-            for (int i = 0; i < activeStepsList.size(); i++) {
-                activeStepsArray[i] = activeStepsList.get(i);
-            }
-            data.setActiveSteps(activeStepsArray);
-
-            // Convert List<Integer> to int[]
-            List<Integer> noteValuesList = sequencer.getNoteValues();
-            int[] noteValuesArray = new int[noteValuesList.size()];
-            for (int i = 0; i < noteValuesList.size(); i++) {
-                noteValuesArray[i] = noteValuesList.get(i);
-            }
-            data.setNoteValues(noteValuesArray);
-
-            // Convert List<Integer> to int[]
-            List<Integer> velocityValuesList = sequencer.getVelocityValues();
-            int[] velocityValuesArray = new int[velocityValuesList.size()];
-            for (int i = 0; i < velocityValuesList.size(); i++) {
-                velocityValuesArray[i] = velocityValuesList.get(i);
-            }
-            data.setVelocityValues(velocityValuesArray);
-
-            // Convert List<Integer> to int[]
-            List<Integer> gateValuesList = sequencer.getGateValues();
-            int[] gateValuesArray = new int[gateValuesList.size()];
-            for (int i = 0; i < gateValuesList.size(); i++) {
-                gateValuesArray[i] = gateValuesList.get(i);
-            }
-            data.setGateValues(gateValuesArray);
-
-            // Copy probability and nudge values if available
-            if (sequencer.getProbabilityValues() != null) {
-                List<Integer> probValuesList = sequencer.getProbabilityValues();
-                int[] probValuesArray = new int[probValuesList.size()];
-                for (int i = 0; i < probValuesList.size(); i++) {
-                    probValuesArray[i] = probValuesList.get(i);
-                }
-                data.setProbabilityValues(probValuesArray);
-            }
-
-            if (sequencer.getNudgeValues() != null) {
-                List<Integer> nudgeValuesList = sequencer.getNudgeValues();
-                int[] nudgeValuesArray = new int[nudgeValuesList.size()];
-                for (int i = 0; i < nudgeValuesList.size(); i++) {
-                    nudgeValuesArray[i] = nudgeValuesList.get(i);
-                }
-                data.setNudgeValues(nudgeValuesArray);
-            }
-
-            // Copy harmonic tilt values
-            if (sequencer.getHarmonicTiltValues() != null) {
-                List<Integer> tiltValuesList = sequencer.getHarmonicTiltValues();
-                int[] tiltValuesArray = new int[tiltValuesList.size()];
-                for (int i = 0; i < tiltValuesList.size(); i++) {
-                    tiltValuesArray[i] = tiltValuesList.get(i);
-                }
-                data.setHarmonicTiltValues(tiltValuesArray);
-            }
-
-            // Save to Redis
-            String json = objectMapper.writeValueAsString(data);
-            jedis.set("melseq:" + sequencer.getId() + ":" + data.getId(), json);
-
-            logger.info("Saved melodic sequence {} for sequencer {}", data.getId(), sequencer.getId());
-
-            // Notify listeners
-            commandBus.publish(
-                    Commands.MELODIC_SEQUENCE_SAVED,
-                    this,
-                    new MelodicSequencerEvent(sequencer.getId(), sequencer.getSequenceData().getId()));
-
-        } catch (Exception e) {
-            logger.error("Error saving melodic sequence: " + e.getMessage(), e);
-            throw new RuntimeException("Failed to save melodic sequence", e);
+   /**
+ * Save a melodic sequence
+ */
+public void saveMelodicSequence(MelodicSequencer sequencer) {
+    try (Jedis jedis = jedisPool.getResource()) {
+        // Create a data transfer object
+        MelodicSequenceData data = sequencer.getSequenceData();
+        
+        // Set or generate ID
+        if (data.getId() <= 0) {
+            data.setId(jedis.incr("seq:melodicsequence"));
         }
+        
+        // Save instrument settings
+        Player player = sequencer.getPlayer();
+        if (player != null && player.getInstrument() != null) {
+            InstrumentWrapper instrument = player.getInstrument();
+            data.setSoundbankName(instrument.getSoundbankName());
+            data.setPreset(instrument.getPreset());
+            data.setBankIndex(instrument.getBankIndex());
+            
+            // Store device name for reconnection
+            data.setDeviceName(instrument.getDeviceName());
+            data.setInstrumentId(instrument.getId());
+            data.setInstrumentName(instrument.getName());
+        }
+        
+        // Save to Redis
+        String json = objectMapper.writeValueAsString(data);
+        jedis.set("melodicseq:" + sequencer.getId() + ":" + data.getId(), json);
+        
+        // Also store in the hash for faster lookup
+        jedis.hset("melodic-sequences:" + sequencer.getId(), String.valueOf(data.getId()), json);
+        
+        logger.info("Saved melodic sequence {} for sequencer {}", 
+                data.getId(), sequencer.getId());
+        
+        // Notify listeners
+        commandBus.publish(Commands.MELODIC_SEQUENCE_SAVED, this, 
+                Map.of("sequencerId", sequencer.getId(), "sequenceId", data.getId()));
+        
+    } catch (Exception e) {
+        logger.error("Error saving melodic sequence: " + e.getMessage(), e);
+        throw new RuntimeException("Failed to save melodic sequence", e);
     }
-
+}
     /**
      * Get all melodic sequence IDs for a specific sequencer
      */

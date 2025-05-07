@@ -56,6 +56,10 @@ public class MelodicSequenceData {
     private Integer bankIndex = 0;
     private Integer preset = 0;
 
+    private String deviceName;
+    private Long instrumentId;
+    private String instrumentName;
+
     /**
      * Default constructor
      */
@@ -573,5 +577,29 @@ public class MelodicSequenceData {
             patternLength = newLength;
             ensureArraySize(patternLength);
         }
+    }
+
+    public String getDeviceName() {
+        return deviceName;
+    }
+
+    public void setDeviceName(String deviceName) {
+        this.deviceName = deviceName;
+    }
+
+    public Long getInstrumentId() {
+        return instrumentId;
+    }
+
+    public void setInstrumentId(Long instrumentId) {
+        this.instrumentId = instrumentId;
+    }
+
+    public String getInstrumentName() {
+        return instrumentName;
+    }
+
+    public void setInstrumentName(String instrumentName) {
+        this.instrumentName = instrumentName;
     }
 }

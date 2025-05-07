@@ -850,7 +850,7 @@ public class MelodicSequencer implements IBusListener {
                     }
 
                     if (sequenceData.getPreset() != null) {
-                        player.getInstrument().setPreset(10);
+                        player.getInstrument().setPreset(sequenceData.getPreset());
                     }
 
                     // Send program change
@@ -1054,6 +1054,26 @@ public class MelodicSequencer implements IBusListener {
             PlayerManager.getInstance().savePlayerProperties(player);
         } catch (Exception e) {
             logger.error("Error repairing melodic sequencer {}: {}", id, e.getMessage());
+        }
+    }
+
+    /**
+     * Update the instrument settings in the sequence data
+     * This should be called before saving the sequence
+     */
+    public void updateInstrumentSettingsInSequenceData() {
+        if (player != null && player.getInstrument() != null) {
+            InstrumentWrapper instrument = player.getInstrument();
+            
+            sequenceData.setSoundbankName(instrument.getSoundbankName());
+            sequenceData.setBankIndex(instrument.getBankIndex());
+            sequenceData.setPreset(instrument.getPreset());
+            sequenceData.setDeviceName(instrument.getDeviceName());
+            sequenceData.setInstrumentId(instrument.getId());
+            sequenceData.setInstrumentName(instrument.getName());
+            
+            logger.debug("Updated sequence data with instrument settings - preset:{}, bank:{}, soundbank:{}",
+                    instrument.getPreset(), instrument.getBankIndex(), instrument.getSoundbankName());
         }
     }
 }
