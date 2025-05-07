@@ -1757,4 +1757,88 @@ public class DrumSequencer implements IBusListener {
 
         logger.info("MIDI connection repair completed");
     }
+
+    /**
+     * Set instrument for a specific drum with all parameters
+     * @param drumIndex The drum index
+     * @param instrumentId The instrument ID (or null to create a new one)
+     * @param deviceName The device name
+     * @param soundbankName The soundbank name
+     * @param preset The preset number
+     * @param bankIndex The bank index
+     * @return The instrument that was set
+     */
+    public InstrumentWrapper setDrumInstrument(int drumIndex, Long instrumentId, 
+            String deviceName, String soundbankName, Integer preset, Integer bankIndex) {
+        
+        if (drumIndex < 0 || drumIndex >= DrumSequenceData.DRUM_PAD_COUNT) {
+            logger.warn("Invalid drum index: {}", drumIndex);
+            return null;
+        }
+        
+        Player player = getPlayer(drumIndex);
+        if (player == null) {
+            logger.warn("No player for drum {}", drumIndex);
+            return null;
+        }
+        
+        // First try to get existing instrument by ID
+        InstrumentWrapper instrument = null;
+        if (instrumentId != null) {
+            instrument = InstrumentManager.getInstance().getInstrumentById(instrumentId);
+        }
+        
+        // If not found, create a new one
+        if (instrument == null) {
+            // Get device
+            MidiDevice device = null;
+            if (deviceName != null && !deviceName.isEmpty()) {
+                device = DeviceManager.getInstance().acquireDevice(deviceName);
+            }
+            
+            // Create new instrument
+            instrument = new InstrumentWrapper(
+                "Drum " + drumIndex,
+                device,
+                DrumSequenceData.MIDI_DRUM_CHANNEL
+            );
+            
+            // Set additional parameters
+            if (deviceName != null) {
+                instrument.setDeviceName(deviceName);
+            }
+            
+            if (soundbankName != null) {
+                instrument.setSoundbankName(soundbankName);
+            }
+            
+            if (preset != null) {
+                instrument.setPreset(preset);
+            }
+            
+            if (bankIndex != null) {
+                instrument.setBankIndex(bankIndex);
+            }
+            
+            // Save the instrument
+            InstrumentManager.getInstance().updateInstrument(instrument);
+        }
+        
+        // Set the instrument on the player
+        player.setInstrument(instrument);
+        player.setInstrumentId(instrument.getId());
+        
+        // Apply the instrument preset
+        PlayerManager.getInstance().applyInstrumentPreset(player);
+        
+        // Update data for saving
+        data.getInstrumentIds()[drumIndex] = instrument.getId();
+        data.getSoundbankNames()[drumIndex] = instrument.getSoundbankName();
+        data.getPresets()[drumIndex] = instrument.getPreset();
+        data.getBankIndices()[drumIndex] = instrument.getBankIndex();
+        data.getDeviceNames()[drumIndex] = instrument.getDeviceName();
+        data.getInstrumentNames()[drumIndex] = instrument.getName();
+        
+        return instrument;
+    }
 }

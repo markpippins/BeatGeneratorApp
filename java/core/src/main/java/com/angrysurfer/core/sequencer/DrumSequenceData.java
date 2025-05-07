@@ -109,7 +109,6 @@ public class DrumSequenceData {
     private int swingPercentage = 50; // Default swing percentage (50 = no swing)
     private boolean swingEnabled = false; // Swing enabled flag
 
-
     // Master tempo
     private int masterTempo;
 
@@ -129,7 +128,13 @@ public class DrumSequenceData {
     // Optional name/description
     private String name;
 
-    // Pattern parameters per drum
+    // Instrument information
+    private Long[] instrumentIds; // Store instrument IDs for each drum
+    private String[] soundbankNames; // Store soundbank names for each drum
+    private Integer[] presets; // Store preset numbers for each drum
+    private Integer[] bankIndices; // Store bank indices for each drum
+    private String[] deviceNames; // Store device names for each drum
+    private String[] instrumentNames; // Store instrument names for each drum
 
     /**
      * Initialize drum sequencer data with default values
@@ -219,6 +224,17 @@ public class DrumSequenceData {
             }
         }
 
+        // Initialize instrument data arrays
+        instrumentIds = new Long[DRUM_PAD_COUNT];
+        soundbankNames = new String[DRUM_PAD_COUNT];
+        presets = new Integer[DRUM_PAD_COUNT];
+        bankIndices = new Integer[DRUM_PAD_COUNT];
+        deviceNames = new String[DRUM_PAD_COUNT];
+        instrumentNames = new String[DRUM_PAD_COUNT];
+
+        // Initialize with defaults
+        java.util.Arrays.fill(presets, 0); // Default drum kit preset
+        java.util.Arrays.fill(bankIndices, 0); // Default bank
     }
 
     /**
