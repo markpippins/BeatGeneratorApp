@@ -41,11 +41,11 @@ import com.angrysurfer.core.api.CommandBus;
 import com.angrysurfer.core.api.Commands;
 import com.angrysurfer.core.api.IBusListener;
 import com.angrysurfer.core.api.TimingBus;
+import com.angrysurfer.core.event.DrumPadSelectionEvent;
 import com.angrysurfer.core.event.DrumStepUpdateEvent;
 import com.angrysurfer.core.event.NoteEvent;
 import com.angrysurfer.core.model.Direction;
 import com.angrysurfer.core.model.Player;
-import com.angrysurfer.core.sequencer.DrumPadSelectionEvent;
 import com.angrysurfer.core.sequencer.DrumSequencer;
 import com.angrysurfer.core.sequencer.TimingDivision;
 import com.angrysurfer.core.sequencer.TimingUpdate;
@@ -613,7 +613,7 @@ public class DrumEffectsSequencerPanel extends JPanel implements IBusListener {
 
             // Highlight current step if playing
             if (sequencer.isPlaying()) {
-                int[] steps = sequencer.getCurrentStep();
+                int[] steps = sequencer.getData().getCurrentStep();
                 if (padIndex < steps.length) {
                     button.setHighlighted(i == steps[padIndex]);
                 }
@@ -755,7 +755,7 @@ public class DrumEffectsSequencerPanel extends JPanel implements IBusListener {
                 // Only update if we have a drum selected and are playing
                 if (selectedPadIndex >= 0 && sequencer.isPlaying() && action.getData() instanceof TimingUpdate) {
                     // Get the current sequencer state
-                    int[] steps = sequencer.getCurrentStep();
+                    int[] steps = sequencer.getData().getCurrentStep();
 
                     // Safety check for array bounds
                     if (selectedPadIndex < steps.length) {

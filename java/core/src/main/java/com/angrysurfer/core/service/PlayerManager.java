@@ -277,7 +277,7 @@ public class PlayerManager implements IBusListener {
 
             // Save player using RedisService (which handles session references)
             // This internally calls playerHelper.savePlayer() for persistence
-            RedisService.getInstance().savePlayer(player);
+            // RedisService.getInstance().savePlayer(player);
 
             // Update cache AFTER successful save to ensure consistency
             playerCache.put(player.getId(), player);

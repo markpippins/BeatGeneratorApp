@@ -3,6 +3,7 @@ package com.angrysurfer.beats.panel.player;
 import java.awt.*;
 import javax.swing.*;
 
+import com.angrysurfer.core.sequencer.DrumSequenceData;
 import com.angrysurfer.core.service.PlayerManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -212,7 +213,7 @@ public class PlayerEditPanel extends JPanel implements IBusListener {
 
             if (response == JOptionPane.YES_OPTION) {
                 // Apply to all drum pads
-                for (int i = 0; i < DrumSequencer.DRUM_PAD_COUNT; i++) {
+                for (int i = 0; i < DrumSequenceData.DRUM_PAD_COUNT; i++) {
                     Player drumPlayer = owningSequencer.getPlayers()[i];
                     if (drumPlayer != null && !drumPlayer.equals(player)) {
                         // Update instrument for this pad

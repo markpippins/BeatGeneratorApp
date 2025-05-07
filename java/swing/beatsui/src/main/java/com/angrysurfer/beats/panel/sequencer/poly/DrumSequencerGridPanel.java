@@ -10,6 +10,7 @@ import javax.swing.BorderFactory;
 import javax.swing.JPanel;
 import javax.swing.SwingUtilities;
 
+import com.angrysurfer.core.sequencer.DrumSequenceData;
 import com.angrysurfer.core.service.DrumSequencerManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -33,7 +34,7 @@ public class DrumSequencerGridPanel extends JPanel {
     private final DrumSequencerGridPanelContextHandler contextMenuHandler;
     
     // UI constants
-    private static final int DRUM_PAD_COUNT = DrumSequencer.DRUM_PAD_COUNT;
+    private static final int DRUM_PAD_COUNT = DrumSequenceData.DRUM_PAD_COUNT;
     private static final int GRID_BUTTON_SIZE = 24;
     
     // UI state
@@ -301,7 +302,7 @@ public class DrumSequencerGridPanel extends JPanel {
             return;
         }
 
-        logger.info("Refreshing entire grid UI for sequence {}", sequencer.getDrumSequenceId());
+        logger.info("Refreshing entire grid UI for sequence {}", sequencer.getData().getId());
 
         try {
             // Ensure we refresh ALL drums and ALL steps

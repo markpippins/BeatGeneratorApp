@@ -134,7 +134,7 @@ public class TimingBus extends AbstractBus {
 
             if (!timingListeners.contains(listener)) {
                 timingListeners.add(listener);
-                System.out.println("TimingBus: Registered listener: " + (listener.getClass() != null ? listener.getClass().getSimpleName() : "null"));
+                System.out.println("TimingBus: Registered listener: " + (listener.getClass() != null ? listener.getClass().getSimpleName() + ": " +  listener.toString() : "null"));
             }
         }
     }

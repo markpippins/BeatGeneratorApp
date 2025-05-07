@@ -1019,7 +1019,7 @@ public class InternalSynthPresetPanel extends JPanel {
                 
                 // Apply changes to the physical MIDI device
                 if (instrument.getBankIndex() != null && instrument.getPreset() != null) {
-                    instrument.applyBankAndProgram(channel);
+                    instrument.applyBankAndProgram();
                 }
             } else {
                 // For external instruments, use spinner value

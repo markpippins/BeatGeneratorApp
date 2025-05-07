@@ -563,4 +563,8 @@ public class SessionManager implements IBusListener {
         // TODO Auto-generated method stub
         // throw new UnsupportedOperationException("Unimplemented method 'onAction'");
     }
+
+    public void saveActiveSession() {
+        saveSession(getActiveSession());
+    }
 }

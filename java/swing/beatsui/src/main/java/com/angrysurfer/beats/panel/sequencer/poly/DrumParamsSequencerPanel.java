@@ -33,11 +33,11 @@ import com.angrysurfer.core.api.CommandBus;
 import com.angrysurfer.core.api.Commands;
 import com.angrysurfer.core.api.IBusListener;
 import com.angrysurfer.core.api.TimingBus;
+import com.angrysurfer.core.event.DrumPadSelectionEvent;
 import com.angrysurfer.core.event.DrumStepUpdateEvent;
 import com.angrysurfer.core.event.NoteEvent;
 import com.angrysurfer.core.model.Direction;
 import com.angrysurfer.core.model.Player;
-import com.angrysurfer.core.sequencer.DrumPadSelectionEvent;
 import com.angrysurfer.core.sequencer.DrumSequencer;
 import com.angrysurfer.core.sequencer.TimingDivision;
 import com.angrysurfer.core.sequencer.TimingUpdate;
@@ -84,9 +84,6 @@ public class DrumParamsSequencerPanel extends JPanel implements IBusListener {
 
     // Add this field:
     private DrumButtonsPanel drumPadPanel;
-
-    // Add this field:
-    private JLabel instrumentInfoLabel;
 
     // Add this field at the class level
     private SoundParametersPanel soundParamsPanel;
@@ -200,21 +197,21 @@ public class DrumParamsSequencerPanel extends JPanel implements IBusListener {
 
         // Create center panel for the info label with GridBagLayout for proper
         // centering
-        JPanel infoLabelPanel = new JPanel(new GridBagLayout());
-        instrumentInfoLabel = new JLabel("No drum selected");
-        instrumentInfoLabel.setFont(new Font(Font.SANS_SERIF, Font.BOLD, 12));
+        // JPanel infoLabelPanel = new JPanel(new GridBagLayout());
+        // instrumentInfoLabel = new JLabel("No drum selected");
+        // instrumentInfoLabel.setFont(new Font(Font.SANS_SERIF, Font.BOLD, 12));
 
         // Create proper constraint settings
-        GridBagConstraints gbc = new GridBagConstraints();
-        gbc.gridx = 0;
-        gbc.gridy = 0;
-        gbc.fill = GridBagConstraints.NONE;
-        gbc.anchor = GridBagConstraints.CENTER;
-        infoLabelPanel.add(instrumentInfoLabel, gbc);
+        // GridBagConstraints gbc = new GridBagConstraints();
+        // gbc.gridx = 0;
+        // gbc.gridy = 0;
+        // gbc.fill = GridBagConstraints.NONE;
+        // gbc.anchor = GridBagConstraints.CENTER;
+        // infoLabelPanel.add(instrumentInfoLabel, gbc);
 
         // Add panels to the top panel
         UIHelper.addSafely(topPanel, westPanel, BorderLayout.WEST);
-        UIHelper.addSafely(topPanel, infoLabelPanel, BorderLayout.CENTER); // Put info label in CENTER of top panel
+        // UIHelper.addSafely(topPanel, infoLabelPanel, BorderLayout.CENTER); // Put info label in CENTER of top panel
         UIHelper.addSafely(topPanel, eastPanel, BorderLayout.EAST);
 
         // Add top panel to main layout
@@ -503,7 +500,7 @@ public class DrumParamsSequencerPanel extends JPanel implements IBusListener {
 
             // Highlight current step if playing
             if (sequencer.isPlaying()) {
-                int[] steps = sequencer.getCurrentStep();
+                int[] steps = sequencer.getData().getCurrentStep();
                 if (padIndex < steps.length) {
                     button.setHighlighted(i == steps[padIndex]);
                 }
@@ -645,7 +642,7 @@ public class DrumParamsSequencerPanel extends JPanel implements IBusListener {
                 // Only update if we have a drum selected and are playing
                 if (selectedPadIndex >= 0 && sequencer.isPlaying() && action.getData() instanceof TimingUpdate) {
                     // Get the current sequencer state
-                    int[] steps = sequencer.getCurrentStep();
+                    int[] steps = sequencer.getData().getCurrentStep();
 
                     // Safety check for array bounds
                     if (selectedPadIndex < steps.length) {

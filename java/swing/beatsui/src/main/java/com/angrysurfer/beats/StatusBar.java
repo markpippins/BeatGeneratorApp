@@ -96,8 +96,6 @@ public class StatusBar extends JPanel implements IBusListener {
         mainPanel.setLayout(new BoxLayout(mainPanel, BoxLayout.X_AXIS));
         
         // Create and add all sections
-        mainPanel.add(new SoundParametersPanel());
-        mainPanel.add(Box.createHorizontalStrut(SECTION_SPACING));
         mainPanel.add(createMonitoringSection());
         mainPanel.add(Box.createHorizontalStrut(SECTION_SPACING));
         mainPanel.add(createMessageSection());

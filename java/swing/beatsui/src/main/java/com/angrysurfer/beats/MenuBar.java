@@ -25,6 +25,7 @@ import com.angrysurfer.core.model.Player;
 import com.angrysurfer.core.redis.InstrumentHelper;
 import com.angrysurfer.core.redis.PlayerHelper;
 import com.angrysurfer.core.redis.RedisService;
+import com.angrysurfer.core.sequencer.DrumSequenceData;
 import com.angrysurfer.core.sequencer.DrumSequencer;
 import com.angrysurfer.core.service.DrumSequencerManager;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -760,14 +761,14 @@ public class MenuBar extends JMenuBar {
             // 1. Check sequencer status
             log.addSection("1. Sequencer Status");
             log.addIndentedLine("Playing: " + sequencer.isPlaying(), 1)
-               .addIndentedLine("BPM: " + sequencer.getMasterTempo(), 1)
+               .addIndentedLine("BPM: " + sequencer.getData().getMasterTempo(), 1)
                .addIndentedLine("Swing: " + (sequencer.isSwingEnabled() ? "Enabled" : "Disabled"), 1)
                .addIndentedLine("Swing Amount: " + sequencer.getSwingPercentage(), 1);
             
             // 2. Check pattern data
             log.addSection("2. Pattern Data");
             int totalActiveSteps = 0;
-            for (int i = 0; i < DrumSequencer.DRUM_PAD_COUNT; i++) {
+            for (int i = 0; i < DrumSequenceData.DRUM_PAD_COUNT; i++) {
                 int activeSteps = 0;
                 for (int j = 0; j < sequencer.getPatternLength(i); j++) {
                     if (sequencer.isStepActive(i, j)) {
@@ -789,7 +790,7 @@ public class MenuBar extends JMenuBar {
             int playersWithInstruments = 0;
             int openDevices = 0;
             
-            for (int i = 0; i < DrumSequencer.DRUM_PAD_COUNT; i++) {
+            for (int i = 0; i < DrumSequenceData.DRUM_PAD_COUNT; i++) {
                 Player player = sequencer.getPlayer(i);
                 if (player != null) {
                     log.addIndentedLine("Drum " + i + " - Player: " + player.getName() + 
@@ -812,14 +813,8 @@ public class MenuBar extends JMenuBar {
                             if (device.isOpen()) {
                                 openDevices++;
                             }
-
-                            Receiver receiver = null;
-                            try {
-                                receiver = instrument.getReceiver();
-                                log.addIndentedLine("Receiver: " + (receiver != null ? "OK" : "NULL"), 2);
-                            } catch (MidiUnavailableException e) {
-                                log.addIndentedLine("Receiver: ERROR - " + e.getMessage(), 2);
-                            }
+                            Receiver receiver = instrument.getReceiver();
+                            log.addIndentedLine("Receiver: " + (receiver != null ? "OK" : "NULL"), 2);
                         } else {
                             log.addIndentedLine("Device: NULL", 2);
                         }
@@ -832,7 +827,7 @@ public class MenuBar extends JMenuBar {
             }
             
             log.addIndentedLine("Players with instruments: " + playersWithInstruments + 
-                             " out of " + DrumSequencer.DRUM_PAD_COUNT, 1);
+                             " out of " + DrumSequenceData.DRUM_PAD_COUNT, 1);
             log.addIndentedLine("Open MIDI devices: " + openDevices, 1);
             
             if (playersWithInstruments == 0) {
@@ -848,7 +843,7 @@ public class MenuBar extends JMenuBar {
             try {
                 // Find first valid drum
                 boolean noteTriggered = false;
-                for (int i = 0; i < DrumSequencer.DRUM_PAD_COUNT; i++) {
+                for (int i = 0; i < DrumSequenceData.DRUM_PAD_COUNT; i++) {
                     Player player = sequencer.getPlayer(i);
                     if (player != null && player.getInstrument() != null && 
                         player.getDevice() != null &&

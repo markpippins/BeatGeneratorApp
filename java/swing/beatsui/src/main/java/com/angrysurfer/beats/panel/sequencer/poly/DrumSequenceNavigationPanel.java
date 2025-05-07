@@ -110,14 +110,14 @@ public class DrumSequenceNavigationPanel extends JPanel {
 
     private String getFormattedIdText() {
         return "Seq: " +
-                (sequencer.getDrumSequenceId() == 0 ? "New" : sequencer.getDrumSequenceId());
+                (sequencer.getData().getId() == 0 ? "New" : sequencer.getData().getId());
     }
 
     /**
      * Enable/disable buttons based on current sequence position
      */
     private void updateButtonStates() {
-        long currentId = sequencer.getDrumSequenceId();
+        long currentId = sequencer.getData().getId();
         boolean hasSequences = manager.hasSequences();
 
         // Get first/last sequence IDs
@@ -133,8 +133,8 @@ public class DrumSequenceNavigationPanel extends JPanel {
         boolean isLast = !hasSequences || (lastId != null && currentId >= lastId);
 
         firstButton.setEnabled(hasSequences && !isFirst);
-        prevButton.setEnabled((hasSequences || sequencer.getDrumSequenceId() < 0) && !isFirst);
-        nextButton.setEnabled(sequencer.getDrumSequenceId() > 0); // Always enable the next button
+        prevButton.setEnabled((hasSequences || sequencer.getData().getId() < 0) && !isFirst);
+        nextButton.setEnabled(sequencer.getData().getId() > 0); // Always enable the next button
         lastButton.setEnabled(hasSequences && !isLast);
 
         logger.debug("Button states: currentId={}, firstId={}, lastId={}, isFirst={}, isLast={}",
@@ -162,7 +162,7 @@ public class DrumSequenceNavigationPanel extends JPanel {
             CommandBus.getInstance().publish(
                     Commands.PATTERN_LOADED,
                     this,
-                    sequencer.getDrumSequenceId());
+                    sequencer.getData().getId());
         }
     }
 
@@ -180,7 +180,7 @@ public class DrumSequenceNavigationPanel extends JPanel {
      * Load the previous sequence
      */
     private void loadPreviousSequence() {
-        Long prevId = manager.getPreviousSequenceId(sequencer.getDrumSequenceId());
+        Long prevId = manager.getPreviousSequenceId(sequencer.getData().getId());
         if (prevId != null) {
             loadSequence(prevId);
         }
@@ -191,7 +191,7 @@ public class DrumSequenceNavigationPanel extends JPanel {
      */
     private void loadNextSequence() {
         // Get current sequence ID
-        Long currentId = sequencer.getDrumSequenceId();
+        Long currentId = sequencer.getData().getId();
 
         // Find the next sequence ID
         Long nextId = manager.getNextSequenceId(currentId);
@@ -244,9 +244,9 @@ public class DrumSequenceNavigationPanel extends JPanel {
         CommandBus.getInstance().publish(
                 Commands.DRUM_SEQUENCE_SAVED,
                 this,
-                sequencer.getDrumSequenceId());
+                sequencer.getData().getId());
 
-        logger.info("Saved drum sequence: {}", sequencer.getDrumSequenceId());
+        logger.info("Saved drum sequence: {}", sequencer.getData().getId());
     }
 
     /**

@@ -3,6 +3,7 @@ package com.angrysurfer.core.redis;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import org.slf4j.Logger;
@@ -28,7 +29,7 @@ class DrumSequenceHelper {
     private final JedisPool jedisPool;
     private final ObjectMapper objectMapper;
     private final CommandBus commandBus = CommandBus.getInstance();
-    
+
     // Constants
     private static final int DRUM_PAD_COUNT = 16;
     private static final int MAX_STEPS = 64;
@@ -55,7 +56,7 @@ class DrumSequenceHelper {
             throw new RuntimeException("Failed to find drum sequence", e);
         }
     }
-    
+
     /**
      * Apply loaded data to a DrumSequencer
      */
@@ -64,46 +65,46 @@ class DrumSequenceHelper {
             logger.warn("Cannot apply null data or sequencer");
             return;
         }
-        
+
         try {
             // Set basic sequence ID
-            sequencer.setDrumSequenceId(data.getId());
-            
+            // sequencer.setSequenceId(data.getId());
+
             // Apply pattern lengths
             if (data.getPatternLengths() != null) {
                 for (int i = 0; i < Math.min(data.getPatternLengths().length, DRUM_PAD_COUNT); i++) {
                     sequencer.setPatternLength(i, data.getPatternLengths()[i]);
                 }
             }
-            
+
             // Apply directions
             if (data.getDirections() != null) {
                 for (int i = 0; i < Math.min(data.getDirections().length, DRUM_PAD_COUNT); i++) {
                     sequencer.setDirection(i, data.getDirections()[i]);
                 }
             }
-            
+
             // Apply timing divisions
             if (data.getTimingDivisions() != null) {
                 for (int i = 0; i < Math.min(data.getTimingDivisions().length, DRUM_PAD_COUNT); i++) {
                     sequencer.setTimingDivision(i, data.getTimingDivisions()[i]);
                 }
             }
-            
+
             // Apply looping flags
             if (data.getLoopingFlags() != null) {
                 for (int i = 0; i < Math.min(data.getLoopingFlags().length, DRUM_PAD_COUNT); i++) {
                     sequencer.setLooping(i, data.getLoopingFlags()[i]);
                 }
             }
-            
+
             // Apply velocities
             if (data.getVelocities() != null) {
                 for (int i = 0; i < Math.min(data.getVelocities().length, DRUM_PAD_COUNT); i++) {
                     sequencer.setVelocity(i, data.getVelocities()[i]);
                 }
             }
-            
+
             // Apply patterns
             if (data.getPatterns() != null) {
                 for (int i = 0; i < Math.min(data.getPatterns().length, DRUM_PAD_COUNT); i++) {
@@ -122,10 +123,10 @@ class DrumSequenceHelper {
                     }
                 }
             }
-            
+
             // Notify that pattern has updated
-            commandBus.publish(Commands.DRUM_SEQUENCE_UPDATED, this, sequencer.getDrumSequenceId());
-            
+            commandBus.publish(Commands.DRUM_SEQUENCE_UPDATED, this, sequencer.getData().getId());
+
         } catch (Exception e) {
             logger.error("Error applying drum sequence data to sequencer: " + e.getMessage(), e);
         }
@@ -138,23 +139,20 @@ class DrumSequenceHelper {
         try (Jedis jedis = jedisPool.getResource()) {
             // Create a data transfer object
             DrumSequenceData data = new DrumSequenceData();
-            
+
             // Set or generate ID
-            if (sequencer.getDrumSequenceId() == 0) {
+            if (sequencer.getData().getId() <= 0) {
                 data.setId(jedis.incr("seq:drumsequence"));
-                sequencer.setDrumSequenceId(data.getId());
-            } else {
-                data.setId(sequencer.getDrumSequenceId());
             }
-            
+
             // Copy pattern data
-            data.setPatternLengths(Arrays.copyOf(sequencer.getPatternLengths(), DRUM_PAD_COUNT));
-            data.setDirections(Arrays.copyOf(sequencer.getDirections(), DRUM_PAD_COUNT));
-            data.setTimingDivisions(Arrays.copyOf(sequencer.getTimingDivisions(), DRUM_PAD_COUNT));
-            data.setLoopingFlags(Arrays.copyOf(sequencer.getLoopingFlags(), DRUM_PAD_COUNT));
-            data.setVelocities(Arrays.copyOf(sequencer.getVelocities(), DRUM_PAD_COUNT));
-            data.setOriginalVelocities(Arrays.copyOf(sequencer.getOriginalVelocities(), DRUM_PAD_COUNT));
-            
+            data.setPatternLengths(Arrays.copyOf(sequencer.getData().getPatternLengths(), DRUM_PAD_COUNT));
+            data.setDirections(Arrays.copyOf(sequencer.getData().getDirections(), DRUM_PAD_COUNT));
+            data.setTimingDivisions(Arrays.copyOf(sequencer.getData().getTimingDivisions(), DRUM_PAD_COUNT));
+            data.setLoopingFlags(Arrays.copyOf(sequencer.getData().getLoopingFlags(), DRUM_PAD_COUNT));
+            data.setVelocities(Arrays.copyOf(sequencer.getData().getVelocities(), DRUM_PAD_COUNT));
+            data.setOriginalVelocities(Arrays.copyOf(sequencer.getData().getOriginalVelocities(), DRUM_PAD_COUNT));
+
             // Copy step patterns (all drums, all steps)
             boolean[][] patterns = new boolean[DRUM_PAD_COUNT][MAX_STEPS];
             for (int i = 0; i < DRUM_PAD_COUNT; i++) {
@@ -163,16 +161,16 @@ class DrumSequenceHelper {
                 }
             }
             data.setPatterns(patterns);
-            
+
             // Save to Redis
             String json = objectMapper.writeValueAsString(data);
             jedis.set("drumseq:" + data.getId(), json);
-            
+
             logger.info("Saved drum sequence {}", data.getId());
-            
+
             // Notify listeners
             commandBus.publish(Commands.DRUM_SEQUENCE_SAVED, this, data.getId());
-            
+
         } catch (Exception e) {
             logger.error("Error saving drum sequence: " + e.getMessage(), e);
             throw new RuntimeException("Failed to save drum sequence", e);
@@ -198,48 +196,6 @@ class DrumSequenceHelper {
     }
 
     /**
-     * Get the minimum drum sequence ID
-     */
-    public Long getMinimumDrumSequenceId() {
-        try (Jedis jedis = jedisPool.getResource()) {
-            Set<String> keys = jedis.keys("drumseq:*");
-            return keys.stream()
-                    .map(key -> Long.parseLong(key.split(":")[1]))
-                    .min(Long::compareTo)
-                    .orElse(null);
-        }
-    }
-
-    /**
-     * Get the maximum drum sequence ID
-     */
-    public Long getMaximumDrumSequenceId() {
-        try (Jedis jedis = jedisPool.getResource()) {
-            Set<String> keys = jedis.keys("drumseq:*");
-            return keys.stream()
-                    .map(key -> Long.parseLong(key.split(":")[1]))
-                    .max(Long::compareTo)
-                    .orElse(null);
-        }
-    }
-
-    /**
-     * Delete a drum sequence
-     */
-    public void deleteDrumSequence(Long drumSequenceId) {
-        try (Jedis jedis = jedisPool.getResource()) {
-            jedis.del("drumseq:" + drumSequenceId);
-            logger.info("Deleted drum sequence {}", drumSequenceId);
-            
-            // Notify listeners
-            commandBus.publish(Commands.DRUM_SEQUENCE_REMOVED, this, drumSequenceId);
-        } catch (Exception e) {
-            logger.error("Error deleting drum sequence {}: {}", drumSequenceId, e.getMessage());
-            throw new RuntimeException("Failed to delete drum sequence", e);
-        }
-    }
-
-    /**
      * Create a new empty drum sequence
      */
     public DrumSequenceData newDrumSequence() {
@@ -247,36 +203,36 @@ class DrumSequenceHelper {
             logger.info("Creating new drum sequence");
             DrumSequenceData data = new DrumSequenceData();
             data.setId(jedis.incr("seq:drumsequence"));
-            
+
             // Set default values
             int[] patternLengths = new int[DRUM_PAD_COUNT];
             Arrays.fill(patternLengths, 16); // Default to 16 steps
             data.setPatternLengths(patternLengths);
-            
+
             Direction[] directions = new Direction[DRUM_PAD_COUNT];
             Arrays.fill(directions, Direction.FORWARD); // Default to forward
             data.setDirections(directions);
-            
+
             TimingDivision[] timings = new TimingDivision[DRUM_PAD_COUNT];
             Arrays.fill(timings, TimingDivision.NORMAL); // Default to normal
             data.setTimingDivisions(timings);
-            
+
             boolean[] looping = new boolean[DRUM_PAD_COUNT];
             Arrays.fill(looping, true); // Default to looping
             data.setLoopingFlags(looping);
-            
+
             int[] velocities = new int[DRUM_PAD_COUNT];
             Arrays.fill(velocities, 100); // Default velocity
             data.setVelocities(velocities);
             data.setOriginalVelocities(Arrays.copyOf(velocities, DRUM_PAD_COUNT));
-            
+
             // Initialize patterns (all false)
             data.setPatterns(new boolean[DRUM_PAD_COUNT][MAX_STEPS]);
-            
+
             // Save to Redis
             String json = objectMapper.writeValueAsString(data);
             jedis.set("drumseq:" + data.getId(), json);
-            
+
             logger.info("Created new drum sequence with ID: {}", data.getId());
             return data;
         } catch (Exception e) {
@@ -310,6 +266,127 @@ class DrumSequenceHelper {
                     .filter(id -> id > currentId)
                     .min(Long::compareTo)
                     .orElse(null);
+        }
+    }
+
+    /**
+     * Get the minimum drum sequence ID
+     * 
+     * @return The minimum ID, or null if no sequences exist
+     */
+    public Long getMinimumDrumSequenceId() {
+        try (Jedis jedis = jedisPool.getResource()) {
+
+            // Get all sequence keys
+            Map<String, String> sequences = jedis.hgetAll("drum-sequences");
+
+            if (sequences == null || sequences.isEmpty()) {
+                logger.info("No drum sequences found in Redis");
+                return null;
+            }
+
+            // Filter out non-numeric keys and find minimum ID
+            return sequences.keySet().stream()
+                    .filter(key -> key != null && !key.equals("null") && key.matches("\\d+")) // Ensure the key is a
+                                                                                              // valid number
+                    .map(key -> {
+                        try {
+                            return Long.parseLong(key);
+                        } catch (NumberFormatException e) {
+                            // This shouldn't happen due to the regex filter, but just in case
+                            logger.warn("Failed to parse sequence ID '{}' as Long", key);
+                            return null;
+                        }
+                    })
+                    .filter(id -> id != null) // Filter out any nulls from failed parsing
+                    .min(Long::compareTo)
+                    .orElse(null); // Return null if no valid IDs found
+        } catch (Exception e) {
+            logger.error("Error getting minimum drum sequence ID: {}", e.getMessage(), e);
+            return null;
+        }
+    }
+
+    /**
+     * Get the maximum drum sequence ID
+     * 
+     * @return The maximum ID, or null if no sequences exist
+     */
+    public Long getMaximumDrumSequenceId() {
+        try (Jedis jedis = jedisPool.getResource()) {
+            // Get all sequence keys
+            Map<String, String> sequences = jedis.hgetAll("drum-sequences");
+
+            if (sequences == null || sequences.isEmpty()) {
+                logger.info("No drum sequences found in Redis");
+                return null;
+            }
+
+            // Filter out non-numeric keys and find maximum ID
+            return sequences.keySet().stream()
+                    .filter(key -> key != null && !key.equals("null") && key.matches("\\d+")) // Ensure the key is a
+                                                                                              // valid number
+                    .map(key -> {
+                        try {
+                            return Long.parseLong(key);
+                        } catch (NumberFormatException e) {
+                            // This shouldn't happen due to the regex filter, but just in case
+                            logger.warn("Failed to parse sequence ID '{}' as Long", key);
+                            return null;
+                        }
+                    })
+                    .filter(id -> id != null) // Filter out any nulls from failed parsing
+                    .max(Long::compareTo)
+                    .orElse(null); // Return null if no valid IDs found
+        } catch (Exception e) {
+            logger.error("Error getting maximum drum sequence ID: {}", e.getMessage(), e);
+            return null;
+        }
+    }
+
+    /**
+     * Delete a drum sequence by ID
+     * @param id The ID of the drum sequence to delete
+     * @return true if successfully deleted, false otherwise
+     */
+    public boolean deleteDrumSequence(Long id) {
+        if (id == null) {
+            logger.warn("Cannot delete drum sequence with null ID");
+            return false;
+        }
+        
+        try (Jedis jedis = jedisPool.getResource()) {
+            String key = "drumseq:" + id;
+            
+            // Check if the sequence exists
+            if (!jedis.exists(key)) {
+                logger.warn("Drum sequence with ID {} not found", id);
+                return false;
+            }
+            
+            // Delete the sequence
+            Long result = jedis.del(key);
+            
+            // Also remove from the hash if it exists there
+            String hashKey = id.toString();
+            if (jedis.hexists("drum-sequences", hashKey)) {
+                jedis.hdel("drum-sequences", hashKey);
+            }
+            
+            boolean success = result != null && result > 0;
+            if (success) {
+                logger.info("Successfully deleted drum sequence with ID {}", id);
+                
+                // Notify listeners
+                commandBus.publish(Commands.DRUM_SEQUENCE_DELETED, this, id);
+            } else {
+                logger.warn("Failed to delete drum sequence with ID {}", id);
+            }
+            
+            return success;
+        } catch (Exception e) {
+            logger.error("Error deleting drum sequence with ID {}: {}", id, e.getMessage(), e);
+            return false;
         }
     }
 }

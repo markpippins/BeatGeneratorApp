@@ -339,13 +339,10 @@ public abstract class Player implements Callable<Boolean>, Serializable, IBusLis
             synchronized (messageLock) {
                 reuseableMessage.setMessage(ShortMessage.NOTE_ON, note, velocity);
                 // Replace sendMessage with sendToDevice
-                instrument.sendToDevice(reuseableMessage);
+                instrument.sendMessage(reuseableMessage);
             }
         } catch (InvalidMidiDataException e) {
             logger.error("Error sending note-on message: {}", e.getMessage(), e);
-        } catch (MidiUnavailableException e) {
-            // Add handling for MidiUnavailableException since sendToDevice throws it
-            logger.error("MIDI device unavailable: {}", e.getMessage(), e);
         }
     }
 
@@ -365,13 +362,11 @@ public abstract class Player implements Callable<Boolean>, Serializable, IBusLis
             if (instrument != null) {
                 synchronized (messageLock) {
                     reuseableMessage.setMessage(ShortMessage.NOTE_ON, note, velocity);
-                    instrument.sendToDevice(reuseableMessage); // Changed from sendMessage to sendToDevice
+                    instrument.sendMessage(reuseableMessage); // Changed from sendMessage to sendToDevice
                 }
             }
         } catch (InvalidMidiDataException e) {
             logger.error("Error in noteOn: {}", e.getMessage(), e);
-        } catch (MidiUnavailableException e) { // Add this catch block
-            logger.error("MIDI device unavailable: {}", e.getMessage(), e);
         }
     }
 
@@ -475,7 +470,7 @@ public abstract class Player implements Callable<Boolean>, Serializable, IBusLis
                     for (int note = 0; note < 128; note++) {
                         synchronized (messageLock) {
                             reuseableMessage.setMessage(ShortMessage.NOTE_OFF, getChannel(), note, 0);
-                            instrument.sendToDevice(reuseableMessage);
+                            instrument.sendMessage(reuseableMessage);
                         }
                     }
                 }

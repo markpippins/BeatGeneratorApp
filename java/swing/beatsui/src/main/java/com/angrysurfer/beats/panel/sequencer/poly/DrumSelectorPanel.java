@@ -14,6 +14,7 @@ import javax.swing.BorderFactory;
 import javax.swing.JPanel;
 import javax.swing.JTabbedPane;
 
+import com.angrysurfer.core.sequencer.DrumSequenceData;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -36,8 +37,8 @@ public class DrumSelectorPanel extends JPanel {
     private final List<DrumSequencerButton> drumButtons = new ArrayList<>();
     
     // Constants
-    private static final int DRUM_PAD_COUNT = DrumSequencer.DRUM_PAD_COUNT;
-    private static final int MIDI_DRUM_NOTE_OFFSET = DrumSequencer.MIDI_DRUM_NOTE_OFFSET;
+    private static final int DRUM_PAD_COUNT = DrumSequenceData.DRUM_PAD_COUNT;
+    private static final int MIDI_DRUM_NOTE_OFFSET = DrumSequenceData.MIDI_DRUM_NOTE_OFFSET;
     
     /**
      * Creates a new DrumSelectorPanel

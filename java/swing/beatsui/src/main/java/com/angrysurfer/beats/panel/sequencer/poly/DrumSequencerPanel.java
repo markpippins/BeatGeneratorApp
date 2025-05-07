@@ -18,6 +18,7 @@ import javax.swing.JSpinner;
 import javax.swing.JToggleButton;
 import javax.swing.SwingUtilities;
 
+import com.angrysurfer.core.sequencer.DrumSequenceData;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -28,8 +29,8 @@ import com.angrysurfer.core.api.Command;
 import com.angrysurfer.core.api.CommandBus;
 import com.angrysurfer.core.api.Commands;
 import com.angrysurfer.core.api.IBusListener;
+import com.angrysurfer.core.event.DrumPadSelectionEvent;
 import com.angrysurfer.core.event.NoteEvent;
-import com.angrysurfer.core.sequencer.DrumPadSelectionEvent;
 import com.angrysurfer.core.sequencer.DrumSequenceModifier;
 import com.angrysurfer.core.sequencer.DrumSequencer;
 import com.angrysurfer.core.sequencer.TimingDivision;
@@ -69,15 +70,15 @@ public class DrumSequencerPanel extends JPanel implements IBusListener {
     private JSpinner densitySpinner;
 
     // Replace the local DRUM_PAD_COUNT constant with DrumSequencer's version
-    private static final int DRUM_PAD_COUNT = DrumSequencer.DRUM_PAD_COUNT;
+    private static final int DRUM_PAD_COUNT = DrumSequenceData.DRUM_PAD_COUNT;
 
     // Add these constants referencing DrumSequencer constants
-    private static final int DEFAULT_VELOCITY = DrumSequencer.DEFAULT_VELOCITY;
-    private static final int DEFAULT_DECAY = DrumSequencer.DEFAULT_DECAY;
-    private static final int DEFAULT_PROBABILITY = DrumSequencer.DEFAULT_PROBABILITY;
-    private static final int MIN_SWING = DrumSequencer.MIN_SWING;
-    private static final int MAX_SWING = DrumSequencer.MAX_SWING;
-    private static final int MIDI_DRUM_NOTE_OFFSET = DrumSequencer.MIDI_DRUM_NOTE_OFFSET;
+    private static final int DEFAULT_VELOCITY = DrumSequenceData.DEFAULT_VELOCITY;
+    private static final int DEFAULT_DECAY = DrumSequenceData.DEFAULT_DECAY;
+    private static final int DEFAULT_PROBABILITY = DrumSequenceData.DEFAULT_PROBABILITY;
+    private static final int MIN_SWING = DrumSequenceData.MIN_SWING;
+    private static final int MAX_SWING = DrumSequenceData.MAX_SWING;
+    private static final int MIDI_DRUM_NOTE_OFFSET = DrumSequenceData.MIDI_DRUM_NOTE_OFFSET;
 
     // UI constants
     private static final int DRUM_BUTTON_SIZE = 28;

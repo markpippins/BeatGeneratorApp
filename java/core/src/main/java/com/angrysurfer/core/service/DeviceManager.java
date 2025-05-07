@@ -264,8 +264,8 @@ public class DeviceManager implements IBusListener {
                     channel,
                     validateData(data1),
                     validateData(data2));
-            instrument.sendToDevice(message);
-        } catch (InvalidMidiDataException | MidiUnavailableException ex) {
+            instrument.sendMessage(message);
+        } catch (InvalidMidiDataException ex) {
             throw new MidiDeviceException("Failed to send MIDI message", ex);
         }
 

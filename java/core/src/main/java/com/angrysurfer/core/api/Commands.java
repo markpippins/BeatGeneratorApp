@@ -362,4 +362,5 @@ public class Commands {
     public static final String DELETE_UNUSED_INSTRUMENTS = "DELETE_UNUSED_INSTRUMENTS";
     public static final String UPDATE_STATUS = "UPDATE_STATUS";
     public static final String REPAIR_MIDI_CONNECTIONS = "REPAIR_MIDI_CONNECTIONS";
+    public static final String DRUM_SEQUENCE_DELETED = "DRUM_SEQUENCE_DELETED";
 }
