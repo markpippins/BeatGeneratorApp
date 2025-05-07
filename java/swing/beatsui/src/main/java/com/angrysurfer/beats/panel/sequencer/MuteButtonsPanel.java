@@ -31,6 +31,7 @@ import com.angrysurfer.core.event.NoteEvent;
 import com.angrysurfer.core.sequencer.DrumSequencer;
 import com.angrysurfer.core.sequencer.MelodicSequencer;
 import com.angrysurfer.core.service.MelodicSequencerManager;
+import com.angrysurfer.core.service.PlayerManager;
 
 /**
  * Panel that handles all mute buttons for both drum and melodic sequencers
@@ -518,15 +519,34 @@ public class MuteButtonsPanel extends JPanel implements IBusListener {
         }
     }
 
-    private void toggleMelodicMute(int seqIndex, boolean muted) {
-        logger.info("{}muting melodic sequencer {}", muted ? "" : "Un", seqIndex + 1);
-        if (melodicSequencers != null && seqIndex < melodicSequencers.size()) {
-            MelodicSequencer sequencer = melodicSequencers.get(seqIndex);
-            if (sequencer != null) {
-                sequencer.getPlayer().setLevel(muted ? 0 : 100);
-            }
+private void toggleMelodicMute(int seqIndex, boolean muted) {
+    logger.info("{}muting melodic sequencer {}", muted ? "" : "Un", seqIndex + 1);
+    if (melodicSequencers != null && seqIndex < melodicSequencers.size()) {
+        MelodicSequencer sequencer = melodicSequencers.get(seqIndex);
+        if (sequencer != null && sequencer.getPlayer() != null) {
+            // Set the player level
+            sequencer.getPlayer().setLevel(muted ? 0 : 100);
+            
+            // Log the new level to help diagnose issues
+            logger.debug("Set melodic sequencer {} player level to {}", 
+                    seqIndex, sequencer.getPlayer().getLevel());
+                    
+            // Ensure changes are persisted
+            PlayerManager.getInstance().savePlayerProperties(sequencer.getPlayer());
+            
+            // Publish an event so other components can be notified
+            CommandBus.getInstance().publish(
+                Commands.PLAYER_LEVEL_CHANGED, 
+                this, 
+                Map.of("playerId", sequencer.getPlayer().getId(), "level", muted ? 0 : 100)
+            );
+        } else {
+            logger.warn("Cannot mute melodic sequencer {} - sequencer or player is null", seqIndex);
         }
+    } else {
+        logger.warn("Cannot mute melodic sequencer {} - index out of range", seqIndex);
     }
+}
 
     /**
      * Set the drum sequencer to control

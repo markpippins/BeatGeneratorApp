@@ -677,6 +677,9 @@ public class Session implements Serializable, IBusListener {
                     player.setInstrument(defaultInstrument);
                     player.setUsingInternalSynth(true);
 
+                    defaultInstrument.setAssignedToPlayer(true);
+
+
                     // Save the player to persist this change
                     PlayerManager.getInstance().savePlayerProperties(player);
 

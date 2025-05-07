@@ -302,7 +302,7 @@ public class InstrumentManager implements IBusListener {
     public InstrumentWrapper findOrCreateInternalInstrument(int channel) {
         // Try to find an existing internal instrument for this channel
         for (InstrumentWrapper instrument : getCachedInstruments()) {
-            if (Boolean.TRUE.equals(instrument.getInternal()) &&
+            if (Boolean.TRUE.equals(instrument.getInternal()) && !instrument.getAssignedToPlayer() &&
                     instrument.getChannel() == channel) {
                 return instrument;
             }
@@ -381,9 +381,7 @@ public class InstrumentManager implements IBusListener {
                     cached.getChannel() == channel &&
                     (!exclusive || !cached.getAssignedToPlayer())) {
 
-                if (exclusive) {
-                    cached.setAssignedToPlayer(true);
-                }
+                cached.setAssignedToPlayer(exclusive);
                 return cached;
             }
         }

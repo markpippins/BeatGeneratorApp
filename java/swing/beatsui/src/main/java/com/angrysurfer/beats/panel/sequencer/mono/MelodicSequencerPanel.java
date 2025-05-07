@@ -300,13 +300,11 @@ public class MelodicSequencerPanel extends JPanel implements IBusListener {
     }
 
     private JPanel createGeneratePanel() {
-
         JPanel panel = new JPanel();
         panel.setBorder(BorderFactory.createTitledBorder("Generate"));
-        // REDUCED: from 5,2 to 2,1
         panel.setLayout(new FlowLayout(FlowLayout.LEFT, 2, 1));
 
-        // Range combo (moved from sequence parameters panel)
+        // Range combo
         String[] rangeOptions = { "1 Octave", "2 Octaves", "3 Octaves", "4 Octaves" };
         rangeCombo = new JComboBox<>(rangeOptions);
         rangeCombo.setSelectedIndex(1); // Default to 2 octaves
@@ -319,20 +317,59 @@ public class MelodicSequencerPanel extends JPanel implements IBusListener {
         generateButton.setPreferredSize(new Dimension(UIHelper.SMALL_CONTROL_WIDTH, UIHelper.CONTROL_HEIGHT));
         generateButton.setMargin(new Insets(2, 2, 2, 2));
         generateButton.addActionListener(e -> {
-            // Get selected octave range from the combo
-            int octaveRange = rangeCombo.getSelectedIndex() + 1;
-            int density = 50; // Fixed density for now
-            sequencer.generatePattern(octaveRange, density);
-            syncUIWithSequencer();
+            try {
+                // Get selected octave range from the combo
+                int octaveRange = rangeCombo.getSelectedIndex() + 1;
+                int density = 50; // Fixed density for now
+                
+                logger.info("Generating new pattern with octave range: {}, density: {}", octaveRange, density);
+                
+                // Make sure we have a valid sequencer
+                if (sequencer == null) {
+                    logger.error("Cannot generate pattern - sequencer is null");
+                    return;
+                }
+                
+                // Generate the pattern
+                MelodicSequenceData data = sequencer.getSequenceData();
+                boolean wasGenerated = sequencer.generatePattern(octaveRange, density);
+                
+                if (wasGenerated) {
+                    logger.info("Pattern was successfully generated");
+                    
+                    // Save the changes to the sequence data
+                    MelodicSequencerManager.getInstance().saveSequence(sequencer);
+                    
+                    // Update UI components
+                    SwingUtilities.invokeLater(() -> {
+                        syncUIWithSequencer();
+                        
+                        // Notify that pattern was updated
+                        CommandBus.getInstance().publish(
+                            Commands.PATTERN_UPDATED,
+                            sequencer,
+                            new MelodicSequencerEvent(
+                                sequencer.getId(),
+                                data.getId())
+                        );
+                    });
+                } else {
+                    logger.warn("Pattern generation failed or was not implemented");
+                }
+            } catch (Exception ex) {
+                logger.error("Error generating pattern: {}", ex.getMessage(), ex);
+            }
         });
 
-        // Latch toggle button (moved from sequence parameters panel)
+        // Latch toggle button
         latchToggleButton = new JToggleButton("L", false);
         latchToggleButton.setToolTipText("Generate new pattern each cycle");
         latchToggleButton.setPreferredSize(new Dimension(UIHelper.SMALL_CONTROL_WIDTH, UIHelper.CONTROL_HEIGHT));
         latchToggleButton.addActionListener(e -> {
-            sequencer.setLatchEnabled(latchToggleButton.isSelected());
-            logger.info("Latch mode set to: {}", latchToggleButton.isSelected());
+            if (sequencer != null) {
+                sequencer.setLatchEnabled(latchToggleButton.isSelected());
+                logger.info("Latch mode set to: {}", latchToggleButton.isSelected());
+            }
         });
 
         panel.add(generateButton);
