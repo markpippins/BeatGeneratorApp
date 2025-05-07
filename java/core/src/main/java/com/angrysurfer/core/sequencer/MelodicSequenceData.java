@@ -1,5 +1,6 @@
 package com.angrysurfer.core.sequencer;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -12,594 +13,651 @@ import com.angrysurfer.core.model.Direction;
 import lombok.Getter;
 import lombok.Setter;
 
-/**
- * Data container for melodic sequencer patterns and settings
- */
 @Getter
 @Setter
 public class MelodicSequenceData {
     private static final Logger logger = LoggerFactory.getLogger(MelodicSequenceData.class);
-
-    // Swing settings
-    private int swingPercentage = 50; // Default swing percentage (50 = no swing)
-    private boolean swingEnabled = false; // Swing enabled flag
-
-    // Sequencing parameters
-    private int patternLength = 16; // Default pattern length
-    private Direction direction = Direction.FORWARD; // Default direction
-    private boolean looping = true; // Default to looping
-    // private int channel = 3; // Default MIDI channel
-    private TimingDivision timingDivision = TimingDivision.NORMAL;
-
-    // Scale & quantization
-    private String rootNote = "C";
-    private String scale = Scale.SCALE_CHROMATIC;
-    private Boolean[] scaleNotes;
-    private boolean quantizeEnabled = true;
-    private int octaveShift = 0; // Compatibility for scale
-
-    // Pattern data storage
-    private boolean[] activeSteps; // Step on/off state
-    private int[] noteValues; // Note for each step
-    private int[] velocityValues; // Velocity for each step
-    private int[] gateValues; // Gate time for each step
-    private int[] probabilityValues; // Probability for each step
-    private int[] nudgeValues; // Timing nudge for each step
-    private int[] harmonicTiltValues; // Harmonic til
-
-    // Identifying information
+    
+    // Constants
+    public static final int MAX_STEPS = 16;
+    public static final int DEFAULT_NOTE = 60; // Middle C
+    public static final int DEFAULT_VELOCITY = 100;
+    public static final int DEFAULT_GATE = 75;
+    public static final int DEFAULT_PROBABILITY = 100;
+    
+    // Id and metadata
     private Long id = 0L;
-    private Integer sequencerId;
-    private String name = "Unnamed Pattern";
-
+    private String name = "New Pattern";
+    private Long createdAt = System.currentTimeMillis();
+    private Long updatedAt = System.currentTimeMillis();
+    
+    // Sequencer settings
+    private Integer swing = 50;
+    private Boolean swingEnabled = false;
+    private Integer patternLength = 16;
+    private Boolean looping = true;
+    private com.angrysurfer.core.model.Direction direction = com.angrysurfer.core.model.Direction.FORWARD;
+    private Integer shuffleAmount = 0;
+    private Boolean quantizeEnabled = true;
+    private Integer rootNote = 0; // C
+    private String scale = "Major";
+    private Integer octaveShift = 0;
+    private TimingDivision timingDivision = TimingDivision.SIXTEENTH;
+    private Integer sequencerId;    // Add this field to store the sequencer ID
+    
+    // Sound-related settings
     private String soundbankName = "Default";
     private Integer bankIndex = 0;
     private Integer preset = 0;
-
     private String deviceName;
     private Long instrumentId;
     private String instrumentName;
-
+    
+    // Pattern data
+    private boolean[] activeSteps = new boolean[MAX_STEPS];
+    private int[] noteValues = new int[MAX_STEPS];
+    private int[] velocityValues = new int[MAX_STEPS];
+    private int[] gateValues = new int[MAX_STEPS];
+    private int[] probabilityValues = new int[MAX_STEPS];
+    private int[] nudgeValues = new int[MAX_STEPS];
+    private int[] tiltValues = new int[MAX_STEPS];
+    
     /**
      * Default constructor
      */
-
     public MelodicSequenceData() {
-        initializePatternData();
+        initializeArrays();
     }
-
+    
     /**
-     * Initialize pattern data with default values
+     * Initialize arrays with default values
      */
-    public void initializePatternData() {
-        // Always create new arrays with current pattern length
-        activeSteps = new boolean[patternLength];
-        noteValues = new int[patternLength];
-        velocityValues = new int[patternLength];
-        gateValues = new int[patternLength];
-        probabilityValues = new int[patternLength];
-        nudgeValues = new int[patternLength];
-        harmonicTiltValues = new int[patternLength];
-
-        // Fill with default values
-        for (int i = 0; i < patternLength; i++) {
-            activeSteps[i] = false; // All steps off by default
-            noteValues[i] = 60; // Middle C
-            velocityValues[i] = 100; // Medium-high velocity
-            gateValues[i] = 50; // 50% gate time
-            probabilityValues[i] = 100; // 100% probability by default
-            nudgeValues[i] = 0; // No timing nudge by default
-            harmonicTiltValues[i] = 0; // No harmonic tilt by default
-        }
+    private void initializeArrays() {
+        // Initialize all arrays with default values
+        Arrays.fill(activeSteps, false);
+        Arrays.fill(noteValues, DEFAULT_NOTE);
+        Arrays.fill(velocityValues, DEFAULT_VELOCITY);
+        Arrays.fill(gateValues, DEFAULT_GATE);
+        Arrays.fill(probabilityValues, DEFAULT_PROBABILITY);
+        Arrays.fill(nudgeValues, 0);
+        Arrays.fill(tiltValues, 0);
+        
+        // Activate some initial steps for a basic pattern
+        activeSteps[0] = true;
+        activeSteps[4] = true;
+        activeSteps[8] = true;
+        activeSteps[12] = true;
     }
-
-    public int getNoteValue(int stepIndex) {
-        if (stepIndex >= 0 && stepIndex < noteValues.length) {
-            return noteValues[stepIndex];
-        }
-        return 60; // Default to middle C
-    }
-
+    
     /**
-     * Get the velocity value for a specific step
+     * Get maximum steps in pattern
      */
-    public int getVelocityValue(int stepIndex) {
-        if (stepIndex >= 0 && stepIndex < velocityValues.length) {
-            return velocityValues[stepIndex];
-        }
-        return 100; // Default velocity
+    public int getMaxSteps() {
+        return MAX_STEPS;
     }
-
+    
     /**
-     * Get the gate value for a specific step
+     * Check if step is active
      */
-    public int getGateValue(int stepIndex) {
-        if (stepIndex >= 0 && stepIndex < gateValues.length) {
-            return gateValues[stepIndex];
-        }
-        return 50; // Default gate
-    }
-
-    /**
-     * Get the probability value for a specific step
-     */
-    public int getProbabilityValue(int stepIndex) {
-        if (stepIndex >= 0 && stepIndex < probabilityValues.length) {
-            return probabilityValues[stepIndex];
-        }
-        return 100; // Default probability
-    }
-
-    /**
-     * Set the probability value for a specific step
-     */
-    public void setProbabilityValue(int stepIndex, int probability) {
-        probability = Math.max(0, Math.min(100, probability));
-
-        if (stepIndex >= 0) {
-            ensureArraySize(stepIndex + 1);
-            probabilityValues[stepIndex] = probability;
-        }
-    }
-
-    /**
-     * Get the nudge value for a specific step
-     */
-    public int getNudgeValue(int stepIndex) {
-        if (stepIndex >= 0 && stepIndex < nudgeValues.length) {
-            return nudgeValues[stepIndex];
-        }
-        return 0; // Default nudge
-    }
-
-    /**
-     * Set the nudge value for a specific step
-     */
-    public void setNudgeValue(int stepIndex, int nudge) {
-        nudge = Math.max(0, nudge);
-
-        if (stepIndex >= 0) {
-            ensureArraySize(stepIndex + 1);
-            nudgeValues[stepIndex] = nudge;
-        }
-    }
-
-    public int[] getHarmonicTiltValuesRaw() {
-        return harmonicTiltValues;
-    }
-
-    /**
-     * Get harmonic tilt values as a list with safety checks
-     */
-    public List<Integer> getHarmonicTiltValues() {
-        // Add null check to prevent NullPointerException
-        if (harmonicTiltValues == null) {
-            logger.warn("harmonicTiltValues array is null, initializing with defaults for pattern length {}",
-                    patternLength);
-            harmonicTiltValues = new int[patternLength];
-        }
-
-        List<Integer> result = Arrays.stream(harmonicTiltValues).boxed().collect(Collectors.toList());
-        logger.debug("MelodicSequenceData.getHarmonicTiltValues() returning list of size {}", result.size());
-
-        return result;
-    }
-
-    // Add a setter for arrays if not already present
-    public void setHarmonicTiltValues(int[] values) {
-        if (values == null) {
-            logger.warn("Attempt to set null harmonicTiltValues, ignoring");
-            return;
-        }
-
-        harmonicTiltValues = new int[values.length];
-        System.arraycopy(values, 0, harmonicTiltValues, 0, values.length);
-        logger.debug("Set {} harmonic tilt values", values.length);
-    }
-
-    /**
-     * Set a single harmonic tilt value with safety checks
-     */
-    public void setHarmonicTiltValue(int index, int value) {
-        // Ensure the array exists
-        if (harmonicTiltValues == null) {
-            logger.info("Creating new harmonicTiltValues array with length {}", patternLength);
-            harmonicTiltValues = new int[patternLength];
-        }
-
-        // Resize if needed
-        if (index >= harmonicTiltValues.length) {
-            int[] newArray = new int[Math.max(patternLength, index + 1)];
-            System.arraycopy(harmonicTiltValues, 0, newArray, 0, harmonicTiltValues.length);
-            harmonicTiltValues = newArray;
-        }
-
-        // Set the value
-        harmonicTiltValues[index] = value;
-    }
-
-    /**
-     * Check if a specific step is active
-     */
-    public boolean isStepActive(int stepIndex) {
-        if (stepIndex >= 0 && stepIndex < activeSteps.length) {
-            return activeSteps[stepIndex];
+    public boolean isStepActive(int step) {
+        if (step >= 0 && step < MAX_STEPS) {
+            return activeSteps[step];
         }
         return false;
     }
-
+    
     /**
-     * Ensure arrays are large enough to accommodate the given index
+     * Set step active state
      */
-    private void ensureArraySize(int requiredSize) {
-        if (requiredSize > patternLength) {
-            // Update pattern length
-            int oldLength = patternLength;
-            patternLength = requiredSize;
-
-            // Resize activeSteps array
-            boolean[] newActiveSteps = new boolean[patternLength];
-            System.arraycopy(activeSteps, 0, newActiveSteps, 0, Math.min(activeSteps.length, patternLength));
-            activeSteps = newActiveSteps;
-
-            // Resize noteValues array
-            int[] newNoteValues = new int[patternLength];
-            System.arraycopy(noteValues, 0, newNoteValues, 0, Math.min(noteValues.length, patternLength));
-            for (int i = oldLength; i < patternLength; i++) {
-                newNoteValues[i] = 60; // Default to middle C
-            }
-            noteValues = newNoteValues;
-
-            // Resize velocityValues array
-            int[] newVelocityValues = new int[patternLength];
-            System.arraycopy(velocityValues, 0, newVelocityValues, 0, Math.min(velocityValues.length, patternLength));
-            for (int i = oldLength; i < patternLength; i++) {
-                newVelocityValues[i] = 100; // Default velocity
-            }
-            velocityValues = newVelocityValues;
-
-            // Resize gateValues array
-            int[] newGateValues = new int[patternLength];
-            System.arraycopy(gateValues, 0, newGateValues, 0, Math.min(gateValues.length, patternLength));
-            for (int i = oldLength; i < patternLength; i++) {
-                newGateValues[i] = 50; // Default gate
-            }
-            gateValues = newGateValues;
-
-            // Resize probabilityValues array
-            int[] newProbabilityValues = new int[patternLength];
-            System.arraycopy(probabilityValues, 0, newProbabilityValues, 0,
-                    Math.min(probabilityValues.length, patternLength));
-            for (int i = oldLength; i < patternLength; i++) {
-                newProbabilityValues[i] = 100; // Default probability
-            }
-            probabilityValues = newProbabilityValues;
-
-            // Resize nudgeValues array
-            int[] newNudgeValues = new int[patternLength];
-            System.arraycopy(nudgeValues, 0, newNudgeValues, 0, Math.min(nudgeValues.length, patternLength));
-            nudgeValues = newNudgeValues;
-
-            // Resize harmonicTiltValues array
-            int[] newHarmonicTiltValues = new int[patternLength];
-            System.arraycopy(harmonicTiltValues, 0, newHarmonicTiltValues, 0,
-                    Math.min(harmonicTiltValues.length, patternLength));
-            harmonicTiltValues = newHarmonicTiltValues;
+    public void setStepActive(int step, boolean active) {
+        if (step >= 0 && step < MAX_STEPS) {
+            activeSteps[step] = active;
+        } else {
+            logger.warn("Attempted to set active state for invalid step: {}", step);
         }
     }
-
+    
     /**
-     * Set all data for a specific step
+     * Get note value for step
      */
-    public void setStepData(int stepIndex, boolean active, int note, int velocity, int gate, int probability,
-            int nudge) {
-        if (stepIndex >= 0) {
-            ensureArraySize(stepIndex + 1);
-
-            activeSteps[stepIndex] = active;
-            noteValues[stepIndex] = note;
-            velocityValues[stepIndex] = velocity;
-            gateValues[stepIndex] = gate;
-            probabilityValues[stepIndex] = Math.max(0, Math.min(100, probability));
-            nudgeValues[stepIndex] = Math.max(0, nudge);
+    public int getNoteValue(int step) {
+        if (step >= 0 && step < MAX_STEPS) {
+            return noteValues[step];
+        }
+        return DEFAULT_NOTE;
+    }
+    
+    /**
+     * Set note value for step
+     */
+    public void setNoteValue(int step, int value) {
+        if (step >= 0 && step < MAX_STEPS) {
+            // Ensure valid MIDI note range (0-127)
+            value = Math.max(0, Math.min(127, value));
+            noteValues[step] = value;
+        } else {
+            logger.warn("Attempted to set note value for invalid step: {}", step);
         }
     }
-
+    
     /**
-     * Set all data for a specific step including harmonic tilt
+     * Get velocity value for step
      */
-    public void setStepData(int stepIndex, boolean active, int note, int velocity, int gate,
-            int probability, int nudge, int harmonicTilt) {
-        setStepData(stepIndex, active, note, velocity, gate, probability, nudge);
-
-        if (stepIndex >= 0) {
-            ensureArraySize(stepIndex + 1);
-            harmonicTiltValues[stepIndex] = harmonicTilt;
+    public int getVelocityValue(int step) {
+        if (step >= 0 && step < MAX_STEPS) {
+            return velocityValues[step];
+        }
+        return DEFAULT_VELOCITY;
+    }
+    
+    /**
+     * Set velocity value for step
+     */
+    public void setVelocityValue(int step, int value) {
+        if (step >= 0 && step < MAX_STEPS) {
+            // Ensure valid MIDI velocity range (0-127)
+            value = Math.max(0, Math.min(127, value));
+            velocityValues[step] = value;
+        } else {
+            logger.warn("Attempted to set velocity value for invalid step: {}", step);
         }
     }
-
+    
     /**
-     * Set step data with default probability and nudge
-     * (for backward compatibility)
+     * Get gate value for step
      */
-    public void setStepData(int stepIndex, boolean active, int note, int velocity, int gate) {
-        setStepData(stepIndex, active, note, velocity, gate, 100, 0);
-    }
-
-    /**
-     * Rotate the pattern one step to the right
-     */
-    public void rotatePatternRight() {
-        if (patternLength <= 1)
-            return;
-
-        // Store the last step's values
-        boolean lastActive = activeSteps[patternLength - 1];
-        int lastNote = noteValues[patternLength - 1];
-        int lastVelocity = velocityValues[patternLength - 1];
-        int lastGate = gateValues[patternLength - 1];
-        int lastProbability = probabilityValues[patternLength - 1];
-        int lastNudge = nudgeValues[patternLength - 1];
-        // int lastHarmonicTilt = harmonicTiltValues[patternLength - 1];
-
-        // Shift elements right
-        for (int i = patternLength - 1; i > 0; i--) {
-            activeSteps[i] = activeSteps[i - 1];
-            noteValues[i] = noteValues[i - 1];
-            velocityValues[i] = velocityValues[i - 1];
-            gateValues[i] = gateValues[i - 1];
-            probabilityValues[i] = probabilityValues[i - 1];
-            nudgeValues[i] = nudgeValues[i - 1];
-            // harmonicTiltValues[i] = harmonicTiltValues[i - 1];
+    public int getGateValue(int step) {
+        if (step >= 0 && step < MAX_STEPS) {
+            return gateValues[step];
         }
-
-        // Place saved last values at the first position
-        activeSteps[0] = lastActive;
-        noteValues[0] = lastNote;
-        velocityValues[0] = lastVelocity;
-        gateValues[0] = lastGate;
-        probabilityValues[0] = lastProbability;
-        nudgeValues[0] = lastNudge;
-        // harmonicTiltValues[0] = lastHarmonicTilt;
+        return DEFAULT_GATE;
     }
-
+    
     /**
-     * Rotate the pattern one step to the left
+     * Set gate value for step
      */
-    public void rotatePatternLeft() {
-        if (patternLength <= 1)
-            return;
-
-        // Store the first step's values
-        boolean firstActive = activeSteps[0];
-        int firstNote = noteValues[0];
-        int firstVelocity = velocityValues[0];
-        int firstGate = gateValues[0];
-        int firstProbability = probabilityValues[0];
-        int firstNudge = nudgeValues[0];
-        // int firstHarmonicTilt = harmonicTiltValues[0];
-
-        // Shift elements left
-        for (int i = 0; i < patternLength - 1; i++) {
-            activeSteps[i] = activeSteps[i + 1];
-            noteValues[i] = noteValues[i + 1];
-            velocityValues[i] = velocityValues[i + 1];
-            gateValues[i] = gateValues[i + 1];
-            probabilityValues[i] = probabilityValues[i + 1];
-            nudgeValues[i] = nudgeValues[i + 1];
-            // harmonicTiltValues[i] = harmonicTiltValues[i + 1];
-        }
-
-        // Place saved first values at the last position
-        activeSteps[patternLength - 1] = firstActive;
-        noteValues[patternLength - 1] = firstNote;
-        velocityValues[patternLength - 1] = firstVelocity;
-        gateValues[patternLength - 1] = firstGate;
-        probabilityValues[patternLength - 1] = firstProbability;
-        nudgeValues[patternLength - 1] = firstNudge;
-        // harmonicTiltValues[patternLength - 1] = firstHarmonicTilt;
-    }
-
-    /**
-     * Clear the pattern (set all steps to inactive)
-     */
-    public void clearPattern() {
-        for (int i = 0; i < patternLength; i++) {
-            activeSteps[i] = false;
+    public void setGateValue(int step, int value) {
+        if (step >= 0 && step < MAX_STEPS) {
+            // Ensure valid gate range (0-100)
+            value = Math.max(0, Math.min(100, value));
+            gateValues[step] = value;
+        } else {
+            logger.warn("Attempted to set gate value for invalid step: {}", step);
         }
     }
-
+    
     /**
-     * Generate a random pattern
-     * 
-     * @param octaveRange Number of octaves to span (1-4)
-     * @param density     Percentage of steps to activate (1-100)
+     * Get probability value for step
      */
-    public void generatePattern(int octaveRange, int density) {
-        // Clear existing pattern
-        clearPattern();
-
-        // Calculate base note from root note
-        int baseNote = 60; // Middle C by default
-
-        // Calculate number of steps to activate
-        int stepsToActivate = patternLength * density / 100;
-        stepsToActivate = Math.max(1, Math.min(stepsToActivate, patternLength));
-
+    public int getProbabilityValue(int step) {
+        if (step >= 0 && step < MAX_STEPS) {
+            return probabilityValues[step];
+        }
+        return DEFAULT_PROBABILITY;
     }
-
+    
     /**
-     * Create a Boolean array representing which notes are in the scale
-     * 
-     * @param rootNote  The root note as a string (e.g., "C", "F#")
-     * @param scaleName The scale name (e.g., "MAJOR", "MINOR")
-     * @return Boolean array where true indicates notes in the scale
+     * Set probability value for step
      */
-    public Boolean[] createScaleArray(String rootNote, String scaleName) {
-        Boolean[] result = new Boolean[12];
-
-        // Default to all notes if invalid input
-        if (rootNote == null || scaleName == null) {
-            for (int i = 0; i < 12; i++) {
-                result[i] = Boolean.TRUE;
-            }
-            return result;
+    public void setProbabilityValue(int step, int value) {
+        if (step >= 0 && step < MAX_STEPS) {
+            // Ensure valid probability range (0-100)
+            value = Math.max(0, Math.min(100, value));
+            probabilityValues[step] = value;
+        } else {
+            logger.warn("Attempted to set probability value for invalid step: {}", step);
         }
-
-        // Get the root note as integer (0-11)
-        int rootIndex = Scale.getRootNoteIndex(rootNote);
-
-        // Get the scale pattern
-        int[] scalePattern = Scale.getScalePattern(scaleName);
-
-        // Initialize all to false
-        for (int i = 0; i < 12; i++) {
-            result[i] = Boolean.FALSE;
-        }
-
-        // Mark notes in scale as true
-        for (int offset : scalePattern) {
-            int noteIndex = (rootIndex + offset) % 12;
-            result[noteIndex] = Boolean.TRUE;
-        }
-
-        return result;
     }
-
+    
     /**
-     * Update the scale notes array based on current root note and scale
+     * Get nudge value for step
      */
-    public void updateScaleNotes() {
-        scaleNotes = createScaleArray(rootNote, scale);
-    }
-
-    /**
-     * Get probability values as a List<Integer>
-     */
-    public List<Integer> getProbabilityValues() {
-        // Add null check to prevent NullPointerException
-        if (probabilityValues == null) {
-            logger.warn("probabilityValues array is null, initializing with defaults");
-            probabilityValues = new int[patternLength];
-            // Fill with default values (100%)
-            for (int i = 0; i < patternLength; i++) {
-                probabilityValues[i] = 100;
-            }
+    public int getNudgeValue(int step) {
+        if (step >= 0 && step < MAX_STEPS) {
+            return nudgeValues[step];
         }
-        return Arrays.stream(probabilityValues).boxed().collect(Collectors.toList());
+        return 0;
     }
-
+    
     /**
-     * Get nudge values as a List<Integer>
+     * Set nudge value for step
      */
-    public List<Integer> getNudgeValues() {
-        // Add null check to prevent NullPointerException
-        if (nudgeValues == null) {
-            logger.warn("nudgeValues array is null, initializing with defaults");
-            nudgeValues = new int[patternLength];
-            // All zeros by default
+    public void setNudgeValue(int step, int value) {
+        if (step >= 0 && step < MAX_STEPS) {
+            nudgeValues[step] = value;
+        } else {
+            logger.warn("Attempted to set nudge value for invalid step: {}", step);
         }
-        return Arrays.stream(nudgeValues).boxed().collect(Collectors.toList());
     }
-
+    
     /**
-     * Get active steps as a List<Boolean>
+     * Get tilt value for step
+     */
+    public int getTiltValue(int step) {
+        if (step >= 0 && step < MAX_STEPS) {
+            return tiltValues[step];
+        }
+        return 0;
+    }
+    
+    /**
+     * Set tilt value for step
+     */
+    public void setTiltValue(int step, int value) {
+        if (step >= 0 && step < MAX_STEPS) {
+            // Tilt values are typically small integers (-12 to +12)
+            tiltValues[step] = value;
+        } else {
+            logger.warn("Attempted to set tilt value for invalid step: {}", step);
+        }
+    }
+    
+    /**
+     * Set harmonic tilt values from array
+     */
+    public void setHarmonicTiltValues(int[] values) {
+        if (values != null) {
+            int copyLength = Math.min(values.length, tiltValues.length);
+            System.arraycopy(values, 0, tiltValues, 0, copyLength);
+        } else {
+            logger.warn("Attempted to set null tilt values array");
+        }
+    }
+    
+    /**
+     * Get raw harmonic tilt values array
+     */
+    public int[] getHarmonicTiltValuesRaw() {
+        return tiltValues;
+    }
+    
+    /**
+     * Get harmonic tilt values as a list
+     * @return List of harmonic tilt values
+     */
+    public List<Integer> getHarmonicTiltValues() {
+        return Arrays.stream(tiltValues).boxed().collect(Collectors.toList());
+    }
+    
+    /**
+     * Convert array to List of Boolean
      */
     public List<Boolean> getActiveSteps() {
-        // Add null check to prevent NullPointerException
-        if (activeSteps == null) {
-            logger.warn("activeSteps array is null, initializing with defaults");
-            activeSteps = new boolean[patternLength];
-            // All false by default
+        List<Boolean> result = new ArrayList<>(MAX_STEPS);
+        for (boolean b : activeSteps) {
+            result.add(b);
         }
-
-        Boolean[] result = new Boolean[activeSteps.length];
-        for (int i = 0; i < activeSteps.length; i++) {
-            result[i] = activeSteps[i];
-        }
-        return Arrays.asList(result);
+        return result;
     }
-
+    
     /**
-     * Get note values as a List<Integer>
+     * Convert array to List of Integer
      */
     public List<Integer> getNoteValues() {
-        // Add null check to prevent NullPointerException
-        if (noteValues == null) {
-            logger.warn("noteValues array is null, initializing with defaults");
-            noteValues = new int[patternLength];
-            // Fill with default values (middle C)
-            for (int i = 0; i < patternLength; i++) {
-                noteValues[i] = 60;
-            }
-        }
         return Arrays.stream(noteValues).boxed().collect(Collectors.toList());
     }
-
+    
     /**
-     * Get velocity values as a List<Integer>
+     * Convert array to List of Integer
      */
     public List<Integer> getVelocityValues() {
-        // Add null check to prevent NullPointerException
-        if (velocityValues == null) {
-            logger.warn("velocityValues array is null, initializing with defaults");
-            velocityValues = new int[patternLength];
-            // Fill with default velocity (100)
-            for (int i = 0; i < patternLength; i++) {
-                velocityValues[i] = 100;
-            }
-        }
         return Arrays.stream(velocityValues).boxed().collect(Collectors.toList());
     }
-
+    
     /**
-     * Get gate values as a List<Integer>
+     * Convert array to List of Integer
      */
     public List<Integer> getGateValues() {
-        // Add null check to prevent NullPointerException
-        if (gateValues == null) {
-            logger.warn("gateValues array is null, initializing with defaults");
-            gateValues = new int[patternLength];
-            // Fill with default gate time (50%)
-            for (int i = 0; i < patternLength; i++) {
-                gateValues[i] = 50;
-            }
-        }
         return Arrays.stream(gateValues).boxed().collect(Collectors.toList());
     }
-
+    
     /**
-     * Handle pattern length changes
+     * Convert array to List of Integer
      */
-    public void setPatternLength(int newLength) {
-        if (newLength != patternLength) {
-            int oldLength = patternLength;
-            patternLength = newLength;
-            ensureArraySize(patternLength);
+    public List<Integer> getProbabilityValues() {
+        return Arrays.stream(probabilityValues).boxed().collect(Collectors.toList());
+    }
+    
+    /**
+     * Convert array to List of Integer
+     */
+    public List<Integer> getNudgeValues() {
+        return Arrays.stream(nudgeValues).boxed().collect(Collectors.toList());
+    }
+    
+    /**
+     * Get pattern length
+     */
+    public int getPatternLength() {
+        return patternLength;
+    }
+    
+    /**
+     * Set pattern length
+     */
+    public void setPatternLength(int length) {
+        if (length > 0 && length <= MAX_STEPS) {
+            patternLength = length;
+        } else {
+            logger.warn("Invalid pattern length: {}, must be between 1 and {}", length, MAX_STEPS);
         }
     }
-
-    public String getDeviceName() {
-        return deviceName;
+    
+    /**
+     * Get swing percentage
+     */
+    public int getSwingPercentage() {
+        return swing;
     }
-
-    public void setDeviceName(String deviceName) {
-        this.deviceName = deviceName;
+    
+    /**
+     * Set swing percentage
+     */
+    public void setSwingPercentage(int percentage) {
+        if (percentage >= 50 && percentage <= 99) {
+            swing = percentage;
+        } else {
+            logger.warn("Invalid swing percentage: {}, must be between 50 and 99", percentage);
+        }
     }
-
-    public Long getInstrumentId() {
-        return instrumentId;
+    
+    /**
+     * Check if swing is enabled
+     */
+    public boolean isSwingEnabled() {
+        return swingEnabled;
     }
-
-    public void setInstrumentId(Long instrumentId) {
-        this.instrumentId = instrumentId;
+    
+    /**
+     * Set swing enabled flag
+     */
+    public void setSwingEnabled(boolean enabled) {
+        swingEnabled = enabled;
     }
-
-    public String getInstrumentName() {
-        return instrumentName;
+    
+    /**
+     * Check if looping is enabled
+     */
+    public boolean isLooping() {
+        return looping;
     }
-
-    public void setInstrumentName(String instrumentName) {
-        this.instrumentName = instrumentName;
+    
+    /**
+     * Set looping flag
+     */
+    public void setLooping(boolean loop) {
+        looping = loop;
+    }
+    
+    /**
+     * Check if quantization is enabled
+     */
+    public boolean isQuantizeEnabled() {
+        return quantizeEnabled;
+    }
+    
+    /**
+     * Set quantization flag
+     */
+    public void setQuantizeEnabled(boolean enabled) {
+        quantizeEnabled = enabled;
+    }
+    
+    /**
+     * Set sequencer ID
+     * @param id The sequencer ID
+     */
+    public void setSequencerId(Integer id) {
+        this.sequencerId = id;
+    }
+    
+    /**
+     * Get sequencer ID
+     * @return The sequencer ID
+     */
+    public Integer getSequencerId() {
+        return sequencerId;
+    }
+    
+    /**
+     * Set the root note from a string value
+     * @param rootNoteStr The root note as a string (e.g., "C", "F#")
+     */
+    public void setRootNoteFromString(String rootNoteStr) {
+        if (rootNoteStr == null || rootNoteStr.isEmpty()) {
+            this.rootNote = 0; // Default to C
+            return;
+        }
+        
+        // Map from note name to integer value
+        String[] noteNames = {"C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"};
+        
+        for (int i = 0; i < noteNames.length; i++) {
+            if (noteNames[i].equalsIgnoreCase(rootNoteStr)) {
+                this.rootNote = i;
+                return;
+            }
+        }
+        
+        // Also check for flat notes
+        String[] flatNoteNames = {"C", "Db", "D", "Eb", "E", "F", "Gb", "G", "Ab", "A", "Bb", "B"};
+        
+        for (int i = 0; i < flatNoteNames.length; i++) {
+            if (flatNoteNames[i].equalsIgnoreCase(rootNoteStr)) {
+                this.rootNote = i;
+                return;
+            }
+        }
+        
+        // If not found, default to C
+        logger.warn("Unknown root note: '{}', defaulting to C", rootNoteStr);
+        this.rootNote = 0;
+    }
+    
+    /**
+     * Get the root note as a string
+     * @return The root note name
+     */
+    public String getRootNoteAsString() {
+        String[] noteNames = {"C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"};
+        int index = (rootNote != null) ? (rootNote % 12) : 0;
+        if (index < 0) index += 12;
+        return noteNames[index];
+    }
+    
+    /**
+     * Create array of scale notes
+     */
+    public Boolean[] createScaleArray(Integer rootNote, String scaleName) {
+        Boolean[] scaleNotes = new Boolean[12];
+        Arrays.fill(scaleNotes, Boolean.FALSE);
+        
+        // Use Integer directly, no parsing needed
+        int rootNoteInt = (rootNote != null) ? rootNote : 0;
+        
+        // Define scale patterns (semitone intervals)
+        int[] intervals;
+        switch (scaleName) {
+            case "Major":
+                intervals = new int[] {0, 2, 4, 5, 7, 9, 11};
+                break;
+            case "Minor":
+                intervals = new int[] {0, 2, 3, 5, 7, 8, 10};
+                break;
+            case "Harmonic Minor":
+                intervals = new int[] {0, 2, 3, 5, 7, 8, 11};
+                break;
+            case "Melodic Minor":
+                intervals = new int[] {0, 2, 3, 5, 7, 9, 11};
+                break;
+            case "Dorian":
+                intervals = new int[] {0, 2, 3, 5, 7, 9, 10};
+                break;
+            case "Phrygian":
+                intervals = new int[] {0, 1, 3, 5, 7, 8, 10};
+                break;
+            case "Lydian":
+                intervals = new int[] {0, 2, 4, 6, 7, 9, 11};
+                break;
+            case "Mixolydian":
+                intervals = new int[] {0, 2, 4, 5, 7, 9, 10};
+                break;
+            case "Locrian":
+                intervals = new int[] {0, 1, 3, 5, 6, 8, 10};
+                break;
+            case "Pentatonic Major":
+                intervals = new int[] {0, 2, 4, 7, 9};
+                break;
+            case "Pentatonic Minor":
+                intervals = new int[] {0, 3, 5, 7, 10};
+                break;
+            case "Blues":
+                intervals = new int[] {0, 3, 5, 6, 7, 10};
+                break;
+            case "Chromatic":
+                intervals = new int[] {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11};
+                break;
+            default:
+                logger.warn("Unknown scale: {}, defaulting to Major", scaleName);
+                intervals = new int[] {0, 2, 4, 5, 7, 9, 11};
+                break;
+        }
+        
+        // Mark scale notes as true
+        for (int interval : intervals) {
+            int note = (rootNoteInt + interval) % 12;
+            scaleNotes[note] = Boolean.TRUE;
+        }
+        
+        return scaleNotes;
+    }
+    
+    /**
+     * Clear the pattern
+     */
+    public void clearPattern() {
+        Arrays.fill(activeSteps, false);
+        Arrays.fill(noteValues, DEFAULT_NOTE);
+        Arrays.fill(velocityValues, DEFAULT_VELOCITY);
+        Arrays.fill(gateValues, DEFAULT_GATE);
+        Arrays.fill(probabilityValues, DEFAULT_PROBABILITY);
+        Arrays.fill(nudgeValues, 0);
+    }
+    
+    /**
+     * Rotate pattern right
+     */
+    public void rotatePatternRight() {
+        // Rotate active steps
+        boolean lastStep = activeSteps[MAX_STEPS - 1];
+        for (int i = MAX_STEPS - 1; i > 0; i--) {
+            activeSteps[i] = activeSteps[i - 1];
+        }
+        activeSteps[0] = lastStep;
+        
+        // Rotate note values
+        int lastNote = noteValues[MAX_STEPS - 1];
+        for (int i = MAX_STEPS - 1; i > 0; i--) {
+            noteValues[i] = noteValues[i - 1];
+        }
+        noteValues[0] = lastNote;
+        
+        // Rotate velocity values
+        int lastVelocity = velocityValues[MAX_STEPS - 1];
+        for (int i = MAX_STEPS - 1; i > 0; i--) {
+            velocityValues[i] = velocityValues[i - 1];
+        }
+        velocityValues[0] = lastVelocity;
+        
+        // Rotate gate values
+        int lastGate = gateValues[MAX_STEPS - 1];
+        for (int i = MAX_STEPS - 1; i > 0; i--) {
+            gateValues[i] = gateValues[i - 1];
+        }
+        gateValues[0] = lastGate;
+        
+        // Rotate probability values
+        int lastProb = probabilityValues[MAX_STEPS - 1];
+        for (int i = MAX_STEPS - 1; i > 0; i--) {
+            probabilityValues[i] = probabilityValues[i - 1];
+        }
+        probabilityValues[0] = lastProb;
+        
+        // Rotate nudge values
+        int lastNudge = nudgeValues[MAX_STEPS - 1];
+        for (int i = MAX_STEPS - 1; i > 0; i--) {
+            nudgeValues[i] = nudgeValues[i - 1];
+        }
+        nudgeValues[0] = lastNudge;
+    }
+    
+    /**
+     * Rotate pattern left
+     */
+    public void rotatePatternLeft() {
+        // Rotate active steps
+        boolean firstStep = activeSteps[0];
+        for (int i = 0; i < MAX_STEPS - 1; i++) {
+            activeSteps[i] = activeSteps[i + 1];
+        }
+        activeSteps[MAX_STEPS - 1] = firstStep;
+        
+        // Rotate note values
+        int firstNote = noteValues[0];
+        for (int i = 0; i < MAX_STEPS - 1; i++) {
+            noteValues[i] = noteValues[i + 1];
+        }
+        noteValues[MAX_STEPS - 1] = firstNote;
+        
+        // Rotate velocity values
+        int firstVelocity = velocityValues[0];
+        for (int i = 0; i < MAX_STEPS - 1; i++) {
+            velocityValues[i] = velocityValues[i + 1];
+        }
+        velocityValues[MAX_STEPS - 1] = firstVelocity;
+        
+        // Rotate gate values
+        int firstGate = gateValues[0];
+        for (int i = 0; i < MAX_STEPS - 1; i++) {
+            gateValues[i] = gateValues[i + 1];
+        }
+        gateValues[MAX_STEPS - 1] = firstGate;
+        
+        // Rotate probability values
+        int firstProb = probabilityValues[0];
+        for (int i = 0; i < MAX_STEPS - 1; i++) {
+            probabilityValues[i] = probabilityValues[i + 1];
+        }
+        probabilityValues[MAX_STEPS - 1] = firstProb;
+        
+        // Rotate nudge values
+        int firstNudge = nudgeValues[0];
+        for (int i = 0; i < MAX_STEPS - 1; i++) {
+            nudgeValues[i] = nudgeValues[i + 1];
+        }
+        nudgeValues[MAX_STEPS - 1] = firstNudge;
+    }
+    
+    /**
+     * Set step data
+     */
+    public void setStepData(int stepIndex, boolean active, int note, int velocity, int gate) {
+        if (stepIndex >= 0 && stepIndex < MAX_STEPS) {
+            setStepActive(stepIndex, active);
+            setNoteValue(stepIndex, note);
+            setVelocityValue(stepIndex, velocity);
+            setGateValue(stepIndex, gate);
+        }
+    }
+    
+    /**
+     * Set step data with probability and nudge
+     */
+    public void setStepData(int stepIndex, boolean active, int note, int velocity, int gate, int probability, int nudge) {
+        setStepData(stepIndex, active, note, velocity, gate);
+        if (stepIndex >= 0 && stepIndex < MAX_STEPS) {
+            setProbabilityValue(stepIndex, probability);
+            setNudgeValue(stepIndex, nudge);
+        }
     }
 }

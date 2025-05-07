@@ -290,10 +290,10 @@ public class MelodicSequencerGridPanel extends JPanel {
 
             // Log what we're syncing
             logger.info("Force syncing grid panel with sequencer - activeSteps:{} steps",
-                    sequencer.getActiveSteps() != null ? sequencer.getActiveSteps().size() : 0);
+                    sequencer.getSequenceData().getActiveSteps() != null ? sequencer.getSequenceData().getActiveSteps().size() : 0);
 
             // Update trigger buttons
-            List<Boolean> activeSteps = sequencer.getActiveSteps();
+            List<Boolean> activeSteps = sequencer.getSequenceData().getActiveSteps();
             for (int i = 0; i < Math.min(triggerButtons.size(), activeSteps.size()); i++) {
                 boolean active = activeSteps.get(i);
                 triggerButtons.get(i).setSelected(active);
@@ -321,7 +321,7 @@ public class MelodicSequencerGridPanel extends JPanel {
             return;
         }
 
-        // Get active steps directly from sequencer
+        // Get active steps directly from sequencer data
         List<Boolean> activeStepsList = sequencer.getSequenceData().getActiveSteps();
         if (activeStepsList == null) {
             logger.error("Active steps list is null");

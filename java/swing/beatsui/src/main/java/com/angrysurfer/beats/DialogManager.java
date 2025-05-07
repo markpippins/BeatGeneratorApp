@@ -20,6 +20,7 @@ import javax.swing.SpinnerNumberModel;
 import javax.swing.SwingUtilities;
 import javax.swing.filechooser.FileNameExtensionFilter;
 
+import com.angrysurfer.beats.panel.sequencer.poly.DrumPresetPanel;
 import com.angrysurfer.core.api.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -83,6 +84,11 @@ public class DialogManager implements IBusListener {
             case Commands.SHOW_FILL_DIALOG -> {
                 if (action.getData() instanceof Object[] params) {
                     handleFillDialog((DrumSequencer) params[0], (Integer) params[1], (Integer) params[2]);
+                }
+            }
+            case Commands.DRUM_PRESET_SELECTION_REQUEST -> {
+                if (action.getData() instanceof DrumSequencer sequencer) {
+                    handleDrumPresetSelection(sequencer);
                 }
             }
         }
@@ -627,6 +633,67 @@ public class DialogManager implements IBusListener {
             dialog.pack();
             dialog.setLocationRelativeTo(frame);
             dialog.setVisible(true);
+        });
+    }
+
+    /**
+     * Handle request to show drum preset selection dialog
+     * 
+     * @param sequencer The drum sequencer to configure
+     */
+    private void handleDrumPresetSelection(DrumSequencer sequencer) {
+        if (sequencer == null) {
+            logger.error("Cannot show drum preset dialog - sequencer is null");
+            return;
+        }
+        
+        SwingUtilities.invokeLater(() -> {
+            try {
+                // Create the drum preset panel
+                DrumPresetPanel presetPanel = new DrumPresetPanel(sequencer);
+                
+                // Create a dialog using the panel
+                Dialog<DrumSequencer> dialog = frame.createDialog(sequencer, presetPanel);
+                dialog.setTitle("Drum Preset Selection");
+                dialog.setResizable(true);
+                
+                // Show the dialog and handle result
+                if (dialog.showDialog()) {
+                    // Get the updated sequencer with new instrument settings
+                    DrumSequencer updatedSequencer = presetPanel.getUpdatedSequencer();
+                    
+                    // Save all player settings
+                    for (Player player : updatedSequencer.getPlayers()) {
+                        if (player != null) {
+                            PlayerManager.getInstance().savePlayerProperties(player);
+                        }
+                    }
+                    
+                    // Notify that drum instrument presets were updated
+                    CommandBus.getInstance().publish(
+                        Commands.DRUM_INSTRUMENTS_UPDATED,
+                        this,
+                        updatedSequencer
+                    );
+                    
+                    // Update UI to reflect changes
+                    CommandBus.getInstance().publish(
+                        Commands.DRUM_GRID_REFRESH_REQUESTED,
+                        this,
+                        null
+                    );
+                    
+                    logger.info("Successfully updated drum presets");
+                }
+            } catch (Exception e) {
+                logger.error("Error showing drum preset dialog: {}", e.getMessage(), e);
+                commandBus.publish(
+                    Commands.STATUS_UPDATE,
+                    this,
+                    new StatusUpdate("DialogManager", "Error", 
+                        "Failed to show drum preset dialog: " + e.getMessage())
+                );
+            }
         });
     }
 }

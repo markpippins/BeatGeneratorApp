@@ -7,6 +7,7 @@ import javax.sound.midi.MidiDevice;
 import javax.sound.midi.MidiUnavailableException;
 
 import com.angrysurfer.core.model.Player;
+import com.angrysurfer.core.sequencer.DrumSequenceData;
 import com.angrysurfer.core.sequencer.DrumSequencer;
 import com.angrysurfer.core.sequencer.MelodicSequencer;
 import org.slf4j.Logger;
@@ -483,6 +484,152 @@ public void refreshCache(List<InstrumentWrapper> instruments) {
         } catch (Exception e) {
             logger.error("Error determining instrument owner: {}", e.getMessage(), e);
             return "Error";
+        }
+    }
+
+    /**
+     * Get available drum instruments
+     * 
+     * @return List of drum instruments
+     */
+    public List<InstrumentWrapper> getDrumInstruments() {
+        List<InstrumentWrapper> drumInstruments = new ArrayList<>();
+        
+        try {
+            // Get all instruments from the database
+            List<InstrumentWrapper> allInstruments = getCachedInstruments();
+            
+            // Filter for drum instruments (typically bank 128 or those with drum-related names)
+            for (InstrumentWrapper instrument : allInstruments) {
+                // Check if it's a drum bank (128) or has drum-related keywords in the name
+                if (instrument.getBankIndex() == 128 || 
+                    isDrumInstrumentByName(instrument.getName())) {
+                    drumInstruments.add(instrument);
+                }
+            }
+            
+            // If no drum instruments found, return all instruments as fallback
+            if (drumInstruments.isEmpty()) {
+                logger.warn("No drum instruments found, returning all instruments");
+                return allInstruments;
+            }
+            
+            // Sort by name for easier selection
+            drumInstruments.sort(Comparator.comparing(InstrumentWrapper::getName));
+            
+            logger.info("Found {} drum instruments", drumInstruments.size());
+            return drumInstruments;
+        } catch (Exception e) {
+            logger.error("Error getting drum instruments: {}", e.getMessage(), e);
+            return new ArrayList<>();
+        }
+    }
+
+    /**
+     * Check if an instrument is a drum based on its name
+     * 
+     * @param name The instrument name
+     * @return true if it appears to be a drum instrument
+     */
+    private boolean isDrumInstrumentByName(String name) {
+        if (name == null) return false;
+        
+        String lowerName = name.toLowerCase();
+        String[] drumKeywords = {
+            "drum", "kick", "snare", "tom", "cymbal", "hat", "clap", "rim", 
+            "percussion", "conga", "bongo", "tabla", "timbale", "wood", "stick",
+            "shaker", "guiro", "bell", "tambourine", "triangle"
+        };
+        
+        for (String keyword : drumKeywords) {
+            if (lowerName.contains(keyword)) {
+                return true;
+            }
+        }
+        
+        return false;
+    }
+
+    /**
+     * Get default drum kit instruments
+     * 
+     * @return List of default drum instruments
+     */
+    public List<InstrumentWrapper> getDefaultDrumKit() {
+        List<InstrumentWrapper> defaultKit = new ArrayList<>();
+        
+        try {
+            // Get all drum instruments
+            List<InstrumentWrapper> allDrums = getDrumInstruments();
+            
+            // If no instruments found, return empty list
+            if (allDrums.isEmpty()) {
+                logger.warn("No instruments found for default drum kit");
+                return defaultKit;
+            }
+            
+            // Define preferred drum names for a standard kit
+            String[] standardDrumNames = {
+                "Kick", "Snare", "Closed Hi-hat", "Open Hi-hat", 
+                "Tom Low", "Tom Mid", "Tom High", "Crash", 
+                "Ride", "Clap", "Rim", "Percussion", 
+                "Cowbell", "Conga", "Shaker", "Tambourine"
+            };
+            
+            // Try to find drums that match these standard names
+            for (String drumName : standardDrumNames) {
+                boolean found = false;
+                
+                // First try exact matches
+                for (InstrumentWrapper instr : allDrums) {
+                    if (instr.getName().equalsIgnoreCase(drumName) || 
+                        instr.getName().contains(drumName)) {
+                        defaultKit.add(instr);
+                        found = true;
+                        break;
+                    }
+                }
+                
+                // If not found, try partial matches
+                if (!found && defaultKit.size() < DrumSequenceData.DRUM_PAD_COUNT) {
+                    String lowerDrumName = drumName.toLowerCase();
+                    for (InstrumentWrapper instr : allDrums) {
+                        String lowerInstrName = instr.getName().toLowerCase();
+                        if (lowerInstrName.contains(lowerDrumName.split(" ")[0])) {
+                            defaultKit.add(instr);
+                            found = true;
+                            break;
+                        }
+                    }
+                }
+                
+                // Still not found, add any drum
+                if (!found && defaultKit.size() < DrumSequenceData.DRUM_PAD_COUNT && !allDrums.isEmpty()) {
+                    // Take the first available
+                    defaultKit.add(allDrums.get(0));
+                    // Remove to avoid duplicates
+                    if (!allDrums.isEmpty()) {
+                        allDrums.remove(0);
+                    }
+                }
+                
+                // If we've filled all 16 slots, stop
+                if (defaultKit.size() >= DrumSequenceData.DRUM_PAD_COUNT) {
+                    break;
+                }
+            }
+            
+            // Fill remaining slots if needed
+            while (defaultKit.size() < DrumSequenceData.DRUM_PAD_COUNT && !allDrums.isEmpty()) {
+                defaultKit.add(allDrums.get(0));
+                allDrums.remove(0);
+            }
+            
+            logger.info("Created default drum kit with {} instruments", defaultKit.size());
+            return defaultKit;
+        } catch (Exception e) {
+            logger.error("Error creating default drum kit: {}", e.getMessage(), e);
+            return new ArrayList<>();
         }
     }
 }

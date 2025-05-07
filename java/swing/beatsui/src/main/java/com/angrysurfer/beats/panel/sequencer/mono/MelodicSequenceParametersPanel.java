@@ -89,7 +89,7 @@ public class MelodicSequenceParametersPanel extends JPanel {
         lastStepSpinner.addChangeListener(e -> {
             if (!updatingUI) {
                 int lastStep = (Integer) lastStepSpinner.getValue();
-                sequencer.setPatternLength(lastStep);
+                sequencer.getSequenceData().setPatternLength(lastStep);
             }
         });
         lastStepPanel.add(lastStepSpinner);
@@ -116,7 +116,7 @@ public class MelodicSequenceParametersPanel extends JPanel {
                     case 3 -> Direction.RANDOM;
                     default -> Direction.FORWARD;
                 };
-                sequencer.setDirection(direction);
+                sequencer.getSequenceData().setDirection(direction);
             }
         });
         directionPanel.add(directionCombo);
@@ -138,7 +138,7 @@ public class MelodicSequenceParametersPanel extends JPanel {
                 TimingDivision division = (TimingDivision) timingCombo.getSelectedItem();
                 if (division != null) {
                     logger.info("Setting timing division to {}", division);
-                    sequencer.setTimingDivision(division);
+                    sequencer.getSequenceData().setTimingDivision(division);
                 }
             }
         });
@@ -157,7 +157,7 @@ public class MelodicSequenceParametersPanel extends JPanel {
         loopToggleButton.setMargin(new Insets(2, 2, 2, 2)); // Reduce internal padding
         loopToggleButton.addActionListener(e -> {
             if (!updatingUI) {
-                sequencer.setLooping(loopToggleButton.isSelected());
+                sequencer.getSequenceData().setLooping(loopToggleButton.isSelected());
             }
         });
 
@@ -176,7 +176,7 @@ public class MelodicSequenceParametersPanel extends JPanel {
         rotateLeftButton.setPreferredSize(new Dimension(UIHelper.SMALL_CONTROL_WIDTH, UIHelper.CONTROL_HEIGHT));
         rotateLeftButton.setMargin(new Insets(2, 2, 2, 2));
         rotateLeftButton.addActionListener(e -> {
-            sequencer.rotatePatternLeft();
+            sequencer.getSequenceData().rotatePatternLeft();
             updateUI(sequencer);
             // Notify that the pattern was updated
             CommandBus.getInstance().publish(
@@ -191,7 +191,7 @@ public class MelodicSequenceParametersPanel extends JPanel {
         rotateRightButton.setPreferredSize(new Dimension(UIHelper.SMALL_CONTROL_WIDTH, UIHelper.CONTROL_HEIGHT));
         rotateRightButton.setMargin(new Insets(2, 2, 2, 2));
         rotateRightButton.addActionListener(e -> {
-            sequencer.rotatePatternRight();
+            sequencer.getSequenceData().rotatePatternRight();
             updateUI(sequencer);
             // Notify that the pattern was updated
             CommandBus.getInstance().publish(
@@ -218,7 +218,7 @@ public class MelodicSequenceParametersPanel extends JPanel {
         clearButton.setPreferredSize(new Dimension(UIHelper.SMALL_CONTROL_WIDTH, UIHelper.CONTROL_HEIGHT));
         clearButton.setMargin(new Insets(2, 2, 2, 2));
         clearButton.addActionListener(e -> {
-            sequencer.clearPattern();
+            sequencer.getSequenceData().clearPattern();
             updateUI(sequencer);
             // Notify that the pattern was updated
             CommandBus.getInstance().publish(
@@ -248,13 +248,13 @@ public class MelodicSequenceParametersPanel extends JPanel {
 
         try {
             // Update timing division
-            TimingDivision timingDivision = sequencer.getTimingDivision();
+            TimingDivision timingDivision = sequencer.getSequenceData().getTimingDivision();
             if (timingDivision != null) {
                 timingCombo.setSelectedItem(timingDivision);
             }
 
             // Update direction
-            Direction direction = sequencer.getDirection();
+            Direction direction = sequencer.getSequenceData().getDirection();
             if (direction != null) {
                 switch (direction) {
                     case FORWARD -> directionCombo.setSelectedIndex(0);
@@ -265,10 +265,10 @@ public class MelodicSequenceParametersPanel extends JPanel {
             }
 
             // Update loop state
-            loopToggleButton.setSelected(sequencer.isLooping());
+            loopToggleButton.setSelected(sequencer.getSequenceData().isLooping());
 
             // Update last step
-            lastStepSpinner.setValue(sequencer.getPatternLength());
+            lastStepSpinner.setValue(sequencer.getSequenceData().getPatternLength());
 
         } finally {
             // Reset flag after updates

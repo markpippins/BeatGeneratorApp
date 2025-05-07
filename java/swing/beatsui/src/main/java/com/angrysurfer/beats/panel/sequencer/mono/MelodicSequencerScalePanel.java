@@ -88,7 +88,7 @@ public class MelodicSequencerScalePanel extends JPanel {
         rootNoteCombo.addItemListener(e -> {
             if (e.getStateChange() == ItemEvent.SELECTED && !updatingUI) {
                 String rootNote = (String) e.getItem();
-                sequencer.getSequenceData().setRootNote(rootNote);
+                sequencer.getSequenceData().setRootNoteFromString(rootNote);
 
                 // Publish event for other listeners
                 CommandBus.getInstance().publish(
@@ -115,7 +115,7 @@ public class MelodicSequencerScalePanel extends JPanel {
         quantizeToggle.setPreferredSize(new Dimension(UIHelper.SMALL_CONTROL_WIDTH - 2, UIHelper.CONTROL_HEIGHT));
         quantizeToggle.addActionListener(e -> {
             if (!updatingUI) {
-                sequencer.setQuantizeEnabled(quantizeToggle.isSelected());
+                sequencer.getSequenceData().setQuantizeEnabled(quantizeToggle.isSelected());
             }
         });
         
@@ -133,7 +133,7 @@ public class MelodicSequencerScalePanel extends JPanel {
         scaleCombo.addItemListener(e -> {
             if (e.getStateChange() == ItemEvent.SELECTED && !updatingUI) {
                 String selectedScale = (String) e.getItem();
-                sequencer.setScale(selectedScale);
+                sequencer.getSequenceData().setScale(selectedScale);
 
                 // Publish event with sequencer ID to indicate which sequencer it's for
                 CommandBus.getInstance().publish(
@@ -166,7 +166,7 @@ public class MelodicSequencerScalePanel extends JPanel {
             if (!updatingUI) {
                 int octave = (Integer) octaveSpinner.getValue();
                 // Use setOctaveShift instead of setOctave
-                sequencer.setOctaveShift(octave);
+                sequencer.getSequenceData().setOctaveShift(octave);
                 logger.debug("Set octave shift to: {}", octave);
             }
         });
@@ -188,22 +188,22 @@ public class MelodicSequencerScalePanel extends JPanel {
         try {
             // Update root note
             if (rootNoteCombo != null) {
-                rootNoteCombo.setSelectedItem(sequencer.getSelectedRootNote());
+                rootNoteCombo.setSelectedItem(sequencer.getSequenceData().getRootNote());
             }
             
             // Update scale
             if (scaleCombo != null) {
-                scaleCombo.setSelectedItem(sequencer.getScale());
+                scaleCombo.setSelectedItem(sequencer.getSequenceData().getScale());
             }
             
             // Update octave - use getOctaveShift instead of getOctave
             if (octaveSpinner != null) {
-                octaveSpinner.setValue(sequencer.getOctaveShift());
+                octaveSpinner.setValue(sequencer.getSequenceData().getOctaveShift());
             }
             
             // Update quantize toggle
             if (quantizeToggle != null) {
-                quantizeToggle.setSelected(sequencer.isQuantizeEnabled());
+                quantizeToggle.setSelected(sequencer.getSequenceData().isQuantizeEnabled());
             }
             
         } finally {

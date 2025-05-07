@@ -1,4 +1,4 @@
-package com.angrysurfer.beats;
+package com.angrysurfer.beats.diagnostic;
 
 import java.awt.BorderLayout;
 import java.awt.Component;
@@ -23,7 +23,7 @@ import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
 import javax.swing.SwingUtilities;
 
-import com.angrysurfer.beats.diagnostic.*;
+import com.angrysurfer.beats.diagnostic.helper.*;
 import com.angrysurfer.core.api.CommandBus;
 import com.angrysurfer.core.api.Commands;
 import com.angrysurfer.core.service.DeviceManager;
@@ -47,12 +47,14 @@ public class DiagnosticsManager {
     private final InstrumentDiagnosticsHelper instrumentHelper;
     private final SessionDiagnosticsHelper sessionHelper;
     private final UserConfigDiagnosticsHelper configHelper;
-    private final ChannelManagerDiagnosticsHelper channelHelper;
+    private final ChannelManagerDiagnostics channelHelper;
     private final DeviceManagerDiagnosticsHelper deviceHelper;
     private final ReceiverManagerDiagnosticsHelper receiverHelper;
     private final PlayerManagerDiagnosticsHelper playerManagerHelper;
     private final SessionManagerDiagnosticsHelper sessionManagerHelper;
     private final UserConfigManagerDiagnosticsHelper userConfigManagerHelper;
+    private final MelodicSequencerDiagnosticsHelper melodicSequencerHelper;
+    private final MelodicSequencerManagerDiagnosticsHelper melodicSequencerManagerHelper;
     
     /**
      * Private constructor for singleton pattern
@@ -68,12 +70,14 @@ public class DiagnosticsManager {
         this.instrumentHelper = new InstrumentDiagnosticsHelper();
         this.sessionHelper = new SessionDiagnosticsHelper();
         this.configHelper = new UserConfigDiagnosticsHelper();
-        this.channelHelper = new ChannelManagerDiagnosticsHelper();
+        this.channelHelper = new ChannelManagerDiagnostics();
         this.deviceHelper = new DeviceManagerDiagnosticsHelper();
         this.receiverHelper = new ReceiverManagerDiagnosticsHelper();
         this.playerManagerHelper = new PlayerManagerDiagnosticsHelper();
         this.sessionManagerHelper = new SessionManagerDiagnosticsHelper();
         this.userConfigManagerHelper = new UserConfigManagerDiagnosticsHelper();
+        this.melodicSequencerHelper = new MelodicSequencerDiagnosticsHelper();
+        this.melodicSequencerManagerHelper = new MelodicSequencerManagerDiagnosticsHelper();
     }
     
     /**
@@ -179,7 +183,7 @@ public class DiagnosticsManager {
     public void runAllDiagnostics() {
         // Create splash screen for progress reporting
         DiagnosticsSplashScreen splash = new DiagnosticsSplashScreen("Running Diagnostics", "Initializing...");
-        splash.setMaxProgress(13); // Updated for new tests
+        splash.setMaxProgress(14); // Updated for new tests
         splash.setVisible(true);
         
         // Create a comprehensive log builder
@@ -226,62 +230,74 @@ public class DiagnosticsManager {
                 masterLog.addSection("5. DrumSequencer Diagnostics");
                 masterLog.addLine(sequencerLog.buildWithoutHeader());
                 
+                // MelodicSequencer diagnostics
+                splash.setProgress(5, "Testing MelodicSequencer...");
+                DiagnosticLogBuilder melodicSequencerLog = testMelodicSequencer();
+                masterLog.addSection("6. MelodicSequencer Diagnostics");
+                masterLog.addLine(melodicSequencerLog.buildWithoutHeader());
+
                 // Player/Instrument integrity
-                splash.setProgress(5, "Testing player and instrument integrity...");
+                splash.setProgress(6, "Testing player and instrument integrity...");
                 DiagnosticLogBuilder playerLog = testPlayerInstrumentIntegrity();
-                masterLog.addSection("6. Player/Instrument Integrity");
+                masterLog.addSection("7. Player/Instrument Integrity");
                 masterLog.addLine(playerLog.buildWithoutHeader());
                 
                 // MIDI sound test
-                splash.setProgress(6, "Testing MIDI sound output...");
+                splash.setProgress(7, "Testing MIDI sound output...");
                 DiagnosticLogBuilder soundLog = testMidiSound();
-                masterLog.addSection("7. MIDI Sound Test");
+                masterLog.addSection("8. MIDI Sound Test");
                 masterLog.addLine(soundLog.buildWithoutHeader());
                 
                 // Channel Manager test
-                splash.setProgress(7, "Testing Channel Manager...");
+                splash.setProgress(8, "Testing Channel Manager...");
                 DiagnosticLogBuilder channelLog = testChannelManager();
-                masterLog.addSection("8. Channel Manager Diagnostics");
+                masterLog.addSection("9. Channel Manager Diagnostics");
                 masterLog.addLine(channelLog.buildWithoutHeader());
                 
                 // Device Manager test
-                splash.setProgress(8, "Testing Device Manager...");
+                splash.setProgress(9, "Testing Device Manager...");
                 DiagnosticLogBuilder deviceLog = testDeviceManager();
-                masterLog.addSection("9. Device Manager Diagnostics");
+                masterLog.addSection("10. Device Manager Diagnostics");
                 masterLog.addLine(deviceLog.buildWithoutHeader());
                 
                 // Receiver Manager test
-                splash.setProgress(9, "Testing Receiver Manager...");
+                splash.setProgress(10, "Testing Receiver Manager...");
                 DiagnosticLogBuilder receiverLog = testReceiverManager();
-                masterLog.addSection("10. Receiver Manager Diagnostics");
+                masterLog.addSection("11. Receiver Manager Diagnostics");
                 masterLog.addLine(receiverLog.buildWithoutHeader());
                 
                 // PlayerManager test
-                splash.setProgress(10, "Testing PlayerManager...");
+                splash.setProgress(11, "Testing PlayerManager...");
                 DiagnosticLogBuilder playerManagerLog = testPlayerManager();
-                masterLog.addSection("11. PlayerManager Diagnostics");
+                masterLog.addSection("12. PlayerManager Diagnostics");
                 masterLog.addLine(playerManagerLog.buildWithoutHeader());
                 
                 // SessionManager test
-                splash.setProgress(11, "Testing SessionManager...");
+                splash.setProgress(12, "Testing SessionManager...");
                 DiagnosticLogBuilder sessionManagerLog = testSessionManager();
-                masterLog.addSection("12. SessionManager Diagnostics");
+                masterLog.addSection("13. SessionManager Diagnostics");
                 masterLog.addLine(sessionManagerLog.buildWithoutHeader());
                 
                 // UserConfigManager test
-                splash.setProgress(12, "Testing UserConfigManager...");
+                splash.setProgress(13, "Testing UserConfigManager...");
                 DiagnosticLogBuilder userConfigManagerLog = testUserConfigManager();
-                masterLog.addSection("13. UserConfigManager Diagnostics");
+                masterLog.addSection("14. UserConfigManager Diagnostics");
                 masterLog.addLine(userConfigManagerLog.buildWithoutHeader());
+
+                // MelodicSequencerManager test
+                splash.setProgress(14, "Testing MelodicSequencerManager...");
+                DiagnosticLogBuilder melodicSequencerManagerLog = testMelodicSequencerManager();
+                masterLog.addSection("15. MelodicSequencerManager Diagnostics");
+                masterLog.addLine(melodicSequencerManagerLog.buildWithoutHeader());
                 
                 // Complete
-                splash.setProgress(13, "Completed all diagnostics");
+                splash.setProgress(15, "Completed all diagnostics");
                 
                 // Compile errors and warnings from all logs
                 for (DiagnosticLogBuilder log : Arrays.asList(
                         redisLog, midiLog, sessionLog, configLog, sequencerLog, 
-                        playerLog, soundLog, channelLog, deviceLog, receiverLog,
-                        playerManagerLog, sessionManagerLog, userConfigManagerLog)) {
+                        melodicSequencerLog, playerLog, soundLog, channelLog, deviceLog, receiverLog,
+                        playerManagerLog, sessionManagerLog, userConfigManagerLog, melodicSequencerManagerLog)) {
                     if (log != null) {
                         for (String error : log.getErrors()) {
                             masterLog.addError(error);
@@ -462,6 +478,34 @@ public class DiagnosticsManager {
      */
     public DiagnosticLogBuilder testConfigTransactions() {
         return userConfigManagerHelper.testConfigTransactions();
+    }
+
+    /**
+     * Test MelodicSequencer functionality
+     */
+    public DiagnosticLogBuilder testMelodicSequencer() {
+        return melodicSequencerHelper.runMelodicSequencerDiagnostics();
+    }
+
+    /**
+     * Test MelodicSequencer pattern operations
+     */
+    public DiagnosticLogBuilder testMelodicPatternOperations() {
+        return melodicSequencerHelper.testPatternOperations();
+    }
+
+    /**
+     * Test MelodicSequencerManager functionality
+     */
+    public DiagnosticLogBuilder testMelodicSequencerManager() {
+        return melodicSequencerManagerHelper.testMelodicSequencerManager();
+    }
+
+    /**
+     * Test melodic sequence persistence
+     */
+    public DiagnosticLogBuilder testMelodicSequencePersistence() {
+        return melodicSequencerManagerHelper.testSequencePersistence();
     }
 
     /**

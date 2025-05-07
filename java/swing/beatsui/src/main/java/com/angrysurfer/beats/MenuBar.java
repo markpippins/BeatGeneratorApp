@@ -12,8 +12,9 @@ import javax.sound.midi.*;
 import javax.swing.*;
 
 import com.angrysurfer.beats.diagnostic.DiagnosticLogBuilder;
+import com.angrysurfer.beats.diagnostic.DiagnosticsManager;
 import com.angrysurfer.beats.diagnostic.DiagnosticsSplashScreen;
-import com.angrysurfer.beats.diagnostic.RedisDiagnosticsHelper;
+import com.angrysurfer.beats.diagnostic.helper.RedisDiagnosticsHelper;
 import com.angrysurfer.beats.visualization.IVisualizationHandler;
 import com.angrysurfer.beats.visualization.VisualizationCategory;
 import com.angrysurfer.core.api.Command;
@@ -203,6 +204,50 @@ public class MenuBar extends JMenuBar {
             }).start();
         });
         diagnosticsMenu.add(drumSequencerDiagnostics);
+
+        // MelodicSequencer diagnostics
+        JMenuItem melodicSequencerDiagnostics = new JMenuItem("Melodic Sequencer Diagnostics");
+        melodicSequencerDiagnostics.addActionListener(e -> {
+            // Create splash screen
+            DiagnosticsSplashScreen splash = new DiagnosticsSplashScreen("Melodic Sequencer Diagnostics", "Analyzing sequencer...");
+            splash.setVisible(true);
+            
+            // Run in background thread
+            new Thread(() -> {
+                try {
+                    DiagnosticLogBuilder log = diagnosticsManager.testMelodicSequencer();
+                    splash.setVisible(false);
+                    diagnosticsManager.showDiagnosticLogDialog(log);
+                } catch (Exception ex) {
+                    splash.setVisible(false);
+                    DiagnosticsManager.showError("Melodic Sequencer Diagnostics",
+                        "Error diagnosing sequencer: " + ex.getMessage());
+                }
+            }).start();
+        });
+        diagnosticsMenu.add(melodicSequencerDiagnostics);
+
+        // Melodic pattern operations test
+        JMenuItem melodicPatternTest = new JMenuItem("Melodic Pattern Operations Test");
+        melodicPatternTest.addActionListener(e -> {
+            // Create splash screen
+            DiagnosticsSplashScreen splash = new DiagnosticsSplashScreen("Melodic Pattern Test", "Testing pattern operations...");
+            splash.setVisible(true);
+            
+            // Run in background thread
+            new Thread(() -> {
+                try {
+                    DiagnosticLogBuilder log = diagnosticsManager.testMelodicPatternOperations();
+                    splash.setVisible(false);
+                    diagnosticsManager.showDiagnosticLogDialog(log);
+                } catch (Exception ex) {
+                    splash.setVisible(false);
+                    DiagnosticsManager.showError("Melodic Pattern Operations Test",
+                        "Error testing pattern operations: " + ex.getMessage());
+                }
+            }).start();
+        });
+        diagnosticsMenu.add(melodicPatternTest);
 
         // MIDI Connection Test
         JMenuItem midiConnectionTest = new JMenuItem("Test MIDI Connections");
@@ -438,6 +483,50 @@ public class MenuBar extends JMenuBar {
             }).start();
         });
         diagnosticsMenu.add(userConfigManagerTest);
+
+        // Add melodic sequencer manager diagnostics
+        JMenuItem melodicSequencerManagerTest = new JMenuItem("Melodic Sequencer Manager Test");
+        melodicSequencerManagerTest.addActionListener(e -> {
+            // Create splash screen
+            DiagnosticsSplashScreen splash = new DiagnosticsSplashScreen("Melodic Sequencer Manager Test", "Testing melodic sequencer database...");
+            splash.setVisible(true);
+            
+            // Run in background thread
+            new Thread(() -> {
+                try {
+                    DiagnosticLogBuilder log = diagnosticsManager.testMelodicSequencerManager();
+                    splash.setVisible(false);
+                    diagnosticsManager.showDiagnosticLogDialog(log);
+                } catch (Exception ex) {
+                    splash.setVisible(false);
+                    DiagnosticsManager.showError("Melodic Sequencer Manager Test",
+                        "Error testing melodic sequencer manager: " + ex.getMessage());
+                }
+            }).start();
+        });
+        diagnosticsMenu.add(melodicSequencerManagerTest);
+
+        // Add melodic sequence persistence diagnostics
+        JMenuItem melodicSequencePersistenceTest = new JMenuItem("Melodic Sequence Persistence Test");
+        melodicSequencePersistenceTest.addActionListener(e -> {
+            // Create splash screen
+            DiagnosticsSplashScreen splash = new DiagnosticsSplashScreen("Melodic Sequence Persistence Test", "Testing sequence save/load...");
+            splash.setVisible(true);
+            
+            // Run in background thread
+            new Thread(() -> {
+                try {
+                    DiagnosticLogBuilder log = diagnosticsManager.testMelodicSequencePersistence();
+                    splash.setVisible(false);
+                    diagnosticsManager.showDiagnosticLogDialog(log);
+                } catch (Exception ex) {
+                    splash.setVisible(false);
+                    DiagnosticsManager.showError("Melodic Sequence Persistence Test",
+                        "Error testing melodic sequence persistence: " + ex.getMessage());
+                }
+            }).start();
+        });
+        diagnosticsMenu.add(melodicSequencePersistenceTest);
 
         // Add config transaction diagnostics
         JMenuItem configTransactionTest = new JMenuItem("Config Transaction Test");
@@ -1227,6 +1316,100 @@ public class MenuBar extends JMenuBar {
             return DrumSequencerManager.getInstance().getActiveSequencer();
         } catch (Exception e) {
             System.out.println("Error getting active sequencer: " + e.getMessage());
+            return null;
+        }
+    }
+
+    /**
+     * Runs comprehensive diagnostics on the MelodicSequencer
+     */
+    private void runMelodicSequencerDiagnostics() {
+        DiagnosticLogBuilder log = new DiagnosticLogBuilder("MelodicSequencer Diagnostics");
+        
+        try {
+            // Get the active MelodicSequencer
+            com.angrysurfer.core.sequencer.MelodicSequencer sequencer = getActiveMelodicSequencer();
+            if (sequencer == null) {
+                log.addError("No active MelodicSequencer found");
+                DiagnosticsManager.showDiagnosticLogDialog(parentFrame, log);
+                return;
+            }
+            
+            // 1. Check sequencer status
+            log.addSection("1. Sequencer Status");
+            log.addIndentedLine("Playing: " + sequencer.isPlaying(), 1)
+               .addIndentedLine("Current Step: " + sequencer.getCurrentStep(), 1)
+               .addIndentedLine("Pattern Length: " + sequencer.getSequenceData().getPatternLength(), 1)
+               .addIndentedLine("Direction: " + sequencer.getSequenceData().getDirection(), 1)
+               .addIndentedLine("Root Note: " + sequencer.getSequenceData().getRootNote(), 1)
+               .addIndentedLine("Scale: " + sequencer.getSequenceData().getScale(), 1);
+            
+            // 2. Check pattern data
+            log.addSection("2. Pattern Data");
+            int activeSteps = 0;
+            for (int i = 0; i < sequencer.getSequenceData().getPatternLength(); i++) {
+                if (sequencer.getSequenceData().isStepActive(i)) {
+                    activeSteps++;
+                }
+            }
+            log.addIndentedLine("Active Steps: " + activeSteps + " of " + 
+                             sequencer.getSequenceData().getPatternLength(), 1);
+            
+            if (activeSteps == 0) {
+                log.addWarning("No active steps found in pattern");
+            }
+            
+            // 3. Check player and instrument
+            log.addSection("3. Player/Instrument Check");
+            com.angrysurfer.core.model.Player player = sequencer.getPlayer();
+            if (player != null) {
+                log.addIndentedLine("Player: " + player.getName() + 
+                                 " (Type: " + player.getClass().getSimpleName() + ")", 1);
+                log.addIndentedLine("Channel: " + player.getChannel(), 2);
+                
+                com.angrysurfer.core.model.InstrumentWrapper instrument = player.getInstrument();
+                if (instrument != null) {
+                    log.addIndentedLine("Instrument: " + instrument.getName() + 
+                                     " (ID: " + instrument.getId() + ")", 2);
+                    
+                    javax.sound.midi.MidiDevice device = instrument.getDevice();
+                    if (device != null) {
+                        log.addIndentedLine("Device: " + device.getDeviceInfo().getName() + 
+                                         " (Open: " + device.isOpen() + ")", 2);
+                        
+                        javax.sound.midi.Receiver receiver = instrument.getReceiver();
+                        log.addIndentedLine("Receiver: " + (receiver != null ? "OK" : "NULL"), 2);
+                    } else {
+                        log.addIndentedLine("Device: NULL", 2);
+                    }
+                } else {
+                    log.addIndentedLine("Instrument: NULL", 2);
+                }
+            } else {
+                log.addIndentedLine("Player: NULL", 1);
+            }
+            
+            log.addLine("\nMelodicSequencer diagnostics completed.");
+            
+            // Display the diagnostic results
+            DiagnosticsManager.showDiagnosticLogDialog(parentFrame, log);
+            
+        } catch (Exception e) {
+            log.addException(e);
+            DiagnosticsManager.showDiagnosticLogDialog(parentFrame, log);
+        }
+    }
+
+    /**
+     * Helper method to get the active MelodicSequencer
+     */
+    private com.angrysurfer.core.sequencer.MelodicSequencer getActiveMelodicSequencer() {
+        // Get from whatever service/manager holds the active sequencer
+        // This is application-specific and needs to be adapted
+        try {
+            return com.angrysurfer.core.service.MelodicSequencerManager.getInstance().getActiveSequencer();
+        } catch (Exception e) {
+            System.out.println("Error getting active melodic sequencer: " + e.getMessage());
             return null;
         }
     }

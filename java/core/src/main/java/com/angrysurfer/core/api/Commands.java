@@ -364,4 +364,8 @@ public class Commands {
     public static final String REPAIR_MIDI_CONNECTIONS = "REPAIR_MIDI_CONNECTIONS";
     public static final String DRUM_SEQUENCE_DELETED = "DRUM_SEQUENCE_DELETED";
     public static final String PLAYER_LEVEL_CHANGED = "PLAYER_LEVEL_CHANGED";
+
+    // Add these constants
+    public static final String DRUM_PRESET_SELECTION_REQUEST = "drum.preset.selection.request";
+    public static final String DRUM_INSTRUMENTS_UPDATED = "drum.instruments.updated";
 }

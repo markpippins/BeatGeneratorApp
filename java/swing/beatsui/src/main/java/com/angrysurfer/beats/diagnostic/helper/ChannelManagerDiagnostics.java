@@ -1,5 +1,6 @@
-package com.angrysurfer.beats.diagnostic;
+package com.angrysurfer.beats.diagnostic.helper;
 
+import com.angrysurfer.beats.diagnostic.DiagnosticLogBuilder;
 import com.angrysurfer.core.service.ChannelManager;
 import java.util.ArrayList;
 import java.util.List;
@@ -7,7 +8,7 @@ import java.util.List;
 /**
  * Diagnostic helper for ChannelManager
  */
-public class ChannelManagerDiagnosticsHelper {
+public class ChannelManagerDiagnostics {
     
     /**
      * Run diagnostics on the ChannelManager

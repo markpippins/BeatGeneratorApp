@@ -62,7 +62,7 @@ public class PatternSequencer {
 
         // Initialize melodic sequencers
         for (MelodicSequencer sequencer : melodicSequencers) {
-            sequencer.setLooping(false);
+            sequencer.setLooping(true);
             logger.debug("Initialized melodic sequencer {}: looping disabled", sequencer.getId());
         }
 

@@ -1,5 +1,6 @@
-package com.angrysurfer.beats.diagnostic;
+package com.angrysurfer.beats.diagnostic.helper;
 
+import com.angrysurfer.beats.diagnostic.DiagnosticLogBuilder;
 import com.angrysurfer.core.api.CommandBus;
 import com.angrysurfer.core.config.UserConfig;
 import com.angrysurfer.core.model.InstrumentWrapper;

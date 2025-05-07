@@ -589,7 +589,7 @@ public class MainPanel extends JPanel implements AutoCloseable, IBusListener {
 
                 // *** THIS IS ALSO CRITICAL - Set up melodic note event publisher ***
                 logger.info("Setting up melodic note event publisher for channel {}",
-                        seq.getChannel());
+                        seq.getPlayer().getChannel());
                 seq.setNoteEventPublisher(noteEvent -> {
                     logger.debug("Publishing melodic note event: note={}, velocity={}",
                             noteEvent.getNote(), noteEvent.getVelocity());
@@ -949,7 +949,7 @@ public class MainPanel extends JPanel implements AutoCloseable, IBusListener {
         // Release channels used by melodic panels
         for (MelodicSequencerPanel panel : melodicPanels) {
             if (panel != null && panel.getSequencer() != null) {
-                int channel = panel.getSequencer().getChannel();
+                int channel = panel.getSequencer().getPlayer().getChannel();
                 ChannelManager.getInstance().releaseChannel(channel);
                 logger.info("Released channel {} on application close", channel);
             }

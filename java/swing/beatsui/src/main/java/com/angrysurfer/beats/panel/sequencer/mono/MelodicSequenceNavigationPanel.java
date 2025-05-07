@@ -171,12 +171,12 @@ public class MelodicSequenceNavigationPanel extends JPanel {
             // Reset the sequencer and clear pattern
             sequencer.setId(0); // Set to 0 to indicate new unsaved sequence
             sequencer.reset();
-            sequencer.clearPattern();
+            sequencer.getSequenceData().clearPattern();
 
             // Set default parameters
-            sequencer.setPatternLength(16);
-            sequencer.setDirection(Direction.FORWARD);
-            sequencer.setTimingDivision(TimingDivision.NORMAL);
+            sequencer.getSequenceData().setPatternLength(16);
+            sequencer.getSequenceData().setDirection(Direction.FORWARD);
+            sequencer.getSequenceData().setTimingDivision(TimingDivision.NORMAL);
             sequencer.setLooping(true);
 
             // Update UI

@@ -1,5 +1,6 @@
-package com.angrysurfer.beats.diagnostic;
+package com.angrysurfer.beats.diagnostic.helper;
 
+import com.angrysurfer.beats.diagnostic.DiagnosticLogBuilder;
 import com.angrysurfer.core.service.InternalSynthManager;
 import com.angrysurfer.core.service.SoundbankManager;
 

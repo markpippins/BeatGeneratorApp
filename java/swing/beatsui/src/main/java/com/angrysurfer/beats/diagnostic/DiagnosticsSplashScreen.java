@@ -89,4 +89,6 @@ public class DiagnosticsSplashScreen extends JWindow {
     public void setMessage(String message) {
         SwingUtilities.invokeLater(() -> messageLabel.setText(message));
     }
+ 
+    
 }

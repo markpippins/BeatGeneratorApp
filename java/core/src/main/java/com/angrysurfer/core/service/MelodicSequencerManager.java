@@ -49,14 +49,12 @@ public class MelodicSequencerManager {
      * Create a new sequencer with specified ID and channel
      * 
      * @param id      The sequencer ID
-     * @param channel The MIDI channel to use
      * @return A new MelodicSequencer instance
      */
     public MelodicSequencer newSequencer(int id) {
         // Create a new sequencer with the specified ID and channel
         MelodicSequencer sequencer = new MelodicSequencer(id);
         sequencer.setSequenceData(new MelodicSequenceData());
-        sequencer.setChannel(MelodicSequencer.SEQUENCER_CHANNELS[id % MelodicSequencer.SEQUENCER_CHANNELS.length]);
         sequencers.add(sequencer);
 
         CommandBus.getInstance().publish(Commands.MELODIC_SEQUENCER_ADDED, this, sequencer);

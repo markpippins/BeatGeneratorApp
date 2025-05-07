@@ -1,8 +1,8 @@
-package com.angrysurfer.beats.diagnostic;
+package com.angrysurfer.beats.diagnostic.helper;
 
+import com.angrysurfer.beats.diagnostic.DiagnosticLogBuilder;
 import com.angrysurfer.core.model.InstrumentWrapper;
 import com.angrysurfer.core.model.Player;
-import com.angrysurfer.core.model.Strike;
 import com.angrysurfer.core.redis.InstrumentHelper;
 import com.angrysurfer.core.redis.PlayerHelper;
 import com.angrysurfer.core.redis.RedisService;
@@ -12,9 +12,9 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 /**
- * Helper class for player diagnostics
+ * Helper class for instrument and player diagnostics
  */
-public class PlayerDiagnosticsHelper {
+public class InstrumentDiagnosticsHelper {
     
     private final RedisService redisService;
     private final PlayerHelper playerHelper;
@@ -23,7 +23,7 @@ public class PlayerDiagnosticsHelper {
     /**
      * Constructor
      */
-    public PlayerDiagnosticsHelper() {
+    public InstrumentDiagnosticsHelper() {
         this.redisService = RedisService.getInstance();
         this.playerHelper = redisService.getPlayerHelper();
         this.instrumentHelper = redisService.getInstrumentHelper();
@@ -152,84 +152,90 @@ public class PlayerDiagnosticsHelper {
     }
     
     /**
-     * Create a test player, test its operations, and clean up
+     * Create a test instrument, test its operations, and clean up
      */
-    public DiagnosticLogBuilder testPlayerOperations() {
-        DiagnosticLogBuilder log = new DiagnosticLogBuilder("Player Operations Test");
+    public DiagnosticLogBuilder testInstrumentOperations() {
+        DiagnosticLogBuilder log = new DiagnosticLogBuilder("Instrument Operations Test");
         
         try {
-            // Test creating a new player
-            log.addSection("1. Creating test player");
+            // Test creating a new instrument
+            log.addSection("1. Creating test instrument");
             
-            // Use the built-in method to create a new Strike player
-            Player testPlayer = playerHelper.newStrike();
+            InstrumentWrapper testInstrument = new InstrumentWrapper();
+            testInstrument.setName("Test Instrument " + System.currentTimeMillis());
+            testInstrument.setDeviceName("Test Device");
+            testInstrument.setChannel(9); // drum channel
             
-            // Update its properties for testing
-            String testName = "Test Player " + System.currentTimeMillis();
-            testPlayer.setName(testName);
-            testPlayer.setChannel(9); // drum channel
-            testPlayer.setRootNote(60); // middle C
+            log.addIndentedLine("Creating instrument: " + testInstrument.getName(), 1);
+            instrumentHelper.saveInstrument(testInstrument);
             
-            log.addIndentedLine("Created player: " + testPlayer.getName() + " with ID: " + testPlayer.getId(), 1);
+            // The ID is set by saveInstrument via jedis.incr
+            Long instrumentId = testInstrument.getId();
             
-            // Save the updated player
-            playerHelper.savePlayer(testPlayer);
-            log.addIndentedLine("Saved player with updated properties", 1);
-            
-            Long playerId = testPlayer.getId();
-            
-            // Test retrieving the player
-            log.addSection("2. Retrieving test player");
-            
-            Player retrievedPlayer = playerHelper.findPlayerById(playerId, testPlayer.getPlayerClassName());
-            
-            if (retrievedPlayer != null) {
-                log.addIndentedLine("Successfully retrieved player: " + retrievedPlayer.getName(), 1);
-                
-                if (!testName.equals(retrievedPlayer.getName())) {
-                    log.addError("Retrieved player name does not match: expected='" + 
-                               testName + "', actual='" + retrievedPlayer.getName() + "'");
-                }
-                
-                if (testPlayer.getChannel() != retrievedPlayer.getChannel()) {
-                    log.addError("Retrieved player channel does not match: expected=" + 
-                               testPlayer.getChannel() + ", actual=" + retrievedPlayer.getChannel());
-                }
+            if (instrumentId != null) {
+                log.addIndentedLine("Created instrument with ID: " + instrumentId, 1);
             } else {
-                log.addError("Failed to retrieve created player");
+                log.addError("Failed to get ID for saved instrument");
+                return log;
             }
             
-            // Test updating the player
-            log.addSection("3. Updating test player");
+            // Test retrieving the instrument
+            log.addSection("2. Retrieving test instrument");
             
-            String updatedName = "Updated " + testPlayer.getName();
-            testPlayer.setName(updatedName);
+            InstrumentWrapper retrievedInstrument = instrumentHelper.findInstrumentById(instrumentId);
             
-            log.addIndentedLine("Updating player name to: " + updatedName, 1);
-            playerHelper.savePlayer(testPlayer);
+            if (retrievedInstrument != null) {
+                log.addIndentedLine("Successfully retrieved instrument: " + retrievedInstrument.getName(), 1);
+                
+                if (!testInstrument.getName().equals(retrievedInstrument.getName())) {
+                    log.addError("Retrieved instrument name does not match: expected='" + 
+                               testInstrument.getName() + "', actual='" + retrievedInstrument.getName() + "'");
+                }
+                
+                if (testInstrument.getChannel() != retrievedInstrument.getChannel()) {
+                    log.addError("Retrieved instrument channel does not match: expected=" + 
+                               testInstrument.getChannel() + ", actual=" + retrievedInstrument.getChannel());
+                }
+            } else {
+                log.addError("Failed to retrieve created instrument");
+            }
+            
+            // Test updating the instrument
+            log.addSection("3. Updating test instrument");
+            
+            String updatedName = "Updated " + testInstrument.getName();
+            testInstrument.setName(updatedName);
+            
+            log.addIndentedLine("Updating instrument name to: " + updatedName, 1);
+            instrumentHelper.saveInstrument(testInstrument);
             
             // Verify update
-            retrievedPlayer = playerHelper.findPlayerById(playerId, testPlayer.getPlayerClassName());
+            retrievedInstrument = instrumentHelper.findInstrumentById(instrumentId);
             
-            if (retrievedPlayer != null && updatedName.equals(retrievedPlayer.getName())) {
-                log.addIndentedLine("Successfully updated player name", 1);
+            if (retrievedInstrument != null && updatedName.equals(retrievedInstrument.getName())) {
+                log.addIndentedLine("Successfully updated instrument name", 1);
             } else {
-                log.addError("Failed to update player name");
+                log.addError("Failed to update instrument name");
             }
             
-            // Clean up - delete test player
-            log.addSection("4. Deleting test player");
+            // Clean up - delete test instrument
+            log.addSection("4. Deleting test instrument");
             
-            log.addIndentedLine("Deleting test player", 1);
-            playerHelper.deletePlayer(testPlayer);
+            log.addIndentedLine("Deleting test instrument", 1);
+            try {
+                instrumentHelper.deleteInstrument(instrumentId);
+                log.addIndentedLine("Successfully executed delete operation", 1);
+            } catch (Exception e) {
+                log.addError("Error deleting instrument: " + e.getMessage());
+            }
             
             // Verify deletion
-            retrievedPlayer = playerHelper.findPlayerById(playerId, testPlayer.getPlayerClassName());
+            retrievedInstrument = instrumentHelper.findInstrumentById(instrumentId);
             
-            if (retrievedPlayer == null) {
-                log.addIndentedLine("Verified player no longer exists", 1);
+            if (retrievedInstrument == null) {
+                log.addIndentedLine("Verified instrument no longer exists", 1);
             } else {
-                log.addError("Player still exists after deletion attempt");
+                log.addError("Instrument still exists after deletion attempt");
             }
             
         } catch (Exception e) {

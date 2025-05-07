@@ -211,6 +211,21 @@ public class DrumSequencerPanel extends JPanel implements IBusListener {
         rightPanel.add(swingPanel);
 
         bottomPanel.add(rightPanel, BorderLayout.EAST);
+
+        // Create preset selection button
+        JButton presetButton = new JButton("Drum Presets");
+        presetButton.setToolTipText("Select preset instruments for each drum");
+        presetButton.addActionListener(e -> {
+            CommandBus.getInstance().publish(
+                    Commands.DRUM_PRESET_SELECTION_REQUEST,
+                    this,
+                    sequencer
+            );
+        });
+
+        // Add the button to the bottom panel
+        bottomPanel.add(presetButton, BorderLayout.NORTH);
+
         add(bottomPanel, BorderLayout.SOUTH);
     }
 

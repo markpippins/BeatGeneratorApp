@@ -307,7 +307,7 @@ public class PopupMixerPanel extends JPanel {
         panel.add(nameLabel);
         
         // Add channel info
-        JLabel channelLabel = new JLabel("Ch " + sequencer.getChannel());
+        JLabel channelLabel = new JLabel("Ch " + sequencer.getPlayer().getChannel());
         channelLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
         panel.add(channelLabel);
         

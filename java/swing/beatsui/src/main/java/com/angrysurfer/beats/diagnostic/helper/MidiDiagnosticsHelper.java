@@ -1,7 +1,10 @@
-package com.angrysurfer.beats.diagnostic;
+package com.angrysurfer.beats.diagnostic.helper;
 
 import javax.sound.midi.*;
 import javax.swing.*;
+
+import com.angrysurfer.beats.diagnostic.DiagnosticLogBuilder;
+
 import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
