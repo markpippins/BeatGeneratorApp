@@ -13,7 +13,7 @@ import javax.sound.midi.Receiver;
 /**
  * Helper class for DrumSequencer diagnostics
  */
-public class DrumSequencerDiagnosticsHelper {
+public class DrumSequencerDiagnostics {
     
     /**
      * Runs comprehensive diagnostics on the DrumSequencer
@@ -28,7 +28,7 @@ public class DrumSequencerDiagnosticsHelper {
                 log.addError("No active DrumSequencer found");
                 return log;
             }
-            
+
             // 1. Check sequencer status
             log.addSection("1. Sequencer Status");
             log.addIndentedLine("Playing: " + sequencer.isPlaying(), 1)

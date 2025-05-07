@@ -190,7 +190,7 @@ public class ChannelCombo extends JComboBox<Integer> implements IBusListener {
             }
             
             // Update player's channel
-            currentPlayer.setChannel(selectedChannel);
+            currentPlayer.setDefaultChannel(selectedChannel);
             
             // Publish change to command bus
             commandBus.publish(Commands.PLAYER_CHANNEL_CHANGE_REQUEST, this, currentPlayer);

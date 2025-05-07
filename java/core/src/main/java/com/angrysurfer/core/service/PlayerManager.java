@@ -411,7 +411,7 @@ public class PlayerManager implements IBusListener {
                             logger.info("Reassigning player {} from channel {} to channel {}",
                                     player.getId(), channel, newChannel);
 
-                            player.setChannel(newChannel);
+                            player.setDefaultChannel(newChannel);
 
                             // Save the updated player
                             savePlayerProperties(player);
@@ -436,7 +436,7 @@ public class PlayerManager implements IBusListener {
                 logger.info("Assigning channel {} to player {} with missing/invalid channel",
                         newChannel, player.getId());
 
-                player.setChannel(newChannel);
+                player.setDefaultChannel(newChannel);
 
                 // Save the updated player
                 savePlayerProperties(player);

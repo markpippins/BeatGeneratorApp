@@ -42,13 +42,13 @@ public class DiagnosticsManager {
     
     // Helper instances
     private final MidiDiagnosticsHelper midiHelper;
-    private final DrumSequencerDiagnosticsHelper sequencerHelper;
+    private final DrumSequencerDiagnostics sequencerHelper;
     private final PlayerDiagnosticsHelper playerHelper;
     private final InstrumentDiagnosticsHelper instrumentHelper;
     private final SessionDiagnosticsHelper sessionHelper;
     private final UserConfigDiagnosticsHelper configHelper;
     private final ChannelManagerDiagnostics channelHelper;
-    private final DeviceManagerDiagnosticsHelper deviceHelper;
+    private final DeviceManagerDiagnostics deviceHelper;
     private final ReceiverManagerDiagnosticsHelper receiverHelper;
     private final PlayerManagerDiagnosticsHelper playerManagerHelper;
     private final SessionManagerDiagnosticsHelper sessionManagerHelper;
@@ -65,13 +65,13 @@ public class DiagnosticsManager {
         
         // Initialize helpers
         this.midiHelper = new MidiDiagnosticsHelper(parentFrame);
-        this.sequencerHelper = new DrumSequencerDiagnosticsHelper();
+        this.sequencerHelper = new DrumSequencerDiagnostics();
         this.playerHelper = new PlayerDiagnosticsHelper();
         this.instrumentHelper = new InstrumentDiagnosticsHelper();
         this.sessionHelper = new SessionDiagnosticsHelper();
         this.configHelper = new UserConfigDiagnosticsHelper();
         this.channelHelper = new ChannelManagerDiagnostics();
-        this.deviceHelper = new DeviceManagerDiagnosticsHelper();
+        this.deviceHelper = new DeviceManagerDiagnostics();
         this.receiverHelper = new ReceiverManagerDiagnosticsHelper();
         this.playerManagerHelper = new PlayerManagerDiagnosticsHelper();
         this.sessionManagerHelper = new SessionManagerDiagnosticsHelper();

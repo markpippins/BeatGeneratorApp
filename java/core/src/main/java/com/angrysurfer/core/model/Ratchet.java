@@ -35,7 +35,6 @@ public class Ratchet extends Strike {
         setId(9000 + ratchets);
         setRootNote(getParent().getRootNote());
         setInstrument(getParent().getInstrument());
-        setChannel(getParent().getChannel());
         setSubDivisions(getParent().getSubDivisions());
         setAllowedControlMessages(getParent().getAllowedControlMessages());
         setPads(getParent().getPads());

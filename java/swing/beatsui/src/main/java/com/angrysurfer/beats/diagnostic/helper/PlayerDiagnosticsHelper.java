@@ -168,7 +168,7 @@ public class PlayerDiagnosticsHelper {
             // Update its properties for testing
             String testName = "Test Player " + System.currentTimeMillis();
             testPlayer.setName(testName);
-            testPlayer.setChannel(9); // drum channel
+            testPlayer.setDefaultChannel(9); // drum channel
             testPlayer.setRootNote(36); // kick
             
             log.addIndentedLine("Created player: " + testPlayer.getName() + " with ID: " + testPlayer.getId(), 1);

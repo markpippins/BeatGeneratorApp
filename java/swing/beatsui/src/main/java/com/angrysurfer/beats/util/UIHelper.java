@@ -173,7 +173,7 @@ public class UIHelper {
         JPanel panel = new JPanel();
         panel.setBorder(BorderFactory.createCompoundBorder(
                 BorderFactory.createTitledBorder(title),
-                BorderFactory.createEmptyBorder(1, 2, 1, 2)));
+                BorderFactory.createEmptyBorder(0, 2, 0, 2)));
 
         return panel;
     }

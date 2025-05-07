@@ -64,7 +64,7 @@ public abstract class Player implements Callable<Boolean>, Serializable, IBusLis
 
     private String name = "Player";
 
-    private Integer channel = 0;
+    private Integer defaultChannel = 0;
 
     private Integer swing = 0;
 
@@ -233,7 +233,7 @@ public abstract class Player implements Callable<Boolean>, Serializable, IBusLis
             return;
         }
         this.instrument = instrument;
-        this.instrument.setChannel(getChannel());
+        this.instrument.setChannel(getDefaultChannel());
         this.instrumentId = instrument.getId();
     }
 
@@ -245,6 +245,21 @@ public abstract class Player implements Callable<Boolean>, Serializable, IBusLis
     @Transient
     public MidiDevice getDevice() {
         return Objects.nonNull(getInstrument()) ? getInstrument().getDevice() : null; 
+    }
+
+    @JsonIgnore
+    @Transient
+    public Integer getChannel() {
+        if (getInstrument() != null)
+            return getInstrument().getChannel();
+
+        return getDefaultChannel();
+    }
+
+    public void setDefaultChannel(Integer channel) {
+        defaultChannel = channel;
+        if (getInstrument() != null)
+            getInstrument().setChannel(channel);
     }
 
     // public Long getSubPosition() {

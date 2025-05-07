@@ -10,7 +10,7 @@ import java.util.List;
 /**
  * Diagnostic helper for DeviceManager
  */
-public class DeviceManagerDiagnosticsHelper {
+public class DeviceManagerDiagnostics {
     
     /**
      * Run diagnostics on the DeviceManager

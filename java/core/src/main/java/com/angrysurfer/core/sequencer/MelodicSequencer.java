@@ -454,8 +454,9 @@ public class MelodicSequencer implements IBusListener {
             logger.info("Using existing player {} for sequencer {}", existingPlayer.getId(), id);
             player = existingPlayer;
             if (player.getChannel() != playerChannel) {
-                player.setChannel(playerChannel);
+                player.setDefaultChannel(playerChannel);
                 player.setOwner(this);
+                player.setMelodicPlayer(true);
                 PlayerManager.getInstance().savePlayerProperties(player);
             }
         } else {
@@ -465,7 +466,7 @@ public class MelodicSequencer implements IBusListener {
 
             player.setOwner(this);
             player.setName("Melo " + tag.toString());
-            player.setChannel(playerChannel);
+            player.setDefaultChannel(playerChannel);
 
             InstrumentWrapper instrument = InstrumentManager.getInstance()
                     .getOrCreateInternalSynthInstrument(playerChannel, true);

@@ -136,13 +136,13 @@ public class DrumSequencer implements IBusListener {
                 // Create new player
                 players[i] = RedisService.getInstance().newStrike();
                 players[i].setOwner(this);
-                players[i].setChannel(DrumSequenceData.MIDI_DRUM_CHANNEL);
+                players[i].setDefaultChannel(DrumSequenceData.MIDI_DRUM_CHANNEL);
                 players[i].setRootNote(DrumSequenceData.MIDI_DRUM_NOTE_OFFSET + i);
                 players[i].setName(InternalSynthManager.getInstance().getDrumName(DrumSequenceData.MIDI_DRUM_NOTE_OFFSET + i));
 
                 // Use PlayerManager to initialize the instrument
                 PlayerManager.getInstance().initializeInternalInstrument(players[i], false);
-
+                players[i].getInstrument().setChannel(9);
                 // Initialize device connections
                 initializeDrumPadConnections(i, defaultDevice);
 
@@ -1446,7 +1446,7 @@ public class DrumSequencer implements IBusListener {
 
         if (player.getInstrument() == null && player.getInstrumentId() != null) {
             player.setInstrument(InstrumentManager.getInstance().getInstrumentById(player.getInstrumentId()));
-            player.setChannel(9);
+            player.getInstrument().setChannel(9);
         }
 
         if (player.getInstrument() == null) {
@@ -1629,7 +1629,7 @@ public class DrumSequencer implements IBusListener {
         }
         
         // Ensure channel is set correctly
-        player.setChannel(DrumSequenceData.MIDI_DRUM_CHANNEL);
+        player.setDefaultChannel(DrumSequenceData.MIDI_DRUM_CHANNEL);
         
         // Ensure instrument is set
         if (player.getInstrument() == null && player.getInstrumentId() != null) {
@@ -1713,7 +1713,7 @@ public class DrumSequencer implements IBusListener {
                 if (receiver != null) {
                     // UPDATED: Now directly set the receiver (no AtomicReference)
                     instrument.setReceiver(receiver);
-                    
+                    instrument.setChannel(9);
                     // Initialize sound with proper program change
                     PlayerManager.getInstance().applyInstrumentPreset(players[drumIndex]);
                     

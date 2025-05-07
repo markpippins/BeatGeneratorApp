@@ -174,7 +174,7 @@ public class DialogManager implements IBusListener {
             if (selectedInstrument != null) {
                 newPlayer.setInstrument(selectedInstrument);
                 // Set default channel (usually channel 1, which is represented as 0 in MIDI)
-                newPlayer.setChannel(0);
+                // newPlayer.setChannel(0);
                 logger.info("Set instrument for new player: " + selectedInstrument.getName());
             } else {
                 logger.error("No instruments available. New player will have no instrument.");

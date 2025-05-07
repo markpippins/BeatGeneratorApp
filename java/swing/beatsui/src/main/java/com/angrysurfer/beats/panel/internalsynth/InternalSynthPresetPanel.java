@@ -148,7 +148,7 @@ public class InternalSynthPresetPanel extends JPanel {
                 updatePresetControls();
             }
             
-            player.setChannel(channelValue);
+            player.setDefaultChannel(channelValue);
         });
         
         // Setup action listeners for soundbank controls
@@ -984,7 +984,7 @@ public class InternalSynthPresetPanel extends JPanel {
             int channel = ((Number) channelSpinner.getValue()).intValue();
             
             // Update channel
-            player.setChannel(channel);
+            player.setDefaultChannel(channel);
             
             // Update soundbank settings for internal synths
             if (usingInternalSynth) {
@@ -1087,7 +1087,7 @@ public class InternalSynthPresetPanel extends JPanel {
         // Update player model with UI settings
         player.setName(getPlayerName());
         player.setInstrument(getSelectedInstrument());
-        player.setChannel(getSelectedChannel());
+        player.setDefaultChannel(getSelectedChannel());
         player.getInstrument().setPreset(getSelectedPreset());
         if (isDrumChannel) {
             player.setRootNote(getSelectedDrumNote());

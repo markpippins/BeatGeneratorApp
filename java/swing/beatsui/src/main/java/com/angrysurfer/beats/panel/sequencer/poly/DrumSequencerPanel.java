@@ -1,6 +1,7 @@
 package com.angrysurfer.beats.panel.sequencer.poly;
 
 import java.awt.BorderLayout;
+import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
@@ -18,7 +19,9 @@ import javax.swing.JSpinner;
 import javax.swing.JToggleButton;
 import javax.swing.SwingUtilities;
 
+import com.angrysurfer.beats.Symbols;
 import com.angrysurfer.core.sequencer.DrumSequenceData;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -174,7 +177,7 @@ public class DrumSequencerPanel extends JPanel implements IBusListener {
 
         DrumSequenceNavigationPanel navigationPanel = new DrumSequenceNavigationPanel(sequencer);
 
-        westPanel.add(navigationPanel, BorderLayout.NORTH);
+        westPanel.add(navigationPanel, BorderLayout.WEST);
 
         eastPanel.add(new SoundParametersPanel(), BorderLayout.NORTH);
 
@@ -212,9 +215,13 @@ public class DrumSequencerPanel extends JPanel implements IBusListener {
 
         bottomPanel.add(rightPanel, BorderLayout.EAST);
 
+        JPanel buttonPanel = UIHelper.createSectionPanel("Presets");
+
         // Create preset selection button
-        JButton presetButton = new JButton("Drum Presets");
+        JButton presetButton = new JButton(Symbols.getSymbol(Symbols.LOAD));
         presetButton.setToolTipText("Select preset instruments for each drum");
+        presetButton.setPreferredSize(new Dimension(UIHelper.SMALL_CONTROL_WIDTH, UIHelper.CONTROL_HEIGHT));
+        presetButton.setMaximumSize(new Dimension(UIHelper.SMALL_CONTROL_WIDTH, UIHelper.CONTROL_HEIGHT));
         presetButton.addActionListener(e -> {
             CommandBus.getInstance().publish(
                     Commands.DRUM_PRESET_SELECTION_REQUEST,
@@ -222,9 +229,9 @@ public class DrumSequencerPanel extends JPanel implements IBusListener {
                     sequencer
             );
         });
-
+        buttonPanel.add(presetButton);
         // Add the button to the bottom panel
-        bottomPanel.add(presetButton, BorderLayout.NORTH);
+        westPanel.add(buttonPanel, BorderLayout.EAST);
 
         add(bottomPanel, BorderLayout.SOUTH);
     }
