@@ -18,10 +18,10 @@ import javax.sound.midi.MidiUnavailableException;
 import javax.sound.midi.Soundbank;
 import javax.sound.midi.Synthesizer;
 
-import com.angrysurfer.core.sequencer.DrumItem;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.angrysurfer.core.model.DrumItem;
 import com.angrysurfer.core.model.InstrumentWrapper;
 import com.angrysurfer.core.model.SynthData;
 import com.angrysurfer.core.redis.RedisService;

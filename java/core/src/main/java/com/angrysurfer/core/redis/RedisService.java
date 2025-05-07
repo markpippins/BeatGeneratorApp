@@ -15,6 +15,8 @@ import com.angrysurfer.core.service.InstrumentManager;
 import com.angrysurfer.core.service.PlayerManager;
 import com.angrysurfer.core.service.ReceiverManager;
 import com.angrysurfer.core.util.ErrorHandler;
+import com.angrysurfer.core.util.SessionDeserializer;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -31,7 +33,6 @@ import com.angrysurfer.core.model.Pattern;
 import com.angrysurfer.core.model.Player;
 import com.angrysurfer.core.model.Rule;
 import com.angrysurfer.core.model.Session;
-import com.angrysurfer.core.model.SessionDeserializer;
 import com.angrysurfer.core.model.Song;
 import com.angrysurfer.core.model.Step;
 import com.fasterxml.jackson.databind.DeserializationFeature;

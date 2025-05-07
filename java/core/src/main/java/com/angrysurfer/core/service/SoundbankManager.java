@@ -20,9 +20,10 @@ import com.angrysurfer.core.api.CommandBus;
 import com.angrysurfer.core.api.Commands;
 import com.angrysurfer.core.api.IBusListener;
 import com.angrysurfer.core.api.StatusUpdate;
+import com.angrysurfer.core.model.DrumItem;
 import com.angrysurfer.core.model.InstrumentWrapper;
 import com.angrysurfer.core.model.SynthData;
-import com.angrysurfer.core.sequencer.DrumItem;
+
 import org.slf4j.LoggerFactory;
 
 public class SoundbankManager implements IBusListener {
@@ -310,6 +311,49 @@ public class SoundbankManager implements IBusListener {
      */
     public Soundbank getSoundbankByName(String name) {
         return getSoundbank(name);
+    }
+
+    /**
+     * Find instruments by name across all soundbanks
+     * @param nameFragment The name fragment to search for
+     * @return List of matching instruments
+     */
+    public List<Instrument> findInstrumentsByName(String nameFragment) {
+        List<Instrument> results = new ArrayList<>();
+        if (nameFragment == null || nameFragment.isEmpty()) {
+            return results;
+        }
+        
+        String lowerCaseSearch = nameFragment.toLowerCase();
+        
+        for (Soundbank soundbank : soundbanks.values()) {
+            for (Instrument instrument : soundbank.getInstruments()) {
+                if (instrument.getName().toLowerCase().contains(lowerCaseSearch)) {
+                    results.add(instrument);
+                }
+            }
+        }
+        
+        return results;
+    }
+
+    /**
+     * Load an instrument into the synthesizer
+     * @param instrument The instrument to load
+     * @return true if successful, false otherwise
+     */
+    public boolean loadInstrument(Instrument instrument) {
+        try {
+            Synthesizer synth = InternalSynthManager.getInstance().getSynthesizer();
+            if (synth == null || !synth.isOpen()) {
+                return false;
+            }
+            
+            return synth.loadInstrument(instrument);
+        } catch (Exception e) {
+            logger.error("Error loading instrument: {}", e.getMessage());
+            return false;
+        }
     }
 
     /**

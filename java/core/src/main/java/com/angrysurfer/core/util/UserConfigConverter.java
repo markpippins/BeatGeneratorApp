@@ -1,4 +1,4 @@
-package com.angrysurfer.core.config;
+package com.angrysurfer.core.util;
 
 import java.io.File;
 import java.io.IOException;

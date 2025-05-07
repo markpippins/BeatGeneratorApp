@@ -1,7 +1,8 @@
-package com.angrysurfer.core.model;
+package com.angrysurfer.core.util;
 
 import java.io.IOException;
 
+import com.angrysurfer.core.model.Session;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.databind.DeserializationContext;
 import com.fasterxml.jackson.databind.JsonNode;

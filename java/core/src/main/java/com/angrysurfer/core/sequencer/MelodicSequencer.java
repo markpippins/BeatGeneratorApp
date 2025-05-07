@@ -773,13 +773,10 @@ public class MelodicSequencer implements IBusListener {
     }
 
     /**
-     * Initialize the Note object with proper InstrumentWrapper and Session
-     * integration
+     * Initialize the Note object with proper InstrumentWrapper and Session integration
      */
     private void initializePlayer() {
-        // Don't directly create with RedisService.getInstance().newNote()
-
-        // Get the current session from SessionManager
+        // First check if we have an active session
         Session session = SessionManager.getInstance().getActiveSession();
         if (session == null) {
             logger.error("Cannot initialize player - no active session");
@@ -793,21 +790,17 @@ public class MelodicSequencer implements IBusListener {
             // Use existing player
             logger.info("Using existing player {} for sequencer {}", existingPlayer.getId(), id);
             player = existingPlayer;
-            // String playerName = "Melody " + getChannel();
+            
             // Update channel if needed
-            // setChannel(getSequenceData().getChannel());
             if (player.getChannel() != getChannel()) {
                 player.setChannel(getChannel());
                 player.setOwner(this);
-                setPlayer(existingPlayer);
-                // Save the player through PlayerManager
                 PlayerManager.getInstance().savePlayerProperties(player);
             }
         } else {
-            // Create new player through PlayerManager
-            logger.info("Creating new player for sequencer {}", id);
-            setPlayer(RedisService.getInstance().newNote());
-
+            // Create new player
+            logger.info("Creating new player for melodic sequencer {}", id);
+            player = RedisService.getInstance().newNote();
             Integer tag = getId() + 1;
 
             player.setOwner(this);
@@ -817,55 +810,63 @@ public class MelodicSequencer implements IBusListener {
             // Get an instrument from InstrumentManager
             InstrumentWrapper instrument = InstrumentManager.getInstance()
                     .getOrCreateInternalSynthInstrument(getChannel(), true);
+                    
             if (instrument != null) {
                 player.setInstrument(instrument);
-                PlayerManager.getInstance().savePlayerProperties(player);
-                logger.info("Created new player {} for melodic sequencer {}", player.getId(), id);
+            } else {
+                logger.warn("Could not create instrument for melodic sequencer {}", id);
+                PlayerManager.getInstance().initializeInternalInstrument(player, true);
             }
 
             if (player.getInstrument() != null) {
                 MidiDevice device = DeviceManager.getInstance().getMidiDevice(player.getInstrument().getDeviceName());
-                if (device != null)
+                if (device != null) {
                     player.getInstrument().setDevice(device);
-            }
-
-            // ensurePlayerHasInstrument();
-            // Always initialize the instrument once player is set up
-            if (player.getInstrument() == null) {
-                PlayerManager.getInstance().initializeInternalInstrument(player, true);
-            }
-
-            // If we have soundbank/bank/preset settings in the sequence data, apply them
-            if (sequenceData.getSoundbankName() != null || sequenceData.getBankIndex() != null ||
-                    sequenceData.getPreset() != null) {
-
-                if (player.getInstrument() != null) {
-                    // Apply saved settings
-                    if (sequenceData.getSoundbankName() != null) {
-                        player.getInstrument().setSoundbankName(sequenceData.getSoundbankName());
-                    }
-
-                    if (sequenceData.getBankIndex() != null) {
-                        player.getInstrument().setBankIndex(sequenceData.getBankIndex());
-                    }
-
-                    if (sequenceData.getPreset() != null) {
-                        player.getInstrument().setPreset(sequenceData.getPreset());
-                    }
-
-                    // Send program change
-                    PlayerManager.getInstance().applyInstrumentPreset(player);
                 }
-            }
-
-            if (player.getInstrument() != null) {
                 player.getInstrument().setAssignedToPlayer(true);
             }
+
+            // Apply settings from sequence data if available
+            if (sequenceData != null) {
+                applySequenceDataToInstrument();
+            }
+
+            // Add to session and save
             session.getPlayers().add(player);
+            PlayerManager.getInstance().savePlayerProperties(player);
             SessionManager.getInstance().saveSession(session);
             logger.info("Added new player to session {}: {}", session.getId(), player.getId());
-
         }
+    }
+
+    /**
+     * Apply sequence data settings to the instrument
+     */
+    private void applySequenceDataToInstrument() {
+        if (sequenceData == null || player == null || player.getInstrument() == null) {
+            return;
+        }
+
+        InstrumentWrapper instrument = player.getInstrument();
+        
+        // Apply saved settings
+        if (sequenceData.getSoundbankName() != null) {
+            instrument.setSoundbankName(sequenceData.getSoundbankName());
+        }
+
+        if (sequenceData.getBankIndex() != null) {
+            instrument.setBankIndex(sequenceData.getBankIndex());
+        }
+
+        if (sequenceData.getPreset() != null) {
+            instrument.setPreset(sequenceData.getPreset());
+        }
+
+        // Send program change
+        PlayerManager.getInstance().applyInstrumentPreset(player);
+        
+        logger.debug("Applied sequence data settings to instrument: preset:{}, bank:{}, soundbank:{}",
+                instrument.getPreset(), instrument.getBankIndex(), instrument.getSoundbankName());
     }
 
     /**
@@ -876,15 +877,14 @@ public class MelodicSequencer implements IBusListener {
             return null;
         }
 
-        // Look for a player that's associated with this sequencer AND has the correct
-        // channel
+        // Look for a player that's associated with this sequencer AND has the correct channel
         for (Player p : session.getPlayers()) {
             if (p instanceof Note &&
                     p.getOwner() != null &&
                     p.getOwner() instanceof MelodicSequencer &&
                     ((MelodicSequencer) p.getOwner()).getId() != null &&
                     ((MelodicSequencer) p.getOwner()).getId().equals(id) &&
-                    p.getChannel() == getChannel()) { // Added channel check
+                    p.getChannel() == getChannel()) {
 
                 return p;
             }

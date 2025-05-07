@@ -9,7 +9,6 @@ import javax.swing.*;
 import com.angrysurfer.beats.panel.PlayerAwarePanel;
 import com.angrysurfer.beats.widget.ChannelCombo;
 import com.angrysurfer.beats.widget.InstrumentCombo;
-import com.angrysurfer.core.sequencer.DrumItem;
 import com.angrysurfer.core.service.InternalSynthManager;
 
 import org.slf4j.Logger;
@@ -21,8 +20,9 @@ import com.angrysurfer.core.api.Command;
 import com.angrysurfer.core.api.CommandBus;
 import com.angrysurfer.core.api.Commands;
 import com.angrysurfer.core.api.IBusListener;
+import com.angrysurfer.core.model.DrumItem;
 import com.angrysurfer.core.model.Player;
-import com.angrysurfer.core.sequencer.PresetItem;
+import com.angrysurfer.core.model.PresetItem;
 import com.angrysurfer.core.service.PlayerManager;
 import com.angrysurfer.core.service.SoundbankManager;
 
@@ -110,8 +110,8 @@ public class SoundParametersPanel extends PlayerAwarePanel implements IBusListen
         channelPanel.add(channelCombo);
 
         // Standardize control sizes to match other panels
-        instrumentCombo.setPreferredSize(new Dimension(UIHelper.LARGE_CONTROL_WIDTH * 2, UIHelper.CONTROL_HEIGHT));
-        channelCombo.setPreferredSize(new Dimension(UIHelper.MEDIUM_CONTROL_WIDTH + 5, UIHelper.CONTROL_HEIGHT));
+        instrumentCombo.setPreferredSize(new Dimension(UIHelper.LARGE_CONTROL_WIDTH * 3, UIHelper.CONTROL_HEIGHT));
+        channelCombo.setPreferredSize(new Dimension(UIHelper.LARGE_CONTROL_WIDTH - 5, UIHelper.CONTROL_HEIGHT));
         soundbankCombo.setPreferredSize(new Dimension(UIHelper.LARGE_CONTROL_WIDTH * 2, UIHelper.CONTROL_HEIGHT));
         bankCombo.setPreferredSize(new Dimension(UIHelper.SMALL_CONTROL_WIDTH * 2, UIHelper.CONTROL_HEIGHT));
         presetCombo.setPreferredSize(new Dimension(UIHelper.LARGE_CONTROL_WIDTH * 2, UIHelper.CONTROL_HEIGHT));

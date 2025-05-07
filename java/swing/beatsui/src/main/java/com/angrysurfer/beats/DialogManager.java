@@ -30,7 +30,6 @@ import com.angrysurfer.beats.panel.player.PlayerEditPanel;
 import com.angrysurfer.beats.panel.player.PlayerInstrumentPanel;
 import com.angrysurfer.beats.panel.player.RuleEditPanel;
 import com.angrysurfer.core.config.UserConfig;
-import com.angrysurfer.core.config.UserConfigConverter;
 import com.angrysurfer.core.model.InstrumentWrapper;
 import com.angrysurfer.core.model.Player;
 import com.angrysurfer.core.model.Rule;
@@ -40,6 +39,7 @@ import com.angrysurfer.core.sequencer.DrumSequencer;
 import com.angrysurfer.core.sequencer.MelodicSequencer;
 import com.angrysurfer.core.service.PlayerManager;
 import com.angrysurfer.core.service.SessionManager;
+import com.angrysurfer.core.util.UserConfigConverter;
 
 public class DialogManager implements IBusListener {
 

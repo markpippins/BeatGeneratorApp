@@ -13,7 +13,12 @@ import java.util.List;
 import javax.swing.BorderFactory;
 import javax.swing.JPanel;
 import javax.swing.JTabbedPane;
+import javax.swing.SwingUtilities;
 
+import com.angrysurfer.core.api.Command;
+import com.angrysurfer.core.api.CommandBus;
+import com.angrysurfer.core.api.Commands;
+import com.angrysurfer.core.api.IBusListener;
 import com.angrysurfer.core.sequencer.DrumSequenceData;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -26,7 +31,7 @@ import com.angrysurfer.core.sequencer.DrumSequencer;
 /**
  * Panel containing drum pad selectors
  */
-public class DrumSelectorPanel extends JPanel {
+public class DrumSelectorPanel extends JPanel implements IBusListener {
     private static final Logger logger = LoggerFactory.getLogger(DrumSelectorPanel.class);
     
     // Reference to the sequencer and parent panel
@@ -39,6 +44,9 @@ public class DrumSelectorPanel extends JPanel {
     // Constants
     private static final int DRUM_PAD_COUNT = DrumSequenceData.DRUM_PAD_COUNT;
     private static final int MIDI_DRUM_NOTE_OFFSET = DrumSequenceData.MIDI_DRUM_NOTE_OFFSET;
+    
+    // Command bus for event handling
+    private final CommandBus commandBus = CommandBus.getInstance();
     
     /**
      * Creates a new DrumSelectorPanel
@@ -54,6 +62,121 @@ public class DrumSelectorPanel extends JPanel {
         setBorder(BorderFactory.createEmptyBorder(0, 5, 0, 0));
         
         initializeButtons();
+        
+        // Register for events
+        commandBus.register(this);
+    }
+    
+    /**
+     * Handle command bus events
+     */
+    @Override
+    public void onAction(Command action) {
+        if (action == null || action.getCommand() == null) {
+            return;
+        }
+        
+        switch (action.getCommand()) {
+            case Commands.PLAYER_UPDATED:
+                if (action.getData() instanceof Player player) {
+                    // Check if this player belongs to our sequencer
+                    if (player.getOwner() == sequencer) {
+                        updateButtonForPlayer(player);
+                    }
+                }
+                break;
+                
+            case Commands.PLAYER_PRESET_CHANGED:
+                if (action.getData() instanceof Object[] data && data.length >= 2) {
+                    Long playerId = (Long) data[0];
+                    
+                    // Find player and update button if it belongs to this sequencer
+                    for (int i = 0; i < DRUM_PAD_COUNT; i++) {
+                        Player player = sequencer.getPlayer(i);
+                        if (player != null && playerId.equals(player.getId())) {
+                            updateButtonForPlayer(player);
+                            break;
+                        }
+                    }
+                }
+                break;
+                
+            case Commands.PLAYER_INSTRUMENT_CHANGED:
+                if (action.getData() instanceof Object[] data && data.length >= 2) {
+                    Long playerId = (Long) data[0];
+                    
+                    // Find player and update button if it belongs to this sequencer
+                    for (int i = 0; i < DRUM_PAD_COUNT; i++) {
+                        Player player = sequencer.getPlayer(i);
+                        if (player != null && playerId.equals(player.getId())) {
+                            updateButtonForPlayer(player);
+                            break;
+                        }
+                    }
+                }
+                break;
+                
+            case Commands.DRUM_PLAYER_INSTRUMENT_CHANGED:
+                if (action.getData() instanceof Object[] data && data.length >= 3) {
+                    DrumSequencer targetSequencer = (DrumSequencer) data[0];
+                    int drumIndex = (int) data[1];
+                    
+                    // Only update if this is our sequencer
+                    if (targetSequencer == sequencer && drumIndex >= 0 && drumIndex < DRUM_PAD_COUNT) {
+                        Player player = sequencer.getPlayer(drumIndex);
+                        if (player != null) {
+                            updateButtonForPlayer(player);
+                        }
+                    }
+                }
+                break;
+        }
+    }
+    
+    /**
+     * Update button text and tooltip for a player
+     */
+    private void updateButtonForPlayer(Player player) {
+        // Find which drum pad this player belongs to
+        for (int i = 0; i < DRUM_PAD_COUNT; i++) {
+            if (sequencer.getPlayer(i) == player) {
+                // We found the right player, update the corresponding button
+                updateButtonForDrumPad(i);
+                break;
+            }
+        }
+    }
+    
+    /**
+     * Update button text and tooltip for a specific drum pad
+     */
+    private void updateButtonForDrumPad(int drumIndex) {
+        if (drumIndex < 0 || drumIndex >= drumButtons.size()) {
+            return;
+        }
+        
+        // Get the button and player
+        DrumSequencerButton button = drumButtons.get(drumIndex);
+        Player player = sequencer.getPlayer(drumIndex);
+        
+        if (player == null) {
+            return;
+        }
+        
+        // Use SwingUtilities.invokeLater to ensure thread safety
+        SwingUtilities.invokeLater(() -> {
+            // Update button text with player name (which should reflect preset)
+            String buttonText = player.getName();
+            button.setText(buttonText);
+            
+            // Update tooltip with MIDI note information
+            Integer noteNumber = player.getRootNote();
+            button.setToolTipText("Select " + buttonText + (noteNumber != null ? 
+                    " (Note: " + noteNumber + ")" : ""));
+            
+            logger.debug("Updated drum button {} to '{}' (Note: {})", 
+                    drumIndex, buttonText, noteNumber);
+        });
     }
     
     /**
@@ -187,6 +310,15 @@ public class DrumSelectorPanel extends JPanel {
             drumButton.setFocusable(true);
             drumButtons.add(drumButton);
             add(drumButton);
+        }
+    }
+    
+    /**
+     * Update all buttons to reflect current player names and settings
+     */
+    public void refreshAllButtons() {
+        for (int i = 0; i < DRUM_PAD_COUNT; i++) {
+            updateButtonForDrumPad(i);
         }
     }
     

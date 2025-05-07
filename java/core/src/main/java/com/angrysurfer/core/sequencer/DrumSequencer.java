@@ -4,12 +4,12 @@ import java.util.Arrays;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 
 import javax.sound.midi.MidiDevice;
 import javax.sound.midi.Receiver;
 
+import com.angrysurfer.core.model.Session;
 import com.angrysurfer.core.service.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -36,13 +36,14 @@ import lombok.Setter;
  * individual parameters per drum pad.
  */
 @Getter
+@Setter
 public class DrumSequencer implements IBusListener {
 
     private static final Logger logger = LoggerFactory.getLogger(DrumSequencer.class);
 
     // Reference to the data container
-    @Setter
-    private final DrumSequenceData data;
+
+    private DrumSequenceData data;
 
     private Player[] players;
 
@@ -95,6 +96,13 @@ public class DrumSequencer implements IBusListener {
      * Initialize all player instances with proper MIDI setup
      */
     private void initializePlayers() {
+        // First check if we have an active session
+        Session activeSession = SessionManager.getInstance().getActiveSession();
+        if (activeSession == null) {
+            logger.error("Cannot initialize players - no active session");
+            return;
+        }
+
         // First try to get default MIDI device to reuse for all drum pads
         MidiDevice defaultDevice = DeviceManager.getInstance().getDefaultOutputDevice();
         if (defaultDevice == null) {
@@ -112,25 +120,63 @@ public class DrumSequencer implements IBusListener {
 
         logger.info("Creating drum players with active connections");
         for (int i = 0; i < DrumSequenceData.DRUM_PAD_COUNT; i++) {
-            players[i] = RedisService.getInstance().newStrike();
-            players[i].setOwner(this);
-            players[i].setChannel(DrumSequenceData.MIDI_DRUM_CHANNEL);
-            players[i].setRootNote(DrumSequenceData.MIDI_DRUM_NOTE_OFFSET + i);
-            players[i].setName(InternalSynthManager.getInstance().getDrumName(DrumSequenceData.MIDI_DRUM_NOTE_OFFSET + i));
+            // First check if player already exists in the session
+            Player existingPlayer = findExistingPlayerForDrum(activeSession, i);
+            
+            if (existingPlayer != null) {
+                logger.info("Using existing player for drum pad {}: {}", i, existingPlayer.getId());
+                players[i] = existingPlayer;
+                
+                // Make sure the player has this sequencer as its owner
+                if (players[i].getOwner() != this) {
+                    players[i].setOwner(this);
+                    PlayerManager.getInstance().savePlayerProperties(players[i]);
+                }
+            } else {
+                // Create new player
+                players[i] = RedisService.getInstance().newStrike();
+                players[i].setOwner(this);
+                players[i].setChannel(DrumSequenceData.MIDI_DRUM_CHANNEL);
+                players[i].setRootNote(DrumSequenceData.MIDI_DRUM_NOTE_OFFSET + i);
+                players[i].setName(InternalSynthManager.getInstance().getDrumName(DrumSequenceData.MIDI_DRUM_NOTE_OFFSET + i));
 
-            // Use PlayerManager to initialize the instrument - it will use our enhanced API
-            PlayerManager.getInstance().initializeInternalInstrument(players[i], false);
+                // Use PlayerManager to initialize the instrument
+                PlayerManager.getInstance().initializeInternalInstrument(players[i], false);
 
-            // Store references in data object
+                // Initialize device connections
+                initializeDrumPadConnections(i, defaultDevice);
 
-            // Initialize device connections
-            initializeDrumPadConnections(i, defaultDevice);
-
-            SessionManager.getInstance().getActiveSession().getPlayers().add(players[i]);
-            SessionManager.getInstance().saveActiveSession();
-
-            logger.debug("Initialized drum pad {} with note {}", i, DrumSequenceData.MIDI_DRUM_NOTE_OFFSET + i);
+                // Add player to session
+                activeSession.getPlayers().add(players[i]);
+                
+                logger.debug("Initialized drum pad {} with note {}", i, DrumSequenceData.MIDI_DRUM_NOTE_OFFSET + i);
+            }
         }
+        
+        // Save the session with all players
+        SessionManager.getInstance().saveActiveSession();
+    }
+
+    /**
+     * Find a player in the session that belongs to this drum pad
+     */
+    private Player findExistingPlayerForDrum(Session session, int drumIndex) {
+        if (session == null) {
+            return null;
+        }
+
+        // Look for a player that's associated with this sequencer and has the right drum index
+        for (Player p : session.getPlayers()) {
+            if (p.getOwner() != null && 
+                p.getOwner() instanceof DrumSequencer &&
+                p.getClass().getSimpleName().equals("Strike") &&
+                p.getRootNote() == DrumSequenceData.MIDI_DRUM_NOTE_OFFSET + drumIndex) {
+                
+                return p;
+            }
+        }
+
+        return null;
     }
 
     /**
@@ -1770,6 +1816,13 @@ public class DrumSequencer implements IBusListener {
      */
     public InstrumentWrapper setDrumInstrument(int drumIndex, Long instrumentId, 
             String deviceName, String soundbankName, Integer preset, Integer bankIndex) {
+        
+        // First check if we have an active session
+        Session activeSession = SessionManager.getInstance().getActiveSession();
+        if (activeSession == null) {
+            logger.error("Cannot set drum instrument - no active session");
+            return null;
+        }
         
         if (drumIndex < 0 || drumIndex >= DrumSequenceData.DRUM_PAD_COUNT) {
             logger.warn("Invalid drum index: {}", drumIndex);
