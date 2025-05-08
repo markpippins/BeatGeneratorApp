@@ -22,6 +22,7 @@ import javax.swing.filechooser.FileNameExtensionFilter;
 
 import com.angrysurfer.beats.panel.sequencer.poly.DrumPresetPanel;
 import com.angrysurfer.core.api.*;
+import com.angrysurfer.core.service.InstrumentManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -645,6 +646,39 @@ public class DialogManager implements IBusListener {
         if (sequencer == null) {
             logger.error("Cannot show drum preset dialog - sequencer is null");
             return;
+        }
+        
+        // Ensure all players have valid instruments with channels
+        try {
+            for (int i = 0; i < sequencer.getPlayers().length; i++) {
+                Player player = sequencer.getPlayers()[i];
+                if (player != null) {
+                    // Make sure player has an instrument
+                    if (player.getInstrument() == null) {
+                        // Try to get instrument from ID
+                        if (player.getInstrumentId() != null) {
+                            InstrumentWrapper instrument = InstrumentManager.getInstance()
+                                .getInstrumentById(player.getInstrumentId());
+                            if (instrument != null) {
+                                player.setInstrument(instrument);
+                            }
+                        }
+                        
+                        // If still null, create a default one
+                        if (player.getInstrument() == null) {
+                            player.setInstrument(InstrumentManager.getInstance().getOrCreateInternalSynthInstrument(9, false));
+                        }
+                    }
+                    
+                    // Ensure instrument has channel set
+                    if (player.getInstrument() != null && player.getInstrument().getChannel() == null) {
+                        player.getInstrument().setChannel(9); // Set drum channel
+                    }
+                }
+            }
+        } catch (Exception e) {
+            logger.warn("Error preparing players for preset dialog: {}", e.getMessage());
+            // Continue anyway, we've tried our best to fix things
         }
         
         SwingUtilities.invokeLater(() -> {

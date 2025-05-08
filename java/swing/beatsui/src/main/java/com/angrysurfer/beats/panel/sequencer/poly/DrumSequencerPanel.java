@@ -20,6 +20,7 @@ import javax.swing.JToggleButton;
 import javax.swing.SwingUtilities;
 
 import com.angrysurfer.beats.Symbols;
+import com.angrysurfer.core.api.*;
 import com.angrysurfer.core.sequencer.DrumSequenceData;
 
 import org.slf4j.Logger;
@@ -28,10 +29,6 @@ import org.slf4j.LoggerFactory;
 import com.angrysurfer.beats.panel.player.SoundParametersPanel;
 import com.angrysurfer.beats.util.UIHelper;
 import com.angrysurfer.beats.visualization.Visualizer;
-import com.angrysurfer.core.api.Command;
-import com.angrysurfer.core.api.CommandBus;
-import com.angrysurfer.core.api.Commands;
-import com.angrysurfer.core.api.IBusListener;
 import com.angrysurfer.core.event.DrumPadSelectionEvent;
 import com.angrysurfer.core.event.NoteEvent;
 import com.angrysurfer.core.sequencer.DrumSequenceModifier;
@@ -226,14 +223,59 @@ public class DrumSequencerPanel extends JPanel implements IBusListener {
             CommandBus.getInstance().publish(
                     Commands.DRUM_PRESET_SELECTION_REQUEST,
                     this,
-                    sequencer
-            );
+                    sequencer);
         });
+
         buttonPanel.add(presetButton);
+        buttonPanel.add(createRefreshButton());
         // Add the button to the bottom panel
         westPanel.add(buttonPanel, BorderLayout.EAST);
 
         add(bottomPanel, BorderLayout.SOUTH);
+    }
+
+    // Add this as a new method:
+    private JButton createRefreshButton() {
+        JButton refreshButton = new JButton(
+                Symbols.getSymbol(Symbols.CYCLE));
+        refreshButton.setToolTipText("Refresh drum instruments (fixes sound issues)");
+        refreshButton.setPreferredSize(new Dimension(com.angrysurfer.beats.util.UIHelper.SMALL_CONTROL_WIDTH,
+                com.angrysurfer.beats.util.UIHelper.CONTROL_HEIGHT));
+        refreshButton.setMaximumSize(new Dimension(com.angrysurfer.beats.util.UIHelper.SMALL_CONTROL_WIDTH,
+                com.angrysurfer.beats.util.UIHelper.CONTROL_HEIGHT));
+
+        refreshButton.addActionListener(e -> {
+            if (sequencer != null) {
+                logger.info("Refreshing all drum instruments");
+
+                // Force instrument refresh for all drum players
+                for (int i = 0; i < sequencer.getPlayers().length; i++) {
+                    com.angrysurfer.core.model.Player player = sequencer.getPlayers()[i];
+                    if (player != null && player.getInstrument() != null) {
+                        // Apply preset through PlayerManager
+                        com.angrysurfer.core.service.PlayerManager.getInstance().applyInstrumentPreset(player);
+
+                        // Log instrument details
+                        logger.info("Refreshed drum {}: {} (bank={}, program={})",
+                                i, player.getName(),
+                                player.getInstrument().getBankIndex(),
+                                player.getInstrument().getPreset());
+                    }
+                }
+
+                // Check MIDI connections
+                sequencer.ensureDeviceConnections();
+
+                // Update UI
+                com.angrysurfer.core.api.CommandBus.getInstance().publish(
+                        com.angrysurfer.core.api.Commands.STATUS_UPDATE,
+                        this,
+                        new StatusUpdate(
+                                "Drum Refresh", "Info", "Refreshed all drum instruments"));
+            }
+        });
+
+        return refreshButton;
     }
 
     /**

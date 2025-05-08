@@ -73,21 +73,24 @@ public class ChannelCombo extends JComboBox<Integer> implements IBusListener {
                     // Use ChannelManager to check channel state
                     boolean inUse = channelManager.isChannelInUse(channel);
                     
+                    // Convert 0-based channel to 1-based for display
+                    int displayChannel = channel + 1;
+                    
                     if (channel == 9) {
-                        // Special case for drums
-                        text = channel + " (Drums)";
-                        tooltip = "Channel 9 - Reserved for drum sounds";
+                        // Special case for drums (MIDI channel 10)
+                        text = displayChannel + " (Drums)";  // Shows "10 (Drums)"
+                        tooltip = "Channel " + displayChannel + " - Reserved for drum sounds";
                     } else if (inUse && (currentPlayer == null || currentPlayer.getChannel() != channel)) {
                         // Channel in use by another player
-                        text = channel + " (In Use)";
-                        tooltip = "Channel " + channel + " - Already in use by another player";
+                        text = displayChannel + " (In Use)";  // Shows values like "1 (In Use)"
+                        tooltip = "Channel " + displayChannel + " - Already in use by another player";
                         
                         // Visual indicator for in-use channels
                         setForeground(java.awt.Color.GRAY);
                     } else {
                         // Normal channel
-                        text = String.valueOf(channel);
-                        tooltip = "Channel " + channel;
+                        text = String.valueOf(displayChannel);  // Shows values 1-16
+                        tooltip = "Channel " + displayChannel;
                         
                         // Reset color
                         setForeground(list.getForeground());

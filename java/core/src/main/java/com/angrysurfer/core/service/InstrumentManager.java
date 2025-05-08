@@ -632,4 +632,52 @@ public void refreshCache(List<InstrumentWrapper> instruments) {
             return new ArrayList<>();
         }
     }
+
+    /**
+     * Get instrument for a drum pad
+     * 
+     * @param channel Should be 9 for drums (MIDI channel 10)
+     * @return The instrument, creating it if necessary
+     */
+    public InstrumentWrapper getDrumInstrument(Long id, String name) {
+        // Try to find an existing instrument
+        InstrumentWrapper instrument = null;
+        
+        // If id is provided, try to find by id first
+        if (id != null) {
+            instrument = instrumentCache.get(id);
+        }
+        
+        // If not found, try by name or use default
+        if (instrument == null) {
+            // Try to find by name if provided
+            if (name != null && !name.isEmpty()) {
+                instrument = findByName(name);
+            }
+            
+            // If still not found, create a new one
+            if (instrument == null) {
+                // Create with null device (indicates internal synth)
+                instrument = new InstrumentWrapper();
+                instrument.setId(System.currentTimeMillis()); // Unique ID
+                instrument.setName(name != null ? name : "Drum " + System.currentTimeMillis());
+                instrument.setDeviceName("Gervill"); // Default to internal synth
+                instrument.setSoundbankName("Default");
+                instrument.setBankIndex(0);
+                instrument.setPreset(0);
+                
+                // CRITICAL - Set channel for drums
+                instrument.setChannel(9); // Channel 10 in MIDI (indexed from 0)
+                
+                // Register with manager
+                updateInstrument(instrument);
+            } else if (instrument.getChannel() == null) {
+                // Ensure channel is set for existing instrument
+                instrument.setChannel(9);
+                updateInstrument(instrument);
+            }
+        }
+        
+        return instrument;
+    }
 }

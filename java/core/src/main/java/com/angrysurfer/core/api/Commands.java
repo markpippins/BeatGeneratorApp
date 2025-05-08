@@ -368,4 +368,8 @@ public class Commands {
     // Add these constants
     public static final String DRUM_PRESET_SELECTION_REQUEST = "drum.preset.selection.request";
     public static final String DRUM_INSTRUMENTS_UPDATED = "drum.instruments.updated";
+
+    // Add a new command:
+    public static final String REFRESH_ALL_INSTRUMENTS = "refresh.all.instruments";
+    public static final String REFRESH_PLAYER_INSTRUMENT = "refresh.player.instrument";
 }

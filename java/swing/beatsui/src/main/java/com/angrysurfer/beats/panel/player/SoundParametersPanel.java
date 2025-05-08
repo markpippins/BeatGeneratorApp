@@ -243,34 +243,53 @@ public class SoundParametersPanel extends PlayerAwarePanel implements IBusListen
                 PresetItem preset = (PresetItem) presetCombo.getSelectedItem();
                 if (preset != null && currentPreset != null && preset.getNumber() == currentPreset.getNumber())
                     return;
-        
+
                 currentPreset = preset;
-        
-                if (getPlayer() != null && getPlayer().getInstrument() != null) {
-                    // CRITICAL: Update the instrument's preset property directly
-                    getPlayer().getInstrument().setPreset(preset.getNumber());
+
+                // Get the current player to ensure changes only affect this player
+                Player targetPlayer = getPlayer();
+                if (targetPlayer != null && targetPlayer.getInstrument() != null) {
+                    // CRITICAL: Store player ID to verify we're affecting the same player
+                    final Long targetPlayerId = targetPlayer.getId();
                     
-                    // Let SoundbankManager handle the preset change
-                    if (getPlayer().getChannel() == 9) {
+                    // CRITICAL: Update the instrument's preset property directly
+                    targetPlayer.getInstrument().setPreset(preset.getNumber());
+                    
+                    // Let SoundbankManager handle the preset change - ONLY for this specific player
+                    if (targetPlayer.getChannel() == 9) {
                         // Handle drum note change
-                        getPlayer().setRootNote(preset.getNumber());
-                        soundbankManager.applyPresetChange(getPlayer().getInstrument(),
-                                getPlayer().getInstrument().getBankIndex(),
-                                preset.getNumber());
+                        targetPlayer.setRootNote(preset.getNumber());
+                        
+                        // Only apply to this specific player's instrument
+                        soundbankManager.applyPresetChangeToPlayer(
+                            targetPlayer,
+                            targetPlayer.getInstrument().getBankIndex(),
+                            preset.getNumber()
+                        );
                     } else {
-                        // Handle melodic preset change
-                        soundbankManager.applyPresetChange(
-                            getPlayer().getInstrument(),
-                            getPlayer().getInstrument().getBankIndex(),
+                        // Handle melodic preset change - for THIS player only
+                        soundbankManager.applyPresetChangeToPlayer(
+                            targetPlayer,
+                            targetPlayer.getInstrument().getBankIndex(),
                             preset.getNumber()
                         );
                     }
                     
                     // Save the changes
-                    playerManager.savePlayerProperties(getPlayer());
+                    playerManager.savePlayerProperties(targetPlayer);
                     
-                    // Notify system of player update
-                    commandBus.publish(Commands.PLAYER_UPDATED, this, getPlayer());
+                    // Verify player is still the one we were working with
+                    if (getPlayer() != null && getPlayer().getId().equals(targetPlayerId)) {
+                        // Notify system of player update
+                        commandBus.publish(Commands.PLAYER_UPDATED, this, targetPlayer);
+                        
+                        // Add explicit message to ensure this player's instrument is refreshed
+                        commandBus.publish(
+                            Commands.REFRESH_PLAYER_INSTRUMENT, 
+                            this,
+                            targetPlayer.getId()
+                        );
+                    }
                 }
             }
         });
@@ -292,13 +311,16 @@ public class SoundParametersPanel extends PlayerAwarePanel implements IBusListen
         if (soundbankCombo == null || getPlayer() == null)
             return;
 
+        // Store the active player to ensure changes only affect this player
+        final Player targetPlayer = getPlayer();
+        
         isInitializing = true;
         try {
-            nameTextField.setText(getPlayer().getName());
+            nameTextField.setText(targetPlayer.getName());
 
-            boolean isDrumChannel = getPlayer().getChannel() == 9;
-            boolean isInternalSynth = getPlayer().getInstrument() != null &&
-                    InternalSynthManager.getInstance().isInternalSynthInstrument(getPlayer().getInstrument());
+            boolean isDrumChannel = targetPlayer.getChannel() == 9;
+            boolean isInternalSynth = targetPlayer.getInstrument() != null &&
+                    InternalSynthManager.getInstance().isInternalSynthInstrument(targetPlayer.getInstrument());
 
             // Update UI according to instrument type
             updateControlVisibility(isInternalSynth, isDrumChannel);

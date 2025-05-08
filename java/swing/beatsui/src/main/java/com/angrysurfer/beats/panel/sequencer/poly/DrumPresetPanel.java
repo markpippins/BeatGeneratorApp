@@ -165,13 +165,27 @@ public class DrumPresetPanel extends JPanel {
             return;
         }
         
-        Player player = sequencer.getPlayers()[drumIndex];
-        player.setInstrument(instrument);
-        
-        // Update the player's name in the label
-        drumLabels.get(drumIndex).setText(String.format("Drum %d: %s", drumIndex + 1, player.getName()));
-        
-        logger.info("Set drum {} instrument to {}", drumIndex + 1, instrument.getName());
+        try {
+            Player player = sequencer.getPlayers()[drumIndex];
+            
+            // Make sure the instrument has the correct channel
+            // This is the fix for the NPE - ensure a channel is set
+            if (instrument.getChannel() == null) {
+                // Channel 9 is standard for drums (MIDI channel 10)
+                instrument.setChannel(9);
+                logger.info("Set missing channel for instrument {} to 9 (drum channel)", 
+                    instrument.getName());
+            }
+            
+            player.setInstrument(instrument);
+            
+            // Update the player's name in the label
+            drumLabels.get(drumIndex).setText(String.format("Drum %d: %s", drumIndex + 1, player.getName()));
+            
+            logger.info("Set drum {} instrument to {}", drumIndex + 1, instrument.getName());
+        } catch (Exception e) {
+            logger.error("Error updating drum instrument: {}", e.getMessage(), e);
+        }
     }
     
     /**

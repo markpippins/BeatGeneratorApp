@@ -22,6 +22,7 @@ import com.angrysurfer.core.api.IBusListener;
 import com.angrysurfer.core.api.StatusUpdate;
 import com.angrysurfer.core.model.DrumItem;
 import com.angrysurfer.core.model.InstrumentWrapper;
+import com.angrysurfer.core.model.Player;
 import com.angrysurfer.core.model.SynthData;
 
 import org.slf4j.LoggerFactory;
@@ -775,6 +776,80 @@ public class SoundbankManager implements IBusListener {
 
         } catch (Exception e) {
             logger.error("Failed to apply preset change: {}", e.getMessage(), e);
+        }
+    }
+
+    /**
+     * Apply a preset change to a specific player's instrument
+     * 
+     * @param player The player to update
+     * @param bankIndex The bank index
+     * @param preset The preset number
+     */
+    public void applyPresetChangeToPlayer(Player player, Integer bankIndex, Integer preset) {
+        if (player == null || player.getInstrument() == null) {
+            logger.warn("Cannot apply preset change - player or instrument is null");
+            return;
+        }
+        
+        InstrumentWrapper instrument = player.getInstrument();
+        int channel = player.getChannel();
+        
+        try {
+            // Store the specific MIDI device for this player
+            javax.sound.midi.MidiDevice device = instrument.getDevice();
+            
+            // Apply bank and program changes specifically to this instrument
+            if (bankIndex != null) {
+                instrument.setBankIndex(bankIndex);
+            }
+            
+            if (preset != null) {
+                instrument.setPreset(preset);
+            }
+            
+            // For internal synth, use direct channel access
+            if (InternalSynthManager.getInstance().isInternalSynthInstrument(instrument)) {
+                javax.sound.midi.Synthesizer synth = InternalSynthManager.getInstance().getSynthesizer();
+                if (synth != null && synth.isOpen()) {
+                    javax.sound.midi.MidiChannel[] channels = synth.getChannels();
+                    if (channels != null && channel < channels.length) {
+                        // Direct channel access to avoid affecting other instruments
+                        channels[channel].controlChange(0, (bankIndex >> 7) & 0x7F);  // Bank MSB
+                        channels[channel].controlChange(32, bankIndex & 0x7F);        // Bank LSB
+                        channels[channel].programChange(preset);
+                        
+                        logger.info("Applied preset change directly to player {} on channel {}: bank={}, program={}", 
+                            player.getId(), channel, bankIndex, preset);
+                    }
+                }
+            } else if (device != null && device.isOpen() && instrument.getReceiver() != null) {
+                // For external device, send MIDI message directly to this device's receiver
+                javax.sound.midi.Receiver receiver = instrument.getReceiver();
+                
+                // Use timestamped messages to ensure proper sequencing
+                long timestamp = -1; // -1 means "as soon as possible"
+                
+                // Bank select MSB
+                javax.sound.midi.ShortMessage bankMSB = new javax.sound.midi.ShortMessage();
+                bankMSB.setMessage(0xB0 | channel, 0, (bankIndex >> 7) & 0x7F);
+                receiver.send(bankMSB, timestamp);
+                
+                // Bank select LSB
+                javax.sound.midi.ShortMessage bankLSB = new javax.sound.midi.ShortMessage();
+                bankLSB.setMessage(0xB0 | channel, 32, bankIndex & 0x7F);
+                receiver.send(bankLSB, timestamp);
+                
+                // Program change
+                javax.sound.midi.ShortMessage progChange = new javax.sound.midi.ShortMessage();
+                progChange.setMessage(0xC0 | channel, preset, 0);
+                receiver.send(progChange, timestamp);
+                
+                logger.info("Applied preset change to player {}'s external device on ch {}: bank={}, program={}", 
+                    player.getId(), channel, bankIndex, preset);
+            }
+        } catch (Exception e) {
+            logger.error("Error applying preset change to player {}: {}", player.getId(), e.getMessage());
         }
     }
 

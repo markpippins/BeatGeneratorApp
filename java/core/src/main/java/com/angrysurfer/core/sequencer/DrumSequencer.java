@@ -1894,4 +1894,85 @@ public class DrumSequencer implements IBusListener {
         
         return instrument;
     }
+
+    /**
+     * Force refresh the sound for a specific drum
+     * 
+     * @param drumIndex The drum index to refresh
+     */
+    public void refreshDrumSound(int drumIndex) {
+        if (drumIndex < 0 || drumIndex >= DrumSequenceData.DRUM_PAD_COUNT) {
+            logger.warn("Invalid drum index for refresh: {}", drumIndex);
+            return;
+        }
+        
+        Player player = players[drumIndex];
+        if (player == null || player.getInstrument() == null) {
+            logger.warn("No player or instrument for drum {}", drumIndex);
+            return;
+        }
+        
+        try {
+            // First, ensure proper device connection
+            InstrumentWrapper instrument = player.getInstrument();
+            
+            // Get device if needed
+            if (instrument.getDevice() == null || !instrument.getDevice().isOpen()) {
+                String deviceName = instrument.getDeviceName();
+                if (deviceName == null || deviceName.isEmpty()) {
+                    deviceName = "Gervill";
+                }
+                
+                MidiDevice device = DeviceManager.getInstance().getMidiDevice(deviceName);
+                if (device != null && !device.isOpen()) {
+                    try {
+                        device.open();
+                    } catch (Exception e) {
+                        logger.warn("Could not open device for drum {}: {}", drumIndex, e.getMessage());
+                    }
+                }
+                
+                if (device != null) {
+                    instrument.setDevice(device);
+                }
+            }
+            
+            // Ensure we have a receiver
+            if (instrument.getReceiver() == null && instrument.getDevice() != null) {
+                instrument.setReceiver(instrument.getDevice().getReceiver());
+            }
+            
+            // Now apply the instrument preset
+            PlayerManager.getInstance().applyInstrumentPreset(player);
+            
+            // Also try direct MIDI messages for more reliable program change
+            if (instrument.getReceiver() != null) {
+                int channel = player.getChannel();
+                int bankIndex = instrument.getBankIndex() != null ? instrument.getBankIndex() : 0;
+                int preset = instrument.getPreset() != null ? instrument.getPreset() : 0;
+                
+                // Send bank select MSB
+                javax.sound.midi.ShortMessage bankMSB = new javax.sound.midi.ShortMessage();
+                bankMSB.setMessage(0xB0 | channel, 0, (bankIndex >> 7) & 0x7F);
+                instrument.getReceiver().send(bankMSB, -1);
+                
+                // Send bank select LSB
+                javax.sound.midi.ShortMessage bankLSB = new javax.sound.midi.ShortMessage();
+                bankLSB.setMessage(0xB0 | channel, 32, bankIndex & 0x7F);
+                instrument.getReceiver().send(bankLSB, -1);
+                
+                // Send program change
+                javax.sound.midi.ShortMessage pc = new javax.sound.midi.ShortMessage();
+                pc.setMessage(0xC0 | channel, preset, 0);
+                instrument.getReceiver().send(pc, -1);
+                
+                logger.info("Sent explicit MIDI program change for drum {}: ch={}, bank={}, program={}", 
+                          drumIndex, channel, bankIndex, preset);
+            }
+            
+            logger.info("Refreshed drum sound for pad {}: {}", drumIndex, player.getName());
+        } catch (Exception e) {
+            logger.error("Error refreshing drum sound: {}", e.getMessage());
+        }
+    }
 }

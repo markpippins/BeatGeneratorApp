@@ -18,8 +18,10 @@ import javax.swing.JScrollPane;
 import javax.swing.JToggleButton;
 import javax.swing.SwingUtilities;
 
+import com.angrysurfer.beats.Symbols;
 import com.angrysurfer.beats.panel.player.ChannelComboPanel;
 import com.angrysurfer.beats.widget.*;
+import com.angrysurfer.core.api.*;
 import com.angrysurfer.core.event.MelodicScaleSelectionEvent;
 import com.angrysurfer.core.event.MelodicSequencerEvent;
 import com.angrysurfer.core.event.NoteEvent;
@@ -32,10 +34,6 @@ import com.angrysurfer.beats.panel.sequencer.MuteSequencerPanel;
 import com.angrysurfer.beats.panel.sequencer.TiltSequencerPanel;
 import com.angrysurfer.beats.panel.session.SessionControlPanel;
 import com.angrysurfer.beats.util.UIHelper;
-import com.angrysurfer.core.api.Command;
-import com.angrysurfer.core.api.CommandBus;
-import com.angrysurfer.core.api.Commands;
-import com.angrysurfer.core.api.IBusListener;
 import com.angrysurfer.core.model.Player;
 import com.angrysurfer.core.redis.MelodicSequenceDataHelper;
 import com.angrysurfer.core.redis.RedisService;
@@ -243,7 +241,7 @@ public class MelodicSequencerPanel extends JPanel implements IBusListener {
         sequenceParamsPanel = new MelodicSequenceParametersPanel(sequencer);
 
         // Navigation panel goes NORTH-WEST
-        westPanel.add(navigationPanel, BorderLayout.NORTH);
+        westPanel.add(navigationPanel, BorderLayout.WEST);
 
         // Sound parameters go NORTH-EAST
         eastPanel.add(new SoundParametersPanel(), BorderLayout.NORTH);
@@ -319,8 +317,62 @@ public class MelodicSequencerPanel extends JPanel implements IBusListener {
         // Add the bottom panel to the SOUTH region of the main panel
         add(bottomPanel, BorderLayout.SOUTH);
 
+        JPanel buttonPanel = UIHelper.createSectionPanel("System");
+
+        // Create refresh button
+        JButton refreshButton = new JButton(Symbols.getSymbol(Symbols.CYCLE));
+        refreshButton.setToolTipText("Refresh all instrument presets");
+        refreshButton.setPreferredSize(new Dimension(UIHelper.SMALL_CONTROL_WIDTH, UIHelper.CONTROL_HEIGHT));
+        refreshButton.setMaximumSize(new Dimension(UIHelper.SMALL_CONTROL_WIDTH, UIHelper.CONTROL_HEIGHT));
+        refreshButton.addActionListener(e -> {
+            CommandBus.getInstance().publish(
+                    Commands.REFRESH_ALL_INSTRUMENTS,
+                    this,
+                    sequencer);
+        });
+        buttonPanel.add(refreshButton);
+        buttonPanel.add(createInstrumentRefreshButton());
+        // Add the button to the bottom panel
+        westPanel.add(buttonPanel, BorderLayout.EAST);
+
         // Register for command updates
         CommandBus.getInstance().register(this);
+    }
+
+    // Add this as a new method:
+    private JButton createInstrumentRefreshButton() {
+        JButton refreshButton = new JButton(Symbols.getSymbol(Symbols.CYCLE));
+        refreshButton.setToolTipText("Refresh all instrument sounds (fixes sound issues)");
+
+        refreshButton.addActionListener(e -> {
+            // First melodic sequencers
+            for (MelodicSequencer seq : MelodicSequencerManager
+                    .getInstance().getAllSequencers()) {
+                if (seq.getPlayer() != null && seq.getPlayer().getInstrument() != null) {
+                    com.angrysurfer.core.service.PlayerManager.getInstance().applyInstrumentPreset(seq.getPlayer());
+                }
+            }
+
+            // Then drum sequencers
+            for (com.angrysurfer.core.sequencer.DrumSequencer seq : com.angrysurfer.core.service.DrumSequencerManager
+                    .getInstance().getAllSequencers()) {
+                for (com.angrysurfer.core.model.Player player : seq.getPlayers()) {
+                    if (player != null && player.getInstrument() != null) {
+                        com.angrysurfer.core.service.PlayerManager.getInstance().applyInstrumentPreset(player);
+                    }
+                }
+                seq.ensureDeviceConnections();
+            }
+
+            // Notify user
+            com.angrysurfer.core.api.CommandBus.getInstance().publish(
+                    com.angrysurfer.core.api.Commands.STATUS_UPDATE,
+                    this,
+                    new StatusUpdate(
+                            "Sound Refresh", "Info", "Refreshed all instrument presets"));
+        });
+
+        return refreshButton;
     }
 
     /**

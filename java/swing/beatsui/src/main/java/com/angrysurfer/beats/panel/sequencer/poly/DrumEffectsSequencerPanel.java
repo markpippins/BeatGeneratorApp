@@ -51,6 +51,7 @@ import com.angrysurfer.core.sequencer.TimingDivision;
 import com.angrysurfer.core.sequencer.TimingUpdate;
 import com.angrysurfer.core.service.DrumSequencerManager;
 import com.angrysurfer.core.service.PlayerManager;
+import com.angrysurfer.core.service.DeviceManager;
 
 /**
  * A sequencer panel with X0X-style step sequencing capabilities
@@ -490,57 +491,7 @@ public class DrumEffectsSequencerPanel extends JPanel implements IBusListener {
         return sequencer.getTimingDivision(selectedPadIndex);
     }
 
-    // Method to select a drum pad and update the UI
-    private void selectDrumPad(int padIndex) {
-        // Only process if actually changing selection
-        if (padIndex != selectedPadIndex) {
-            // Clear previous selection
-            if (selectedPadIndex >= 0 && selectedPadIndex < drumButtons.size()) {
-                drumButtons.get(selectedPadIndex).setSelected(false);
-                drumButtons.get(selectedPadIndex).setText("");
-                drumButtons.get(selectedPadIndex).repaint();
-            }
-
-            // Set new selection
-            selectedPadIndex = padIndex;
-
-            // Update sequencer's selected pad index
-            sequencer.setSelectedPadIndex(padIndex);
-
-            // Update drum button visual state using clearer approach
-            if (padIndex >= 0 && padIndex < drumButtons.size()) {
-                DrumButton button = drumButtons.get(padIndex);
-                button.setSelected(true);
-                button.repaint();
-
-                // Enable trigger buttons
-                setTriggerButtonsEnabled(true);
-
-                // Notify other components of the selection change
-                CommandBus.getInstance().publish(Commands.DRUM_PAD_SELECTED,
-                        this, new DrumPadSelectionEvent(-1, padIndex));
-
-                // Refresh trigger buttons to show the pattern for the selected pad
-                refreshTriggerButtonsForPad(padIndex);
-
-                // Update controls to match the selected pad's settings
-                updateControlsFromSequencer();
-
-                // Update dial positions for the selected drum
-                updateDialsForSelectedPad();
-
-                // Update sequence parameter controls to match selected drum
-                if (sequenceParamsPanel != null) {
-                    sequenceParamsPanel.updateControls(padIndex);
-                }
-                } else {
-                    // No valid selection - disable trigger buttons
-                    setTriggerButtonsEnabled(false);
-                }
-        }
-    }
-
-    // Replace the handleDrumPadSelected method with this version
+    // Replace the handleDrumPadSelected method with this improved version:
     private void handleDrumPadSelected(int padIndex) {
         // Don't process if already selected or we're in the middle of handling a selection
         if (padIndex == selectedPadIndex || isHandlingSelection) return;
@@ -556,12 +507,36 @@ public class DrumEffectsSequencerPanel extends JPanel implements IBusListener {
             if (padIndex >= 0 && padIndex < sequencer.getPlayers().length) {
                 Player player = sequencer.getPlayers()[padIndex];
                 
-                if (player != null) {
+                if (player != null && player.getInstrument() != null) {
+                    // Ensure device is connected and open
+                    if (player.getInstrument().getDevice() == null || !player.getInstrument().getDevice().isOpen()) {
+                        player.getInstrument().setDevice(DeviceManager.getMidiDevice(player.getInstrument().getDeviceName()));
+                        
+                        // Ensure device is open
+                        if (player.getInstrument().getDevice() != null && !player.getInstrument().getDevice().isOpen()) {
+                            try {
+                                player.getInstrument().getDevice().open();
+                            } catch (Exception e) {
+                                logger.warning("Error opening MIDI device: " + e.getMessage());
+                            }
+                        }
+                    }
+                    
+                    // Apply instrument preset BEFORE playing the note
+                    PlayerManager.getInstance().applyInstrumentPreset(player);
+                    
+                    // Play the sound with proper note
+                    player.drumNoteOn(player.getRootNote(), 100);
+                    
+                    // Request activation
                     CommandBus.getInstance().publish(
                         Commands.PLAYER_ACTIVATION_REQUEST,
                         this, 
                         player
                     );
+                    
+                    // Update info display with current instrument
+                    updateInstrumentInfoLabel();
                 }
             }
             

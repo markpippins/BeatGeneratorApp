@@ -147,6 +147,27 @@ public class MelodicSequencer implements IBusListener {
         }
 
         PlayerManager.getInstance().applyInstrumentPreset(player);
+        
+        // Add this explicit program change to ensure the preset is applied:
+        if (player != null && player.getInstrument() != null) {
+            try {
+                // Force program change through both regular channel and direct MIDI
+                InstrumentWrapper instrument = player.getInstrument();
+                int channel = player.getChannel();
+                int bankIndex = instrument.getBankIndex() != null ? instrument.getBankIndex() : 0;
+                int preset = instrument.getPreset() != null ? instrument.getPreset() : 0;
+                
+                // Send explicit bank select and program change
+                instrument.controlChange(0, (bankIndex >> 7) & 0x7F);  // Bank MSB
+                instrument.controlChange(32, bankIndex & 0x7F);        // Bank LSB
+                instrument.programChange(preset, 0);
+                
+                logger.info("Explicitly set instrument {} to bank {} program {} on channel {}",
+                    instrument.getName(), bankIndex, preset, channel);
+            } catch (Exception e) {
+                logger.error("Error applying program change: {}", e.getMessage(), e);
+            }
+        }
 
         isPlaying = true;
         logger.info("Melodic sequencer {} started playback", id);
@@ -712,6 +733,23 @@ public class MelodicSequencer implements IBusListener {
                 logger.info("Received TRANSPORT_STOP command");
                 stop();
             }
+
+            case Commands.REFRESH_ALL_INSTRUMENTS -> {
+                logger.info("Refreshing instrument preset for melodic sequencer {}", id);
+                if (player != null && player.getInstrument() != null) {
+                    PlayerManager.getInstance().applyInstrumentPreset(player);
+                }
+            }
+
+            case Commands.REFRESH_PLAYER_INSTRUMENT -> {
+                if (action.getData() instanceof Long playerId && 
+                    player != null && 
+                    player.getId().equals(playerId)) {
+                    
+                    logger.info("Explicit refresh requested for player instrument: {}", playerId);
+                    PlayerManager.getInstance().applyInstrumentPreset(player);
+                }
+            }
         }
     }
 
@@ -810,3 +848,4 @@ public class MelodicSequencer implements IBusListener {
         }
     }
 }
+

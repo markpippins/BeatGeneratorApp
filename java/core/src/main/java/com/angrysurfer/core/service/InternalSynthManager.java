@@ -15,6 +15,8 @@ import javax.sound.midi.MidiChannel;
 import javax.sound.midi.MidiDevice;
 import javax.sound.midi.MidiSystem;
 import javax.sound.midi.MidiUnavailableException;
+import javax.sound.midi.Receiver;
+import javax.sound.midi.ShortMessage;
 import javax.sound.midi.Soundbank;
 import javax.sound.midi.Synthesizer;
 
@@ -339,9 +341,67 @@ public class InternalSynthManager {
             if (preset != null) {
                 instrument.setPreset(preset);
             }
+            
+            // Make sure we have the correct channel
+            int channel = instrument.getChannel() != null ? instrument.getChannel() : 0;
+            bankIndex = instrument.getBankIndex() != null ? instrument.getBankIndex() : 0;
+            preset = instrument.getPreset() != null ? instrument.getPreset() : 0;
+            
+            logger.info("InternalSynthManager updating: channel={}, bank={}, program={}", 
+                channel, bankIndex, preset);
 
-            // Apply the changes to the MIDI device
-            initializeInstrumentState(instrument);
+            // Make sure synth is initialized
+            if (synthesizer == null || !synthesizer.isOpen()) {
+                initializeSynthesizer();
+            }
+
+            if (synthesizer != null && synthesizer.isOpen()) {
+                // First apply through the synth's MidiChannels directly
+                MidiChannel[] channels = synthesizer.getChannels();
+                if (channels != null && channel < channels.length) {
+                    channels[channel].controlChange(0, (bankIndex >> 7) & 0x7F);
+                    channels[channel].controlChange(32, bankIndex & 0x7F);
+                    channels[channel].programChange(preset);
+                    
+                    // For percussion channel, ensure drum mode is enabled
+                    if (channel == 9) {
+                        channels[channel].controlChange(0, 120);
+                    }
+                    
+                    logger.info("Applied preset via direct synth channel: ch={}, bank={}, program={}",
+                        channel, bankIndex, preset);
+                } else {
+                    logger.warn("Could not access synthesizer channel {}", channel);
+                }
+                
+                // Also try through Receiver for completeness
+                try {
+                    Receiver receiver = synthesizer.getReceiver();
+                    if (receiver != null) {
+                        // Bank select MSB
+                        javax.sound.midi.ShortMessage bankMSB = new javax.sound.midi.ShortMessage();
+                        bankMSB.setMessage(0xB0 | channel, 0, (bankIndex >> 7) & 0x7F);
+                        receiver.send(bankMSB, -1);
+                        
+                        // Bank select LSB
+                        javax.sound.midi.ShortMessage bankLSB = new javax.sound.midi.ShortMessage();
+                        bankLSB.setMessage(0xB0 | channel, 32, bankIndex & 0x7F);
+                        receiver.send(bankLSB, -1);
+                        
+                        // Program change
+                        javax.sound.midi.ShortMessage pc = new javax.sound.midi.ShortMessage();
+                        pc.setMessage(0xC0 | channel, preset, 0);
+                        receiver.send(pc, -1);
+                        
+                        logger.info("Applied preset via synth receiver: ch={}, bank={}, program={}",
+                            channel, bankIndex, preset);
+                    }
+                } catch (Exception e) {
+                    logger.warn("Error sending direct MIDI messages: {}", e.getMessage());
+                }
+            } else {
+                logger.warn("Synthesizer not available for preset change");
+            }
 
             logger.debug("Updated preset for instrument {} to bank {}, program {}",
                     instrument.getName(),

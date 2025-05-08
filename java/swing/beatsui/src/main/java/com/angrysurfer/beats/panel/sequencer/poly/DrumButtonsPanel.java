@@ -54,7 +54,7 @@ public class DrumButtonsPanel extends JPanel {
             drumButton.setName("DrumButton-" + i);
             drumButton.setToolTipText("Pad " + (i + 1));
             drumButton.setText(Integer.toString(i + 1));
-            drumButton.setExclusive(true);
+            // drumButton.setExclusive(true);
             
             final int index = i;
             drumButton.addActionListener(e -> selectDrumPad(index));
@@ -124,9 +124,12 @@ public class DrumButtonsPanel extends JPanel {
     }
     
     /**
-     * Initialize drum pads with labels and tooltips
+     * Initialize all drum pads to ensure they have proper MIDI connections
      */
-    private void initializeDrumPads() {
+    public void initializeDrumPads() {
+        // Make sure all drums are properly prepared
+        sequencer.ensureDeviceConnections();
+        
         // Names for each drum part - these will be used in tooltips
         String[] drumNames = {
                 "Kick", "Snare", "Closed HH", "Open HH",
@@ -140,10 +143,10 @@ public class DrumButtonsPanel extends JPanel {
             DrumButton button = drumButtons.get(i);
 
             // Set the pad number (1-based)
-            button.setPadNumber(i + 1);
+            // button.setPadNumber(i + 1);
 
             // Set main beat flag for pads 1, 5, 9, 13 (zero-indexed as 0, 4, 8, 12)
-            button.setMainBeat(i == 0 || i == 4 || i == 8 || i == 12);
+            // button.setMainBeat(i == 0 || i == 4 || i == 8 || i == 12);
 
             // Set detailed tooltip
             String drumName = (i < drumNames.length) ? drumNames[i] : "Drum " + (i + 1);
