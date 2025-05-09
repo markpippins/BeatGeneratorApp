@@ -1,8 +1,6 @@
 package com.angrysurfer.beats.panel.player;
 
 import java.awt.BorderLayout;
-import java.awt.Component;
-import java.awt.Cursor;
 import java.awt.Dimension;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
@@ -15,12 +13,10 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import javax.sound.midi.Soundbank;
 import javax.sound.midi.Synthesizer;
 import javax.swing.BorderFactory;
-import javax.swing.DefaultListCellRenderer;
 import javax.swing.JButton;
 import javax.swing.JComboBox;
 import javax.swing.JFileChooser;
 import javax.swing.JLabel;
-import javax.swing.JList;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JSpinner;
@@ -29,19 +25,16 @@ import javax.swing.SpinnerNumberModel;
 import javax.swing.SwingUtilities;
 import javax.swing.filechooser.FileFilter;
 
-import com.angrysurfer.beats.widget.ChannelCombo;
-import com.angrysurfer.beats.widget.InstrumentCombo;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.angrysurfer.beats.widget.ChannelCombo;
+import com.angrysurfer.beats.widget.InstrumentCombo;
 import com.angrysurfer.core.api.CommandBus;
 import com.angrysurfer.core.api.Commands;
 import com.angrysurfer.core.model.DrumItem;
 import com.angrysurfer.core.model.InstrumentWrapper;
 import com.angrysurfer.core.model.Player;
-import com.angrysurfer.core.model.PresetItem;
-import com.angrysurfer.core.sequencer.DrumSequencer;
-import com.angrysurfer.core.sequencer.MelodicSequencer;
 import com.angrysurfer.core.service.InstrumentManager;
 import com.angrysurfer.core.service.InternalSynthManager;
 import com.angrysurfer.core.service.PlayerManager;
@@ -98,12 +91,20 @@ public class PlayerEditBasicPropertiesPanel extends JPanel {
         super(new GridBagLayout());
         this.player = player;
 
-        // Cache initial state - important for detecting changes
-        if (player != null) {
+        // Initialize with defaults if player is null
+        // if (player != null) {
+            // Create minimal placeholder player for initial UI setup
+            //  Player defaultPlayer = new Player();
+            // defaultPlayer.setName("Default Player");
+            // defaultPlayer.setChannel(0);
+
+            // this.player = defaultPlayer;
+        // } else {
+            // Cache initial state - important for detecting changes
             initialChannel = player.getChannel();
             isDrumPlayer = initialChannel == 9;
             initialInstrument = player.getInstrument();
-        }
+        // }
 
         setBorder(BorderFactory.createCompoundBorder(
                 BorderFactory.createTitledBorder("Basic Properties"),
@@ -122,8 +123,6 @@ public class PlayerEditBasicPropertiesPanel extends JPanel {
 
         initComponents();
         layoutComponents();
-        // registerForInstrumentUpdates();
-        // registerForDrumEvents();
         registerForCommandBusEvents();
 
         // Run this after component initialization to ensure proper state

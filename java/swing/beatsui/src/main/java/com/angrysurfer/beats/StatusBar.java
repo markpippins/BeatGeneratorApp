@@ -7,6 +7,7 @@ import java.util.*;
 import javax.swing.*;
 import javax.swing.Timer;
 
+import com.angrysurfer.beats.panel.TransportPanel;
 import com.angrysurfer.beats.panel.player.SoundParametersPanel;
 import com.angrysurfer.beats.util.UIHelper;
 import com.angrysurfer.beats.widget.VuMeter;
@@ -89,7 +90,7 @@ public class StatusBar extends JPanel implements IBusListener {
     private void setup() {
         // Global panel setup
         setLayout(new BorderLayout());
-        setBorder(BorderFactory.createEmptyBorder(5, 8, 5, 8));
+        // setBorder(BorderFactory.createEmptyBorder(5, 8, 5, 8));
         
         // Create main panel with horizontal layout
         JPanel mainPanel = new JPanel();
@@ -97,6 +98,8 @@ public class StatusBar extends JPanel implements IBusListener {
         
         // Create and add all sections
         mainPanel.add(createMonitoringSection());
+        mainPanel.add(Box.createHorizontalStrut(SECTION_SPACING));
+        mainPanel.add(new TransportPanel());
         mainPanel.add(Box.createHorizontalStrut(SECTION_SPACING));
         mainPanel.add(createMessageSection());
 

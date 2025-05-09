@@ -105,6 +105,7 @@ public class Symbols {
     public static final String MIDI_MONITOR_IN_OUT_CHANNEL = "midi_monitor_in_out_channel";
     public static final String MIDI_MONITOR_IN_OUT = "midi_monitor_in_out";
     public static final String MIDI_MONITOR_IN_OUT_CC_NOTE = "midi_monitor_in_out_cc_note";
+    public static final String REFRESH = "refresh";
 
     static {
         Map<String, String> map = new HashMap<>();
@@ -138,6 +139,7 @@ public class Symbols {
         map.put(ALL_NOTES_OFF, "🔕");
         map.put(CYCLE, "🔄");
         map.put(LOOP, "🔁");
+        map.put(REFRESH, "🔄");
 
         map.put(NEW, "🆕");
         map.put(OPEN, "📂");

@@ -29,6 +29,7 @@ import com.angrysurfer.core.api.Command;
 import com.angrysurfer.core.api.CommandBus;
 import com.angrysurfer.core.api.Commands;
 import com.angrysurfer.core.api.IBusListener;
+import com.angrysurfer.core.event.PlayerUpdateEvent;
 import com.angrysurfer.core.model.Player;
 
 /**
@@ -70,11 +71,30 @@ public class PlayerEditDetailPanel extends JPanel {
     /**
      * Creates a new PlayerEditDetailPanel for the given player
      *
-     * @param player The player being edited
+     * @param player The player being edited (can be null initially)
      */
     public PlayerEditDetailPanel(Player player) {
         super(new BorderLayout());
         this.player = player;
+
+        // Initialize with default values if player is null
+        // if (player == null) {
+        //     // Create placeholder player with default values for initial UI setup
+        //     Player defaultPlayer = new Player();
+        //     defaultPlayer.setLevel(100);
+        //     defaultPlayer.setMinVelocity(64);
+        //     defaultPlayer.setMaxVelocity(96);
+        //     defaultPlayer.setPanPosition(64);
+        //     defaultPlayer.setRootNote(60); // Middle C
+        //     defaultPlayer.setSwing(0);
+        //     defaultPlayer.setProbability(100);
+        //    defaultPlayer.setRandomDegree(0);
+        //    defaultPlayer.setSparse(0.0);
+        //    defaultPlayer.setRatchetCount(4);
+        //    defaultPlayer.setRatchetInterval(4);
+        //
+        //     this.player = defaultPlayer;
+        // }
 
         // Initialize performance controls
         levelSlider = createSlider("Level", player.getLevel(), 0, 100);
@@ -308,6 +328,8 @@ public class PlayerEditDetailPanel extends JPanel {
      * Sets up action listeners for buttons and sliders
      */
     private void setupActionListeners() {
+        CommandBus commandBus = CommandBus.getInstance();
+
         // Octave navigation - updated to use NoteSelectionDial directly
         prevButton.addActionListener(new ActionListener() {
             @Override
@@ -333,16 +355,40 @@ public class PlayerEditDetailPanel extends JPanel {
             }
         });
 
-        // Note dial changes should publish the new note value
+        // Note dial changes
         noteDial.addChangeListener(e -> {
+            if (player == null) return;
+            
             int value = noteDial.getValue();
-            // Publish the new note value with player ID
-            CommandBus.getInstance().publish(Commands.NEW_VALUE_NOTE, this,
-                    new Object[] { player.getId(), (long) value });
+            player.setRootNote(value);
+            
+            // Create a player update event
+            commandBus.publish(
+                Commands.PLAYER_UPDATE_EVENT,
+                this,
+                new PlayerUpdateEvent(player)
+            );
 
             // Show the note name in logs
             logger.debug("Note changed: {} (MIDI: {})",
                     noteDial.getNoteWithOctave(), value);
+        });
+
+        // Pan dial change listener
+        panDial.addChangeListener(e -> {
+            if (player == null) return;
+            
+            int value = panDial.getValue();
+            player.setPanPosition(value);
+            
+            // Create a player update event
+            commandBus.publish(
+                Commands.PLAYER_UPDATE_EVENT,
+                this,
+                new PlayerUpdateEvent(player)
+            );
+            
+            logger.debug("Pan changed: {}", value);
         });
 
         CommandBus.getInstance().register(new IBusListener() {
@@ -352,16 +398,6 @@ public class PlayerEditDetailPanel extends JPanel {
                     noteDial.setValue((Integer) action.getData(), false);
                 }
             }
-        });
-
-        // Add pan dial change listener
-        panDial.addChangeListener(e -> {
-            int value = panDial.getValue();
-            // Publish the new pan value with player ID
-            CommandBus.getInstance().publish(Commands.NEW_VALUE_PAN, this,
-                    new Object[] { player.getId(), (long) value });
-
-            logger.debug("Pan changed: {}", value);
         });
 
         // Add velocity min slider change listener

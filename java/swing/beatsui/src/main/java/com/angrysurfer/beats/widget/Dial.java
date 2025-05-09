@@ -127,6 +127,13 @@ public class Dial extends JComponent {
         setCommand(command);
     }
 
+    public Dial(int min, int max, int initialValue) {
+        this();
+        setMinimum(min);
+        setMaximum(max);
+        setValue(initialValue);
+    }
+
     public void setKnobColor(Color color) {
         this.knobColor = color;
         this.gradientStartColor = color.brighter();

@@ -52,9 +52,9 @@ public class TransportPanel extends JPanel {
 
     public TransportPanel() {
         super(new BorderLayout());
-        setPreferredSize(new Dimension(getPreferredSize().width, 75));
+        // setPreferredSize(new Dimension(getPreferredSize().width, 75));
 
-        setBorder(BorderFactory.createEmptyBorder(2, 2, 2, 2));
+        // setBorder(BorderFactory.createEmptyBorder(2, 2, 2, 2));
 
         // Start with recording disabled
         isRecording = false;

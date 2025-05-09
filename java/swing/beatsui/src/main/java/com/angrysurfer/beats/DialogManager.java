@@ -73,7 +73,8 @@ public class DialogManager implements IBusListener {
             case Commands.RULE_ADD_REQUEST -> handleAddRule((Player) action.getData());
             case Commands.RULE_EDIT_REQUEST -> handleEditRule((Rule) action.getData());
             case Commands.EDIT_PLAYER_PARAMETERS -> handlePlayerParameters((Player) action.getData());
-            case Commands.CREATE_INSTRUMENT_FOR_PLAYER_REQUEST -> handleCreateInstrumentForPlayer((Player) action.getData());
+            case Commands.CREATE_INSTRUMENT_FOR_PLAYER_REQUEST ->
+                handleCreateInstrumentForPlayer((Player) action.getData());
             case Commands.LOAD_CONFIG -> SwingUtilities.invokeLater(() -> showConfigFileChooserDialog());
             case Commands.SAVE_CONFIG -> SwingUtilities.invokeLater(() -> showConfigFileSaverDialog());
             case Commands.SHOW_MAX_LENGTH_DIALOG -> handleMaxLengthDialog((DrumSequencer) action.getData());
@@ -114,7 +115,8 @@ public class DialogManager implements IBusListener {
                     setNewPlayerInstrument(newPlayer);
 
                     // Create panel and dialog
-                    PlayerEditPanel panel = new PlayerEditPanel(newPlayer);
+                    PlayerEditPanel panel = new PlayerEditPanel();
+                    panel.setPlayer(newPlayer);
                     Dialog<Player> dialog = frame.createDialog(newPlayer, panel);
                     dialog.setTitle("Add Player");
 
@@ -212,7 +214,8 @@ public class DialogManager implements IBusListener {
                     logger.debug("Opening editor for player: {} (ID: {})", player.getName(), player.getId());
 
                     // Create panel with the player
-                    PlayerEditPanel panel = new PlayerEditPanel(player);
+                    PlayerEditPanel panel = new PlayerEditPanel();
+                    panel.setPlayer(player);
                     Dialog<Player> dialog = frame.createDialog(player, panel);
                     dialog.setTitle(getPlayerTitle(player));
 
@@ -296,7 +299,20 @@ public class DialogManager implements IBusListener {
 
                 if (dialog.showDialog()) {
                     Rule updatedRule = panel.getUpdatedRule();
-                    Player player = PlayerManager.getInstance().getActivePlayer(); // redisService.findPlayerForRule(rule);
+                    Player player = null;
+                    if (rule != null) {
+                        // Get player from the rule if possible
+                        player = rule.getPlayer();
+                    }
+                    String message;
+                    // If that doesn't work (rule has no player reference), try to get from context:
+                    if (player == null) {
+                        // If we can't find the player, just use a generic message
+                        message = "Are you sure you want to delete this rule?";
+                    } else {
+                        message = "Are you sure you want to delete this rule from player " + player.getName() + "?";
+                    }
+
                     if (player != null) {
                         redisService.saveRule(updatedRule);
                         redisService.savePlayer(player);
@@ -361,21 +377,20 @@ public class DialogManager implements IBusListener {
                     PlayerInstrumentPanel panel = new PlayerInstrumentPanel(player);
                     Dialog<InstrumentWrapper> dialog = frame.createDialog(null, panel);
                     dialog.setTitle("Create Instrument for " + player.getName());
-                    
+
                     // Show dialog
                     boolean result = dialog.showDialog();
-                    
+
                     // Result handling is done inside PlayerInstrumentPanel
                     // which publishes the appropriate events
-                    
+
                 } catch (Exception e) {
                     logger.error("Error creating instrument for player: " + e.getMessage(), e);
                     commandBus.publish(
-                        Commands.STATUS_UPDATE,
-                        this,
-                        new StatusUpdate("DialogManager", "Error",
-                            "Failed to create instrument: " + e.getMessage())
-                    );
+                            Commands.STATUS_UPDATE,
+                            this,
+                            new StatusUpdate("DialogManager", "Error",
+                                    "Failed to create instrument: " + e.getMessage()));
                 }
             });
         }
@@ -647,7 +662,7 @@ public class DialogManager implements IBusListener {
             logger.error("Cannot show drum preset dialog - sequencer is null");
             return;
         }
-        
+
         // Ensure all players have valid instruments with channels
         try {
             for (int i = 0; i < sequencer.getPlayers().length; i++) {
@@ -658,18 +673,19 @@ public class DialogManager implements IBusListener {
                         // Try to get instrument from ID
                         if (player.getInstrumentId() != null) {
                             InstrumentWrapper instrument = InstrumentManager.getInstance()
-                                .getInstrumentById(player.getInstrumentId());
+                                    .getInstrumentById(player.getInstrumentId());
                             if (instrument != null) {
                                 player.setInstrument(instrument);
                             }
                         }
-                        
+
                         // If still null, create a default one
                         if (player.getInstrument() == null) {
-                            player.setInstrument(InstrumentManager.getInstance().getOrCreateInternalSynthInstrument(9, false));
+                            player.setInstrument(
+                                    InstrumentManager.getInstance().getOrCreateInternalSynthInstrument(9, false));
                         }
                     }
-                    
+
                     // Ensure instrument has channel set
                     if (player.getInstrument() != null && player.getInstrument().getChannel() == null) {
                         player.getInstrument().setChannel(9); // Set drum channel
@@ -680,53 +696,50 @@ public class DialogManager implements IBusListener {
             logger.warn("Error preparing players for preset dialog: {}", e.getMessage());
             // Continue anyway, we've tried our best to fix things
         }
-        
+
         SwingUtilities.invokeLater(() -> {
             try {
                 // Create the drum preset panel
                 DrumPresetPanel presetPanel = new DrumPresetPanel(sequencer);
-                
+
                 // Create a dialog using the panel
                 Dialog<DrumSequencer> dialog = frame.createDialog(sequencer, presetPanel);
                 dialog.setTitle("Drum Preset Selection");
                 dialog.setResizable(true);
-                
+
                 // Show the dialog and handle result
                 if (dialog.showDialog()) {
                     // Get the updated sequencer with new instrument settings
                     DrumSequencer updatedSequencer = presetPanel.getUpdatedSequencer();
-                    
+
                     // Save all player settings
                     for (Player player : updatedSequencer.getPlayers()) {
                         if (player != null) {
                             PlayerManager.getInstance().savePlayerProperties(player);
                         }
                     }
-                    
+
                     // Notify that drum instrument presets were updated
                     CommandBus.getInstance().publish(
-                        Commands.DRUM_INSTRUMENTS_UPDATED,
-                        this,
-                        updatedSequencer
-                    );
-                    
+                            Commands.DRUM_INSTRUMENTS_UPDATED,
+                            this,
+                            updatedSequencer);
+
                     // Update UI to reflect changes
                     CommandBus.getInstance().publish(
-                        Commands.DRUM_GRID_REFRESH_REQUESTED,
-                        this,
-                        null
-                    );
-                    
+                            Commands.DRUM_GRID_REFRESH_REQUESTED,
+                            this,
+                            null);
+
                     logger.info("Successfully updated drum presets");
                 }
             } catch (Exception e) {
                 logger.error("Error showing drum preset dialog: {}", e.getMessage(), e);
                 commandBus.publish(
-                    Commands.STATUS_UPDATE,
-                    this,
-                    new StatusUpdate("DialogManager", "Error", 
-                        "Failed to show drum preset dialog: " + e.getMessage())
-                );
+                        Commands.STATUS_UPDATE,
+                        this,
+                        new StatusUpdate("DialogManager", "Error",
+                                "Failed to show drum preset dialog: " + e.getMessage()));
             }
         });
     }

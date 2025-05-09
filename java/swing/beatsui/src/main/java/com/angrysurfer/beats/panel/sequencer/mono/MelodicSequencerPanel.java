@@ -26,6 +26,7 @@ import com.angrysurfer.core.event.MelodicScaleSelectionEvent;
 import com.angrysurfer.core.event.MelodicSequencerEvent;
 import com.angrysurfer.core.event.NoteEvent;
 
+import com.angrysurfer.core.event.PlayerRefreshEvent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -244,7 +245,7 @@ public class MelodicSequencerPanel extends JPanel implements IBusListener {
         westPanel.add(navigationPanel, BorderLayout.WEST);
 
         // Sound parameters go NORTH-EAST
-        eastPanel.add(new SoundParametersPanel(), BorderLayout.NORTH);
+        // eastPanel.add(new SoundParametersPanel(), BorderLayout.NORTH);
 
         // Create and add the center info panel with instrument info
         JPanel centerPanel = new JPanel(new GridBagLayout()); // Use GridBagLayout for true vertical centering
@@ -332,6 +333,7 @@ public class MelodicSequencerPanel extends JPanel implements IBusListener {
         });
         buttonPanel.add(refreshButton);
         buttonPanel.add(createInstrumentRefreshButton());
+        buttonPanel.add(createRefreshButton());
         // Add the button to the bottom panel
         westPanel.add(buttonPanel, BorderLayout.EAST);
 
@@ -372,6 +374,44 @@ public class MelodicSequencerPanel extends JPanel implements IBusListener {
                             "Sound Refresh", "Info", "Refreshed all instrument presets"));
         });
 
+        return refreshButton;
+    }
+
+    private JButton createRefreshButton() {
+        JButton refreshButton = new JButton(Symbols.getSymbol(Symbols.CYCLE));
+        refreshButton.setToolTipText("Refresh instrument preset (fixes sound issues)");
+        refreshButton.setPreferredSize(new Dimension(UIHelper.SMALL_CONTROL_WIDTH,
+                                                    UIHelper.CONTROL_HEIGHT));
+        refreshButton.setMaximumSize(new Dimension(UIHelper.SMALL_CONTROL_WIDTH,
+                                                  UIHelper.CONTROL_HEIGHT));
+        
+        refreshButton.addActionListener(e -> {
+            if (sequencer != null && sequencer.getPlayer() != null && 
+                sequencer.getPlayer().getInstrument() != null) {
+                
+                // Log current instrument state
+                com.angrysurfer.core.model.InstrumentWrapper instr = sequencer.getPlayer().getInstrument();
+                logger.info("Refreshing instrument: {} (bank={}, program={})", 
+                          instr.getName(), instr.getBankIndex(), instr.getPreset());
+                
+                // Send the player-specific refresh event
+                PlayerRefreshEvent event = new PlayerRefreshEvent(sequencer.getPlayer());
+                com.angrysurfer.core.api.CommandBus.getInstance().publish(
+                    com.angrysurfer.core.api.Commands.PLAYER_REFRESH_EVENT,
+                    this,
+                    event
+                );
+                
+                // Update UI
+                com.angrysurfer.core.api.CommandBus.getInstance().publish(
+                    com.angrysurfer.core.api.Commands.STATUS_UPDATE, 
+                    this, 
+                    new com.angrysurfer.core.api.StatusUpdate(
+                        "Preset Refresh", "Info", "Refreshed instrument for " + sequencer.getPlayer().getName())
+                );
+            }
+        });
+        
         return refreshButton;
     }
 

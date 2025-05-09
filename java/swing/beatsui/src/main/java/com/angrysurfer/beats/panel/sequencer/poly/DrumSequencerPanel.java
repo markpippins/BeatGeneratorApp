@@ -176,7 +176,7 @@ public class DrumSequencerPanel extends JPanel implements IBusListener {
 
         westPanel.add(navigationPanel, BorderLayout.WEST);
 
-        eastPanel.add(new SoundParametersPanel(), BorderLayout.NORTH);
+        //eastPanel.add(new SoundParametersPanel(), BorderLayout.NORTH);
 
         topPanel.add(westPanel, BorderLayout.WEST);
         topPanel.add(eastPanel, BorderLayout.EAST);

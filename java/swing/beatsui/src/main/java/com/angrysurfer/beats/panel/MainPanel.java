@@ -52,7 +52,7 @@ import com.angrysurfer.core.service.InternalSynthManager;
 import com.angrysurfer.core.service.SessionManager;
 import com.angrysurfer.core.model.Player;
 
-public class MainPanel extends JPanel implements AutoCloseable, IBusListener {
+public class MainPanel extends PlayerAwarePanel implements AutoCloseable, IBusListener {
     private static final Logger logger = LoggerFactory.getLogger(MainPanel.class.getName());
 
     static {
@@ -87,11 +87,9 @@ public class MainPanel extends JPanel implements AutoCloseable, IBusListener {
     private Point dragStartPoint;
 
     public MainPanel(StatusBar statusBar) {
-        super(new BorderLayout());
-        // setBorder(new EmptyBorder(2, 5, 2, 5));
-
+        super();
+        setLayout(new BorderLayout());
         CommandBus.getInstance().register(this);
-
         setupTabbedPane(statusBar);
         add(tabbedPane, BorderLayout.CENTER);
     }
@@ -120,7 +118,7 @@ public class MainPanel extends JPanel implements AutoCloseable, IBusListener {
         // Add new Sample Browser tab
         tabbedPane.addTab("Samples", createSampleBrowserPanel());
 
-        tabbedPane.setBorder(BorderFactory.createEmptyBorder(0, 8, 0, 8));
+        tabbedPane.setBorder(BorderFactory.createEmptyBorder(0, 4, 0, 4));
 
         JPanel tabToolbar = new JPanel();
         tabToolbar.setLayout(new BoxLayout(tabToolbar, BoxLayout.X_AXIS));
@@ -667,6 +665,16 @@ public class MainPanel extends JPanel implements AutoCloseable, IBusListener {
                 // TRANSPORT_STOPPED events
             }
         }
+    }
+
+    @Override
+    public void handlePlayerActivated() {
+
+    }
+
+    @Override
+    public void handlePlayerUpdated() {
+
     }
 
     private JToggleButton createMetronomeToggleButton() {

@@ -35,10 +35,8 @@ public class PlayerManagerDiagnosticsHelper {
             Map<Long, Player> playerCache = manager.getPlayerCache();
             log.addLine("Player cache size: " + playerCache.size());
             
-            // Get active player
-            Player activePlayer = manager.getActivePlayer();
-            log.addLine("Active player: " + (activePlayer != null ? 
-                activePlayer.getName() + " (ID: " + activePlayer.getId() + ")" : "None"));
+            // No longer use active player - it's been replaced by the event system
+            log.addLine("Note: Active player concept has been replaced by PlayerSelectionEvent system");
             
             // Test channel assignment
             log.addSection("Player Channel Assignment");
@@ -113,19 +111,15 @@ public class PlayerManagerDiagnosticsHelper {
             // Test getPlayerById functionality
             log.addSection("Player Retrieval Test");
             
-            if (activePlayer != null) {
-                log.addLine("Testing getPlayerById with active player ID: " + activePlayer.getId());
-                Player retrieved = manager.getPlayerById(activePlayer.getId());
-                log.addLine("Retrieved player: " + (retrieved != null ? "Success" : "Failed"));
-                if (retrieved != null) {
-                    log.addLine("Retrieved player is same as active: " + (retrieved == activePlayer));
-                }
-            } else if (!playerCache.isEmpty()) {
+            if (!playerCache.isEmpty()) {
                 // Test with first cached player
                 Long testId = playerCache.keySet().iterator().next();
                 log.addLine("Testing getPlayerById with cached player ID: " + testId);
                 Player retrieved = manager.getPlayerById(testId);
                 log.addLine("Retrieved player: " + (retrieved != null ? "Success" : "Failed"));
+                if (retrieved != null) {
+                    log.addLine("Player name: " + retrieved.getName());
+                }
             } else {
                 log.addWarning("No players available to test getPlayerById");
             }
@@ -148,7 +142,7 @@ public class PlayerManagerDiagnosticsHelper {
             // Test command bus registration
             log.addSection("Event System Registration");
             CommandBus commandBus = CommandBus.getInstance();
-            // log.addLine("PlayerManager is registered with CommandBus: " + commandBus.isRegistered(manager));
+            log.addLine("CommandBus instance obtained: " + (commandBus != null));
             
             // Check channel consistency
             log.addSection("Channel Consistency Test");
@@ -252,12 +246,10 @@ public class PlayerManagerDiagnosticsHelper {
                 for (Rule rule : player.getRules()) {
                     log.addIndentedLine("Rule " + index + ":", 1);
                     log.addIndentedLine("ID: " + rule.getId(), 2);
-                    // log.addIndentedLine("Beat: " + rule.getBeat(), 2);
                     log.addIndentedLine("Part: " + rule.getPart(), 2);
                     log.addIndentedLine("Operator: " + rule.getOperator(), 2);
                     log.addIndentedLine("Comparison: " + rule.getComparison(), 2);
                     log.addIndentedLine("Value: " + rule.getValue(), 2);
-                    // log.addIndentedLine("Type: " + rule.getRuleTypeAsString(), 2);
                     index++;
                 }
             } else {

@@ -20,7 +20,10 @@ import javax.swing.JPanel;
 import javax.swing.JTable;
 import javax.swing.JTextField;
 
+import com.angrysurfer.beats.Symbols;
+import com.angrysurfer.beats.panel.PlayerAwarePanel;
 import com.angrysurfer.beats.widget.Dial;
+import com.angrysurfer.core.model.Player;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -38,10 +41,11 @@ public class UIHelper {
     private static final Logger logger = LoggerFactory.getLogger(UIHelper.class.getName());
 
     // UI constants - Optional size adjustments
-    public static final int CONTROL_HEIGHT = 22; // REDUCED from 25 to 22
-    public static final int SMALL_CONTROL_WIDTH = 35; // REDUCED from 40 to 35
-    public static final int MEDIUM_CONTROL_WIDTH = 55; // REDUCED from 60 to 55
-    public static final int LARGE_CONTROL_WIDTH = 85; // REDUCED from 90 to 85
+    public static final int CONTROL_HEIGHT = 24; // UPDATED from 22 to 24
+    public static final int CONTROL_WIDTH = 100;
+    public static final int SMALL_CONTROL_WIDTH = 40; // UPDATED from 35 to 40
+    public static final int MEDIUM_CONTROL_WIDTH = 60; // UPDATED from 55 to 60
+    public static final int LARGE_CONTROL_WIDTH = 120; // UPDATED from 85 to 120
     public static final int ID_LABEL_WIDTH = 85;
 
     // Greys & Dark Blues
@@ -139,15 +143,10 @@ public class UIHelper {
      */
     public static boolean addSafely(Container container, Component component, Object constraints) {
         if (component == null) {
-            // Logger.getLogger(UIHelper.class.getName()).warning(
-            //         "Attempted to add null component to " +
-            //                 (container != null ? container.getClass().getSimpleName() : "null container"));
             return false;
         }
 
         if (container == null) {
-            // Logger.getLogger(UIHelper.class.getName()).warning(
-            //         "Attempted to add component to null container");
             return false;
         }
 
@@ -155,8 +154,6 @@ public class UIHelper {
             container.add(component, constraints);
             return true;
         } catch (Exception e) {
-            // Logger.getLogger(UIHelper.class.getName()).warning(
-            //         "Error adding component: " + e.getMessage());
             e.printStackTrace(); // More detailed stack trace for debugging
             return false;
         }
@@ -351,9 +348,20 @@ public class UIHelper {
     /**
      * Creates a panel with up/down buttons for adjustments
      */
-    public static JPanel createVerticalAdjustPanel(String label, String upLabel, String downLabel, String upCommand,
-            String downCommand) {
-        JPanel navPanel = new JPanel(new BorderLayout(0, 2));
+    public static PlayerAwarePanel createVerticalAdjustPanel(String label, String upLabel, String downLabel, String upCommand,
+                                                             String downCommand) {
+        PlayerAwarePanel navPanel = new PlayerAwarePanel() {
+            @Override
+            public void handlePlayerActivated() {
+
+            }
+
+            @Override
+            public void handlePlayerUpdated() {
+
+            }
+        };
+        navPanel.setLayout(new BorderLayout(0, 2));
         navPanel.setBorder(BorderFactory.createEmptyBorder(0, 5, 0, 5)); // Add margins
         JLabel octaveLabel = new JLabel(label, JLabel.CENTER);
 
@@ -367,7 +375,7 @@ public class UIHelper {
         } else {
             // Original code path for other commands
             prevButton.addActionListener(e -> CommandBus.getInstance().publish(e.getActionCommand(), UIHelper.class,
-                    PlayerManager.getInstance().getActivePlayer()));
+                    navPanel.getTargetPlayer()));
         }
 
         // Similar change for the down button
@@ -378,7 +386,7 @@ public class UIHelper {
                     e -> CommandBus.getInstance().publish(e.getActionCommand(), UIHelper.class, null));
         } else {
             nextButton.addActionListener(e -> CommandBus.getInstance().publish(e.getActionCommand(), UIHelper.class,
-                    PlayerManager.getInstance().getActivePlayer()));
+                    navPanel.getTargetPlayer()));
         }
 
         // Enable/disable buttons based on player selection
@@ -479,5 +487,163 @@ public class UIHelper {
         dial.setUpdateOnResize(false);
         dial.setLabel(label);
         return dial;
+    }
+
+    /**
+     * Create a player refresh button
+     * 
+     * @param player The player to refresh
+     * @param buttonText Optional button text (if null, uses refresh symbol)
+     * @return A configured JButton
+     */
+    public static JButton createPlayerRefreshButton(Player player, String buttonText) {
+        JButton refreshButton;
+        
+        if (buttonText != null) {
+            refreshButton = new JButton(buttonText);
+        } else {
+            refreshButton = new JButton(Symbols.getSymbol(Symbols.REFRESH));
+        }
+        
+        refreshButton.setToolTipText("Refresh instrument sound");
+        refreshButton.setPreferredSize(new Dimension(SMALL_CONTROL_WIDTH, CONTROL_HEIGHT));
+        
+        refreshButton.addActionListener(e -> {
+            if (player != null && player.getInstrument() != null) {
+                // Create a refresh event for this specific player
+                com.angrysurfer.core.event.PlayerRefreshEvent event = 
+                    new com.angrysurfer.core.event.PlayerRefreshEvent(player);
+                
+                // Send the event
+                CommandBus.getInstance().publish(
+                    Commands.PLAYER_REFRESH_EVENT,
+                    refreshButton,
+                    event
+                );
+                
+                // Show status update
+                CommandBus.getInstance().publish(
+                    Commands.STATUS_UPDATE,
+                    refreshButton,
+                    new com.angrysurfer.core.api.StatusUpdate(
+                        "Sound Refresh", "Info", 
+                        "Refreshed instrument for " + player.getName())
+                );
+            }
+        });
+        
+        return refreshButton;
+    }
+
+    /**
+     * Create a player selection button
+     * 
+     * @param player The player to select
+     * @param buttonText Optional button text
+     * @return A configured JButton
+     */
+    public static JButton createPlayerSelectButton(Player player, String buttonText) {
+        String text = buttonText != null ? buttonText : "Select " + player.getName();
+        JButton selectButton = new JButton(text);
+        
+        selectButton.setToolTipText("Select " + player.getName() + " for editing");
+        selectButton.setPreferredSize(new Dimension(CONTROL_WIDTH, CONTROL_HEIGHT));
+        
+        selectButton.addActionListener(e -> {
+            if (player != null) {
+                // Create a selection event for this specific player
+                com.angrysurfer.core.event.PlayerSelectionEvent event = 
+                    new com.angrysurfer.core.event.PlayerSelectionEvent(player);
+                
+                // Send the event
+                CommandBus.getInstance().publish(
+                    Commands.PLAYER_SELECTION_EVENT,
+                    selectButton,
+                    event
+                );
+            }
+        });
+        
+        return selectButton;
+    }
+
+    /**
+     * Create a player-aware labeled control panel with title
+     * 
+     * @param title The panel title
+     * @param player The player this panel works with
+     * @param hasRefreshButton Whether to include a refresh button
+     * @return A configured JPanel with BorderLayout
+     */
+    public static JPanel createPlayerAwareControlPanel(String title, Player player, boolean hasRefreshButton) {
+        JPanel panel = new JPanel(new BorderLayout(5, 5));
+        panel.setBorder(BorderFactory.createCompoundBorder(
+            BorderFactory.createTitledBorder(title),
+            BorderFactory.createEmptyBorder(5, 5, 5, 5)
+        ));
+        
+        if (hasRefreshButton && player != null) {
+            JPanel headerPanel = new JPanel(new BorderLayout());
+            
+            // Add refresh button to the right side
+            JButton refreshButton = createPlayerRefreshButton(player, null);
+            headerPanel.add(refreshButton, BorderLayout.EAST);
+            
+            panel.add(headerPanel, BorderLayout.NORTH);
+        }
+        
+        return panel;
+    }
+
+    /**
+     * Create a dial panel for a player parameter
+     * 
+     * @param label The parameter label
+     * @param player The player this dial affects
+     * @param min Minimum value
+     * @param max Maximum value
+     * @param initialValue Initial value
+     * @param propertyUpdater Function that updates the player property
+     * @return A configured dial panel
+     */
+    public static JPanel createPlayerParameterDialPanel(
+        String label, 
+        Player player, 
+        int min, 
+        int max, 
+        int initialValue,
+        Consumer<Integer> propertyUpdater
+    ) {
+        JPanel panel = new JPanel(new BorderLayout(5, 0));
+        panel.setBorder(BorderFactory.createEmptyBorder(2, 2, 2, 2));
+        
+        JLabel nameLabel = new JLabel(label, JLabel.CENTER);
+        panel.add(nameLabel, BorderLayout.NORTH);
+        
+        Dial dial = new Dial(min, max, initialValue);
+        dial.setPreferredSize(new Dimension(50, 50));
+        
+        dial.addChangeListener(e -> {
+            int value = dial.getValue();
+            if (player != null && propertyUpdater != null) {
+                // Update the property
+                propertyUpdater.accept(value);
+                
+                // Send a player update event
+                CommandBus.getInstance().publish(
+                    Commands.PLAYER_UPDATE_EVENT,
+                    dial,
+                    new com.angrysurfer.core.event.PlayerUpdateEvent(player)
+                );
+            }
+        });
+        
+        panel.add(dial, BorderLayout.CENTER);
+        
+        JLabel valueLabel = new JLabel(String.valueOf(initialValue), JLabel.CENTER);
+        dial.addChangeListener(e -> valueLabel.setText(String.valueOf(dial.getValue())));
+        panel.add(valueLabel, BorderLayout.SOUTH);
+        
+        return panel;
     }
 }

@@ -32,7 +32,7 @@ import com.angrysurfer.core.model.Player;
 import com.angrysurfer.core.sequencer.Scale;
 import com.angrysurfer.core.service.PlayerManager;
 
-public class ControlPanel extends JPanel {
+public class ControlPanel extends PlayerAwarePanel {
     private static final Logger logger = LoggerFactory.getLogger(ControlPanel.class.getName());
     private static final int BUTTON_SIZE = 30;
     private static final int PANEL_HEIGHT = 100; // Increased from 90 to 100px
@@ -62,7 +62,8 @@ public class ControlPanel extends JPanel {
 
     public ControlPanel() {
         // Use BorderLayout as the main layout for better component positioning
-        super(new BorderLayout());
+        super();
+        setLayout(new BorderLayout());
 
         // Set fixed height - updated to match new PANEL_HEIGHT
         setMinimumSize(new Dimension(getMinimumSize().width, PANEL_HEIGHT));
@@ -112,6 +113,16 @@ public class ControlPanel extends JPanel {
         add(rightPanel, BorderLayout.EAST);
 
         setupCommandBusListener();
+    }
+
+    @Override
+    public void handlePlayerActivated() {
+        
+    }
+
+    @Override
+    public void handlePlayerUpdated() {
+
     }
 
     private static final String PLAYER_PANEL = "PLAYER_PANEL";
@@ -296,7 +307,7 @@ public class ControlPanel extends JPanel {
                     noteSelectionDial.setValue(newNote, false);
 
                     // Save the change and notify UI
-                    PlayerManager.getInstance().getActivePlayer().setRootNote(newNote);
+                    getTargetPlayer().setRootNote(newNote);
 
                     // Request row refresh in players panel
                     CommandBus.getInstance().publish(Commands.PLAYER_ROW_REFRESH, this, activePlayer);
@@ -323,7 +334,7 @@ public class ControlPanel extends JPanel {
                     noteSelectionDial.setValue(newNote, false);
 
                     // Save the change and notify UI
-                    PlayerManager.getInstance().getActivePlayer().setRootNote(newNote);
+                    getTargetPlayer().setRootNote(newNote);
 
                     // Request row refresh in players panel
                     CommandBus.getInstance().publish(Commands.PLAYER_ROW_REFRESH, this, activePlayer);
@@ -435,7 +446,7 @@ public class ControlPanel extends JPanel {
                 Dial sourceDial = (Dial) e.getSource();
                 if (sourceDial.getCommand() != null) {
                     CommandBus.getInstance().publish(sourceDial.getCommand(),
-                            PlayerManager.getInstance().getActivePlayer(), sourceDial.getValue());
+                            getTargetPlayer(), sourceDial.getValue());
                 }
             }
         });
@@ -556,7 +567,7 @@ public class ControlPanel extends JPanel {
             activePlayer.setLevel(value);
 
             // Save the change and notify UI
-            PlayerManager.getInstance().getActivePlayer().setLevel(value);
+            getTargetPlayer().setLevel(value);
 
             // Request row refresh in players panel (important!)
             CommandBus.getInstance().publish(Commands.PLAYER_ROW_REFRESH, this, activePlayer);
@@ -574,7 +585,7 @@ public class ControlPanel extends JPanel {
             activePlayer.setSwing(value);
 
             // Save the change and notify UI
-            PlayerManager.getInstance().getActivePlayer().setSwing(value);
+            getTargetPlayer().setSwing(value);
 
             // Request row refresh
             CommandBus.getInstance().publish(Commands.PLAYER_ROW_REFRESH, this, activePlayer);
@@ -589,7 +600,7 @@ public class ControlPanel extends JPanel {
             logger.info("Updating player probability to: " + value);
 
             // Update player and save
-            PlayerManager.getInstance().getActivePlayer().setProbability(value);
+            getTargetPlayer().setProbability(value);
 
             // Request row refresh
             CommandBus.getInstance().publish(Commands.PLAYER_ROW_REFRESH, this, activePlayer);
@@ -625,7 +636,7 @@ public class ControlPanel extends JPanel {
             activePlayer.setMinVelocity(minValue);
 
             // Save the changes and notify UI
-            PlayerManager.getInstance().getActivePlayer().setMinVelocity(minValue);
+            getTargetPlayer().setMinVelocity(minValue);
 
             // Request row refresh
             CommandBus.getInstance().publish(Commands.PLAYER_ROW_REFRESH, this, activePlayer);
@@ -661,7 +672,7 @@ public class ControlPanel extends JPanel {
             activePlayer.setMaxVelocity(maxValue);
 
             // Save the changes and notify UI
-            PlayerManager.getInstance().getActivePlayer().setMaxVelocity(maxValue);
+            getTargetPlayer().setMaxVelocity(maxValue);
 
             // Request row refresh
             CommandBus.getInstance().publish(Commands.PLAYER_ROW_REFRESH, this, activePlayer);
@@ -677,7 +688,7 @@ public class ControlPanel extends JPanel {
 
             // Update player and save
             activePlayer.setPanPosition(value);
-            PlayerManager.getInstance().getActivePlayer().setPan(value);
+            getTargetPlayer().setPan(value);
 
             // Request row refresh
             CommandBus.getInstance().publish(Commands.PLAYER_ROW_REFRESH, this, activePlayer);
@@ -693,7 +704,7 @@ public class ControlPanel extends JPanel {
 
             // Update player and save
             activePlayer.setRandomDegree(value);
-            PlayerManager.getInstance().getActivePlayer().setRandomDegree(value);
+            getTargetPlayer().setRandomDegree(value);
 
             // Request row refresh
             CommandBus.getInstance().publish(Commands.PLAYER_ROW_REFRESH, this, activePlayer);
@@ -709,7 +720,7 @@ public class ControlPanel extends JPanel {
 
             // Update player and save
             activePlayer.setSparse(value / 100.0); // Convert to 0-1.0 range
-            PlayerManager.getInstance().getActivePlayer().setSparse(value);
+            getTargetPlayer().setSparse(value);
 
             // Request row refresh
             CommandBus.getInstance().publish(Commands.PLAYER_ROW_REFRESH, this, activePlayer);
@@ -725,7 +736,7 @@ public class ControlPanel extends JPanel {
 
             // Update player and save
             activePlayer.setRootNote(value);
-            PlayerManager.getInstance().getActivePlayer().setRootNote(value);
+            getTargetPlayer().setRootNote(value);
 
             // Request row refresh
             CommandBus.getInstance().publish(Commands.PLAYER_ROW_REFRESH, this, activePlayer);

@@ -187,7 +187,7 @@ public class DrumParamsSequencerPanel extends JPanel implements IBusListener {
 
         // Create east panel for sound parameters
         JPanel eastPanel = new JPanel(new BorderLayout(2, 2));
-        eastPanel.add(new SoundParametersPanel(), BorderLayout.NORTH);
+        //eastPanel.add(new SoundParametersPanel(), BorderLayout.NORTH);
 
         // Create top panel to hold west, center and east panels
         JPanel topPanel = new JPanel(new BorderLayout(2, 2));

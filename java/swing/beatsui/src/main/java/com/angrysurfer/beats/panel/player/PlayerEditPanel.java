@@ -3,6 +3,7 @@ package com.angrysurfer.beats.panel.player;
 import java.awt.*;
 import javax.swing.*;
 
+import com.angrysurfer.beats.panel.PlayerAwarePanel;
 import com.angrysurfer.core.sequencer.DrumSequenceData;
 import com.angrysurfer.core.service.PlayerManager;
 import org.slf4j.Logger;
@@ -11,103 +12,78 @@ import org.slf4j.LoggerFactory;
 import com.angrysurfer.core.api.Command;
 import com.angrysurfer.core.api.CommandBus;
 import com.angrysurfer.core.api.Commands;
-import com.angrysurfer.core.api.IBusListener;
 import com.angrysurfer.core.model.InstrumentWrapper;
 import com.angrysurfer.core.model.Player;
 import com.angrysurfer.core.sequencer.DrumSequencer;
 
 /**
- * Panel for editing player properties using CommandBus pattern
+ * Panel for editing player properties using the PlayerAwarePanel pattern
  */
-public class PlayerEditPanel extends JPanel implements IBusListener {
+public class PlayerEditPanel extends PlayerAwarePanel {
     private static final Logger logger = LoggerFactory.getLogger(PlayerEditPanel.class);
-
-    // Player reference - treated as transient, always get fresh from PlayerManager
-    private Player player;
-    private Long playerId;
 
     // UI Components
     private PlayerEditBasicPropertiesPanel basicPropertiesPanel;
     private PlayerEditDetailPanel detailPanel;
-    // private SoundParametersPanel soundParametersPanel;
 
     // Services
-    private final CommandBus commandBus = CommandBus.getInstance();
     private final PlayerManager playerManager = PlayerManager.getInstance();
 
-    // Add tracking fields to PlayerEditPanel
+    // Tracking fields for state changes
     private boolean initialIsDrumPlayer = false;
     private InstrumentWrapper initialInstrument;
     private DrumSequencer owningSequencer = null;
-
+    
     /**
      * Constructor
      */
-    public PlayerEditPanel(Player player) {
-        super(new BorderLayout(5, 5));
-        this.player = player;
+    public PlayerEditPanel() {
+        super();
+        initComponents();
+        layoutComponents();
+    }
 
-        // Cache initial state
+    /**
+     * Handle when a new player is activated for this panel
+     */
+    @Override
+    public void handlePlayerActivated() {
+        logger.info("Player activated in edit panel: {}", getPlayer() != null ? getPlayer().getName() : "null");
+        
+        // Cache initial state for comparison when saving
+        Player player = getPlayer();
         if (player != null) {
-            this.playerId = player.getId();
             initialIsDrumPlayer = player.getChannel() == 9;
             initialInstrument = player.getInstrument();
 
             // Check if this is part of a drum sequencer
             if (player.getOwner() instanceof DrumSequencer) {
                 owningSequencer = (DrumSequencer) player.getOwner();
+            } else {
+                owningSequencer = null;
             }
         }
-
-        initComponents();
-        layoutComponents();
-        registerForEvents();
+        
+        // Update all panels with the new player
+        updatePanels();
     }
 
     /**
-     * Register for command bus events
+     * Handle when the panel's player is updated
      */
-    private void registerForEvents() {
-        commandBus.register(this);
-    }
-
     @Override
-    public void onAction(Command action) {
-        if (action == null || action.getCommand() == null)
-            return;
-
-        // Only process events relevant to our player
-        if (playerId == null)
-            return;
-
-        switch (action.getCommand()) {
-            case Commands.PLAYER_UPDATED -> handlePlayerUpdated(action);
-        }
-    }
-
-    /**
-     * Handle player update events
-     */
-    private void handlePlayerUpdated(Command action) {
-        if (action.getData() instanceof Player updatedPlayer &&
-                playerId.equals(updatedPlayer.getId())) {
-
-            // Update our player reference with fresh data
-            SwingUtilities.invokeLater(() -> {
-                player = updatedPlayer;
-                updatePanels();
-            });
-        }
+    public void handlePlayerUpdated() {
+        logger.info("Player updated in edit panel: {}", getPlayer() != null ? getPlayer().getName() : "null");
+        updatePanels();
     }
 
     /**
      * Initialize UI components
      */
     private void initComponents() {
-        // Create panels with player reference
-        basicPropertiesPanel = new PlayerEditBasicPropertiesPanel(player);
-        detailPanel = new PlayerEditDetailPanel(player);
-        // soundParametersPanel = new SoundParametersPanel(player);
+        // Create panels - will be updated when a player is activated
+        basicPropertiesPanel = new PlayerEditBasicPropertiesPanel(null);
+        detailPanel = new PlayerEditDetailPanel(null);
     }
 
     /**
@@ -120,9 +96,6 @@ public class PlayerEditPanel extends JPanel implements IBusListener {
         // Add basic properties at top
         mainPanel.add(basicPropertiesPanel, BorderLayout.NORTH);
 
-        // Add sound parameters panel below basics
-        // mainPanel.add(soundParametersPanel, BorderLayout.CENTER);
-
         // Add detail panel at bottom
         mainPanel.add(detailPanel, BorderLayout.SOUTH);
 
@@ -134,13 +107,14 @@ public class PlayerEditPanel extends JPanel implements IBusListener {
      * Update all panels with latest player data
      */
     private void updatePanels() {
-        if (player == null)
+        Player player = getPlayer();
+        if (player == null) {
             return;
+        }
 
         // Update each panel with fresh player data
         basicPropertiesPanel.updateFromPlayer(player);
         detailPanel.updateFromPlayer(player);
-        // soundParametersPanel.updateFromPlayer(player);
     }
 
     /**
@@ -149,24 +123,20 @@ public class PlayerEditPanel extends JPanel implements IBusListener {
     public Player getUpdatedPlayer() {
         // Make sure we apply any pending changes from all panels
         applyAllChanges();
-
-        // Get fresh player from manager to ensure we have latest data
-        Player updatedPlayer = playerManager.getPlayerById(playerId);
-
-        if (updatedPlayer != null && updatedPlayer.getInstrument() != null) {
-            logger.debug("Returning player with instrument settings - Name: {}, Bank: {}, Preset: {}",
-                    updatedPlayer.getInstrument().getName(),
-                    updatedPlayer.getInstrument().getBankIndex(),
-                    updatedPlayer.getInstrument().getPreset());
-        }
-
-        return updatedPlayer;
+        
+        // Return the current player from PlayerAwarePanel
+        return getPlayer();
     }
 
     /**
      * Apply all changes from UI components to player model
      */
     public void applyAllChanges() {
+        Player player = getPlayer();
+        if (player == null) {
+            return;
+        }
+        
         // Save the owner reference which might be lost during editing
         Object ownerReference = player.getOwner();
         
@@ -181,15 +151,20 @@ public class PlayerEditPanel extends JPanel implements IBusListener {
         handleDrumPlayerChanges();
     
         // Save through PlayerManager for consistency
-        PlayerManager.getInstance().savePlayerProperties(player);
+        playerManager.savePlayerProperties(player);
+        
+        // Request player update to notify other components
+        requestPlayerUpdate();
     }
     
     /**
      * Handle changes for drum players
      */
     private void handleDrumPlayerChanges() {
-        // Only process if we have a player
-        if (player == null) return;
+        Player player = getPlayer();
+        if (player == null) {
+            return;
+        }
 
         // Check if this is a drum player now
         boolean isDrumPlayer = player.getChannel() == 9;
@@ -221,30 +196,13 @@ public class PlayerEditPanel extends JPanel implements IBusListener {
                         drumPlayer.setInstrumentId(player.getInstrument().getId());
 
                         // Save changes
-                        PlayerManager.getInstance().savePlayerProperties(drumPlayer);
+                        playerManager.savePlayerProperties(drumPlayer);
                     }
                 }
-
-//                PlayerManager.getInstance().getActivePlayer().setInstrument(player.getInstrument());
 
                 logger.info("Applied instrument {} to all drum pads in sequencer", 
                     player.getInstrument().getName());
             }
         }
-    }
-
-    /**
-     * Update from player
-     */
-    public void updateFromPlayer(Player newPlayer) {
-        if (newPlayer == null)
-            return;
-
-        // Update our reference and ID
-        this.player = newPlayer;
-        this.playerId = newPlayer.getId();
-
-        // Update all child panels
-        updatePanels();
     }
 }

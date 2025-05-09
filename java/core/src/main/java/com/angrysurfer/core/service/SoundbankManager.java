@@ -6,7 +6,6 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.logging.Logger;
 
 import javax.sound.midi.Instrument;
 import javax.sound.midi.MidiChannel;
@@ -15,17 +14,14 @@ import javax.sound.midi.MidiSystem;
 import javax.sound.midi.Soundbank;
 import javax.sound.midi.Synthesizer;
 
+import com.angrysurfer.core.model.*;
+import org.slf4j.LoggerFactory;
+
 import com.angrysurfer.core.api.Command;
 import com.angrysurfer.core.api.CommandBus;
 import com.angrysurfer.core.api.Commands;
 import com.angrysurfer.core.api.IBusListener;
 import com.angrysurfer.core.api.StatusUpdate;
-import com.angrysurfer.core.model.DrumItem;
-import com.angrysurfer.core.model.InstrumentWrapper;
-import com.angrysurfer.core.model.Player;
-import com.angrysurfer.core.model.SynthData;
-
-import org.slf4j.LoggerFactory;
 
 public class SoundbankManager implements IBusListener {
 
@@ -948,8 +944,183 @@ public class SoundbankManager implements IBusListener {
         }
     }
     
-    // All existing methods remain the same...
-    
+    /**
+     * Get all available soundbanks for a player
+     * Returns a list of SoundbankItem objects ready for use in a JComboBox
+     * 
+     * @param player The player to get soundbanks for
+     * @return List of available soundbanks formatted for display
+     */
+    public List<SoundbankItem> getPlayerSoundbanks(Player player) {
+        List<SoundbankItem> result = new ArrayList<>();
+        
+        if (player == null) {
+            logger.warn("Cannot get soundbanks for null player");
+            return result;
+        }
+        
+        // Get all soundbank names
+        List<String> soundbanks = getSoundbankNames();
+        
+        // Convert to SoundbankItem objects
+        for (String soundbank : soundbanks) {
+            result.add(new SoundbankItem(soundbank));
+        }
+        
+        return result;
+    }
+
+    /**
+     * Get all available banks for a player's selected soundbank
+     * Returns a list of BankItem objects ready for use in a JComboBox
+     * 
+     * @param player The player to get banks for
+     * @param soundbankName The name of the selected soundbank
+     * @return List of available banks formatted for display
+     */
+    public List<BankItem> getPlayerBanks(Player player, String soundbankName) {
+        List<BankItem> result = new ArrayList<>();
+        
+        if (player == null || soundbankName == null || soundbankName.isEmpty()) {
+            logger.warn("Cannot get banks for null player or empty soundbank name");
+            return result;
+        }
+        
+        // Get available banks for this soundbank
+        List<Integer> banks = getAvailableBanksByName(soundbankName);
+        
+        // Convert to BankItem objects
+        for (Integer bankIndex : banks) {
+            String bankName = "Bank " + bankIndex;
+            result.add(new BankItem(bankIndex, bankName));
+        }
+        
+        return result;
+    }
+
+    /**
+     * Get all available presets for a player's selected soundbank and bank
+     * Returns a list of PresetItem objects ready for use in a JComboBox
+     * 
+     * @param player The player to get presets for
+     * @param soundbankName The name of the selected soundbank
+     * @param bankIndex The index of the selected bank
+     * @return List of available presets formatted for display
+     */
+    public List<PresetItem> getPlayerPresets(Player player, String soundbankName, Integer bankIndex) {
+        List<PresetItem> result = new ArrayList<>();
+        
+        if (player == null) {
+            logger.warn("Cannot get presets for null player");
+            return result;
+        }
+        
+        // Handle special case for drum channel (channel 9)
+        if (player.getChannel() == 9) {
+            return getDrumPresets();
+        }
+        
+        // For non-drum channels, get presets from soundbank and bank
+        if (soundbankName != null && !soundbankName.isEmpty() && bankIndex != null) {
+            List<String> presetNames = getPresetNames(soundbankName, bankIndex);
+            
+            // If no presets found in the specified bank/soundbank, use general MIDI presets
+            if (presetNames.isEmpty()) {
+                presetNames = getGeneralMIDIPresetNames();
+            }
+            
+            // Create PresetItems
+            for (int i = 0; i < presetNames.size(); i++) {
+                String name = presetNames.get(i);
+                if (name != null && !name.isEmpty()) {
+                    result.add(new PresetItem(i, name));
+                }
+            }
+        } else {
+            // Fall back to general MIDI presets if soundbank or bank not specified
+            List<String> presetNames = getGeneralMIDIPresetNames();
+            for (int i = 0; i < presetNames.size(); i++) {
+                result.add(new PresetItem(i, presetNames.get(i)));
+            }
+        }
+        
+        return result;
+    }
+
+    /**
+     * Get drum presets for a player on channel 9
+     * Returns a list of PresetItem objects ready for use in a JComboBox
+     * 
+     * @return List of available drum presets formatted for display
+     */
+    public List<PresetItem> getDrumPresets() {
+        List<PresetItem> result = new ArrayList<>();
+        
+        // Get all drum items
+        List<DrumItem> drums = getDrumItems();
+        
+        // Convert to PresetItems
+        for (DrumItem drum : drums) {
+            result.add(new PresetItem(drum.getNoteNumber(), drum.getName()));
+        }
+        
+        return result;
+    }
+
+    /**
+     * Update a player's instrument to use the selected soundbank, bank, and preset
+     * This method handles all the necessary updates and sends the appropriate events
+     * 
+     * @param player The player to update
+     * @param soundbankName The name of the selected soundbank
+     * @param bankIndex The index of the selected bank
+     * @param presetNumber The number of the selected preset
+     * @return true if the update was successful
+     */
+    public boolean updatePlayerSound(Player player, String soundbankName, Integer bankIndex, Integer presetNumber) {
+        if (player == null || player.getInstrument() == null) {
+            logger.warn("Cannot update sound for null player or instrument");
+            return false;
+        }
+        
+        try {
+            InstrumentWrapper instrument = player.getInstrument();
+            
+            // Update soundbank if specified
+            if (soundbankName != null && !soundbankName.isEmpty()) {
+                instrument.setSoundbankName(soundbankName);
+            }
+            
+            // Update bank if specified
+            if (bankIndex != null) {
+                instrument.setBankIndex(bankIndex);
+            }
+            
+            // Update preset if specified
+            if (presetNumber != null) {
+                instrument.setPreset(presetNumber);
+            }
+            
+            // Apply the changes
+            if (bankIndex != null && presetNumber != null) {
+                applyPresetChangeToPlayer(player, bankIndex, presetNumber);
+            }
+            
+            // Create a preset change event
+            CommandBus.getInstance().publish(
+                Commands.PLAYER_PRESET_CHANGE_EVENT,
+                this,
+                new com.angrysurfer.core.event.PlayerPresetChangeEvent(player, bankIndex, presetNumber)
+            );
+            
+            return true;
+        } catch (Exception e) {
+            logger.error("Error updating player sound: {}", e.getMessage());
+            return false;
+        }
+    }
+
+
     /**
      * Handle command bus events
      */
@@ -986,4 +1157,7 @@ public class SoundbankManager implements IBusListener {
                 break;
         }
     }
+
+
+    
 }

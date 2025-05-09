@@ -13,6 +13,7 @@ import javax.swing.JToolBar;
 import javax.swing.SwingUtilities;
 
 import com.angrysurfer.beats.panel.TransportPanel;
+import com.angrysurfer.beats.panel.player.SoundParametersPanel;
 import com.angrysurfer.beats.panel.sequencer.MuteButtonsPanel;
 import com.angrysurfer.beats.panel.session.SessionControlPanel;
 import com.angrysurfer.beats.panel.session.SessionDisplayPanel;
@@ -96,10 +97,11 @@ public class ToolBar extends JToolBar {
         add(displayPanel, BorderLayout.WEST);
 
         // Transport controls
-        transportPanel = new TransportPanel();
+        // transportPanel = new TransportPanel();
         // Let the transport panel take the center space
-        add(transportPanel, BorderLayout.CENTER);
-
+        // add(transportPanel, BorderLayout.CENTER);
+        add(new SoundParametersPanel(), BorderLayout.CENTER);
+        
         controlPanel = new SessionControlPanel();
         
         controlPanel.setPreferredSize(new Dimension(PANEL_WIDTH, 80));

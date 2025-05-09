@@ -372,4 +372,14 @@ public class Commands {
     // Add a new command:
     public static final String REFRESH_ALL_INSTRUMENTS = "refresh.all.instruments";
     public static final String REFRESH_PLAYER_INSTRUMENT = "refresh.player.instrument";
+
+    // Add these new command constants to the Commands class
+    public static final String PLAYER_SELECTION_EVENT = "player.selection.event";
+    public static final String PLAYER_UPDATE_EVENT = "player.update.event";
+    public static final String PLAYER_INSTRUMENT_CHANGE_EVENT = "player.instrument.change.event";
+    public static final String PLAYER_PRESET_CHANGE_EVENT = "player.preset.change.event";
+    public static final String PLAYER_REFRESH_EVENT = "player.refresh.event";
+
+    // Add to Commands.java:
+    public static final String PLAYER_RULE_UPDATE_EVENT = "PLAYER_RULE_UPDATE_EVENT";
 }

@@ -48,7 +48,7 @@ import com.angrysurfer.core.sequencer.Scale;
 import com.angrysurfer.core.service.PlayerManager;
 import com.angrysurfer.core.service.SessionManager;
 
-public class PianoPanel extends JPanel {
+public class PianoPanel extends PlayerAwarePanel {
     private static final String DEFAULT_ROOT = "C";
     private String currentRoot = DEFAULT_ROOT; // Add root note tracking
     private String currentScale = "Chromatic"; // Default scale
@@ -63,7 +63,7 @@ public class PianoPanel extends JPanel {
     private JButton followScaleBtn;
 
     public PianoPanel() {
-        super(null); // Remove statusConsumer parameter
+        super(); // Remove statusConsumer parameter
         setPreferredSize(new Dimension(255, 60));
         setMinimumSize(new Dimension(265, 60));
         setBorder(BorderFactory.createEmptyBorder(20,2,20,2));
@@ -134,6 +134,16 @@ public class PianoPanel extends JPanel {
         setupActionBusListener();
         setupPlayerStatusIndicator();
         setupKeyboardNavigation();
+    }
+
+    @Override
+    public void handlePlayerActivated() {
+
+    }
+
+    @Override
+    public void handlePlayerUpdated() {
+
     }
 
     @Override
@@ -247,6 +257,10 @@ public class PianoPanel extends JPanel {
     }
 
     private void handleKeyHold(int note) {
+
+        if (getTargetPlayer() == null)
+            logger.info("No player available");
+
         // Toggle behavior: if note is already held, release it
         if (heldNotes.contains(note)) {
             heldNotes.remove(note);
@@ -258,8 +272,8 @@ public class PianoPanel extends JPanel {
             CommandBus.getInstance().publish(Commands.CLEAR_STATUS, this, null);
         } else {
             // Add to held notes and play
-            Player activePlayer = PlayerManager.getInstance().getActivePlayer();
-            String playerInfo = activePlayer != null ? " through " + activePlayer.getName() : " (no active player)";
+            ;
+            String playerInfo = getTargetPlayer() != null ? " through " + getTargetPlayer().getName() : " (no active player)";
             
             // Update status using CommandBus
             CommandBus.getInstance().publish(
@@ -309,8 +323,7 @@ public class PianoPanel extends JPanel {
 
     private void playNote(int note) {
         // Update status with player information
-        Player activePlayer = PlayerManager.getInstance().getActivePlayer();
-        String playerInfo = activePlayer != null ? " through " + activePlayer.getName() : " (no active player)";
+        String playerInfo = getTargetPlayer() != null ? " through " + getTargetPlayer().getName() : " (no active player)";
         
         CommandBus.getInstance().publish(
             Commands.STATUS_UPDATE,
@@ -321,7 +334,7 @@ public class PianoPanel extends JPanel {
         if (SessionManager.getInstance().isRecording()) {
             CommandBus.getInstance().publish(Commands.NEW_VALUE_NOTE, this, note);
             CommandBus.getInstance().publish(Commands.PLAYER_ROW_REFRESH, this,
-                    PlayerManager.getInstance().getActivePlayer());
+                    getTargetPlayer());
         }
 
         // Send MIDI note to active player
@@ -600,11 +613,10 @@ public class PianoPanel extends JPanel {
 
     private void updatePlayerStatusIndicator() {
         SwingUtilities.invokeLater(() -> {
-            Player activePlayer = PlayerManager.getInstance().getActivePlayer();
-            boolean hasActivePlayer = activePlayer != null;
+            boolean hasActivePlayer = getTargetPlayer() != null;
             playerStatusIndicator.setForeground(hasActivePlayer ? Color.GREEN : Color.RED);
             playerStatusIndicator.setToolTipText(
-                    hasActivePlayer ? "Active player: " + activePlayer.getName() : "No active player selected");
+                    hasActivePlayer ? "Active player: " + getTargetPlayer().getName() : "No active player selected");
         });
     }
 

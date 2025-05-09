@@ -32,7 +32,7 @@ import com.angrysurfer.core.model.Player;
 import com.angrysurfer.core.service.PlayerManager;
 import com.angrysurfer.core.service.SessionManager;
 
-public class MiniLaunchPanel extends JPanel implements IBusListener {
+public class MiniLaunchPanel extends PlayerAwarePanel implements IBusListener {
 
     private static final Logger logger = LoggerFactory.getLogger(MiniLaunchPanel.class);
 
@@ -72,7 +72,8 @@ public class MiniLaunchPanel extends JPanel implements IBusListener {
     }
 
     public MiniLaunchPanel() {
-        super(new BorderLayout());
+        super();
+        setLayout(new BorderLayout());
         commandBus.register(this);
         setup();
     }
@@ -90,6 +91,16 @@ public class MiniLaunchPanel extends JPanel implements IBusListener {
                 }
             }
         }
+    }
+
+    @Override
+    public void handlePlayerActivated() {
+
+    }
+
+    @Override
+    public void handlePlayerUpdated() {
+
     }
 
     private void setup() {
@@ -197,33 +208,31 @@ public class MiniLaunchPanel extends JPanel implements IBusListener {
      */
     public boolean sendNoteToActivePlayer(int midiNote) {
 
-        Player activePlayer = PlayerManager.getInstance().getActivePlayer();
-
-        if (activePlayer == null) {
+        if (getTargetPlayer() == null) {
             logger.debug("No active player to receive MIDI note: {}", midiNote);
             return false;
         }
 
         if (SessionManager.getInstance().isRecording()) {
             CommandBus.getInstance().publish(Commands.NEW_VALUE_NOTE, this, midiNote);
-            CommandBus.getInstance().publish(Commands.PLAYER_ROW_REFRESH, this, activePlayer);
+            CommandBus.getInstance().publish(Commands.PLAYER_ROW_REFRESH, this, getTargetPlayer());
         }   
 
 
         try {
             // Use the player's instrument, channel, and a reasonable velocity
-            InstrumentWrapper instrument = activePlayer.getInstrument();
+            InstrumentWrapper instrument = getTargetPlayer().getInstrument();
             if (instrument == null) {
                 logger.debug("Active player has no instrument");
                 return false;
             }
 
-            int channel = activePlayer.getChannel();
+            int channel = getTargetPlayer().getChannel();
 
             // Only send program change if preset has changed for this channel
-            if (activePlayer.getPreset() != null) {
+            if (getTargetPlayer().getPreset() != null) {
                 Integer lastPreset = lastSentPresets.get(channel);
-                Integer currentPreset = activePlayer.getPreset();
+                Integer currentPreset = getTargetPlayer().getPreset();
 
                 // Send program change only if the preset has changed for this channel
                 if (lastPreset == null || !lastPreset.equals(currentPreset)) {
@@ -241,10 +250,10 @@ public class MiniLaunchPanel extends JPanel implements IBusListener {
             }
 
             // Calculate velocity from player settings
-            int velocity = (int) Math.round((activePlayer.getMinVelocity() + activePlayer.getMaxVelocity()) / 2.0);
+            int velocity = (int) Math.round((getTargetPlayer().getMinVelocity() + getTargetPlayer().getMaxVelocity()) / 2.0);
 
             // Just update the note in memory temporarily - don't save to Redis
-            activePlayer.setRootNote(midiNote);
+            getTargetPlayer().setRootNote(midiNote);
 
             // Send the note to the device
             logger.debug("Sending note: note={}, channel={}, velocity={}", midiNote, channel, velocity);
