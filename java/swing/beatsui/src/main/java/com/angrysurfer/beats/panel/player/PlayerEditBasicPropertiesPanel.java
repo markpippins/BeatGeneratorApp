@@ -507,7 +507,7 @@ public class PlayerEditBasicPropertiesPanel extends JPanel {
     /**
      * Apply all changes to the player and update system state
      */
-    private void applyChanges() {
+    void applyChanges() {
         if (player == null || initializing.get()) {
             return;
         }
