@@ -63,7 +63,8 @@ public class MainPanel extends PlayerAwarePanel implements AutoCloseable, IBusLi
     private JTabbedPane tabbedPane;
     private final List<Dial> velocityDials = new ArrayList<>();
     private final List<Dial> gateDials = new ArrayList<>();
-
+    private LoggingPanel loggingPanel;
+        
     private int latencyCompensation = 20;
     private int lookAheadMs = 40;
     private boolean useAheadScheduling = true;
@@ -103,20 +104,18 @@ public class MainPanel extends PlayerAwarePanel implements AutoCloseable, IBusLi
         tabbedPane.addTab("Melo", createMelodicSequencersPanel());
 
         tabbedPane.addTab("Song", createSongPanel());
+        tabbedPane.addTab("Mixer", createMixerPanel());
         tabbedPane.addTab("Synth", internalSynthControlPanel);
         tabbedPane.addTab("Matrix", createModulationMatrixPanel());
-        tabbedPane.addTab("Mixer", createMixerPanel());
-
         tabbedPane.addTab("Players", new SessionPanel());
+       
+        tabbedPane.addTab("Launch", new LaunchPanel());
 
-        // Create combined panel for Instruments + Systems
+        tabbedPane.addTab("Samples", createSampleBrowserPanel());
         tabbedPane.addTab("Instruments", createCombinedInstrumentsSystemPanel());
 
-        tabbedPane.addTab("Launch", new LaunchPanel());
-        // Remove the separate Systems tab
-        // tabbedPane.addTab("System", new SystemsPanel());
-        // Add new Sample Browser tab
-        tabbedPane.addTab("Samples", createSampleBrowserPanel());
+        loggingPanel = new LoggingPanel();
+        tabbedPane.addTab("Logs", loggingPanel);
 
         tabbedPane.setBorder(BorderFactory.createEmptyBorder(0, 4, 0, 4));
 
@@ -138,7 +137,7 @@ public class MainPanel extends PlayerAwarePanel implements AutoCloseable, IBusLi
         buttonPanel.add(createAllNotesOffButton());
         buttonPanel.add(createLoopToggleButton()); // Add the new loop toggle button
         buttonPanel.add(createMetronomeToggleButton());
-        
+
         // buttonPanel.add(createRestartButton());
 
         // Create mute buttons toolbar early
@@ -200,25 +199,25 @@ public class MainPanel extends PlayerAwarePanel implements AutoCloseable, IBusLi
         // Process JTabbedPane components
         if (component instanceof JTabbedPane) {
             JTabbedPane tabbedPane = (JTabbedPane) component;
-            
+
             // Add change listener to this tabbed pane
             tabbedPane.addChangeListener(e -> {
                 // Get the selected component
                 Component selectedComponent = tabbedPane.getSelectedComponent();
                 handleComponentSelection(selectedComponent, tabbedPane);
             });
-            
+
             // Process each child component in the tabbedPane
             for (int i = 0; i < tabbedPane.getTabCount(); i++) {
                 Component tabComponent = tabbedPane.getComponentAt(i);
                 // Recursively process this component
                 addListenersRecursive(tabComponent);
             }
-        } 
+        }
         // Process any container that might contain other components
         else if (component instanceof Container) {
             Container container = (Container) component;
-            
+
             // Process all child components
             for (Component child : container.getComponents()) {
                 addListenersRecursive(child);
@@ -230,33 +229,34 @@ public class MainPanel extends PlayerAwarePanel implements AutoCloseable, IBusLi
      * Unified method to handle component selection in any tabbed pane
      * 
      * @param selectedComponent The component that was selected
-     * @param sourceTabbedPane The tabbed pane where selection occurred
+     * @param sourceTabbedPane  The tabbed pane where selection occurred
      */
     private void handleComponentSelection(Component selectedComponent, JTabbedPane sourceTabbedPane) {
-        if (selectedComponent == null) return;
-        
+        if (selectedComponent == null)
+            return;
+
         // Request focus on the newly selected tab component
         SwingUtilities.invokeLater(selectedComponent::requestFocusInWindow);
 
         // Case 1: DrumSequencerPanel direct selection
-        if (selectedComponent == drumSequencerPanel && 
-            drumSequencerPanel.getDrumSelectorPanel().getSelectedDrumPadIndex() != null) {
+        if (selectedComponent == drumSequencerPanel &&
+                drumSequencerPanel.getDrumSelectorPanel().getSelectedDrumPadIndex() != null) {
             Player player = drumSequencerPanel.getSequencer().getPlayer(
-                drumSequencerPanel.getDrumSelectorPanel().getSelectedDrumPadIndex());
+                    drumSequencerPanel.getDrumSelectorPanel().getSelectedDrumPadIndex());
             activatePlayer(player, "drum sequencer");
         }
 
         // Case 2: DrumParamsSequencerPanel direct selection
         else if (selectedComponent == drumParamsSequencerPanel) {
             Player player = drumParamsSequencerPanel.getSequencer().getPlayer(
-                drumParamsSequencerPanel.getSelectedPadIndex());
+                    drumParamsSequencerPanel.getSelectedPadIndex());
             activatePlayer(player, "drum params");
         }
 
         // Case 3: DrumEffectsSequencerPanel direct selection
         else if (selectedComponent == drumEffectsSequencerPanel) {
             Player player = drumEffectsSequencerPanel.getSequencer().getPlayer(
-                drumEffectsSequencerPanel.getSelectedPadIndex());
+                    drumEffectsSequencerPanel.getSelectedPadIndex());
             activatePlayer(player, "drum effects");
         }
 
@@ -273,14 +273,12 @@ public class MainPanel extends PlayerAwarePanel implements AutoCloseable, IBusLi
 
             if (selectedDrumsTab instanceof DrumSequencerPanel) {
                 int playerIndex = ((DrumSequencerPanel) selectedDrumsTab)
-                    .getDrumSelectorPanel().getSelectedDrumPadIndex();
+                        .getDrumSelectorPanel().getSelectedDrumPadIndex();
                 player = ((DrumSequencerPanel) selectedDrumsTab).getSequencer().getPlayer(playerIndex);
-            }
-            else if (selectedDrumsTab instanceof DrumEffectsSequencerPanel) {
+            } else if (selectedDrumsTab instanceof DrumEffectsSequencerPanel) {
                 int playerIndex = ((DrumEffectsSequencerPanel) selectedDrumsTab).getSelectedPadIndex();
                 player = ((DrumEffectsSequencerPanel) selectedDrumsTab).getSequencer().getPlayer(playerIndex);
-            }
-            else if (selectedDrumsTab instanceof DrumParamsSequencerPanel) {
+            } else if (selectedDrumsTab instanceof DrumParamsSequencerPanel) {
                 int playerIndex = ((DrumParamsSequencerPanel) selectedDrumsTab).getSelectedPadIndex();
                 player = ((DrumParamsSequencerPanel) selectedDrumsTab).getSequencer().getPlayer(playerIndex);
             }
@@ -298,14 +296,14 @@ public class MainPanel extends PlayerAwarePanel implements AutoCloseable, IBusLi
                 activatePlayer(player, "melodic tabbed pane");
             }
         }
-        
+
         // Handle more specialized tab selections that might need additional processing
         else if (sourceTabbedPane == tabbedPane) {
             // Handle main tabbed pane selection for specific tab indices
             int selectedIndex = tabbedPane.getSelectedIndex();
             String tabName = tabbedPane.getTitleAt(selectedIndex);
             logger.debug("Main tab selected: {} (index: {})", tabName, selectedIndex);
-            
+
             // Additional custom handling for specific tabs could go here
         }
     }
@@ -319,11 +317,11 @@ public class MainPanel extends PlayerAwarePanel implements AutoCloseable, IBusLi
     private void activatePlayer(Player player, String source) {
         if (player != null) {
             CommandBus.getInstance().publish(
-                Commands.PLAYER_ACTIVATION_REQUEST,
-                this,
-                player);
-            logger.debug("Tab switched to {} - set player '{}' as active", 
-                source, player.getName());
+                    Commands.PLAYER_ACTIVATION_REQUEST,
+                    this,
+                    player);
+            logger.debug("Tab switched to {} - set player '{}' as active",
+                    source, player.getName());
         }
     }
 
@@ -481,7 +479,7 @@ public class MainPanel extends PlayerAwarePanel implements AutoCloseable, IBusLi
 
     private MelodicSequencerPanel createMelodicSequencerPanel(int index) {
         return new MelodicSequencerPanel(index, noteEvent -> {
-           
+
             // Get the panel's sequencer to use as the event source
             MelodicSequencer sequencer = null;
             if (index >= 0 && index < melodicPanels.length && melodicPanels[index] != null) {
@@ -535,7 +533,6 @@ public class MainPanel extends PlayerAwarePanel implements AutoCloseable, IBusLi
         // titleLabel.setFont(new Font("Dialog", Font.BOLD, 16));
         // titleLabel.setBorder(BorderFactory.createEmptyBorder(0, 0, 10, 0));
         // mainPanel.add(titleLabel, BorderLayout.NORTH);
-
 
         modulationTabbedPane.addTab("LFOs", lfoPanel);
         modulationTabbedPane.addTab("XY Pad", createXYPadPanel());
@@ -944,7 +941,10 @@ public class MainPanel extends PlayerAwarePanel implements AutoCloseable, IBusLi
     public void close() throws Exception {
         if (tabbedPane != null) {
             for (Component comp : tabbedPane.getComponents()) {
-                if (comp instanceof AutoCloseable) {
+                if (comp instanceof LoggingPanel) {
+                    ((LoggingPanel) comp).cleanup();
+                }
+                else if (comp instanceof AutoCloseable) {
                     try {
                         ((AutoCloseable) comp).close();
                     } catch (Exception e) {
@@ -983,3 +983,4 @@ public class MainPanel extends PlayerAwarePanel implements AutoCloseable, IBusLi
         return null;
     }
 }
+
