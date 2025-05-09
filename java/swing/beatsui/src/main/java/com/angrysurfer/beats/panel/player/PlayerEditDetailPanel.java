@@ -77,25 +77,6 @@ public class PlayerEditDetailPanel extends JPanel {
         super(new BorderLayout());
         this.player = player;
 
-        // Initialize with default values if player is null
-        // if (player == null) {
-        //     // Create placeholder player with default values for initial UI setup
-        //     Player defaultPlayer = new Player();
-        //     defaultPlayer.setLevel(100);
-        //     defaultPlayer.setMinVelocity(64);
-        //     defaultPlayer.setMaxVelocity(96);
-        //     defaultPlayer.setPanPosition(64);
-        //     defaultPlayer.setRootNote(60); // Middle C
-        //     defaultPlayer.setSwing(0);
-        //     defaultPlayer.setProbability(100);
-        //    defaultPlayer.setRandomDegree(0);
-        //    defaultPlayer.setSparse(0.0);
-        //    defaultPlayer.setRatchetCount(4);
-        //    defaultPlayer.setRatchetInterval(4);
-        //
-        //     this.player = defaultPlayer;
-        // }
-
         // Initialize performance controls
         levelSlider = createSlider("Level", player.getLevel(), 0, 100);
         velocityMinSlider = createSlider("Min Velocity", player.getMinVelocity(), 0, 127);

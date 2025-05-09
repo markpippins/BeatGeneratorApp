@@ -1,9 +1,6 @@
 package com.angrysurfer.beats.panel.sequencer.mono;
 
-import java.awt.Dimension;
-import java.awt.FlowLayout;
-import java.awt.Color;
-import java.awt.Component;
+import java.awt.*;
 import javax.swing.*;
 import java.util.ArrayList;
 import java.util.List;
@@ -51,16 +48,14 @@ public class MelodicSequencerGridPanel extends JPanel {
      * Initialize the grid panel
      */
     private void initialize() {
-        // REDUCED: from 5,0 to 2,0
-        setLayout(new BoxLayout(this, BoxLayout.X_AXIS));
-        // REDUCED: from 10,10,10,10 to 5,5,5,5
+        // Use BorderLayout for the main panel to allow proper expansion
+        setLayout(new BorderLayout(2, 0));
         setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
-        setPreferredSize(new Dimension(getPreferredSize().width, 400));
         setMinimumSize(new Dimension(800, 700));
 
-        // Create panel for the 16 columns (fix the initialization)
+        // Create panel for the 16 columns
         JPanel sequencePanel = new JPanel();
-        sequencePanel.setLayout(new BoxLayout(sequencePanel, BoxLayout.X_AXIS));
+        sequencePanel.setLayout(new GridLayout(1, 16, 2, 0)); // Use GridLayout for equal width columns
 
         // Create 16 columns
         for (int i = 0; i < 16; i++) {
@@ -69,7 +64,15 @@ public class MelodicSequencerGridPanel extends JPanel {
         }
 
         // Add the sequence panel to the main panel
-        add(sequencePanel);
+        add(sequencePanel, BorderLayout.CENTER);
+
+        // Add component listener to handle resizing
+        addComponentListener(new java.awt.event.ComponentAdapter() {
+            @Override
+            public void componentResized(java.awt.event.ComponentEvent e) {
+                updateDialSizes();
+            }
+        });
     }
 
     /**
@@ -79,7 +82,6 @@ public class MelodicSequencerGridPanel extends JPanel {
         // Use BoxLayout for vertical arrangement
         JPanel column = new JPanel();
         column.setLayout(new BoxLayout(column, BoxLayout.Y_AXIS));
-        // REDUCED: from 5,2,5,2 to 2,1,2,1
         column.setBorder(BorderFactory.createEmptyBorder(2, 1, 2, 1));
 
         for (int i = 0; i < 5; i++) {
@@ -99,6 +101,11 @@ public class MelodicSequencerGridPanel extends JPanel {
             // Create dial - first one is always a NoteSelectionDial
             Dial dial = i == 4 ? new NoteSelectionDial() : new Dial();
 
+            // Set default sizes - we'll update these in updateDialSizes()
+            int dialSize = i == 4 ? 60 : 40; // Note dial is larger than others
+            dial.setPreferredSize(new Dimension(dialSize, dialSize));
+            dial.setMinimumSize(new Dimension(30, 30)); // Minimum size for any dial
+
             // Store the dial in the appropriate collection based on its type
             switch (i) {
                 case 0 -> {
@@ -110,7 +117,6 @@ public class MelodicSequencerGridPanel extends JPanel {
                     dial.setKnobColor(UIHelper.getDialColor("gate"));
                 }
                 case 4 -> {
-                    dial.setPreferredSize(new Dimension(75, 75));
                     noteDials.add(dial);
                 }
                 case 2 -> {
@@ -118,11 +124,6 @@ public class MelodicSequencerGridPanel extends JPanel {
                     dial.setMaximum(100);
                     dial.setValue(100); // Default to 100%
                     dial.setKnobColor(UIHelper.getDialColor("probability"));
-                    dial.addChangeListener(e -> {
-                        if (!listenersEnabled)
-                            return;
-                        sequencer.getSequenceData().setProbabilityValue(index, dial.getValue());
-                    });
                     probabilityDials.add(dial);
                 }
                 case 3 -> {
@@ -130,16 +131,11 @@ public class MelodicSequencerGridPanel extends JPanel {
                     dial.setMaximum(250);
                     dial.setValue(0); // Default to no nudge
                     dial.setKnobColor(UIHelper.getDialColor("nudge"));
-                    dial.addChangeListener(e -> {
-                        if (!listenersEnabled)
-                            return;
-                        sequencer.getSequenceData().setNudgeValue(index, dial.getValue());
-                    });
                     nudgeDials.add(dial);
                 }
             }
 
-            dial.setUpdateOnResize(false);
+            dial.setUpdateOnResize(true); // Enable auto-updating on resize
             dial.setToolTipText(String.format("Step %d %s", index + 1, getKnobLabel(i)));
             dial.setName("JDial-" + index + "-" + i);
 
@@ -149,7 +145,9 @@ public class MelodicSequencerGridPanel extends JPanel {
             column.add(dialPanel);
         }
 
-        // REDUCED: from 0,5 to 0,2
+        // Add listeners after all dials are created and added to collections
+        addDialListeners(index);
+
         column.add(Box.createRigidArea(new Dimension(0, 2)));
 
         // Make trigger button more compact
@@ -160,6 +158,8 @@ public class MelodicSequencerGridPanel extends JPanel {
         triggerButton.setToggleable(true);
 
         triggerButton.addActionListener(e -> {
+            if (!listenersEnabled) return;
+
             boolean isSelected = triggerButton.isSelected();
             // Get existing step data
             int note = noteDials.get(index).getValue();
@@ -177,43 +177,113 @@ public class MelodicSequencerGridPanel extends JPanel {
         buttonPanel1.add(triggerButton);
         column.add(buttonPanel1);
 
-        noteDials.get(index).addChangeListener(e -> {
-            if (!listenersEnabled) {
-                return;
-            }
-
-            // Update sequencer pattern data
-            sequencer.setStepData(index, triggerButton.isSelected(),
-                    noteDials.get(index).getValue(), velocityDials.get(index).getValue(),
-                    gateDials.get(index).getValue(), probabilityDials.get(index).getValue(),
-                    nudgeDials.get(index).getValue());
-        });
-
-        velocityDials.get(index).addChangeListener(e -> {
-            if (!listenersEnabled) {
-                return;
-            }
-
-            // Update sequencer pattern data
-            sequencer.setStepData(index, triggerButton.isSelected(),
-                    noteDials.get(index).getValue(), velocityDials.get(index).getValue(),
-                    gateDials.get(index).getValue(), probabilityDials.get(index).getValue(),
-                    nudgeDials.get(index).getValue());
-        });
-
-        gateDials.get(index).addChangeListener(e -> {
-            if (!listenersEnabled) {
-                return;
-            }
-
-            // Update sequencer pattern data
-            sequencer.setStepData(index, triggerButton.isSelected(),
-                    noteDials.get(index).getValue(), velocityDials.get(index).getValue(),
-                    gateDials.get(index).getValue(), probabilityDials.get(index).getValue(),
-                    nudgeDials.get(index).getValue());
-        });
-
         return column;
+    }
+
+    /**
+     * Add listeners to dials at the specified index
+     */
+    private void addDialListeners(int index) {
+        // Note dial listener
+        noteDials.get(index).addChangeListener(e -> {
+            if (!listenersEnabled) return;
+            updateSequencerData(index);
+        });
+
+        // Velocity dial listener
+        velocityDials.get(index).addChangeListener(e -> {
+            if (!listenersEnabled) return;
+            updateSequencerData(index);
+        });
+
+        // Gate dial listener
+        gateDials.get(index).addChangeListener(e -> {
+            if (!listenersEnabled) return;
+            updateSequencerData(index);
+        });
+
+        // Probability dial listener
+        probabilityDials.get(index).addChangeListener(e -> {
+            if (!listenersEnabled) return;
+            updateSequencerData(index);
+        });
+
+        // Nudge dial listener
+        nudgeDials.get(index).addChangeListener(e -> {
+            if (!listenersEnabled) return;
+            updateSequencerData(index);
+        });
+    }
+
+    /**
+     * Update sequencer data with values from all dials at the specified index
+     */
+    private void updateSequencerData(int index) {
+        if (index < 0 || index >= triggerButtons.size()) return;
+
+        sequencer.setStepData(index,
+                triggerButtons.get(index).isSelected(),
+                noteDials.get(index).getValue(),
+                velocityDials.get(index).getValue(),
+                gateDials.get(index).getValue(),
+                probabilityDials.get(index).getValue(),
+                nudgeDials.get(index).getValue());
+    }
+
+    /**
+     * Update dial sizes based on container width
+     */
+    private void updateDialSizes() {
+        // Get available width per column (16 columns total)
+        int totalWidth = getWidth();
+        if (totalWidth <= 0) return; // Skip if not yet displayed
+
+        // Account for borders and padding
+        int availableWidth = totalWidth - 40; // Subtract border/padding (adjust as needed)
+        int columnWidth = Math.max(40, availableWidth / 16); // Ensure minimum width
+
+        // Calculate dial sizes based on column width
+        int standardDialSize = Math.max(30, (int) (columnWidth * 0.8)); // 80% of column width
+        int noteDialSize = Math.max(40, (int) (columnWidth * 0.95)); // 95% of column width
+
+        logger.debug("Resizing dials - column width: {}, standard size: {}, note size: {}",
+                columnWidth, standardDialSize, noteDialSize);
+
+        // Update all dials
+        for (int i = 0; i < noteDials.size(); i++) {
+            // Update standard dials
+            if (i < velocityDials.size()) {
+                velocityDials.get(i).setPreferredSize(new Dimension(standardDialSize, standardDialSize));
+            }
+            if (i < gateDials.size()) {
+                gateDials.get(i).setPreferredSize(new Dimension(standardDialSize, standardDialSize));
+            }
+            if (i < probabilityDials.size()) {
+                probabilityDials.get(i).setPreferredSize(new Dimension(standardDialSize, standardDialSize));
+            }
+            if (i < nudgeDials.size()) {
+                nudgeDials.get(i).setPreferredSize(new Dimension(standardDialSize, standardDialSize));
+            }
+
+            // Update note dials (larger)
+            if (i < noteDials.size()) {
+                noteDials.get(i).setPreferredSize(new Dimension(noteDialSize, noteDialSize));
+            }
+        }
+
+        // Force immediate update
+        revalidate();
+        repaint();
+    }
+
+    /**
+     * Overridden to update dial sizes when first displayed
+     */
+    @Override
+    public void addNotify() {
+        super.addNotify();
+        // Schedule dial size update after component is fully displayed
+        SwingUtilities.invokeLater(this::updateDialSizes);
     }
 
     /**
@@ -268,9 +338,9 @@ public class MelodicSequencerGridPanel extends JPanel {
 
         listenersEnabled = false;
         try {
-
             forceSync();
-
+            // Make sure dial sizes are appropriate
+            updateDialSizes();
         } finally {
             listenersEnabled = true;
         }

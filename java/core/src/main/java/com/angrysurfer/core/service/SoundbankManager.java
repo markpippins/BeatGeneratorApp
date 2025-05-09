@@ -23,6 +23,8 @@ import com.angrysurfer.core.api.Commands;
 import com.angrysurfer.core.api.IBusListener;
 import com.angrysurfer.core.api.StatusUpdate;
 
+import javax.swing.JComboBox;
+
 public class SoundbankManager implements IBusListener {
 
     private static final org.slf4j.Logger logger = LoggerFactory.getLogger(SoundbankManager.class);
@@ -1120,6 +1122,135 @@ public class SoundbankManager implements IBusListener {
         }
     }
 
+    /**
+     * Update instrument UI components with current instrument settings
+     * 
+     * @param instrument The instrument to get settings from
+     * @param soundbankCombo Soundbank combo box to update
+     * @param bankCombo Bank combo box to update
+     * @param presetCombo Preset combo box to update
+     */
+    public void updateInstrumentUIComponents(InstrumentWrapper instrument, 
+                                       JComboBox<String> soundbankCombo,
+                                       JComboBox<Integer> bankCombo, 
+                                       JComboBox<PresetItem> presetCombo) {
+        if (instrument == null) {
+            return;
+        }
+        
+        // Remember current state to prevent events
+        String currentSoundbank = soundbankCombo.getSelectedItem() != null ? 
+                soundbankCombo.getSelectedItem().toString() : null;
+        Integer currentBank = bankCombo.getSelectedItem() != null ? 
+                (Integer) bankCombo.getSelectedItem() : null;
+        int currentPreset = presetCombo.getSelectedItem() instanceof PresetItem ? 
+                ((PresetItem) presetCombo.getSelectedItem()).getNumber() : -1;
+        
+        try {
+            // Update soundbank combo
+            soundbankCombo.removeAllItems();
+            List<String> soundbanks = getSoundbankNames();
+            for (String name : soundbanks) {
+                soundbankCombo.addItem(name);
+            }
+            
+            // Select instrument's soundbank
+            if (instrument.getSoundbankName() != null) {
+                soundbankCombo.setSelectedItem(instrument.getSoundbankName());
+            } else if (soundbankCombo.getItemCount() > 0) {
+                soundbankCombo.setSelectedIndex(0);
+            }
+            
+            // Update bank combo
+            bankCombo.removeAllItems();
+            String selectedSoundbank = soundbankCombo.getSelectedItem() != null ? 
+                    soundbankCombo.getSelectedItem().toString() : null;
+            
+            if (selectedSoundbank != null) {
+                List<Integer> banks = getAvailableBanksByName(selectedSoundbank);
+                for (Integer bank : banks) {
+                    bankCombo.addItem(bank);
+                }
+                
+                // Select instrument's bank
+                if (instrument.getBankIndex() != null) {
+                    bankCombo.setSelectedItem(instrument.getBankIndex());
+                } else if (bankCombo.getItemCount() > 0) {
+                    bankCombo.setSelectedIndex(0);
+                }
+            }
+            
+            // Update preset combo
+            presetCombo.removeAllItems();
+            Integer selectedBank = bankCombo.getSelectedItem() != null ? 
+                    (Integer) bankCombo.getSelectedItem() : null;
+            
+            if (selectedSoundbank != null && selectedBank != null) {
+                List<String> presetNames = getPresetNames(selectedSoundbank, selectedBank);
+                
+                // If no presets for this bank, use General MIDI
+                if (presetNames.isEmpty()) {
+                    presetNames = getGeneralMIDIPresetNames();
+                }
+                
+                // Add presets to combo
+                for (int i = 0; i < presetNames.size(); i++) {
+                    presetCombo.addItem(new PresetItem(i, presetNames.get(i)));
+                }
+                
+                // Select instrument's preset
+                if (instrument.getPreset() != null) {
+                    for (int i = 0; i < presetCombo.getItemCount(); i++) {
+                        PresetItem item = (PresetItem) presetCombo.getItemAt(i);
+                        if (item.getNumber() == instrument.getPreset()) {
+                            presetCombo.setSelectedIndex(i);
+                            break;
+                        }
+                    }
+                } else if (presetCombo.getItemCount() > 0) {
+                    presetCombo.setSelectedIndex(0);
+                }
+            }
+        } catch (Exception e) {
+            logger.error("Error updating instrument UI components: {}", e.getMessage(), e);
+        }
+    }
+
+    /**
+     * Play a preview note for a specific player
+     * 
+     * @param player The player to preview
+     * @param durationMs Duration of preview note in milliseconds
+     */
+    public void playPreviewNote(Player player, int durationMs) {
+        if (player == null) {
+            return;
+        }
+        
+        try {
+            // First apply the current preset
+            InstrumentWrapper instrument = player.getInstrument();
+            if (instrument != null) {
+                // Apply current preset settings
+                Integer bankIndex = instrument.getBankIndex();
+                Integer preset = instrument.getPreset();
+                
+                // Apply changes directly to player
+                applyPresetChangeToPlayer(player, bankIndex, preset);
+                
+                // For drum channel, play root note or default kick drum
+                if (player.getChannel() == 9) {
+                    int noteNumber = player.getRootNote() != null ? player.getRootNote() : 36; // Default to kick
+                    InternalSynthManager.getInstance().playNote(noteNumber, 100, durationMs, 9);
+                } else {
+                    // For melodic instruments, play middle C
+                    InternalSynthManager.getInstance().playNote(60, 100, durationMs, player.getChannel());
+                }
+            }
+        } catch (Exception e) {
+            logger.error("Error playing preview note: {}", e.getMessage(), e);
+        }
+    }
 
     /**
      * Handle command bus events
@@ -1157,7 +1288,4 @@ public class SoundbankManager implements IBusListener {
                 break;
         }
     }
-
-
-    
 }
