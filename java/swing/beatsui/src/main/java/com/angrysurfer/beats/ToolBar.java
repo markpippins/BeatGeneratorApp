@@ -59,7 +59,7 @@ public class ToolBar extends JToolBar {
                                 Session session = (Session) action.getData();
                                 displayPanel.setSession(session);
                                 controlPanel.setSession(session);
-                                transportPanel.updateTransportState(session);
+                                // transportPanel.updateTransportState(session);
                                 // sessionNameField.setText(session.getName());
                                 currentSession = session;
                             }

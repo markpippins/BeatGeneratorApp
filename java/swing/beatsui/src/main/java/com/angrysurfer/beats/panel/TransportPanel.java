@@ -26,7 +26,6 @@ import com.angrysurfer.core.service.SessionManager;
  * Panel containing transport controls (play, stop, record, etc.)
  */
 public class TransportPanel extends JPanel {
-    private final CommandBus commandBus = CommandBus.getInstance();
 
     // Transport controls
     private JButton playButton;
@@ -51,10 +50,8 @@ public class TransportPanel extends JPanel {
     private long lastSessionNavTime = 0;
 
     public TransportPanel() {
-        super(new BorderLayout());
-        // setPreferredSize(new Dimension(getPreferredSize().width, 75));
-
-        // setBorder(BorderFactory.createEmptyBorder(2, 2, 2, 2));
+        super(new FlowLayout(FlowLayout.CENTER, 5, 0));
+        setBorder(BorderFactory.createEmptyBorder(2, 2, 2, 2));
 
         // Start with recording disabled
         isRecording = false;
@@ -68,13 +65,7 @@ public class TransportPanel extends JPanel {
         autoRecordingEnableTimer.setRepeats(false);
         autoRecordingEnableTimer.start();
 
-        // Get transport buttons panel and add it to center
-        JPanel transportButtonsPanel = setupTransportButtons();
-        add(transportButtonsPanel, BorderLayout.CENTER);
-
-        // JPanel indicatorPanel = new TransportIndicatorPanel();
-        // add(indicatorPanel, BorderLayout.SOUTH);
-
+        add(createTransportButtons());
         setupCommandBusListener();
 
         // Set initial button states
@@ -87,7 +78,7 @@ public class TransportPanel extends JPanel {
      * 
      * @return JPanel containing all transport buttons
      */
-    private JPanel setupTransportButtons() {
+    private JPanel createTransportButtons() {
         // Create panel to hold transport buttons with flow layout
         JPanel buttonsPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 5, 0));
 
@@ -117,7 +108,7 @@ public class TransportPanel extends JPanel {
 
         // Special action for pause button - send ALL_NOTES_OFF
         pauseButton.addActionListener(e -> {
-            commandBus.publish(Commands.ALL_NOTES_OFF, this);
+            CommandBus.getInstance().publish(Commands.ALL_NOTES_OFF, this);
         });
 
         // Rest of existing code...
@@ -150,7 +141,7 @@ public class TransportPanel extends JPanel {
         button.setEnabled(true);
         button.setActionCommand(command);
         button.addActionListener(e -> {
-            commandBus.publish(command, button);
+            CommandBus.getInstance().publish(command, button);
             updatePlayButtonAppearance();
             updateRecordButtonAppearance();
         });
@@ -203,22 +194,22 @@ public class TransportPanel extends JPanel {
                     SessionManager.getInstance().saveSession(currentSession);
 
                     // Show save confirmation
-                    // commandBus.publish(Commands.SHOW_STATUS, this, "Session saved");
+                    // CommandBus.getInstance().publish(Commands.SHOW_STATUS, this, "Session saved");
                 }
             } catch (Exception ex) {
                 // Log and show any errors during save
                 System.err.println("Error saving session: " + ex.getMessage());
                 ex.printStackTrace();
-                // commandBus.publish(Commands.SHOW_ERROR, this, "Error saving session: " +
+                // CommandBus.getInstance().publish(Commands.SHOW_ERROR, this, "Error saving session: " +
                 // ex.getMessage());
             }
         }
 
         // Publish the appropriate command
         if (isRecording) {
-            commandBus.publish(Commands.TRANSPORT_RECORD_START, this);
+            CommandBus.getInstance().publish(Commands.TRANSPORT_RECORD_START, this);
         } else {
-            commandBus.publish(Commands.TRANSPORT_RECORD_STOP, this);
+            CommandBus.getInstance().publish(Commands.TRANSPORT_RECORD_STOP, this);
         }
     }
 
@@ -273,7 +264,7 @@ public class TransportPanel extends JPanel {
     }
 
     private void setupCommandBusListener() {
-        commandBus.register(new IBusListener() {
+        CommandBus.getInstance().register(new IBusListener() {
             @Override
             public void onAction(Command action) {
                 // Skip if this panel is the sender
@@ -304,7 +295,7 @@ public class TransportPanel extends JPanel {
                             if (!isRecording) {
                                 isRecording = true;
                                 updateRecordButtonAppearance();
-                                commandBus.publish(Commands.TRANSPORT_RECORD_START, TransportPanel.this);
+                                CommandBus.getInstance().publish(Commands.TRANSPORT_RECORD_START, TransportPanel.this);
                             }
                         }
                     }

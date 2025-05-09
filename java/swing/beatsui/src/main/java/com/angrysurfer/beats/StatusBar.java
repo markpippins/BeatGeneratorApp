@@ -93,18 +93,18 @@ public class StatusBar extends JPanel implements IBusListener {
         // setBorder(BorderFactory.createEmptyBorder(5, 8, 5, 8));
         
         // Create main panel with horizontal layout
-        JPanel mainPanel = new JPanel();
-        mainPanel.setLayout(new BoxLayout(mainPanel, BoxLayout.X_AXIS));
+        JPanel statusPanel = new JPanel();
+        statusPanel.setLayout(new BoxLayout(statusPanel, BoxLayout.X_AXIS));
         
         // Create and add all sections
-        mainPanel.add(createMonitoringSection());
-        mainPanel.add(Box.createHorizontalStrut(SECTION_SPACING));
-        mainPanel.add(new TransportPanel());
-        mainPanel.add(Box.createHorizontalStrut(SECTION_SPACING));
-        mainPanel.add(createMessageSection());
+        statusPanel.add(createMonitoringSection());
+        statusPanel.add(Box.createHorizontalStrut(SECTION_SPACING));
+        statusPanel.add(new TransportPanel());
+        statusPanel.add(Box.createHorizontalStrut(SECTION_SPACING));
+        statusPanel.add(createMessageSection());
 
         // Add main panel to status bar
-        add(mainPanel, BorderLayout.CENTER);
+        add(statusPanel, BorderLayout.CENTER);
     }
 
     private JPanel createMonitoringSection() {

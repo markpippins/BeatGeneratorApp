@@ -65,6 +65,7 @@ public class LoggingPanel extends JPanel {
         // Setup document and styles
         logTextPane = new JTextPane();
         logTextPane.setEditable(false);
+        logTextPane.setBackground(Color.WHITE);
         document = logTextPane.getStyledDocument();
         
         // Create styles
