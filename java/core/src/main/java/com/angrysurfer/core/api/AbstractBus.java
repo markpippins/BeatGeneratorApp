@@ -10,7 +10,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import com.angrysurfer.core.service.LogManager;
 
-public class AbstractBus implements IBusListener {
+public abstract class AbstractBus {
 
     private final List<IBusListener> listeners = new CopyOnWriteArrayList<>();
     private final LogManager logManager = LogManager.getInstance();
@@ -19,8 +19,11 @@ public class AbstractBus implements IBusListener {
     private final ExecutorService commandExecutor;
     private final boolean asyncProcessing;
 
-    public AbstractBus() {
+    protected AbstractBus() {
         this(true, Runtime.getRuntime().availableProcessors());
+        // DON'T call register(this) here - it's unsafe during initialization
+        // If subclasses need to register with themselves, they should do it explicitly
+        // after their fields are initialized
     }
 
     public AbstractBus(boolean asyncProcessing, int threadPoolSize) {
@@ -48,7 +51,7 @@ public class AbstractBus implements IBusListener {
         }
 
         // Register self to handle logging commands
-        register(this);
+        // register(this);
     }
 
     public void register(IBusListener listener) {
@@ -76,9 +79,9 @@ public class AbstractBus implements IBusListener {
         // listeners.size() + " listeners");
         Command cmd = new Command(command, sender, data);
         for (IBusListener listener : listeners) {
-            // System.out.println("AbstractBus: Sending " + command + " to " +
-            // listener.getClass().getName());
-            listener.onAction(cmd);
+            // System.out.println("AbstractBus: Sending " + command + " to " +  listener.getClass().getName());
+            if (listener != sender)
+                listener.onAction(cmd);
         }
     }
 
@@ -95,12 +98,12 @@ public class AbstractBus implements IBusListener {
             return;
         }
 
-        String sender = action.getSender() != null ? action.getSender().getClass().getSimpleName() : "unknown";
-        String dataType = action.getData() != null ? action.getData().getClass().getSimpleName() : "null";
+        // String sender = action.getSender() != null ? action.getSender().getClass().getSimpleName() : "unknown";
+        // String dataType = action.getData() != null ? action.getData().getClass().getSimpleName() : "null";
 
-        logManager.debug("CommandBus",
-                String.format("Publishing command: %s from: %s data: %s",
-                        action.getCommand(), sender, dataType));
+        // logManager.debug("CommandBus",
+        //         String.format("Publishing command: %s from: %s data: %s",
+        //                 action.getCommand(), sender, dataType));
 
         // Use executor service if running async, otherwise process in current thread
         if (asyncProcessing && commandExecutor != null) {
@@ -165,24 +168,24 @@ public class AbstractBus implements IBusListener {
         }
     }
 
-    @Override
-    public void onAction(Command action) {
-        // Handle logging commands
-        if (action.getData() instanceof LogMessage msg) {
-            switch (action.getCommand()) {
-                case Commands.LOG_DEBUG -> logManager.debug(msg.source(), msg.message());
-                case Commands.LOG_INFO -> logManager.info(msg.source(), msg.message());
-                case Commands.LOG_WARN -> logManager.warn(msg.source(), msg.message());
-                case Commands.LOG_ERROR -> {
-                    if (msg.throwable() != null) {
-                        logManager.error(msg.source(), msg.message(), msg.throwable());
-                    } else {
-                        logManager.error(msg.source(), msg.message());
-                    }
-                }
-            }
-        }
-    }
+//    @Override
+//    public void onAction(Command action) {
+//        // Handle logging commands
+//        if (action.getData() instanceof LogMessage msg) {
+//            switch (action.getCommand()) {
+//                case Commands.LOG_DEBUG -> logManager.debug(msg.source(), msg.message());
+//                case Commands.LOG_INFO -> logManager.info(msg.source(), msg.message());
+//                case Commands.LOG_WARN -> logManager.warn(msg.source(), msg.message());
+//                case Commands.LOG_ERROR -> {
+//                    if (msg.throwable() != null) {
+//                        logManager.error(msg.source(), msg.message(), msg.throwable());
+//                    } else {
+//                        logManager.error(msg.source(), msg.message());
+//                    }
+//                }
+//            }
+//        }
+//    }
 
     // Helper record for log messages
     public record LogMessage(String source, String message, Throwable throwable) {

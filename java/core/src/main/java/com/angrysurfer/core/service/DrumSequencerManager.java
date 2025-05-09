@@ -13,11 +13,11 @@ import com.angrysurfer.core.api.Command;
 import com.angrysurfer.core.api.CommandBus;
 import com.angrysurfer.core.api.Commands;
 import com.angrysurfer.core.api.IBusListener;
+import com.angrysurfer.core.event.DrumStepUpdateEvent;
+import com.angrysurfer.core.event.NoteEvent;
 import com.angrysurfer.core.redis.RedisService;
 import com.angrysurfer.core.sequencer.DrumSequenceData;
 import com.angrysurfer.core.sequencer.DrumSequencer;
-import com.angrysurfer.core.sequencer.DrumStepUpdateEvent;
-import com.angrysurfer.core.sequencer.NoteEvent;
 
 /**
  * Manager for DrumSequencer instances.
@@ -81,8 +81,8 @@ public class DrumSequencerManager implements IBusListener {
     public Long saveSequence(DrumSequencer sequencer) {
         try {
             redisService.saveDrumSequence(sequencer);
-            logger.info("Saved drum sequence with ID: {}", sequencer.getDrumSequenceId());
-            return sequencer.getDrumSequenceId();
+            logger.info("Saved drum sequence with ID: {}", sequencer.getData().getId());
+            return sequencer.getData().getId();
         } catch (Exception e) {
             logger.error("Error saving drum sequence: " + e.getMessage(), e);
             return null;
@@ -419,7 +419,7 @@ public class DrumSequencerManager implements IBusListener {
      */
     public synchronized void setSelectedPadIndex(int index) {
         // Validate the index first
-        if (index >= 0 && index < DrumSequencer.DRUM_PAD_COUNT) {
+        if (index >= 0 && index < DrumSequenceData.DRUM_PAD_COUNT) {
             selectedPadIndex = index;
             
             // Also update the selected pad index in sequencers
@@ -431,5 +431,34 @@ public class DrumSequencerManager implements IBusListener {
         } else {
             logger.warn("Attempted to set invalid pad index: {}", index);
         }
+    }
+
+    /**
+     * Updates tempo settings on all managed sequencers
+     * 
+     * @param tempoInBPM The new tempo in BPM
+     * @param ticksPerBeat The new ticks per beat value
+     */
+    public synchronized void updateTempoSettings(float tempoInBPM, int ticksPerBeat) {
+        for (DrumSequencer sequencer : sequencers) {
+            // sequencer.getData().setTempoInBPM(tempoInBPM);
+            // sequencer.getData().setTicksPerBeat(ticksPerBeat);
+            sequencer.getData().setMasterTempo(ticksPerBeat);
+        }
+        logger.info("Updated tempo settings on {} drum sequencers: {} BPM, {} ticks per beat", 
+                sequencers.size(), tempoInBPM, ticksPerBeat);
+    }
+
+    /**
+     * Get the currently active sequencer
+     * 
+     * @return The active DrumSequencer, or null if none available
+     */
+    public DrumSequencer getActiveSequencer() {
+        // If we have sequencers, return the first one (or implement more sophisticated logic)
+        if (!sequencers.isEmpty()) {
+            return sequencers.get(0);
+        }
+        return null;
     }
 }

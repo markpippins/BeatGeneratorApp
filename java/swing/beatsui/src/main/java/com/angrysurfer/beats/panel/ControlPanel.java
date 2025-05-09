@@ -20,10 +20,10 @@ import javax.swing.event.ChangeListener;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.angrysurfer.beats.UIUtils;
 import com.angrysurfer.beats.widget.Dial;
 import com.angrysurfer.beats.widget.NoteSelectionDial;
-import com.angrysurfer.beats.widget.UIHelper;
+import com.angrysurfer.beats.util.UIHelper;
+import com.angrysurfer.beats.util.UIHelper;
 import com.angrysurfer.core.api.Command;
 import com.angrysurfer.core.api.CommandBus;
 import com.angrysurfer.core.api.Commands;
@@ -32,7 +32,7 @@ import com.angrysurfer.core.model.Player;
 import com.angrysurfer.core.sequencer.Scale;
 import com.angrysurfer.core.service.PlayerManager;
 
-public class ControlPanel extends JPanel {
+public class ControlPanel extends PlayerAwarePanel {
     private static final Logger logger = LoggerFactory.getLogger(ControlPanel.class.getName());
     private static final int BUTTON_SIZE = 30;
     private static final int PANEL_HEIGHT = 100; // Increased from 90 to 100px
@@ -62,7 +62,8 @@ public class ControlPanel extends JPanel {
 
     public ControlPanel() {
         // Use BorderLayout as the main layout for better component positioning
-        super(new BorderLayout());
+        super();
+        setLayout(new BorderLayout());
 
         // Set fixed height - updated to match new PANEL_HEIGHT
         setMinimumSize(new Dimension(getMinimumSize().width, PANEL_HEIGHT));
@@ -112,6 +113,16 @@ public class ControlPanel extends JPanel {
         add(rightPanel, BorderLayout.EAST);
 
         setupCommandBusListener();
+    }
+
+    @Override
+    public void handlePlayerActivated() {
+        
+    }
+
+    @Override
+    public void handlePlayerUpdated() {
+
     }
 
     private static final String PLAYER_PANEL = "PLAYER_PANEL";
@@ -165,43 +176,43 @@ public class ControlPanel extends JPanel {
 
         panDial = createDial("pan", 64, 0, 127, 1);
         panDial.setCommand(Commands.NEW_VALUE_PAN);
-        panDial.setKnobColor(UIUtils.mutedRed);
+        panDial.setKnobColor(UIHelper.mutedRed);
         panDial.setGradientStartColor(panDial.getKnobColor().brighter());
         panDial.setGradientEndColor(panDial.getKnobColor().darker());
         
         velocityMinDial = createDial("minVelocity", 64, 0, 127, 1);
         velocityMinDial.setCommand(Commands.NEW_VALUE_VELOCITY_MIN);
-        velocityMinDial.setKnobColor(UIUtils.warmGray);
+        velocityMinDial.setKnobColor(UIHelper.warmGray);
         velocityMinDial.setGradientStartColor(velocityMinDial.getKnobColor().brighter());
         velocityMinDial.setGradientEndColor(velocityMinDial.getKnobColor().darker());
         
         velocityMaxDial = createDial("maxVelocity", 127, 0, 127, 1);
         velocityMaxDial.setCommand(Commands.NEW_VALUE_VELOCITY_MAX);
-        velocityMaxDial.setKnobColor(UIUtils.warmGray);
+        velocityMaxDial.setKnobColor(UIHelper.warmGray);
         velocityMaxDial.setGradientStartColor(velocityMaxDial.getKnobColor().brighter());
         velocityMaxDial.setGradientEndColor(velocityMaxDial.getKnobColor().darker());
 
         swingDial = createDial("swing", 50, 0, 100, 1);
         swingDial.setCommand(Commands.NEW_VALUE_SWING);
-        swingDial.setKnobColor(UIUtils.slateGray);
+        swingDial.setKnobColor(UIHelper.slateGray);
         swingDial.setGradientStartColor(swingDial.getKnobColor().brighter());
         swingDial.setGradientEndColor(swingDial.getKnobColor().darker());
 
         probabilityDial = createDial("probability", 100, 0, 100, 1);
         probabilityDial.setCommand(Commands.NEW_VALUE_PROBABILITY);
-        probabilityDial.setKnobColor(UIUtils.deepNavy);
+        probabilityDial.setKnobColor(UIHelper.deepNavy);
         probabilityDial.setGradientStartColor(probabilityDial.getKnobColor().brighter());
         probabilityDial.setGradientEndColor(probabilityDial.getKnobColor().darker());
 
         randomDial = createDial("random", 0, 0, 100, 1);
         randomDial.setCommand(Commands.NEW_VALUE_RANDOM);
-        randomDial.setKnobColor(UIUtils.mutedOlive);
+        randomDial.setKnobColor(UIHelper.mutedOlive);
         randomDial.setGradientStartColor(randomDial.getKnobColor().brighter());
         randomDial.setGradientEndColor(randomDial.getKnobColor().darker());
 
         sparseDial = createDial("sparse", 0, 0, 100, 1);
         sparseDial.setCommand(Commands.NEW_VALUE_SPARSE);
-        sparseDial.setKnobColor(UIUtils.deepTeal);
+        sparseDial.setKnobColor(UIHelper.deepTeal);
         sparseDial.setGradientStartColor(sparseDial.getKnobColor().brighter());
         sparseDial.setGradientEndColor(sparseDial.getKnobColor().darker());
 
@@ -296,7 +307,7 @@ public class ControlPanel extends JPanel {
                     noteSelectionDial.setValue(newNote, false);
 
                     // Save the change and notify UI
-                    PlayerManager.getInstance().updatePlayerNote(activePlayer, newNote);
+                    getTargetPlayer().setRootNote(newNote);
 
                     // Request row refresh in players panel
                     CommandBus.getInstance().publish(Commands.PLAYER_ROW_REFRESH, this, activePlayer);
@@ -323,7 +334,7 @@ public class ControlPanel extends JPanel {
                     noteSelectionDial.setValue(newNote, false);
 
                     // Save the change and notify UI
-                    PlayerManager.getInstance().updatePlayerNote(activePlayer, newNote);
+                    getTargetPlayer().setRootNote(newNote);
 
                     // Request row refresh in players panel
                     CommandBus.getInstance().publish(Commands.PLAYER_ROW_REFRESH, this, activePlayer);
@@ -425,7 +436,7 @@ public class ControlPanel extends JPanel {
         dial.setPreferredSize(new Dimension(50, 50));
         dial.setMinimumSize(new Dimension(50, 50));
         dial.setMaximumSize(new Dimension(50, 50));
-        dial.setBackground(UIUtils.getDialColor(propertyName));
+        dial.setBackground(UIHelper.getDialColor(propertyName));
         // Store the property name in the dial
         dial.setName(propertyName);
 
@@ -435,7 +446,7 @@ public class ControlPanel extends JPanel {
                 Dial sourceDial = (Dial) e.getSource();
                 if (sourceDial.getCommand() != null) {
                     CommandBus.getInstance().publish(sourceDial.getCommand(),
-                            PlayerManager.getInstance().getActivePlayer(), sourceDial.getValue());
+                            getTargetPlayer(), sourceDial.getValue());
                 }
             }
         });
@@ -447,8 +458,8 @@ public class ControlPanel extends JPanel {
                     return;
 
                 switch (action.getCommand()) {
-                case Commands.PLAYER_SELECTED -> dial.setEnabled(true);
-                case Commands.PLAYER_UNSELECTED -> dial.setEnabled(false);
+                case Commands.PLAYER_ACTIVATED -> dial.setEnabled(true);
+                // case Commands.PLAYER_UNSELECTED -> dial.setEnabled(false);
                 }
             }
         });
@@ -513,7 +524,7 @@ public class ControlPanel extends JPanel {
                 String cmd = action.getCommand();
 
                 try {
-                    if (Commands.PLAYER_SELECTED.equals(cmd)) {
+                    if (Commands.PLAYER_ACTIVATED.equals(cmd)) {
                         if (action.getData() instanceof Player player) {
                             logger.info("ControlPanel updating controls for player: " + player.getName() + " (ID: "
                                     + player.getId() + ")");
@@ -528,12 +539,13 @@ public class ControlPanel extends JPanel {
                                 updateVerticalAdjustButtons(true);
                             });
                         }
-                    } else if (Commands.PLAYER_UNSELECTED.equals(cmd)) {
-                        logger.info("ControlPanel received PLAYER_UNSELECTED");
-                        activePlayer = null;
-                        disableDials();
-                        updateVerticalAdjustButtons(false);
-                    }
+                    } 
+                    // else if (Commands.PLAYER_UNSELECTED.equals(cmd)) {
+                    //     logger.info("ControlPanel received PLAYER_UNSELECTED");
+                    //     activePlayer = null;
+                    //     disableDials();
+                    //     updateVerticalAdjustButtons(false);
+                    // }
                 } catch (Exception e) {
                     logger.error("Error in command handler: " + e.getMessage());
                     e.printStackTrace();
@@ -555,7 +567,7 @@ public class ControlPanel extends JPanel {
             activePlayer.setLevel(value);
 
             // Save the change and notify UI
-            PlayerManager.getInstance().updatePlayerLevel(activePlayer, value);
+            getTargetPlayer().setLevel(value);
 
             // Request row refresh in players panel (important!)
             CommandBus.getInstance().publish(Commands.PLAYER_ROW_REFRESH, this, activePlayer);
@@ -573,7 +585,7 @@ public class ControlPanel extends JPanel {
             activePlayer.setSwing(value);
 
             // Save the change and notify UI
-            PlayerManager.getInstance().updatePlayerSwing(activePlayer, value);
+            getTargetPlayer().setSwing(value);
 
             // Request row refresh
             CommandBus.getInstance().publish(Commands.PLAYER_ROW_REFRESH, this, activePlayer);
@@ -588,7 +600,7 @@ public class ControlPanel extends JPanel {
             logger.info("Updating player probability to: " + value);
 
             // Update player and save
-            PlayerManager.getInstance().updatePlayerProbability(activePlayer, value);
+            getTargetPlayer().setProbability(value);
 
             // Request row refresh
             CommandBus.getInstance().publish(Commands.PLAYER_ROW_REFRESH, this, activePlayer);
@@ -624,7 +636,7 @@ public class ControlPanel extends JPanel {
             activePlayer.setMinVelocity(minValue);
 
             // Save the changes and notify UI
-            PlayerManager.getInstance().updatePlayerVelocityMin(activePlayer, minValue);
+            getTargetPlayer().setMinVelocity(minValue);
 
             // Request row refresh
             CommandBus.getInstance().publish(Commands.PLAYER_ROW_REFRESH, this, activePlayer);
@@ -660,7 +672,7 @@ public class ControlPanel extends JPanel {
             activePlayer.setMaxVelocity(maxValue);
 
             // Save the changes and notify UI
-            PlayerManager.getInstance().updatePlayerVelocityMax(activePlayer, maxValue);
+            getTargetPlayer().setMaxVelocity(maxValue);
 
             // Request row refresh
             CommandBus.getInstance().publish(Commands.PLAYER_ROW_REFRESH, this, activePlayer);
@@ -676,7 +688,7 @@ public class ControlPanel extends JPanel {
 
             // Update player and save
             activePlayer.setPanPosition(value);
-            PlayerManager.getInstance().updatePlayerPan(activePlayer, value);
+            getTargetPlayer().setPan(value);
 
             // Request row refresh
             CommandBus.getInstance().publish(Commands.PLAYER_ROW_REFRESH, this, activePlayer);
@@ -692,7 +704,7 @@ public class ControlPanel extends JPanel {
 
             // Update player and save
             activePlayer.setRandomDegree(value);
-            PlayerManager.getInstance().updatePlayerRandom(activePlayer, value);
+            getTargetPlayer().setRandomDegree(value);
 
             // Request row refresh
             CommandBus.getInstance().publish(Commands.PLAYER_ROW_REFRESH, this, activePlayer);
@@ -708,7 +720,7 @@ public class ControlPanel extends JPanel {
 
             // Update player and save
             activePlayer.setSparse(value / 100.0); // Convert to 0-1.0 range
-            PlayerManager.getInstance().updatePlayerSparse(activePlayer, value);
+            getTargetPlayer().setSparse(value);
 
             // Request row refresh
             CommandBus.getInstance().publish(Commands.PLAYER_ROW_REFRESH, this, activePlayer);
@@ -724,7 +736,7 @@ public class ControlPanel extends JPanel {
 
             // Update player and save
             activePlayer.setRootNote(value);
-            PlayerManager.getInstance().updatePlayerNote(activePlayer, value);
+            getTargetPlayer().setRootNote(value);
 
             // Request row refresh
             CommandBus.getInstance().publish(Commands.PLAYER_ROW_REFRESH, this, activePlayer);

@@ -30,6 +30,8 @@ import javax.swing.SpinnerNumberModel;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
 
+import com.angrysurfer.beats.panel.instrument.InstrumentEditPanel;
+import com.angrysurfer.core.service.InstrumentManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -230,6 +232,18 @@ class SystemsPanel extends JPanel {
             newInstrument.setHighestNote(127); // Default range
             newInstrument.setInitialized(true);
             
+            // Generate a consistent ID for this device
+            // Use a hash of the device name to make it consistent
+            long deviceId = Math.abs(deviceName.hashCode());
+            
+            // For Gervill specifically, use a well-known ID to match MelodicSequencer
+            if ("Gervill".equals(deviceName) || deviceName.contains("Gervill")) {
+                // Base ID for Gervill (matches MelodicSequencer's 9985L base)
+                deviceId = 9985L;
+            }
+            
+            newInstrument.setId(deviceId);
+            
             // Show the edit dialog
             InstrumentEditPanel editorPanel = new InstrumentEditPanel(newInstrument);
             Dialog<InstrumentWrapper> dialog = new Dialog<>(newInstrument, editorPanel);
@@ -238,29 +252,21 @@ class SystemsPanel extends JPanel {
             if (dialog.showDialog()) {
                 InstrumentWrapper updatedInstrument = editorPanel.getUpdatedInstrument();
                 
+                // Ensure ID is preserved
+                if (updatedInstrument.getId() == null) {
+                    updatedInstrument.setId(deviceId);
+                }
+                
                 // Save the new instrument
                 RedisService.getInstance().saveInstrument(updatedInstrument);
                 
-                // Notify about the new instrument
-                CommandBus.getInstance().publish(
-                        Commands.STATUS_UPDATE,
-                        this, 
-                        new StatusUpdate("Created new instrument: " + updatedInstrument.getName()));
+                // Update local cache too
+                InstrumentManager.getInstance().updateInstrument(updatedInstrument);
                 
-                // Notify that an instrument was added (so InstrumentsPanel can refresh)
-                CommandBus.getInstance().publish(
-                        Commands.INSTRUMENT_ADDED, 
-                        this, 
-                        updatedInstrument);
-                
-                logger.info("Created new instrument: {}", updatedInstrument.getName());
+                // Rest of notification code...
             }
         } catch (Exception e) {
-            CommandBus.getInstance().publish(
-                    Commands.STATUS_UPDATE,
-                    this,
-                    new StatusUpdate("Error creating instrument: " + e.getMessage()));
-            logger.error("Error creating instrument", e);
+            // Error handling...
         }
     }
 

@@ -55,8 +55,9 @@ public class Commands {
     // Player selection commands
     public static final String PLAYER = "PLAYER";
 
-    public static final String PLAYER_SELECTED = "PLAYER_SELECTED";
-    public static final String PLAYER_UNSELECTED = "PLAYER_UNSELECTED";
+    public static final String PLAYER_ACTIVATION_REQUEST = "PLAYER_ACTIVATION_REQUEST";
+    public static final String PLAYER_ACTIVATED = "PLAYER_ACTIVATED";
+    
     public static final String PLAYER_ADDED = "PLAYER_ADDED";
     public static final String PLAYER_UPDATED = "PLAYER_UPDATED";
     public static final String PLAYER_DELETED = "PLAYER_DELETED";
@@ -260,7 +261,7 @@ public class Commands {
     public static final String SOUNDBANK_UNSELECTED_CHANGED = "SOUNDBANK_UNSELECTED_CHANGED";
     public static final String SOUNDBANK_SELECTED_REQUEST = "SOUNDBANK_SELECTED_REQUEST";
     public static final String SOUNDBANK_UNSELECTED_REQUEST = "SOUNDBANK_UNSELECTED_REQUEST";
- 
+
     public static final String PAD_TOGGLED = "PAD_TOGGLED";
     public static final String NEW_VALUE_OCTAVE = "NEW_VALUE_OCTAVE";
     public static final String SEQUENCER_STEP_UPDATE = "SEQUENCER_STEP_UPDATE";
@@ -274,7 +275,7 @@ public class Commands {
     public static final String DRUM_SEQUENCE_REMOVED = "DRUM_SEQUENCE_REMOVED";
     public static final String DRUM_SEQUENCE_ADDED = "DRUM_SEQUENCE_ADDED";
     public static final String DRUM_SEQUENCE_SELECTED = "DRUM_SEQUENCE_SELECTED";
-	public static final String SAVE_DRUM_SEQUENCE = "SAVE_DRUM_SEQUENCE";
+    public static final String SAVE_DRUM_SEQUENCE = "SAVE_DRUM_SEQUENCE";
     public static final String LOAD_DRUM_SEQUENCE = "LOAD_DRUM_SEQUENCE";
     public static final String DRUM_SEQUENCE_PARAMS_CHANGED = "DRUM_SEQUENCE_PARAMS_CHANGED";
     public static final String DRUM_SEQUENCE_LOADED = "DRUM_SEQUENCE_LOADED";
@@ -322,4 +323,63 @@ public class Commands {
     public static final String GLOBAL_SCALE_SELECTED = "GLOBAL_SCALE_SELECTED";
     public static final String DRUM_SEQUENCE_MAX_LENGTH_CHANGED = "DRUM_SEQUENCE_MAX_LENGTH_CHANGED";
     public static final String DRUM_SEQUENCE_GRID_RECREATE_REQUESTED = "DRUM_SEQUENCE_GRID_RECREATE_REQUESTED";
+    public static final String USER_CONFIG_UPDATED = "USER_CONFIG_UPDATED";
+    public static final String SESSION_TEMPO_CHANGED = "SESSION_TEMPO_CHANGED";
+    public static final String THEME_CHANGED = "THEME_CHANGED";
+    public static final String REQUEST_ONE_TIME_NOTIFICATION = "REQUEST_ONE_TIME_NOTIFICATION";
+    public static final String SEQUENCER_STATE_CHANGED = "SEQUENCER_STATE_CHANGED";
+    public static final String INSTRUMENT_CHANGED = "INSTRUMENT_CHANGED";
+    public static final String DRUM_STEP_UPDATED = "DRUM_STEP_UPDATED";
+
+    // Player update commands
+    public static final String PLAYER_UPDATE_REQUEST = "PLAYER_UPDATE_REQUEST";
+
+    // Player preset commands
+    public static final String PLAYER_PRESET_CHANGE_REQUEST = "PLAYER_PRESET_CHANGE_REQUEST";
+    public static final String PLAYER_PRESET_CHANGED = "PLAYER_PRESET_CHANGED";
+
+    // Player instrument commands
+    public static final String PLAYER_CHANNEL_CHANGE_REQUEST = "PLAYER_CHANNEL_CHANGE_REQUEST";
+    public static final String PLAYER_INSTRUMENT_CHANGE_REQUEST = "PLAYER_INSTRUMENT_CHANGE_REQUEST";
+    public static final String PLAYER_INSTRUMENT_CHANGED = "PLAYER_INSTRUMENT_CHANGED";
+    public static final String TRANSPORT_STATE_REQUEST = "TRANSPORT_STATE_REQUEST";
+    public static final String TEMPO_CHANGE = "TEMPO_CHANGE";
+    public static final String TIME_SIGNATURE_CHANGE = "TIME_SIGNATURE_CHANGE";
+    public static final String ACTIVE_PLAYER_REQUEST = "ACTIVE_PLAYER_REQUEST";
+
+    // Add this if it doesn't exist
+    public static final String MELODIC_PATTERN_UPDATED = "MELODIC_PATTERN_UPDATED";
+    public static final String DRUM_PLAYER_INSTRUMENT_CHANGED = "DRUM_PLAYER_INSTRUMENT_CHANGED";
+    public static final String CREATE_INSTRUMENT_FOR_PLAYER_REQUEST = "CREATE_INSTRUMENT_FOR_PLAYER_REQUEST";
+
+    // Add these constants to the Commands class
+    public static final String LOAD_SOUNDBANK = "LOAD_SOUNDBANK";
+    public static final String REFRESH_SOUNDBANKS = "REFRESH_SOUNDBANKS";
+    public static final String SOUNDBANKS_REFRESHED = "SOUNDBANKS_REFRESHED";
+
+    public static final String CHANNEL_ASSIGNMENT_CHANGED = "CHANNEL_ASSIGNMENT_CHANGED";
+    
+    public static final String DELETE_UNUSED_INSTRUMENTS = "DELETE_UNUSED_INSTRUMENTS";
+    public static final String UPDATE_STATUS = "UPDATE_STATUS";
+    public static final String REPAIR_MIDI_CONNECTIONS = "REPAIR_MIDI_CONNECTIONS";
+    public static final String DRUM_SEQUENCE_DELETED = "DRUM_SEQUENCE_DELETED";
+    public static final String PLAYER_LEVEL_CHANGED = "PLAYER_LEVEL_CHANGED";
+
+    // Add these constants
+    public static final String DRUM_PRESET_SELECTION_REQUEST = "drum.preset.selection.request";
+    public static final String DRUM_INSTRUMENTS_UPDATED = "drum.instruments.updated";
+
+    // Add a new command:
+    public static final String REFRESH_ALL_INSTRUMENTS = "refresh.all.instruments";
+    public static final String REFRESH_PLAYER_INSTRUMENT = "refresh.player.instrument";
+
+    // Add these new command constants to the Commands class
+    public static final String PLAYER_SELECTION_EVENT = "player.selection.event";
+    public static final String PLAYER_UPDATE_EVENT = "player.update.event";
+    public static final String PLAYER_INSTRUMENT_CHANGE_EVENT = "player.instrument.change.event";
+    public static final String PLAYER_PRESET_CHANGE_EVENT = "player.preset.change.event";
+    public static final String PLAYER_REFRESH_EVENT = "player.refresh.event";
+
+    // Add to Commands.java:
+    public static final String PLAYER_RULE_UPDATE_EVENT = "PLAYER_RULE_UPDATE_EVENT";
 }

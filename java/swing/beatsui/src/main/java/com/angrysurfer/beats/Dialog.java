@@ -12,6 +12,7 @@ import javax.swing.BorderFactory;
 import javax.swing.JButton;
 import javax.swing.JComponent;
 import javax.swing.JDialog;
+import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.KeyStroke;
 
@@ -26,6 +27,7 @@ public class Dialog<T> extends JDialog {
     private boolean accepted = false;
     private JPanel buttonPanel;
     private JPanel titlePanel;
+    private JLabel titleLabel;
 
     public Dialog() {
         this(null, null, null);
@@ -91,6 +93,14 @@ public class Dialog<T> extends JDialog {
         });
     }
 
+    @Override
+    public void setTitle(String title) {
+        super.setTitle(title);
+        if (titleLabel != null) {
+            titleLabel.setText(title);
+        }
+   }
+
     private void setupTitlePanel() {
         titlePanel = new JPanel();
         titlePanel.setLayout(new BorderLayout());
@@ -101,8 +111,11 @@ public class Dialog<T> extends JDialog {
         JButton prevButton = createNavigationButton("⏮", "Previous");
         JButton nextButton = createNavigationButton("⏭", "Next");
 
+        titleLabel = new JLabel("Title", JLabel.CENTER);
+
         // Add buttons to title panel
         titlePanel.add(prevButton, BorderLayout.WEST);
+        titlePanel.add(titleLabel, BorderLayout.CENTER);
         titlePanel.add(nextButton, BorderLayout.EAST);
 
         add(titlePanel, BorderLayout.NORTH);
@@ -146,11 +159,6 @@ public class Dialog<T> extends JDialog {
         button.setFocusPainted(false);
         button.addActionListener(listener);
         return button;
-    }
-
-    @Override
-    public void setTitle(String title) {
-        super.setTitle(title);
     }
 
     public void setContent(JPanel content) {

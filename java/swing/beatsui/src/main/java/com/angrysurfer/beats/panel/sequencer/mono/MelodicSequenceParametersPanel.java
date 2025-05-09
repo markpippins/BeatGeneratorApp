@@ -4,9 +4,10 @@ import com.angrysurfer.core.model.Direction;
 import com.angrysurfer.core.sequencer.MelodicSequencer;
 import com.angrysurfer.core.sequencer.Scale;
 import com.angrysurfer.core.sequencer.TimingDivision;
-import com.angrysurfer.beats.event.MelodicScaleSelectionEvent;
+import com.angrysurfer.beats.util.UIHelper;
 import com.angrysurfer.core.api.CommandBus;
 import com.angrysurfer.core.api.Commands;
+import com.angrysurfer.core.event.MelodicScaleSelectionEvent;
 
 import javax.swing.*;
 import javax.swing.border.TitledBorder;
@@ -21,31 +22,19 @@ import org.slf4j.LoggerFactory;
  */
 public class MelodicSequenceParametersPanel extends JPanel {
     private static final Logger logger = LoggerFactory.getLogger(MelodicSequenceParametersPanel.class);
-    
-    // Size constants
-    private static final int SMALL_CONTROL_WIDTH = 40;
-    private static final int MEDIUM_CONTROL_WIDTH = 60;
-    private static final int LARGE_CONTROL_WIDTH = 90;
-    private static final int CONTROL_HEIGHT = 25;
-    
+
     // UI Controls
     private JComboBox<String> directionCombo;
     private JComboBox<TimingDivision> timingCombo;
     private JToggleButton loopToggleButton;
     private JSpinner lastStepSpinner;
-    private JComboBox<String> rootNoteCombo;
-    private JComboBox<String> scaleCombo;
-    private JCheckBox quantizeCheckbox;
-    private JLabel octaveLabel;
-    private JButton octaveDownBtn;
-    private JButton octaveUpBtn;
-    
+
     // Reference to sequencer
     private MelodicSequencer sequencer;
-    
+
     // Flag to prevent event loops
     private boolean updatingUI = false;
-    
+
     /**
      * Create a new sequence parameters panel
      * 
@@ -55,58 +44,67 @@ public class MelodicSequenceParametersPanel extends JPanel {
         this.sequencer = sequencer;
         initialize();
     }
-    
+
     /**
      * Initialize the panel with all controls
      */
     private void initialize() {
-        setBorder(BorderFactory.createTitledBorder("Sequence Parameters"));
-        setLayout(new FlowLayout(FlowLayout.LEFT, 10, 5));
-        
-        // Create all the panels and controls
-        createLastStepControls();
-        createDirectionControls();
-        createTimingControls();
-        createLoopButton();
-        createRotationControls();
-        createClearButton();
-        createRootNoteControls();
-        createQuantizeControls();
-        createScaleControls();
-        createOctaveControls();
+        setLayout(new BorderLayout(0, 0)); // No gaps between components
+        UIHelper.setWidgetPanelBorder(this,"Sequence Parameters");
+
+        // Reduce spacing in the controls panel
+        JPanel controlsPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 1, 0));
+
+        // Add all controls to the left panel EXCEPT those now in the scale panel
+        createLastStepControls(controlsPanel);
+        createDirectionControls(controlsPanel);
+        createTimingControls(controlsPanel);
+        createLoopButton(controlsPanel);
+        createRotationControls(controlsPanel);
+
+        add(controlsPanel, BorderLayout.WEST);
+
+        // Reduce spacing in the clear button panel
+        JPanel clearPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 1, 0));
+        JButton clearButton = createClearButton();
+        clearPanel.add(clearButton);
+
+        // Add the clear panel to the EAST position
+        add(clearPanel, BorderLayout.EAST);
     }
-    
+
     /**
      * Create last step spinner control
      */
-    private void createLastStepControls() {
-        JPanel lastStepPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 5, 0));
+    private void createLastStepControls(JPanel parentPanel) {
+        JPanel lastStepPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 1, 0)); // Changed from 2,0 to 1,0
         lastStepPanel.add(new JLabel("Last Step:"));
 
         // Create spinner model with range 1-16, default 16
         SpinnerNumberModel lastStepModel = new SpinnerNumberModel(16, 1, 64, 1);
         lastStepSpinner = new JSpinner(lastStepModel);
-        lastStepSpinner.setPreferredSize(new Dimension(MEDIUM_CONTROL_WIDTH, CONTROL_HEIGHT));
+        lastStepSpinner.setPreferredSize(new Dimension(UIHelper.MEDIUM_CONTROL_WIDTH - 5, UIHelper.CONTROL_HEIGHT)); // Reduced
+                                                                                                                   // width
         lastStepSpinner.setToolTipText("Set the last step for the pattern (1-16)");
         lastStepSpinner.addChangeListener(e -> {
             if (!updatingUI) {
                 int lastStep = (Integer) lastStepSpinner.getValue();
-                sequencer.setPatternLength(lastStep);
+                sequencer.getSequenceData().setPatternLength(lastStep);
             }
         });
         lastStepPanel.add(lastStepSpinner);
-        
-        add(lastStepPanel);
+
+        parentPanel.add(lastStepPanel);
     }
-    
+
     /**
      * Create direction combo control
      */
-    private void createDirectionControls() {
-        JPanel directionPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 5, 0));
+    private void createDirectionControls(JPanel parentPanel) {
+        JPanel directionPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 2, 0)); // REDUCED: from 5,0 to 2,0
 
         directionCombo = new JComboBox<>(new String[] { "Forward", "Backward", "Bounce", "Random" });
-        directionCombo.setPreferredSize(new Dimension(LARGE_CONTROL_WIDTH, CONTROL_HEIGHT));
+        directionCombo.setPreferredSize(new Dimension(UIHelper.LARGE_CONTROL_WIDTH, UIHelper.CONTROL_HEIGHT));
         directionCombo.setToolTipText("Set the playback direction of the pattern");
         directionCombo.addActionListener(e -> {
             if (!updatingUI) {
@@ -118,252 +116,120 @@ public class MelodicSequenceParametersPanel extends JPanel {
                     case 3 -> Direction.RANDOM;
                     default -> Direction.FORWARD;
                 };
-                sequencer.setDirection(direction);
+                sequencer.getSequenceData().setDirection(direction);
             }
         });
         directionPanel.add(directionCombo);
-        
-        add(directionPanel);
+
+        parentPanel.add(directionPanel);
     }
-    
+
     /**
      * Create timing division combo control
      */
-    private void createTimingControls() {
-        JPanel timingPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 5, 0));
+    private void createTimingControls(JPanel parentPanel) {
+        JPanel timingPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 2, 0)); // REDUCED: from 5,0 to 2,0
 
         timingCombo = new JComboBox<>(TimingDivision.getValuesAlphabetically());
-        timingCombo.setPreferredSize(new Dimension(LARGE_CONTROL_WIDTH, CONTROL_HEIGHT));
+        timingCombo.setPreferredSize(new Dimension(UIHelper.LARGE_CONTROL_WIDTH, UIHelper.CONTROL_HEIGHT));
         timingCombo.setToolTipText("Set the timing division for this pattern");
         timingCombo.addActionListener(e -> {
             if (!updatingUI) {
                 TimingDivision division = (TimingDivision) timingCombo.getSelectedItem();
                 if (division != null) {
                     logger.info("Setting timing division to {}", division);
-                    sequencer.setTimingDivision(division);
+                    sequencer.getSequenceData().setTimingDivision(division);
                 }
             }
         });
         timingPanel.add(timingCombo);
-        
-        add(timingPanel);
+
+        parentPanel.add(timingPanel);
     }
-    
+
     /**
      * Create loop toggle button
      */
-    private void createLoopButton() {
+    private void createLoopButton(JPanel parentPanel) {
         loopToggleButton = new JToggleButton("🔁", true); // Default to looping enabled
         loopToggleButton.setToolTipText("Loop this pattern");
-        loopToggleButton.setPreferredSize(new Dimension(SMALL_CONTROL_WIDTH, CONTROL_HEIGHT));
+        loopToggleButton.setPreferredSize(new Dimension(UIHelper.SMALL_CONTROL_WIDTH, UIHelper.CONTROL_HEIGHT));
         loopToggleButton.setMargin(new Insets(2, 2, 2, 2)); // Reduce internal padding
         loopToggleButton.addActionListener(e -> {
             if (!updatingUI) {
-                sequencer.setLooping(loopToggleButton.isSelected());
+                sequencer.getSequenceData().setLooping(loopToggleButton.isSelected());
             }
         });
-        
-        add(loopToggleButton);
+
+        parentPanel.add(loopToggleButton);
     }
-    
+
     /**
      * Create rotation controls
      */
-    private void createRotationControls() {
-        JPanel rotationPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 5, 0));
+    private void createRotationControls(JPanel parentPanel) {
+        JPanel rotationPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 2, 0)); // REDUCED: from 5,0 to 2,0
 
         // Rotate Left button
         JButton rotateLeftButton = new JButton("⟵");
         rotateLeftButton.setToolTipText("Rotate pattern one step left");
-        rotateLeftButton.setPreferredSize(new Dimension(SMALL_CONTROL_WIDTH, CONTROL_HEIGHT));
+        rotateLeftButton.setPreferredSize(new Dimension(UIHelper.SMALL_CONTROL_WIDTH, UIHelper.CONTROL_HEIGHT));
         rotateLeftButton.setMargin(new Insets(2, 2, 2, 2));
         rotateLeftButton.addActionListener(e -> {
-            sequencer.rotatePatternLeft();
+            sequencer.getSequenceData().rotatePatternLeft();
             updateUI(sequencer);
             // Notify that the pattern was updated
             CommandBus.getInstance().publish(
-                Commands.PATTERN_UPDATED,
-                sequencer,
-                null
-            );
+                    Commands.PATTERN_UPDATED,
+                    sequencer,
+                    null);
         });
 
         // Rotate Right button
         JButton rotateRightButton = new JButton("⟶");
         rotateRightButton.setToolTipText("Rotate pattern one step right");
-        rotateRightButton.setPreferredSize(new Dimension(SMALL_CONTROL_WIDTH, CONTROL_HEIGHT));
+        rotateRightButton.setPreferredSize(new Dimension(UIHelper.SMALL_CONTROL_WIDTH, UIHelper.CONTROL_HEIGHT));
         rotateRightButton.setMargin(new Insets(2, 2, 2, 2));
         rotateRightButton.addActionListener(e -> {
-            sequencer.rotatePatternRight();
+            sequencer.getSequenceData().rotatePatternRight();
             updateUI(sequencer);
             // Notify that the pattern was updated
             CommandBus.getInstance().publish(
-                Commands.PATTERN_UPDATED,
-                sequencer,
-                null
-            );
+                    Commands.PATTERN_UPDATED,
+                    sequencer,
+                    null);
         });
 
         // Add buttons to rotation panel
         rotationPanel.add(rotateLeftButton);
         rotationPanel.add(rotateRightButton);
-        
-        add(rotationPanel);
+
+        parentPanel.add(rotationPanel);
     }
-    
+
     /**
      * Create clear button
+     * 
+     * @return The created button
      */
-    private void createClearButton() {
+    private JButton createClearButton() {
         JButton clearButton = new JButton("🗑️");
         clearButton.setToolTipText("Clear pattern");
-        clearButton.setPreferredSize(new Dimension(SMALL_CONTROL_WIDTH, CONTROL_HEIGHT));
+        clearButton.setPreferredSize(new Dimension(UIHelper.SMALL_CONTROL_WIDTH, UIHelper.CONTROL_HEIGHT));
         clearButton.setMargin(new Insets(2, 2, 2, 2));
         clearButton.addActionListener(e -> {
-            sequencer.clearPattern();
+            sequencer.getSequenceData().clearPattern();
             updateUI(sequencer);
             // Notify that the pattern was updated
             CommandBus.getInstance().publish(
-                Commands.PATTERN_UPDATED,
-                sequencer,
-                null
-            );
+                    Commands.PATTERN_UPDATED,
+                    sequencer,
+                    null);
         });
-        
-        add(clearButton);
+
+        return clearButton;
     }
-    
-    /**
-     * Create root note controls
-     */
-    private void createRootNoteControls() {
-        JPanel rootNotePanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 5, 0));
-        rootNotePanel.add(new JLabel("Root:"));
 
-        String[] noteNames = { "C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B" };
-        rootNoteCombo = new JComboBox<>(noteNames);
-        rootNoteCombo.setPreferredSize(new Dimension(MEDIUM_CONTROL_WIDTH, CONTROL_HEIGHT));
-        rootNoteCombo.setToolTipText("Set the root note");
-        rootNoteCombo.addItemListener(e -> {
-            if (e.getStateChange() == ItemEvent.SELECTED && !updatingUI) {
-                String rootNote = (String) e.getItem();
-                sequencer.setRootNote(rootNote);
-
-                // Publish event for other listeners
-                CommandBus.getInstance().publish(
-                    Commands.ROOT_NOTE_SELECTED,
-                    this,
-                    rootNote
-                );
-
-                logger.info("Root note selected: {}", rootNote);
-            }
-        });
-        
-        rootNotePanel.add(rootNoteCombo);
-        
-        add(rootNotePanel);
-    }
-    
-    /**
-     * Create quantize checkbox
-     */
-    private void createQuantizeControls() {
-        quantizeCheckbox = new JCheckBox("Q", true);
-        quantizeCheckbox.setToolTipText("Quantize notes to scale");
-        quantizeCheckbox.setPreferredSize(new Dimension(SMALL_CONTROL_WIDTH, CONTROL_HEIGHT));
-        quantizeCheckbox.addActionListener(e -> {
-            if (!updatingUI) {
-                sequencer.setQuantizeEnabled(quantizeCheckbox.isSelected());
-            }
-        });
-        
-        add(quantizeCheckbox);
-    }
-    
-    /**
-     * Create scale combo control
-     */
-    private void createScaleControls() {
-        JPanel scalePanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 5, 0));
-        scalePanel.add(new JLabel("Scale:"));
-
-        String[] scaleNames = Scale.getScales();
-        scaleCombo = new JComboBox<>(scaleNames);
-        scaleCombo.setPreferredSize(new Dimension(120, CONTROL_HEIGHT));
-        scaleCombo.setToolTipText("Set the scale");
-        scaleCombo.addItemListener(e -> {
-            if (e.getStateChange() == ItemEvent.SELECTED && !updatingUI) {
-                String selectedScale = (String) e.getItem();
-                sequencer.setScale(selectedScale);
-
-                // Publish event with sequencer ID to indicate which sequencer it's for
-                CommandBus.getInstance().publish(
-                    Commands.SCALE_SELECTED,
-                    this,
-                    new MelodicScaleSelectionEvent(sequencer.getId(), selectedScale)
-                );
-
-                logger.info("Scale selected for sequencer {}: {}", sequencer.getId(), selectedScale);
-            }
-        });
-        
-        scalePanel.add(scaleCombo);
-        
-        add(scalePanel);
-    }
-    
-    /**
-     * Create octave controls
-     */
-    private void createOctaveControls() {
-        JPanel octavePanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 2, 0));
-        octavePanel.add(new JLabel("Octave:"));
-
-        octaveDownBtn = new JButton("-");
-        octaveDownBtn.setMargin(new java.awt.Insets(1, 5, 1, 5));
-        octaveDownBtn.setFocusable(false);
-        octaveDownBtn.setPreferredSize(new Dimension(SMALL_CONTROL_WIDTH, CONTROL_HEIGHT));
-        octaveDownBtn.addActionListener(e -> {
-            if (!updatingUI) {
-                sequencer.decrementOctaveShift();
-                updateOctaveLabel();
-            }
-        });
-        octaveDownBtn.setToolTipText("Lower the octave");
-
-        octaveLabel = new JLabel("0");
-        octaveLabel.setPreferredSize(new Dimension(20, 20));
-        octaveLabel.setHorizontalAlignment(JLabel.CENTER);
-
-        octaveUpBtn = new JButton("+");
-        octaveUpBtn.setMargin(new java.awt.Insets(1, 5, 1, 5));
-        octaveUpBtn.setFocusable(false);
-        octaveUpBtn.setPreferredSize(new Dimension(SMALL_CONTROL_WIDTH, CONTROL_HEIGHT));
-        octaveUpBtn.addActionListener(e -> {
-            if (!updatingUI) {
-                sequencer.incrementOctaveShift();
-                updateOctaveLabel();
-            }
-        });
-        octaveUpBtn.setToolTipText("Raise the octave");
-
-        octavePanel.add(octaveDownBtn);
-        octavePanel.add(octaveLabel);
-        octavePanel.add(octaveUpBtn);
-        
-        add(octavePanel);
-    }
-    
-    /**
-     * Update the octave label to show current octave shift
-     */
-    private void updateOctaveLabel() {
-        if (octaveLabel != null && sequencer != null) {
-            octaveLabel.setText(Integer.toString(sequencer.getOctaveShift()));
-        }
-    }
-    
     /**
      * Update the panel UI to reflect sequencer state
      * 
@@ -373,22 +239,22 @@ public class MelodicSequenceParametersPanel extends JPanel {
         if (sequencer == null) {
             return;
         }
-        
+
         // Store the current sequencer reference
         this.sequencer = sequencer;
-        
+
         // Set flag to prevent event loops
         updatingUI = true;
-        
+
         try {
             // Update timing division
-            TimingDivision timingDivision = sequencer.getTimingDivision();
+            TimingDivision timingDivision = sequencer.getSequenceData().getTimingDivision();
             if (timingDivision != null) {
                 timingCombo.setSelectedItem(timingDivision);
             }
-            
+
             // Update direction
-            Direction direction = sequencer.getDirection();
+            Direction direction = sequencer.getSequenceData().getDirection();
             if (direction != null) {
                 switch (direction) {
                     case FORWARD -> directionCombo.setSelectedIndex(0);
@@ -397,48 +263,17 @@ public class MelodicSequenceParametersPanel extends JPanel {
                     case RANDOM -> directionCombo.setSelectedIndex(3);
                 }
             }
-            
+
             // Update loop state
-            loopToggleButton.setSelected(sequencer.isLooping());
-            
+            loopToggleButton.setSelected(sequencer.getSequenceData().isLooping());
+
             // Update last step
-            lastStepSpinner.setValue(sequencer.getPatternLength());
-            
-            // Update root note
-            String rootNote = sequencer.getRootNote() != null ? sequencer.getRootNote().toString() : null;
-            if (rootNote != null) {
-                rootNoteCombo.setSelectedItem(rootNote);
-            }
-            
-            // Update scale
-            String scale = sequencer.getScale();
-            if (scale != null) {
-                scaleCombo.setSelectedItem(scale);
-            }
-            
-            // Update quantize
-            quantizeCheckbox.setSelected(sequencer.isQuantizeEnabled());
-            
-            // Update octave
-            updateOctaveLabel();
-            
+            lastStepSpinner.setValue(sequencer.getSequenceData().getPatternLength());
+
         } finally {
             // Reset flag after updates
             updatingUI = false;
         }
     }
 
-    /**
-     * Set the selected scale (without triggering events)
-     */ 
-    public void setSelectedScale(String scale) {
-        if (scale != null && scaleCombo != null) {
-            updatingUI = true;
-            try {
-                scaleCombo.setSelectedItem(scale);
-            } finally {
-                updatingUI = false;
-            }
-        }
-    }
 }

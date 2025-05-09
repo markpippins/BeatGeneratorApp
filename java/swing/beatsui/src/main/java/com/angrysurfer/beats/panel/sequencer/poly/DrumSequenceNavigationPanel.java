@@ -1,5 +1,6 @@
 package com.angrysurfer.beats.panel.sequencer.poly;
 
+import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.Insets;
@@ -14,7 +15,7 @@ import javax.swing.border.TitledBorder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.angrysurfer.beats.UIUtils;
+import com.angrysurfer.beats.util.UIHelper;
 import com.angrysurfer.core.api.CommandBus;
 import com.angrysurfer.core.api.Commands;
 import com.angrysurfer.core.redis.RedisService;
@@ -29,18 +30,13 @@ public class DrumSequenceNavigationPanel extends JPanel {
 
     private static final Logger logger = LoggerFactory.getLogger(DrumSequenceNavigationPanel.class);
 
-    private static final int SMALL_CONTROL_WIDTH = 40;
-    private static final int MEDIUM_CONTROL_WIDTH = 60;
-    private static final int LABEL_WIDTH = 85;
-    private static final int CONTROL_HEIGHT = 25;
-
     private JLabel sequenceIdLabel;
     private JButton firstButton;
     private JButton prevButton;
     private JButton nextButton;
     private JButton lastButton;
     private JButton saveButton;
-    private JButton newButton;  // Add new button field
+    private JButton newButton; // Add new button field
 
     private final DrumSequencer sequencer;
     private final DrumSequencerManager manager;
@@ -53,21 +49,18 @@ public class DrumSequenceNavigationPanel extends JPanel {
     }
 
     private void initializeUI() {
+        // REDUCED: from 5,2 to 2,1
+        setLayout(new FlowLayout(FlowLayout.LEFT, 2, 1));
 
-        setLayout(new FlowLayout(FlowLayout.LEFT, 5, 2));
-        setBorder(BorderFactory.createTitledBorder(
-                BorderFactory.createLineBorder(UIUtils.deepNavy),
-                "Sequence Navigation",
-                TitledBorder.LEFT,
-                TitledBorder.TOP
-        ));
+        UIHelper.setWidgetPanelBorder(this, "Sequence");
 
-
+        // Make ID label slightly smaller
         sequenceIdLabel = new JLabel(getFormattedIdText(), SwingConstants.CENTER);
-        sequenceIdLabel.setPreferredSize(new Dimension(LABEL_WIDTH, CONTROL_HEIGHT));
+        // REDUCED: from ID_LABEL_WIDTH to ID_LABEL_WIDTH - 10
+        sequenceIdLabel.setPreferredSize(new Dimension(UIHelper.ID_LABEL_WIDTH - 5, UIHelper.CONTROL_HEIGHT));
         sequenceIdLabel.setOpaque(true);
-        sequenceIdLabel.setBackground(UIUtils.darkGray);
-        sequenceIdLabel.setForeground(UIUtils.coolBlue);
+        sequenceIdLabel.setBackground(UIHelper.darkGray);
+        sequenceIdLabel.setForeground(UIHelper.coolBlue);
         sequenceIdLabel.setFont(sequenceIdLabel.getFont().deriveFont(12f));
 
         // Create new sequence button with plus icon
@@ -80,10 +73,10 @@ public class DrumSequenceNavigationPanel extends JPanel {
         lastButton = createButton("⏭", "Last sequence", e -> loadLastSequence());
 
         saveButton = createButton("💾", "Save current sequence", e -> saveCurrentSequence());
-        
+
         // Add components to panel - add new button first
         add(sequenceIdLabel);
-        add(newButton);      // Add new button here
+        add(newButton); // Add new button here
         add(firstButton);
         add(prevButton);
         add(nextButton);
@@ -99,11 +92,11 @@ public class DrumSequenceNavigationPanel extends JPanel {
         button.setToolTipText(tooltip);
         button.addActionListener(listener);
         button.setFocusable(false);
-        
+
         // Set consistent size and margins to match other panels
-        button.setPreferredSize(new Dimension(SMALL_CONTROL_WIDTH, CONTROL_HEIGHT));
+        button.setPreferredSize(new Dimension(UIHelper.SMALL_CONTROL_WIDTH, UIHelper.CONTROL_HEIGHT));
         button.setMargin(new Insets(2, 2, 2, 2));
-        
+
         return button;
     }
 
@@ -116,15 +109,15 @@ public class DrumSequenceNavigationPanel extends JPanel {
     }
 
     private String getFormattedIdText() {
-        return "Seq: " + 
-            (sequencer.getDrumSequenceId() == 0 ? "New" : sequencer.getDrumSequenceId());
+        return "Seq: " +
+                (sequencer.getData().getId() == 0 ? "New" : sequencer.getData().getId());
     }
 
     /**
      * Enable/disable buttons based on current sequence position
      */
     private void updateButtonStates() {
-        long currentId = sequencer.getDrumSequenceId();
+        long currentId = sequencer.getData().getId();
         boolean hasSequences = manager.hasSequences();
 
         // Get first/last sequence IDs
@@ -140,8 +133,8 @@ public class DrumSequenceNavigationPanel extends JPanel {
         boolean isLast = !hasSequences || (lastId != null && currentId >= lastId);
 
         firstButton.setEnabled(hasSequences && !isFirst);
-        prevButton.setEnabled((hasSequences || sequencer.getDrumSequenceId() < 0) && !isFirst);
-        nextButton.setEnabled(sequencer.getDrumSequenceId() > 0);  // Always enable the next button
+        prevButton.setEnabled((hasSequences || sequencer.getData().getId() < 0) && !isFirst);
+        nextButton.setEnabled(sequencer.getData().getId() > 0); // Always enable the next button
         lastButton.setEnabled(hasSequences && !isLast);
 
         logger.debug("Button states: currentId={}, firstId={}, lastId={}, isFirst={}, isLast={}",
@@ -161,7 +154,7 @@ public class DrumSequenceNavigationPanel extends JPanel {
                 sequencer.reset(true);
             else
                 sequencer.reset(false);
-                
+
             // Update UI
             updateSequenceIdDisplay();
 
@@ -169,8 +162,7 @@ public class DrumSequenceNavigationPanel extends JPanel {
             CommandBus.getInstance().publish(
                     Commands.PATTERN_LOADED,
                     this,
-                    sequencer.getDrumSequenceId()
-            );
+                    sequencer.getData().getId());
         }
     }
 
@@ -188,7 +180,7 @@ public class DrumSequenceNavigationPanel extends JPanel {
      * Load the previous sequence
      */
     private void loadPreviousSequence() {
-        Long prevId = manager.getPreviousSequenceId(sequencer.getDrumSequenceId());
+        Long prevId = manager.getPreviousSequenceId(sequencer.getData().getId());
         if (prevId != null) {
             loadSequence(prevId);
         }
@@ -199,18 +191,18 @@ public class DrumSequenceNavigationPanel extends JPanel {
      */
     private void loadNextSequence() {
         // Get current sequence ID
-        Long currentId = sequencer.getDrumSequenceId();
-        
+        Long currentId = sequencer.getData().getId();
+
         // Find the next sequence ID
         Long nextId = manager.getNextSequenceId(currentId);
-        
+
         // If there is a next sequence, load it
         if (nextId != null) {
             // Load the sequence into the sequencer
             if (manager.loadSequence(nextId, sequencer)) {
                 logger.info("Loaded next drum sequence: {}", nextId);
                 updateSequenceIdDisplay();
-                
+
                 // Notify other components that sequence has been updated
                 CommandBus.getInstance().publish(Commands.DRUM_SEQUENCE_UPDATED, this, nextId);
             }
@@ -218,7 +210,7 @@ public class DrumSequenceNavigationPanel extends JPanel {
             // We're at the last sequence - don't create a new one automatically
             logger.info("Already at last sequence - use New button to create a new sequence");
         }
-        
+
         // Update button states based on new position
         updateButtonStates();
     }
@@ -252,10 +244,9 @@ public class DrumSequenceNavigationPanel extends JPanel {
         CommandBus.getInstance().publish(
                 Commands.DRUM_SEQUENCE_SAVED,
                 this,
-                sequencer.getDrumSequenceId()
-        );
+                sequencer.getData().getId());
 
-        logger.info("Saved drum sequence: {}", sequencer.getDrumSequenceId());
+        logger.info("Saved drum sequence: {}", sequencer.getData().getId());
     }
 
     /**
@@ -265,24 +256,23 @@ public class DrumSequenceNavigationPanel extends JPanel {
         try {
             // Create a new sequence with an assigned ID right away
             DrumSequenceData newSequence = manager.createNewSequence();
-            
+
             if (newSequence != null) {
                 // Apply the new sequence to the sequencer
                 Long newId = newSequence.getId();
                 RedisService.getInstance().applyDrumSequenceToSequencer(newSequence, sequencer);
-                
+
                 logger.info("Created new drum sequence with ID: {}", newId);
-                
+
                 // Update UI
                 updateSequenceIdDisplay();
-                
+
                 // Notify other components
                 CommandBus.getInstance().publish(
-                    Commands.DRUM_SEQUENCE_UPDATED,
-                    this,
-                    newId
-                );
-                
+                        Commands.DRUM_SEQUENCE_UPDATED,
+                        this,
+                        newId);
+
                 // Update button states
                 updateButtonStates();
             } else {

@@ -38,15 +38,21 @@ public class ContextMenuHelper {
     }
 
     public void setAddEnabled(boolean enabled) {
-        addMenuItem.setEnabled(enabled);
+        if (addMenuItem != null) {
+            addMenuItem.setEnabled(enabled);
+        }
     }
 
     public void setEditEnabled(boolean enabled) {
-        editMenuItem.setEnabled(enabled);
+        if (editMenuItem != null) {
+            editMenuItem.setEnabled(enabled);
+        }
     }
 
     public void setDeleteEnabled(boolean enabled) {
-        deleteMenuItem.setEnabled(enabled);
+        if (deleteMenuItem != null) {
+            deleteMenuItem.setEnabled(enabled);
+        }
     }
 
     public void install(JComponent component) {

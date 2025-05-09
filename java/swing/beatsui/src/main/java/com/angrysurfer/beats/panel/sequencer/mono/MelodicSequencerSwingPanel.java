@@ -3,7 +3,7 @@ package com.angrysurfer.beats.panel.sequencer.mono;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.Insets;
-import javax.swing.BorderFactory;
+
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JSlider;
@@ -12,6 +12,7 @@ import javax.swing.JToggleButton;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.angrysurfer.beats.util.UIHelper;
 import com.angrysurfer.core.sequencer.MelodicSequencer;
 
 /**
@@ -34,30 +35,34 @@ public class MelodicSequencerSwingPanel extends JPanel {
     public MelodicSequencerSwingPanel(MelodicSequencer sequencer) {
         this.sequencer = sequencer;
         
-        setLayout(new FlowLayout(FlowLayout.LEFT, 5, 5));
-        setBorder(BorderFactory.createTitledBorder("Swing"));
+        // Reduce layout spacing
+        setLayout(new FlowLayout(FlowLayout.LEFT, 1, 0));
+
+        UIHelper.setWidgetPanelBorder(this, "Swing");
 
         // Swing on/off toggle
-        swingToggle = new JToggleButton("On", sequencer.isSwingEnabled());
-        swingToggle.setPreferredSize(new Dimension(50, 25)); // Slightly wider for text "On"
-        swingToggle.setMargin(new Insets(2, 2, 2, 2)); // Reduce internal padding
+        swingToggle = new JToggleButton("On", sequencer.getSequenceData().isSwingEnabled());
+        swingToggle.setPreferredSize(new Dimension(40, 22));
+        swingToggle.setMargin(new Insets(2, 2, 2, 2));
         swingToggle.addActionListener(e -> {
-            sequencer.setSwingEnabled(swingToggle.isSelected());
+            sequencer.getSequenceData().setSwingEnabled(swingToggle.isSelected());
         });
         add(swingToggle);
 
-        // Swing amount slider - use MelodicSequencer.MIN_SWING and MAX_SWING
+        // Swing amount slider
         swingSlider = new JSlider(JSlider.HORIZONTAL, 
-            MelodicSequencer.MIN_SWING, MelodicSequencer.MAX_SWING, sequencer.getSwingPercentage());
+            MelodicSequencer.MIN_SWING, MelodicSequencer.MAX_SWING, sequencer.getSequenceData().getSwingPercentage());
         swingSlider.setMajorTickSpacing(5);
         swingSlider.setPaintTicks(true);
-        swingSlider.setPreferredSize(new Dimension(100, 30));
+        swingSlider.setPreferredSize(new Dimension(85, 22));
 
-        valueLabel = new JLabel(sequencer.getSwingPercentage() + "%");
+        valueLabel = new JLabel(sequencer.getSequenceData().getSwingPercentage() + "%");
+        valueLabel.setFont(valueLabel.getFont().deriveFont(11f));
+        valueLabel.setPreferredSize(new Dimension(25, 22));
 
         swingSlider.addChangeListener(e -> {
             int value = swingSlider.getValue();
-            sequencer.setSwingPercentage(value);
+            sequencer.getSequenceData().setSwingPercentage(value);
             valueLabel.setText(value + "%");
         });
 
@@ -69,8 +74,8 @@ public class MelodicSequencerSwingPanel extends JPanel {
      * Updates controls to match current sequencer state
      */
     public void updateControls() {
-        swingToggle.setSelected(sequencer.isSwingEnabled());
-        swingSlider.setValue(sequencer.getSwingPercentage());
-        valueLabel.setText(sequencer.getSwingPercentage() + "%");
+        swingToggle.setSelected(sequencer.getSequenceData().isSwingEnabled());
+        swingSlider.setValue(sequencer.getSequenceData().getSwingPercentage());
+        valueLabel.setText(sequencer.getSequenceData().getSwingPercentage() + "%");
     }
 }

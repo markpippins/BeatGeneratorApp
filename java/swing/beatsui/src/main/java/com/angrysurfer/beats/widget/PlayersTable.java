@@ -25,10 +25,11 @@ import javax.swing.event.TableColumnModelListener;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.TableRowSorter;
 
+import com.angrysurfer.beats.util.UIHelper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.angrysurfer.beats.UIUtils;
+import com.angrysurfer.beats.util.UIHelper;
 import com.angrysurfer.core.Constants;
 import com.angrysurfer.core.api.Command;
 import com.angrysurfer.core.api.CommandBus;
@@ -45,7 +46,7 @@ public class PlayersTable extends JTable {
     private final PlayersTableModel tableModel;
     private final Set<Long> flashingPlayerIds = new HashSet<>();
     private Timer flashTimer;
-    private final Color FLASH_COLOR = UIUtils.coolBlue; // new Color(255, 255, 200); // Light yellow flash
+    private final Color FLASH_COLOR = UIHelper.coolBlue; // new Color(255, 255, 200); // Light yellow flash
     private final int FLASH_DURATION_MS = 500; // Flash duration in milliseconds
     private int lastSelectedRow = -1;
     private ListSelectionListener selectionListener;
@@ -60,7 +61,7 @@ public class PlayersTable extends JTable {
         setupTable();
         setupSelectionListener();
         setupMouseListener();
-        setupMouseWheel();     // Add this line
+        setupMouseWheel(); // Add this line
         setupCommandBusListener();
     }
 
@@ -74,22 +75,23 @@ public class PlayersTable extends JTable {
         getColumnModel().getColumn(tableModel.getColumnIndex(PlayersTableModel.COL_ID)).setMaxWidth(30);
         getColumnModel().getColumn(tableModel.getColumnIndex(PlayersTableModel.COL_ID)).setWidth(0);
         getColumnModel().getColumn(tableModel.getColumnIndex(PlayersTableModel.COL_ID)).setPreferredWidth(30);
-        
+
         // Set column widths for Name column
         getColumnModel().getColumn(tableModel.getColumnIndex(PlayersTableModel.COL_NAME)).setMinWidth(100);
         getColumnModel().getColumn(tableModel.getColumnIndex(PlayersTableModel.COL_NAME)).setPreferredWidth(150);
-        
+
         // Double the width of the Instrument column
         int instrumentColumnIndex = tableModel.getColumnIndex(PlayersTableModel.COL_INSTRUMENT);
         getColumnModel().getColumn(instrumentColumnIndex).setMinWidth(120); // Increased from 100
         getColumnModel().getColumn(instrumentColumnIndex).setPreferredWidth(120); // Doubled from 150
-        
-        // Reduce the Note column back to normal size - no longer showing drum names here
+
+        // Reduce the Note column back to normal size - no longer showing drum names
+        // here
         int noteColumnIndex = tableModel.getColumnIndex(PlayersTableModel.COL_NOTE);
         getColumnModel().getColumn(noteColumnIndex).setMinWidth(40); // Reduced from 60
         getColumnModel().getColumn(noteColumnIndex).setPreferredWidth(60); // Reduced from 100
         getColumnModel().getColumn(noteColumnIndex).setMaxWidth(80); // Reduced from 160
-        
+
         // Keep the wider Preset column to fit preset names and drum names
         int presetColumnIndex = tableModel.getColumnIndex(PlayersTableModel.COL_PRESET);
         getColumnModel().getColumn(presetColumnIndex).setMinWidth(80);
@@ -98,7 +100,7 @@ public class PlayersTable extends JTable {
 
         // Set fixed widths for other columns - skip Preset and Instrument columns
         for (int i = 2; i < getColumnCount(); i++) {
-            if (i != presetColumnIndex && i != instrumentColumnIndex && i != noteColumnIndex) { 
+            if (i != presetColumnIndex && i != instrumentColumnIndex && i != noteColumnIndex) {
                 getColumnModel().getColumn(i).setMaxWidth(80);
                 getColumnModel().getColumn(i).setPreferredWidth(60);
             }
@@ -124,7 +126,8 @@ public class PlayersTable extends JTable {
         SwingUtilities.invokeLater(
                 () -> UIHelper.restoreColumnOrder(this, Constants.PLAYER, PlayersTableModel.COLUMNS));
 
-        // Set custom renderer for all rows - this handles centering numeric values internally
+        // Set custom renderer for all rows - this handles centering numeric values
+        // internally
         setupCustomRowRenderer();
     }
 
@@ -150,7 +153,7 @@ public class PlayersTable extends JTable {
                                 if (isPlayerFlashing(player)) {
                                     bgColor = isSelected ? FLASH_COLOR.darker() : FLASH_COLOR;
                                 } else if (player != null && player.isPlaying()) {
-                                    bgColor = isSelected ? UIUtils.mutedRed.darker() : UIUtils.fadedLime;
+                                    bgColor = isSelected ? UIHelper.mutedRed.darker() : UIHelper.fadedLime;
                                 } else if (isSelected) {
                                     bgColor = table.getSelectionBackground();
                                 }
@@ -243,13 +246,14 @@ public class PlayersTable extends JTable {
         CommandBus.getInstance().register(new IBusListener() {
             @Override
             public void onAction(Command action) {
-                if (action.getCommand() == null) return;
-                
+                if (action.getCommand() == null)
+                    return;
+
                 switch (action.getCommand()) {
                     case Commands.PLAYER_ADDED:
                         if (action.getData() instanceof Player player) {
                             System.out.println("PlayersTable received PLAYER_ADDED: " + player.getName());
-                            
+
                             SwingUtilities.invokeLater(() -> {
                                 // Only add if not already in table
                                 if (findPlayerRowIndex(player) == -1) {
@@ -260,22 +264,23 @@ public class PlayersTable extends JTable {
                             });
                         }
                         break;
-                        
+
                     case Commands.PLAYER_DELETED:
                         if (action.getData() instanceof Player player) {
                             System.out.println("PlayersTable received PLAYER_DELETED: " + player.getName());
-                            
+
                             SwingUtilities.invokeLater(() -> {
                                 int rowIndex = findPlayerRowIndex(player);
                                 if (rowIndex >= 0) {
-                                    System.out.println("Removing player from table row " + rowIndex + ": " + player.getName());
+                                    System.out.println(
+                                            "Removing player from table row " + rowIndex + ": " + player.getName());
                                     getPlayersTableModel().removeRow(convertRowIndexToModel(rowIndex));
                                     repaint();
                                 }
                             });
                         }
                         break;
-                    
+
                     case Commands.PLAYER_ROW_REFRESH:
                         if (action.getData() instanceof Player player) {
                             SwingUtilities.invokeLater(() -> {
@@ -283,7 +288,7 @@ public class PlayersTable extends JTable {
                             });
                         }
                         break;
-                        
+
                     case Commands.SESSION_UPDATED:
                     case Commands.SESSION_SELECTED:
                     case Commands.SESSION_LOADED:
@@ -314,7 +319,7 @@ public class PlayersTable extends JTable {
                         }
                         break;
 
-                    case Commands.PLAYER_SELECTED:
+                    case Commands.PLAYER_ACTIVATED:
                         if (action.getData() instanceof Player player) {
                             SwingUtilities.invokeLater(() -> {
                                 // Find the row for this player
@@ -322,23 +327,23 @@ public class PlayersTable extends JTable {
                                 if (rowIndex >= 0) {
                                     // Select the row without triggering additional selection events
                                     getSelectionModel().removeListSelectionListener(selectionListener);
-                                    
+
                                     // Clear current selection and select the player's row
                                     clearSelection();
                                     setRowSelectionInterval(rowIndex, rowIndex);
-                                    
+
                                     // Make sure the row is visible
                                     scrollRectToVisible(getCellRect(rowIndex, 0, true));
-                                    
+
                                     // Store as last selected row
                                     lastSelectedRow = rowIndex;
-                                    
+
                                     // Restore the selection listener
                                     getSelectionModel().addListSelectionListener(selectionListener);
-                                    
+
                                     // Request focus so keyboard navigation works
                                     requestFocus();
-                                    
+
                                     logger.info("Selected row " + rowIndex + " for player: " + player.getName());
                                 }
                             });
@@ -354,14 +359,14 @@ public class PlayersTable extends JTable {
         while (tableModel.getRowCount() > 0) {
             tableModel.removeRow(0);
         }
-        
+
         // Add all players from the session
         if (session != null && session.getPlayers() != null) {
             for (Player player : session.getPlayers()) {
                 tableModel.addPlayerRow(player);
             }
         }
-        
+
         // Sort and repaint
         sortTable();
         repaint();
@@ -379,20 +384,10 @@ public class PlayersTable extends JTable {
                 player = getPlayerAtRow(row);
             }
 
-            // Log selection for debugging
-            logger.info("Player selection changed: "
-                    + (player != null ? player.getName() + " (ID: " + player.getId() + ")" : "null"));
-
-            // First update PlayerManager's state directly
-            PlayerManager.getInstance().setActivePlayer(player);
-
-            // Then explicitly publish events
             if (player != null) {
-                logger.info("Publishing PLAYER_SELECTED event for: " + player.getName());
-                CommandBus.getInstance().publish(Commands.PLAYER_SELECTED, this, player);
+                CommandBus.getInstance().publish(Commands.PLAYER_ACTIVATION_REQUEST, this, player);
             } else {
-                logger.info("Publishing PLAYER_UNSELECTED event");
-                CommandBus.getInstance().publish(Commands.PLAYER_UNSELECTED, this, null);
+                // CommandBus.getInstance().publish(Commands.PLAYER_UNSELECTED, this, null);
             }
         } catch (Exception ex) {
             logger.error("Error in player selection: " + ex.getMessage());
@@ -497,7 +492,8 @@ public class PlayersTable extends JTable {
 
             // Update each column with fresh data
             tableModel.setValueAt(player.getName(), modelRow, tableModel.getColumnIndex(PlayersTableModel.COL_NAME));
-            tableModel.setValueAt(player.getRootNote(), modelRow, tableModel.getColumnIndex(PlayersTableModel.COL_NOTE));
+            tableModel.setValueAt(player.getRootNote(), modelRow,
+                    tableModel.getColumnIndex(PlayersTableModel.COL_NOTE));
             tableModel.setValueAt(player.getLevel(), modelRow, tableModel.getColumnIndex(PlayersTableModel.COL_LEVEL));
             tableModel.setValueAt(player.isMuted(), modelRow, tableModel.getColumnIndex(PlayersTableModel.COL_MUTE));
             tableModel.setValueAt(player.getProbability(), modelRow,
@@ -535,8 +531,9 @@ public class PlayersTable extends JTable {
 
     public int findPlayerRowIndex(Player player) {
         PlayersTableModel model = getPlayersTableModel();
-        if (player == null || model == null) return -1;
-        
+        if (player == null || model == null)
+            return -1;
+
         for (int i = 0; i < model.getRowCount(); i++) {
             Long rowPlayerId = (Long) model.getValueAt(i, 0);
             if (rowPlayerId != null && rowPlayerId.equals(player.getId())) {
@@ -548,13 +545,15 @@ public class PlayersTable extends JTable {
 
     /**
      * Find the view row index of a player by ID
+     * 
      * @param playerId ID of the player to find
      * @return Row index in view coordinates, or -1 if not found
      */
     public int findPlayerRowIndexById(Long playerId) {
         PlayersTableModel model = getPlayersTableModel();
-        if (playerId == null || model == null) return -1;
-        
+        if (playerId == null || model == null)
+            return -1;
+
         // Search through model rows
         for (int i = 0; i < model.getRowCount(); i++) {
             Long rowPlayerId = (Long) model.getValueAt(i, model.getColumnIndex(PlayersTableModel.COL_ID));
@@ -563,7 +562,7 @@ public class PlayersTable extends JTable {
                 return convertRowIndexFromModel(i);
             }
         }
-        
+
         return -1;
     }
 
@@ -611,7 +610,9 @@ public class PlayersTable extends JTable {
     }
 
     /**
-     * Converts a row index from the model's coordinate space to the view's coordinate space
+     * Converts a row index from the model's coordinate space to the view's
+     * coordinate space
+     * 
      * @param modelRow The row index in model coordinates
      * @return The row index in view coordinates, or -1 if not found/visible
      */
@@ -619,14 +620,15 @@ public class PlayersTable extends JTable {
         if (modelRow < 0) {
             return -1;
         }
-        
-        // Search through all rows in the view to find the one that maps to this model row
+
+        // Search through all rows in the view to find the one that maps to this model
+        // row
         for (int i = 0; i < getRowCount(); i++) {
             if (convertRowIndexToModel(i) == modelRow) {
                 return i;
             }
         }
-        
+
         // Row might not be visible due to filtering
         return -1;
     }
@@ -640,14 +642,14 @@ public class PlayersTable extends JTable {
                 while (parent != null && !(parent instanceof javax.swing.JScrollPane)) {
                     parent = parent.getParent();
                 }
-                
+
                 if (parent != null) {
                     // We have a scroll pane, let's scroll it
                     javax.swing.JScrollPane scrollPane = (javax.swing.JScrollPane) parent;
-                    
+
                     // Get the current scroll position
                     int currentPosition = scrollPane.getVerticalScrollBar().getValue();
-                    
+
                     // Calculate scroll amount - faster when modifier keys are pressed
                     int scrollAmount = e.getUnitsToScroll() * getRowHeight();
                     if (e.isShiftDown()) {
@@ -656,10 +658,10 @@ public class PlayersTable extends JTable {
                     if (e.isControlDown()) {
                         scrollAmount *= 5; // Scroll 5x faster with control
                     }
-                    
+
                     // Apply the new scroll position
                     scrollPane.getVerticalScrollBar().setValue(currentPosition + scrollAmount);
-                    
+
                     // Consume the event so it doesn't propagate
                     e.consume();
                 }

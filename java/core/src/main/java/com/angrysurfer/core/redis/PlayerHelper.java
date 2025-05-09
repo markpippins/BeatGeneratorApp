@@ -8,10 +8,13 @@ import java.util.Set;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.angrysurfer.core.model.Note;
 import com.angrysurfer.core.model.Player;
 import com.angrysurfer.core.model.Rule;
 import com.angrysurfer.core.model.Session;
 import com.angrysurfer.core.model.Strike;
+import com.angrysurfer.core.service.SessionManager;
+import com.angrysurfer.core.util.ErrorHandler;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import lombok.Getter;
@@ -38,11 +41,64 @@ public class PlayerHelper {
         return String.format("player:%s:%d", className.toLowerCase(), id);
     }
 
+    /**
+     * Find a player by ID, automatically determining the player type
+     * 
+     * @param id The player ID to look up
+     * @return The player with the specified ID, or null if not found
+     */
+    public Player findPlayerById(Long id) {
+        if (id == null) {
+            logger.warn("findPlayerById called with null ID");
+            return null;
+        }
+
+        logger.debug("Looking up player by ID: {}", id);
+
+        // Try to find the player as a Note first
+        Player player = findPlayerById(id, "Note");
+
+        // If not found, try as a Strike
+        if (player == null) {
+            player = findPlayerById(id, "Strike");
+        }
+
+        // Log result
+        if (player != null) {
+            logger.debug("Found player: {} (ID: {}, Type: {})",
+                    player.getName(), player.getId(), player.getPlayerClassName());
+        } else {
+            logger.debug("No player found with ID: {}", id);
+        }
+
+        return player;
+    }
+
     public Player findPlayerById(Long id, String className) {
         try (Jedis jedis = jedisPool.getResource()) {
-            String json = jedis.get(getPlayerKey(className, id));
+            // Normalize the class name (capitalize first letter for consistency)
+            String normalizedClassName = className;
+            if (className != null && !className.isEmpty()) {
+                normalizedClassName = className.substring(0, 1).toUpperCase() + className.substring(1).toLowerCase();
+            }
+
+            String json = jedis.get(getPlayerKey(normalizedClassName, id));
             if (json != null) {
-                Strike player = objectMapper.readValue(json, Strike.class);
+                // Dynamically determine class based on normalized className parameter
+                Class<? extends Player> playerClass;
+                switch (normalizedClassName) {
+                    case "Note":
+                        playerClass = Note.class;
+                        break;
+                    case "Strike":
+                        playerClass = Strike.class;
+                        break;
+                    default:
+                        throw new IllegalArgumentException("Unsupported player class: " + className);
+                }
+
+                // Use the correct class for deserialization
+                Player player = objectMapper.readValue(json, playerClass);
 
                 // Load rules for this player
                 Set<String> ruleIds = jedis.smembers("player:" + id + ":rules");
@@ -65,7 +121,8 @@ public class PlayerHelper {
             }
             return null;
         } catch (Exception e) {
-            logger.error("Error finding player: " + e.getMessage());
+            logger.error("Error finding player: " + e.getMessage(), e);
+            ErrorHandler.logError("PlayerHelper", "Failed to find player", e);
             throw new RuntimeException("Failed to find player", e);
         }
     }
@@ -168,6 +225,17 @@ public class PlayerHelper {
         }
     }
 
+    public void deletePlayerById(Long id, String className) {
+        try (Jedis jedis = jedisPool.getResource()) {
+            String playerKey = getPlayerKey(className, id);
+            jedis.del(playerKey);
+            logger.info("Deleted player with ID: " + id);
+        } catch (Exception e) {
+            logger.error("Error deleting player: " + e.getMessage());
+            throw new RuntimeException("Failed to delete player", e);
+        }
+    }
+
     public void deletePlayer(Player player) {
         try (Jedis jedis = jedisPool.getResource()) {
             // Remove player's rules
@@ -223,12 +291,25 @@ public class PlayerHelper {
         }
     }
 
-    public Player newPlayer() {
-        Player player = new Strike();
+    public Player newNote() {
+        Player player = new Note("Note", SessionManager.getInstance().getActiveSession(), null, 60, null);
+
+        player.setId(getNextPlayerId());
+        player.setRules(new HashSet<>()); // Ensure rules are initialized
+        player.setMinVelocity(60);
+        player.setMaxVelocity(127);
+        player.setLevel(100);
+        savePlayer(player);
+        return player;
+
+    }
+
+    public Player newStrike() {
+        Player player = new Strike("Strike", SessionManager.getInstance().getActiveSession(), null, 36, null);
+
         player.setId(getNextPlayerId());
         player.setRules(new HashSet<>()); // Ensure rules are initialized
         savePlayer(player);
         return player;
-
     }
 }

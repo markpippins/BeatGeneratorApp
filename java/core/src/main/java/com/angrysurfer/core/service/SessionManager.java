@@ -1,9 +1,6 @@
 package com.angrysurfer.core.service;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 import java.util.logging.Logger;
 
 import com.angrysurfer.core.api.Command;
@@ -22,12 +19,11 @@ import lombok.Setter;
 
 @Getter
 @Setter
-public class SessionManager implements IBusListener {
+public class SessionManager {
 
     private static final Logger logger = Logger.getLogger(SessionManager.class.getName());
     private static SessionManager instance;
 
-    private final CommandBus commandBus = CommandBus.getInstance();
     private final RedisService redisService = RedisService.getInstance();
 
     private final Map<Long, InstrumentWrapper> instrumentCache = new HashMap<>();
@@ -59,7 +55,7 @@ public class SessionManager implements IBusListener {
 
     void handleSessionRequest() {
         if (Objects.nonNull(getActiveSession()))
-            commandBus.publish(Commands.SESSION_SELECTED, this, getActiveSession());
+            CommandBus.getInstance().publish(Commands.SESSION_SELECTED, this, getActiveSession());
     }
 
     // Direct getter instead of delegating
@@ -67,17 +63,37 @@ public class SessionManager implements IBusListener {
         return activeSession;
     }
 
-    // Direct setter instead of delegating
+    /**
+     * Updates tempo settings in all sequencers to match the active session
+     */
+    private void updateSequencerTempoSettings() {
+        if (activeSession == null) {
+            return;
+        }
+        
+        // Get tempo settings from session
+        float tempoInBPM = activeSession.getTempoInBPM();
+        int ticksPerBeat = activeSession.getTicksPerBeat();
+        
+        // Update all drum sequencers
+        DrumSequencerManager.getInstance().updateTempoSettings(tempoInBPM, ticksPerBeat);
+        
+        // Update all melodic sequencers
+        MelodicSequencerManager.getInstance().updateTempoSettings(tempoInBPM, ticksPerBeat);
+        
+        logger.info("Updated all sequencers with tempo: " + tempoInBPM + " BPM, " + 
+                   ticksPerBeat + " ticks per beat");
+    }
+
+    // Modify setActiveSession method to update sequencer settings
     public void setActiveSession(Session session) {
         if (session != null && !session.equals(this.activeSession)) {
             this.activeSession = session;
+            
+            // Update sequencers with session tempo settings
+            updateSequencerTempoSettings();
 
-            // Make sure the SequencerManager knows about the session
-            // // System.out.println("SessionManager: Setting active session on
-            // SequencerManager");
-            // sequencerManager.setActiveSession(session);
-
-            commandBus.publish(Commands.SESSION_SELECTED, this, session);
+            CommandBus.getInstance().publish(Commands.SESSION_SELECTED, this, session);
             logger.info("Session selected: " + session.getId());
         }
     }
@@ -96,10 +112,10 @@ public class SessionManager implements IBusListener {
         // != null ? activeSession.getId() : "null"));
 
         if (activeSession != null) {
-            // System.out.println("SessionManager: Session details:");
+            System.out.println("SessionManager: Session details:");
             // System.out.println(" - ID: " + activeSession.getId());
-            // System.out.println(" - Players: " + (activeSession.getPlayers() != null ?
-            // activeSession.getPlayers().size() : 0));
+            System.out.println(" - Players: " + (activeSession.getPlayers() != null ?
+            activeSession.getPlayers().size() : 0));
             // System.out.println(" - BPM: " + activeSession.getTempoInBPM());
             // System.out.println(" - PPQ: " + activeSession.getTicksPerBeat());
         }
@@ -109,7 +125,7 @@ public class SessionManager implements IBusListener {
         songEngine = new SongEngine();
         // System.out.println("SessionManager: SongEngine created");
 
-        commandBus.register(new IBusListener() {
+        CommandBus.getInstance().register(new IBusListener() {
             @Override
             public void onAction(Command action) {
                 if (action == null || action.getCommand() == null)
@@ -148,7 +164,7 @@ public class SessionManager implements IBusListener {
                         }
                     }
                     case Commands.SHOW_PLAYER_EDITOR_OK -> processPlayerEdit((Player) action.getData());
-                    case Commands.SHOW_RULE_EDITOR_OK -> processRuleEdit((Rule) action.getData());
+                    // case Commands.SHOW_RULE_EDITOR_OK -> processRuleEdit((Rule) action.getData());
                     case Commands.PLAYER_DELETE_REQUEST -> {
                         if (action.getData() instanceof Long[] playerIds) {
                             processPlayerDeleteByIds(playerIds);
@@ -175,7 +191,7 @@ public class SessionManager implements IBusListener {
                             if (currentOffset < 12) {
                                 getActiveSession().setNoteOffset(currentOffset + 1);
                                 logger.info("Transposed up: new offset = " + getActiveSession().getNoteOffset());
-                                commandBus.publish(Commands.SESSION_UPDATED, this, getActiveSession());
+                                CommandBus.getInstance().publish(Commands.SESSION_UPDATED, this, getActiveSession());
                             }
                         }
                     }
@@ -186,7 +202,7 @@ public class SessionManager implements IBusListener {
                             if (currentOffset > -12) {
                                 getActiveSession().setNoteOffset(currentOffset - 1);
                                 logger.info("Transposed down: new offset = " + getActiveSession().getNoteOffset());
-                                commandBus.publish(Commands.SESSION_UPDATED, this, getActiveSession());
+                                CommandBus.getInstance().publish(Commands.SESSION_UPDATED, this, getActiveSession());
                             }
                         }
                     }
@@ -198,8 +214,17 @@ public class SessionManager implements IBusListener {
                             getActiveSession().stopAllNotes();
                         }
                     }
+                    // Add this case to the existing switch statement in SessionManager's command bus listener
+                    case Commands.SESSION_TEMPO_CHANGED -> {
+                        if (getActiveSession() != null) {
+                            // The session tempo was already updated by whoever sent this command
+                            // Now propagate to all sequencers
+                            updateSequencerTempoSettings();
+                        }
+                    }
                     }
                 } catch (Exception e) {
+                    e.printStackTrace();
                     // logger. error("Error processing command {}: {}", cmd, e.getMessage());
                 }
             }
@@ -226,7 +251,7 @@ public class SessionManager implements IBusListener {
                     if (getActiveSession().getPlayers().remove(player)) {
                         redisService.deletePlayer(player);
                         logger.info("Player deleted: " + player.getId());
-                        commandBus.publish(Commands.PLAYER_DELETED, this);
+                        CommandBus.getInstance().publish(Commands.PLAYER_DELETED, this);
                     }
                 }
             }
@@ -313,6 +338,51 @@ public class SessionManager implements IBusListener {
         setActiveSession(session);
     }
 
+    /**
+     * Load the session including all players and instruments
+     */
+    private void loadSession() {
+        try {
+            // Load session from persistence using existing session loading logic
+            Session session = redisService.findSessionById(redisService.getMinimumSessionId());
+            if (session == null) {
+                session = redisService.newSession();
+            }
+            
+            // Load all instruments using InstrumentManager
+            InstrumentManager instrumentManager = InstrumentManager.getInstance();
+            List<InstrumentWrapper> instruments = instrumentManager.getCachedInstruments();
+            
+            // No need to manually update each instrument in InstrumentManager
+            // since getAllInstruments() should already have populated the cache
+            
+            // Load all players using PlayerManager
+            PlayerManager playerManager = PlayerManager.getInstance();
+            Set<Player> players = SessionManager.getInstance().getActiveSession().getPlayers();
+            
+            // Link players to their instruments and add to session
+            for (Player player : players) {
+                // Link player to its instrument if available
+                if (player.getInstrumentId() != null) {
+                    InstrumentWrapper instrument = 
+                        instrumentManager.getInstrumentById(player.getInstrumentId());
+                    if (instrument != null) {
+                        player.setInstrument(instrument);
+                    }
+                }
+                
+                // Add player to session
+                session.addOrUpdatePlayer(player);
+            }
+            
+            // Set the active session
+            this.activeSession = session;
+        } catch (Exception e) {
+            logger.severe("Failed to load session: " + e.getMessage());
+            this.activeSession = new Session();
+        }
+    }
+
     // Moved from SessionManager
     public void deleteAllSessions() {
         logger.info("Deleting sessions");
@@ -321,7 +391,7 @@ public class SessionManager implements IBusListener {
             if (session != null) {
                 logger.info(String.format("Loading session {}", id));
                 redisService.deleteSession(id);
-                commandBus.publish(Commands.SESSION_DELETED, this, id);
+                CommandBus.getInstance().publish(Commands.SESSION_DELETED, this, id);
             }
         });
     }
@@ -333,46 +403,38 @@ public class SessionManager implements IBusListener {
     private void processPlayerEdit(Player player) {
         logger.info("Processing player edit/add: " + player.getName());
 
-        RedisService redis = RedisService.getInstance();
+        // Use PlayerManager for consistent player saving
+        PlayerManager playerManager = PlayerManager.getInstance();
 
         if (player.getId() == null) {
-            redis.savePlayer(player);
+            // New player - save through PlayerManager
+            playerManager.savePlayerProperties(player);
 
             // Add to session
             getActiveSession().getPlayers().add(player);
 
+            // Register for event buses
             CommandBus.getInstance().register(player);
             TimingBus.getInstance().register(player);
 
-            // TODO: don't save session here
-
-            // redis.saveSession(getActiveSession());
-
-            // Get fresh session state
-            // activeSession = redis.findSessionById(activeSession.getId());
-
             logger.info("Added new player and updated session");
         } else {
-            // TODO: don't save player here, just update the active session
-
-            // Existing player update
-            redis.savePlayer(player);
-            // activeSession = redis.findSessionById(activeSession.getId());
-            // redis.saveSession(getActiveSession());
+            // Existing player update - save through PlayerManager
+            playerManager.savePlayerProperties(player);
             logger.info("Updated existing player and session");
         }
 
         // Notify UI
-        commandBus.publish(Commands.PLAYER_UPDATED, this, player);
-        commandBus.publish(Commands.SESSION_UPDATED, this, getActiveSession());
+        CommandBus.getInstance().publish(Commands.PLAYER_UPDATED, this, player);
+        CommandBus.getInstance().publish(Commands.SESSION_UPDATED, this, getActiveSession());
     }
 
-    private void processRuleEdit(Rule data) {
-        // Publish rule event
-        if (Objects.nonNull(PlayerManager.getInstance().getActivePlayer())) {
-            commandBus.publish(Commands.RULE_EDITED, this, PlayerManager.getInstance().getActivePlayer());
-        }
-    }
+    // private void processRuleEdit(Rule data) {
+    //     // Publish rule event
+    //     if (Objects.nonNull(PlayerManager.getInstance().getActivePlayer())) {
+    //         CommandBus.getInstance().publish(Commands.RULE_EDITED, this, PlayerManager.getInstance().getActivePlayer());
+    //     }
+    // }
 
     private void logSessionState(Session session) {
         if (session != null) {
@@ -421,8 +483,8 @@ public class SessionManager implements IBusListener {
             RedisService.getInstance().saveSession(activeSession);
 
             // Publish update events
-            commandBus.publish(Commands.PLAYER_UPDATED, this, player);
-            commandBus.publish(Commands.SESSION_UPDATED, this, activeSession);
+            CommandBus.getInstance().publish(Commands.PLAYER_UPDATED, this, player);
+            CommandBus.getInstance().publish(Commands.SESSION_UPDATED, this, activeSession);
         }
     }
 
@@ -490,14 +552,12 @@ public class SessionManager implements IBusListener {
             redisService.saveSession(activeSession);
 
             // Notify listeners about the deletions
-            commandBus.publish(Commands.PLAYER_DELETED, this);
+            CommandBus.getInstance().publish(Commands.PLAYER_DELETED, this);
             logger.info("Successfully deleted " + deletedCount + " players");
         }
     }
 
-    @Override
-    public void onAction(Command action) {
-        // TODO Auto-generated method stub
-        // throw new UnsupportedOperationException("Unimplemented method 'onAction'");
+    public void saveActiveSession() {
+        saveSession(getActiveSession());
     }
 }

@@ -35,7 +35,8 @@ import javax.swing.plaf.basic.BasicButtonUI;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.angrysurfer.beats.UIUtils;
+import com.angrysurfer.beats.panel.session.SessionPanel;
+import com.angrysurfer.beats.util.UIHelper;
 import com.angrysurfer.beats.widget.ColorAnimator;
 import com.angrysurfer.core.api.Command;
 import com.angrysurfer.core.api.CommandBus;
@@ -47,7 +48,7 @@ import com.angrysurfer.core.sequencer.Scale;
 import com.angrysurfer.core.service.PlayerManager;
 import com.angrysurfer.core.service.SessionManager;
 
-public class PianoPanel extends JPanel {
+public class PianoPanel extends PlayerAwarePanel {
     private static final String DEFAULT_ROOT = "C";
     private String currentRoot = DEFAULT_ROOT; // Add root note tracking
     private String currentScale = "Chromatic"; // Default scale
@@ -62,12 +63,12 @@ public class PianoPanel extends JPanel {
     private JButton followScaleBtn;
 
     public PianoPanel() {
-        super(null); // Remove statusConsumer parameter
+        super(); // Remove statusConsumer parameter
         setPreferredSize(new Dimension(255, 60));
         setMinimumSize(new Dimension(265, 60));
         setBorder(BorderFactory.createEmptyBorder(20,2,20,2));
         setOpaque(true);
-        setBackground(UIUtils.fadedOrange);
+        setBackground(UIHelper.fadedOrange);
 
         // Add three colored buttons on the right side
         int buttonWidth = 25;
@@ -78,18 +79,18 @@ public class PianoPanel extends JPanel {
 
         followScaleBtn = new JButton();
         followScaleBtn.setBounds(startX, startY, buttonWidth, buttonHeight);
-        followScaleBtn.setBackground(UIUtils.coolBlue);
+        followScaleBtn.setBackground(UIHelper.coolBlue);
 
         configureToggleButton(followScaleBtn);
 
         JButton button2 = new JButton();
         button2.setBounds(startX, startY + buttonHeight + spacing, buttonWidth, buttonHeight);
-        button2.setBackground(UIUtils.warmMustard);
+        button2.setBackground(UIHelper.warmMustard);
         configureToggleButton(button2);
 
         JButton button3 = new JButton();
         button3.setBounds(startX, startY + (buttonHeight + spacing) * 2, buttonWidth, buttonHeight);
-        button3.setBackground(UIUtils.fadedOrange);
+        button3.setBackground(UIHelper.fadedOrange);
         configureToggleButton(button3);
 
         add(followScaleBtn);
@@ -133,6 +134,16 @@ public class PianoPanel extends JPanel {
         setupActionBusListener();
         setupPlayerStatusIndicator();
         setupKeyboardNavigation();
+    }
+
+    @Override
+    public void handlePlayerActivated() {
+
+    }
+
+    @Override
+    public void handlePlayerUpdated() {
+
     }
 
     @Override
@@ -191,7 +202,7 @@ public class PianoPanel extends JPanel {
                     }
 
                     // Add these new cases
-                    case Commands.PLAYER_SELECTED -> {
+                    case Commands.PLAYER_ACTIVATED -> {
                         if (action.getData() instanceof Player player && player.getRootNote() != null) {
                             int note = player.getRootNote().intValue();
                             logger.info("Piano panel: Player selected with note " + note);
@@ -246,6 +257,10 @@ public class PianoPanel extends JPanel {
     }
 
     private void handleKeyHold(int note) {
+
+        if (getTargetPlayer() == null)
+            logger.info("No player available");
+
         // Toggle behavior: if note is already held, release it
         if (heldNotes.contains(note)) {
             heldNotes.remove(note);
@@ -257,8 +272,8 @@ public class PianoPanel extends JPanel {
             CommandBus.getInstance().publish(Commands.CLEAR_STATUS, this, null);
         } else {
             // Add to held notes and play
-            Player activePlayer = PlayerManager.getInstance().getActivePlayer();
-            String playerInfo = activePlayer != null ? " through " + activePlayer.getName() : " (no active player)";
+            ;
+            String playerInfo = getTargetPlayer() != null ? " through " + getTargetPlayer().getName() : " (no active player)";
             
             // Update status using CommandBus
             CommandBus.getInstance().publish(
@@ -308,8 +323,7 @@ public class PianoPanel extends JPanel {
 
     private void playNote(int note) {
         // Update status with player information
-        Player activePlayer = PlayerManager.getInstance().getActivePlayer();
-        String playerInfo = activePlayer != null ? " through " + activePlayer.getName() : " (no active player)";
+        String playerInfo = getTargetPlayer() != null ? " through " + getTargetPlayer().getName() : " (no active player)";
         
         CommandBus.getInstance().publish(
             Commands.STATUS_UPDATE,
@@ -320,27 +334,27 @@ public class PianoPanel extends JPanel {
         if (SessionManager.getInstance().isRecording()) {
             CommandBus.getInstance().publish(Commands.NEW_VALUE_NOTE, this, note);
             CommandBus.getInstance().publish(Commands.PLAYER_ROW_REFRESH, this,
-                    PlayerManager.getInstance().getActivePlayer());
+                    getTargetPlayer());
         }
 
         // Send MIDI note to active player
-        boolean notePlayed = PlayerManager.getInstance().sendNoteToActivePlayer(note);
-
-        // Visual feedback based on success
-        if (!notePlayed) {
-            // Flash the key briefly with red to indicate failure
-            JButton key = noteToKeyMap.get(note);
-            if (key != null) {
-                Color originalBackground = key.getBackground();
-                key.setBackground(new Color(255, 100, 100));
-
-                // Reset after brief delay
-                new Timer(150, e -> {
-                    key.setBackground(originalBackground);
-                    ((Timer) e.getSource()).stop();
-                }).start();
-            }
-        }
+//        boolean notePlayed = activePlayer.noteOn(note, activePlayer.getLevel());
+//
+//        // Visual feedback based on success
+//        if (!notePlayed) {
+//            // Flash the key briefly with red to indicate failure
+//            JButton key = noteToKeyMap.get(note);
+//            if (key != null) {
+//                Color originalBackground = key.getBackground();
+//                key.setBackground(new Color(255, 100, 100));
+//
+//                // Reset after brief delay
+//                new Timer(150, e -> {
+//                    key.setBackground(originalBackground);
+//                    ((Timer) e.getSource()).stop();
+//                }).start();
+//            }
+//        }
     }
 
     private void stopNote(int note) {
@@ -585,8 +599,8 @@ public class PianoPanel extends JPanel {
             @Override
             public void onAction(Command action) {
                 switch (action.getCommand()) {
-                    case Commands.PLAYER_SELECTED:
-                    case Commands.PLAYER_UNSELECTED:
+                    case Commands.PLAYER_ACTIVATED:
+                    // case Commands.PLAYER_UNSELECTED:
                         updatePlayerStatusIndicator();
                         break;
                 }
@@ -599,11 +613,10 @@ public class PianoPanel extends JPanel {
 
     private void updatePlayerStatusIndicator() {
         SwingUtilities.invokeLater(() -> {
-            Player activePlayer = PlayerManager.getInstance().getActivePlayer();
-            boolean hasActivePlayer = activePlayer != null;
+            boolean hasActivePlayer = getTargetPlayer() != null;
             playerStatusIndicator.setForeground(hasActivePlayer ? Color.GREEN : Color.RED);
             playerStatusIndicator.setToolTipText(
-                    hasActivePlayer ? "Active player: " + activePlayer.getName() : "No active player selected");
+                    hasActivePlayer ? "Active player: " + getTargetPlayer().getName() : "No active player selected");
         });
     }
 

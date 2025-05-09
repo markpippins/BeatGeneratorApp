@@ -143,7 +143,7 @@ public class NoteSelectionDial extends Dial {
         double radius = (size - 2 * margin) / 2.0;
 
         // Draw dial background
-        // g2d.setColor(UIUtils.charcoalGray);
+        // g2d.setColor(UIHelper.charcoalGray);
         g2d.setColor(getParent().getBackground());
         g2d.fillOval(x + margin, y + margin, size - 2 * margin, size - 2 * margin);
 

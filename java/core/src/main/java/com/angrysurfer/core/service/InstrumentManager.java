@@ -1,13 +1,15 @@
 package com.angrysurfer.core.service;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import javax.sound.midi.MidiDevice;
+import javax.sound.midi.MidiUnavailableException;
 
+import com.angrysurfer.core.model.Player;
+import com.angrysurfer.core.sequencer.DrumSequenceData;
+import com.angrysurfer.core.sequencer.DrumSequencer;
+import com.angrysurfer.core.sequencer.MelodicSequencer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -33,6 +35,7 @@ public class InstrumentManager implements IBusListener {
     private List<String> devices = new ArrayList<>();
     private boolean needsRefresh = true;
     private final CommandBus commandBus = CommandBus.getInstance();
+    private boolean isInitializing = false;
 
     // Private constructor for singleton pattern
     private InstrumentManager() {
@@ -58,8 +61,12 @@ public class InstrumentManager implements IBusListener {
 
         switch (action.getCommand()) {
             case Commands.USER_CONFIG_LOADED -> {
-                // Refresh instruments when user config changes
-                refreshInstruments();
+                // Check if we're already initializing to prevent recursion
+                if (!isInitializing) {
+                    refreshInstruments();
+                } else {
+                    logger.debug("Skipping refresh during initialization");
+                }
             }
             case Commands.INSTRUMENT_UPDATED -> {
                 // Update single instrument in cache
@@ -77,43 +84,116 @@ public class InstrumentManager implements IBusListener {
 
     public void initializeCache() {
         logger.info("Initializing instrument cache");
-        // Get instruments from UserConfigManager which is the source of truth
-        List<InstrumentWrapper> instruments = UserConfigManager.getInstance().getInstruments();
-        instrumentCache.clear();
 
-        if (instruments != null) {
-            for (InstrumentWrapper instrument : instruments) {
-                instrumentCache.put(instrument.getId(), instrument);
+        // Set flag to prevent recursion
+        isInitializing = true;
+
+        try {
+            // Get instruments from UserConfigManager which is the source of truth
+            List<InstrumentWrapper> instruments = UserConfigManager.getInstance().getInstruments();
+            instrumentCache.clear();
+
+            if (instruments != null) {
+                for (InstrumentWrapper instrument : instruments) {
+                    instrumentCache.put(instrument.getId(), instrument);
+                }
+                logger.info("Cached {} instruments", instrumentCache.size());
+            } else {
+                logger.warn("No instruments found in UserConfigManager");
             }
-            logger.info("Cached {} instruments", instrumentCache.size());
-        } else {
-            logger.warn("No instruments found in UserConfigManager");
-        }
 
-        needsRefresh = false;
+            needsRefresh = false;
+        } finally {
+            // Always reset the flag when done
+            isInitializing = false;
+        }
     }
 
     public void refreshInstruments() {
+        // Skip if we're already initializing
+        if (isInitializing) {
+            logger.debug("Skipping recursive refresh call");
+            return;
+        }
+
         logger.info("Refreshing instruments cache");
         initializeCache();
         needsRefresh = false;
     }
 
+    /**
+     * Get instruments that can be used on a specific channel
+     */
     public List<InstrumentWrapper> getInstrumentByChannel(int channel) {
-        if (needsRefresh) {
-            refreshInstruments();
-        }
         return instrumentCache.values().stream()
-                .filter(i -> i.receivesOn(channel) &&
-                        (devices == null || devices.isEmpty() || devices.contains(i.getDeviceName())))
+                .filter(instrument -> {
+                    // Safety check for null instrument
+                    if (instrument == null)
+                        return false;
+
+                    try {
+                        // Use safe receivesOn method
+                        return instrument.receivesOn(channel);
+                    } catch (Exception e) {
+                        // Fallback for any unexpected errors
+                        logger.warn("Error checking if instrument receives on channel {}: {}",
+                                channel, e.getMessage());
+
+                        // Check channel directly as fallback
+                        return instrument.getChannel() != null &&
+                                instrument.getChannel() == channel;
+                    }
+                })
+                .sorted(Comparator.comparing(InstrumentWrapper::getName))
                 .collect(Collectors.toList());
     }
 
+    /**
+     * Get instrument by ID
+     * 
+     * @param id The instrument ID
+     * @return The instrument, or null if not found
+     */
+    /**
+     * Get an instrument by ID
+     * 
+     * @param id The instrument ID to look up
+     * @return The instrument with the specified ID, or null if not found
+     */
     public InstrumentWrapper getInstrumentById(Long id) {
-        if (needsRefresh) {
-            refreshInstruments();
+        if (id == null) {
+            logger.warn("getInstrumentById called with null ID");
+            return null;
         }
-        return instrumentCache.get(id);
+
+        logger.debug("Looking up instrument by ID: {}", id);
+
+        // Check cache first
+        InstrumentWrapper instrument = instrumentCache.get(id);
+
+        // If not in cache, try to load from Redis
+        if (instrument == null) {
+            logger.info("Instrument with ID {} not found in cache, checking database", id);
+            try {
+                instrument = RedisService.getInstance().getInstrumentById(id);
+
+                // Add to cache if found
+                if (instrument != null) {
+                    logger.info("Found instrument in database: {} (ID: {})",
+                            instrument.getName(), instrument.getId());
+                    instrumentCache.put(id, instrument);
+                } else {
+                    logger.warn("Instrument with ID {} not found in database", id);
+                }
+            } catch (Exception e) {
+                logger.error("Error retrieving instrument with ID {}: {}", id, e.getMessage(), e);
+            }
+        } else {
+            logger.debug("Found instrument in cache: {} (ID: {})",
+                    instrument.getName(), instrument.getId());
+        }
+
+        return instrument;
     }
 
     public List<String> getInstrumentNames() {
@@ -169,26 +249,25 @@ public class InstrumentManager implements IBusListener {
     }
 
     /**
-     * Updates an instrument in the cache and in the UserConfigManager
-     * 
-     * @param instrument The instrument to update
+     * Update instrument in cache and persist it
      */
     public void updateInstrument(InstrumentWrapper instrument) {
-        if (instrument == null) {
-            logger.warn("Attempt to update null instrument");
+        if (instrument == null || instrument.getId() == null) {
+            logger.warn("Cannot update instrument: null or missing ID");
             return;
         }
-        
-        // Update in local cache
+
+        // Store in cache
         instrumentCache.put(instrument.getId(), instrument);
-        
-        // Update in UserConfigManager
-        UserConfigManager.getInstance().updateInstrument(instrument);
-        
-        // Publish event for listeners
-        commandBus.publish(Commands.INSTRUMENT_UPDATED, this, instrument);
-        
-        logger.info("Instrument updated: {} (ID: {})", instrument.getName(), instrument.getId());
+
+        // Persist to storage using RedisService instead of persistenceService
+        try {
+            RedisService.getInstance().saveInstrument(instrument);
+            logger.debug("Saved instrument: {} (ID: {})",
+                    instrument.getName(), instrument.getId());
+        } catch (Exception e) {
+            logger.error("Failed to persist instrument: {}", e.getMessage());
+        }
     }
 
     /**
@@ -201,17 +280,404 @@ public class InstrumentManager implements IBusListener {
             logger.warn("Attempt to remove instrument with null ID");
             return;
         }
-        
+
         // Get instrument for logging before removal
         InstrumentWrapper instrument = instrumentCache.get(instrumentId);
         String name = instrument != null ? instrument.getName() : "Unknown";
-        
+
         // Remove from cache
         instrumentCache.remove(instrumentId);
-        
+
         // Remove from UserConfigManager
         UserConfigManager.getInstance().removeInstrument(instrumentId);
-        
+
         logger.info("Instrument removed: {} (ID: {})", name, instrumentId);
+    }
+
+    /**
+     * Find or create an internal instrument for the specified channel
+     * 
+     * @param channel The MIDI channel
+     * @return An InstrumentWrapper for the internal synth
+     */
+    public InstrumentWrapper findOrCreateInternalInstrument(int channel) {
+        // Try to find an existing internal instrument for this channel
+        for (InstrumentWrapper instrument : getCachedInstruments()) {
+            if (Boolean.TRUE.equals(instrument.getInternal()) && !instrument.getAssignedToPlayer() &&
+                    instrument.getChannel() == channel) {
+                return instrument;
+            }
+        }
+
+        // Create a new internal instrument
+        InstrumentWrapper internalInstrument = new InstrumentWrapper(
+                "Internal Synth",
+                null, // Internal synth uses null device
+                channel);
+
+        // Configure as internal instrument
+        internalInstrument.setInternal(true);
+        internalInstrument.setDeviceName("Gervill");
+        internalInstrument.setSoundbankName("Default");
+        internalInstrument.setBankIndex(0);
+        internalInstrument.setPreset(0); // Piano
+        internalInstrument.setId(9985L + channel);
+
+        // Add to cache and persist
+        updateInstrument(internalInstrument);
+
+        return internalInstrument;
+    }
+
+    /**
+     * Get the default internal instrument for the sequencer's channel
+     * 
+     * @return An InstrumentWrapper for the internal synth
+     */
+    private InstrumentWrapper getDefaultInstrument(int channel) {
+        // Create with null device (indicates internal synth)
+        InstrumentWrapper internalInstrument = new InstrumentWrapper(
+                "Internal Synth",
+                null,
+                channel // Use the sequencer's channel
+        );
+
+        // Configure as internal instrument
+        internalInstrument.setInternal(true);
+        internalInstrument.setDeviceName("Gervill");
+        internalInstrument.setSoundbankName("Default");
+        internalInstrument.setBankIndex(0);
+        internalInstrument.setPreset(0); // Default to piano
+        internalInstrument.setId(9985L + channel); // Use channel for unique ID
+
+        // Register with manager
+        InstrumentManager.getInstance().updateInstrument(internalInstrument);
+
+        return internalInstrument;
+    }
+
+    /**
+     * Get instrument for internal synthesizer on a specific channel
+     * 
+     * @param channel MIDI channel
+     * @return The instrument, creating it if necessary
+     */
+    public InstrumentWrapper getOrCreateInternalSynthInstrument(int channel, boolean exclusive) {
+        // First try to find an existing instrument
+        Long id = 9985L + channel;
+
+        // Try to find by ID first
+        InstrumentWrapper instrument = instrumentCache.get(id);
+        if (instrument != null && (!exclusive || !instrument.getAssignedToPlayer())) {
+            if (exclusive) {
+                instrument.setAssignedToPlayer(true);
+            }
+            return instrument;
+        }
+
+        // Next try by device name and channel
+        for (InstrumentWrapper cached : instrumentCache.values()) {
+            if (InternalSynthManager.getInstance().isInternalSynthInstrument(cached) &&
+                    cached.getChannel() != null &&
+                    cached.getChannel() == channel &&
+                    (!exclusive || !cached.getAssignedToPlayer())) {
+
+                cached.setAssignedToPlayer(exclusive);
+                return cached;
+            }
+        }
+
+        // No instrument found, create a new one using InternalSynthManager
+        boolean isDrumChannel = (channel == 9);
+        instrument = InternalSynthManager.getInstance().createInternalInstrument(
+                channel, isDrumChannel, null);
+
+        if (instrument != null) {
+            // Store in our cache
+            updateInstrument(instrument);
+
+            // Mark as assigned if exclusive
+            if (exclusive) {
+                instrument.setAssignedToPlayer(true);
+            }
+        }
+
+        return instrument;
+    }
+
+    /**
+ * Refresh the instrument cache with the provided list of instruments
+ */
+public void refreshCache(List<InstrumentWrapper> instruments) {
+    if (instruments == null) return;
+    
+    // Clear the existing cache
+    instrumentCache.clear();
+    
+    // Add all instruments to the cache
+    for (InstrumentWrapper instrument : instruments) {
+        if (instrument != null && instrument.getId() != null) {
+            instrumentCache.put(instrument.getId(), instrument);
+        }
+    }
+    
+    logger.debug("Refreshed instrument cache with {} instruments", instruments.size());
+}
+
+
+    /**
+     * Determine who owns/uses an instrument
+     *
+     * @param instrument The instrument to check
+     * @return A string description of the owner(s)
+     */
+    public String determineInstrumentOwner(InstrumentWrapper instrument) {
+        if (instrument == null || instrument.getId() == null) {
+            return "";
+        }
+
+        List<String> owners = new ArrayList<>();
+
+        try {
+            // Check session players
+            Set<Player> sessionPlayers = SessionManager.getInstance().getActiveSession().getPlayers();
+            if (sessionPlayers != null) {
+                for (Player player : sessionPlayers) {
+                    if (player != null &&
+                            player.getInstrumentId() != null &&
+                            player.getInstrumentId().equals(instrument.getId())) {
+                        owners.add("Session: " + player.getName());
+                    }
+                }
+            }
+
+            // Check melodic sequencers
+            for (MelodicSequencer sequencer : MelodicSequencerManager.getInstance().getAllSequencers()) {
+                if (sequencer != null && sequencer.getPlayer() != null &&
+                        sequencer.getPlayer().getInstrumentId() != null &&
+                        sequencer.getPlayer().getInstrumentId().equals(instrument.getId())) {
+                    owners.add("Melodic: " + sequencer.getClass().getName());
+                }
+            }
+
+            // Check drum sequencers (which have multiple players)
+            for (DrumSequencer sequencer : DrumSequencerManager.getInstance().getAllSequencers()) {
+                if (sequencer != null && sequencer.getPlayers() != null) {
+                    for (Player player : sequencer.getPlayers()) {
+                        if (player != null &&
+                                player.getInstrumentId() != null &&
+                                player.getInstrumentId().equals(instrument.getId())) {
+                            owners.add(sequencer.getClass().getName() + " (" + player.getName() + ")");
+                        }
+                    }
+                }
+            }
+
+            if (owners.isEmpty()) {
+                return "None";
+            } else if (owners.size() <= 2) {
+                return String.join(", ", owners);
+            } else {
+                // If there are many owners, show a count
+                return owners.get(0) + " and " + (owners.size() - 1) + " more";
+            }
+        } catch (Exception e) {
+            logger.error("Error determining instrument owner: {}", e.getMessage(), e);
+            return "Error";
+        }
+    }
+
+    /**
+     * Get available drum instruments
+     * 
+     * @return List of drum instruments
+     */
+    public List<InstrumentWrapper> getDrumInstruments() {
+        List<InstrumentWrapper> drumInstruments = new ArrayList<>();
+        
+        try {
+            // Get all instruments from the database
+            List<InstrumentWrapper> allInstruments = getCachedInstruments();
+            
+            // Filter for drum instruments (typically bank 128 or those with drum-related names)
+            for (InstrumentWrapper instrument : allInstruments) {
+                // Check if it's a drum bank (128) or has drum-related keywords in the name
+                if (instrument.getBankIndex() == 128 || 
+                    isDrumInstrumentByName(instrument.getName())) {
+                    drumInstruments.add(instrument);
+                }
+            }
+            
+            // If no drum instruments found, return all instruments as fallback
+            if (drumInstruments.isEmpty()) {
+                logger.warn("No drum instruments found, returning all instruments");
+                return allInstruments;
+            }
+            
+            // Sort by name for easier selection
+            drumInstruments.sort(Comparator.comparing(InstrumentWrapper::getName));
+            
+            logger.info("Found {} drum instruments", drumInstruments.size());
+            return drumInstruments;
+        } catch (Exception e) {
+            logger.error("Error getting drum instruments: {}", e.getMessage(), e);
+            return new ArrayList<>();
+        }
+    }
+
+    /**
+     * Check if an instrument is a drum based on its name
+     * 
+     * @param name The instrument name
+     * @return true if it appears to be a drum instrument
+     */
+    private boolean isDrumInstrumentByName(String name) {
+        if (name == null) return false;
+        
+        String lowerName = name.toLowerCase();
+        String[] drumKeywords = {
+            "drum", "kick", "snare", "tom", "cymbal", "hat", "clap", "rim", 
+            "percussion", "conga", "bongo", "tabla", "timbale", "wood", "stick",
+            "shaker", "guiro", "bell", "tambourine", "triangle"
+        };
+        
+        for (String keyword : drumKeywords) {
+            if (lowerName.contains(keyword)) {
+                return true;
+            }
+        }
+        
+        return false;
+    }
+
+    /**
+     * Get default drum kit instruments
+     * 
+     * @return List of default drum instruments
+     */
+    public List<InstrumentWrapper> getDefaultDrumKit() {
+        List<InstrumentWrapper> defaultKit = new ArrayList<>();
+        
+        try {
+            // Get all drum instruments
+            List<InstrumentWrapper> allDrums = getDrumInstruments();
+            
+            // If no instruments found, return empty list
+            if (allDrums.isEmpty()) {
+                logger.warn("No instruments found for default drum kit");
+                return defaultKit;
+            }
+            
+            // Define preferred drum names for a standard kit
+            String[] standardDrumNames = {
+                "Kick", "Snare", "Closed Hi-hat", "Open Hi-hat", 
+                "Tom Low", "Tom Mid", "Tom High", "Crash", 
+                "Ride", "Clap", "Rim", "Percussion", 
+                "Cowbell", "Conga", "Shaker", "Tambourine"
+            };
+            
+            // Try to find drums that match these standard names
+            for (String drumName : standardDrumNames) {
+                boolean found = false;
+                
+                // First try exact matches
+                for (InstrumentWrapper instr : allDrums) {
+                    if (instr.getName().equalsIgnoreCase(drumName) || 
+                        instr.getName().contains(drumName)) {
+                        defaultKit.add(instr);
+                        found = true;
+                        break;
+                    }
+                }
+                
+                // If not found, try partial matches
+                if (!found && defaultKit.size() < DrumSequenceData.DRUM_PAD_COUNT) {
+                    String lowerDrumName = drumName.toLowerCase();
+                    for (InstrumentWrapper instr : allDrums) {
+                        String lowerInstrName = instr.getName().toLowerCase();
+                        if (lowerInstrName.contains(lowerDrumName.split(" ")[0])) {
+                            defaultKit.add(instr);
+                            found = true;
+                            break;
+                        }
+                    }
+                }
+                
+                // Still not found, add any drum
+                if (!found && defaultKit.size() < DrumSequenceData.DRUM_PAD_COUNT && !allDrums.isEmpty()) {
+                    // Take the first available
+                    defaultKit.add(allDrums.get(0));
+                    // Remove to avoid duplicates
+                    if (!allDrums.isEmpty()) {
+                        allDrums.remove(0);
+                    }
+                }
+                
+                // If we've filled all 16 slots, stop
+                if (defaultKit.size() >= DrumSequenceData.DRUM_PAD_COUNT) {
+                    break;
+                }
+            }
+            
+            // Fill remaining slots if needed
+            while (defaultKit.size() < DrumSequenceData.DRUM_PAD_COUNT && !allDrums.isEmpty()) {
+                defaultKit.add(allDrums.get(0));
+                allDrums.remove(0);
+            }
+            
+            logger.info("Created default drum kit with {} instruments", defaultKit.size());
+            return defaultKit;
+        } catch (Exception e) {
+            logger.error("Error creating default drum kit: {}", e.getMessage(), e);
+            return new ArrayList<>();
+        }
+    }
+
+    /**
+     * Get instrument for a drum pad
+     * 
+     * @param channel Should be 9 for drums (MIDI channel 10)
+     * @return The instrument, creating it if necessary
+     */
+    public InstrumentWrapper getDrumInstrument(Long id, String name) {
+        // Try to find an existing instrument
+        InstrumentWrapper instrument = null;
+        
+        // If id is provided, try to find by id first
+        if (id != null) {
+            instrument = instrumentCache.get(id);
+        }
+        
+        // If not found, try by name or use default
+        if (instrument == null) {
+            // Try to find by name if provided
+            if (name != null && !name.isEmpty()) {
+                instrument = findByName(name);
+            }
+            
+            // If still not found, create a new one
+            if (instrument == null) {
+                // Create with null device (indicates internal synth)
+                instrument = new InstrumentWrapper();
+                instrument.setId(System.currentTimeMillis()); // Unique ID
+                instrument.setName(name != null ? name : "Drum " + System.currentTimeMillis());
+                instrument.setDeviceName("Gervill"); // Default to internal synth
+                instrument.setSoundbankName("Default");
+                instrument.setBankIndex(0);
+                instrument.setPreset(0);
+                
+                // CRITICAL - Set channel for drums
+                instrument.setChannel(9); // Channel 10 in MIDI (indexed from 0)
+                
+                // Register with manager
+                updateInstrument(instrument);
+            } else if (instrument.getChannel() == null) {
+                // Ensure channel is set for existing instrument
+                instrument.setChannel(9);
+                updateInstrument(instrument);
+            }
+        }
+        
+        return instrument;
     }
 }

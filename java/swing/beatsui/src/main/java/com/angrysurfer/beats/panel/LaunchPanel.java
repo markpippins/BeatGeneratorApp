@@ -18,7 +18,7 @@ import javax.swing.Timer;
 import javax.swing.border.EmptyBorder;
 import javax.swing.plaf.basic.BasicButtonUI;
 
-import com.angrysurfer.beats.UIUtils;
+import com.angrysurfer.beats.util.UIHelper;
 import com.angrysurfer.core.api.*;
 
 public class LaunchPanel extends JPanel implements IBusListener {
@@ -32,8 +32,11 @@ public class LaunchPanel extends JPanel implements IBusListener {
         1, 2, 3, 4 // inputs 13-16 map to 1,2,3,4
     };
 
+    JPanel gridPanel;
+
     public LaunchPanel() {
         super(new BorderLayout());
+        UIHelper.setPanelBorder(this);
         commandBus.register(this);
         setup();
     }
@@ -41,7 +44,21 @@ public class LaunchPanel extends JPanel implements IBusListener {
     @Override
     public void onAction(Command action) {
         if (Commands.CHANGE_THEME.equals(action.getCommand())) {
-            SwingUtilities.invokeLater(this::repaint);
+            SwingUtilities.invokeLater(() -> {
+                // Remove existing grid panel
+                remove(gridPanel);
+                
+                // Create new grid panel with updated theme colors
+                gridPanel = createGridPanel();
+                add(gridPanel, BorderLayout.CENTER);
+                
+                // Ensure proper layout
+                revalidate();
+                repaint();
+                
+                // Add debug message
+                System.out.println("LaunchPanel: Grid panel recreated after theme change");
+            });
         }
     }
 
@@ -51,14 +68,14 @@ public class LaunchPanel extends JPanel implements IBusListener {
     }
 
     private JPanel createGridPanel() {
-        JPanel gridPanel = new JPanel(new GridLayout(8, 8, 5, 5));
-        gridPanel.setBorder(new EmptyBorder(5, 5, 5, 5));
+        gridPanel = new JPanel(new GridLayout(8, 8, 2, 2));
+        // gridPanel.setBorder(new EmptyBorder(5, 5, 5, 5));
 
         Color[] quadrantColors = {
-            UIUtils.mutedRed, // Top-left
-            UIUtils.mutedOlive, // Top-right
-            UIUtils.warmMustard, // Bottom-left
-            UIUtils.fadedOrange // Bottom-right
+            UIHelper.mutedRed, // Top-left
+            UIHelper.mutedOlive, // Top-right
+            UIHelper.warmMustard, // Bottom-left
+            UIHelper.fadedOrange // Bottom-right
         };
 
         int[] count = {1, 1, 1, 1};

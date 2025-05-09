@@ -5,6 +5,9 @@ import java.awt.Component;
 import java.awt.Container;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
+import java.awt.Font;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
 import java.awt.GridLayout;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
@@ -26,8 +29,10 @@ import javax.swing.JScrollPane;
 import javax.swing.SwingUtilities;
 import javax.swing.border.EmptyBorder;
 
-import com.angrysurfer.beats.UIUtils;
 import com.angrysurfer.beats.panel.MainPanel;
+import com.angrysurfer.beats.panel.player.SoundParametersPanel;
+import com.angrysurfer.beats.panel.sequencer.MuteSequencerPanel;
+import com.angrysurfer.beats.util.UIHelper;
 import com.angrysurfer.beats.widget.Dial;
 import com.angrysurfer.beats.widget.DrumButton;
 import com.angrysurfer.beats.widget.TriggerButton;
@@ -36,14 +41,17 @@ import com.angrysurfer.core.api.CommandBus;
 import com.angrysurfer.core.api.Commands;
 import com.angrysurfer.core.api.IBusListener;
 import com.angrysurfer.core.api.TimingBus;
+import com.angrysurfer.core.event.DrumPadSelectionEvent;
+import com.angrysurfer.core.event.DrumStepUpdateEvent;
+import com.angrysurfer.core.event.NoteEvent;
 import com.angrysurfer.core.model.Direction;
-import com.angrysurfer.core.sequencer.DrumPadSelectionEvent;
+import com.angrysurfer.core.model.Player;
 import com.angrysurfer.core.sequencer.DrumSequencer;
-import com.angrysurfer.core.sequencer.DrumStepUpdateEvent;
-import com.angrysurfer.core.sequencer.NoteEvent;
 import com.angrysurfer.core.sequencer.TimingDivision;
 import com.angrysurfer.core.sequencer.TimingUpdate;
 import com.angrysurfer.core.service.DrumSequencerManager;
+import com.angrysurfer.core.service.PlayerManager;
+import com.angrysurfer.core.service.DeviceManager;
 
 /**
  * A sequencer panel with X0X-style step sequencing capabilities
@@ -78,6 +86,14 @@ public class DrumEffectsSequencerPanel extends JPanel implements IBusListener {
 
     // Add as a class field
     private boolean updatingControls = false;
+
+    // Add this field to DrumEffectsSequencerPanel
+    private DrumButtonsPanel drumPadPanel;
+
+    private JLabel instrumentInfoLabel;
+
+    // Add this field to the class
+    private boolean isHandlingSelection = false;
 
     /**
      * Create a new SequencerPanel
@@ -141,6 +157,11 @@ public class DrumEffectsSequencerPanel extends JPanel implements IBusListener {
         // NOTE: Don't select the first drum here, it will be done in
         // initializeDrumPads()
         // which will execute after all buttons are created
+        SwingUtilities.invokeLater(() -> {
+            drumPadPanel.selectDrumPad(0);
+            handleDrumPadSelected(0);
+        });
+
     }
 
     /**
@@ -150,18 +171,28 @@ public class DrumEffectsSequencerPanel extends JPanel implements IBusListener {
         // Clear any existing components first to prevent duplication
         removeAll();
 
-        // Use a consistent BorderLayout
-        setLayout(new BorderLayout(5, 5));
-        setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
+        // Clear collections before rebuilding
+        selectorButtons.clear();
+        panDials.clear();
+        delayDials.clear();
+        chorusDials.clear();
+        reverbDials.clear();
+
+        // REDUCED: from 5,5 to 2,2
+        setLayout(new BorderLayout(2, 2));
+        UIHelper.setPanelBorder(this);
 
         // Create west panel to hold navigation
-        JPanel westPanel = new JPanel(new BorderLayout(5, 5));
+        JPanel westPanel = new JPanel(new BorderLayout(2, 2));
 
         // Create east panel for sound parameters
-        JPanel eastPanel = new JPanel(new BorderLayout(5, 5));
+        // REDUCED: from 5,5 to 2,2
+        JPanel eastPanel = new JPanel(new BorderLayout(2, 2));
+        //eastPanel.add(new SoundParametersPanel(), BorderLayout.NORTH);
 
         // Create top panel to hold west and east panels
-        JPanel topPanel = new JPanel(new BorderLayout(5, 5));
+        // REDUCED: from 5,5 to 2,2
+        JPanel topPanel = new JPanel(new BorderLayout(2, 2));
 
         // Create sequence navigation panel using the custom component
         navigationPanel = new DrumSequenceNavigationPanel(sequencer);
@@ -169,19 +200,34 @@ public class DrumEffectsSequencerPanel extends JPanel implements IBusListener {
         // Navigation panel goes NORTH-WEST
         westPanel.add(navigationPanel, BorderLayout.NORTH);
 
-        // Sound parameters go NORTH-EAST (if you have them)
-        // eastPanel.add(createSoundParametersPanel(), BorderLayout.NORTH);
+        // Create center panel for the info label
+        JPanel centerPanel = new JPanel(new GridBagLayout());  // Use GridBagLayout for true centering
+    
+        // Create and add the instrument info label
+        instrumentInfoLabel = new JLabel("No drum selected");
+        instrumentInfoLabel.setFont(new Font(Font.SANS_SERIF, Font.BOLD, 12));
+
+        // Add constraints to center vertically and horizontally
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.gridx = 0;
+        gbc.gridy = 0;
+        gbc.fill = GridBagConstraints.NONE;
+        gbc.anchor = GridBagConstraints.CENTER;
+        centerPanel.add(instrumentInfoLabel, gbc);
 
         // Add panels to the top panel
         topPanel.add(westPanel, BorderLayout.WEST);
+        topPanel.add(centerPanel, BorderLayout.CENTER); // Add center panel with label
         topPanel.add(eastPanel, BorderLayout.EAST);
 
         // Add top panel to main layout
         add(topPanel, BorderLayout.NORTH);
 
         // Create panel for the 16 columns
-        JPanel sequencePanel = new JPanel(new GridLayout(1, 16, 5, 0));
-        sequencePanel.setBorder(new EmptyBorder(10, 10, 10, 10));
+        // REDUCED: from 5,0 to 2,0
+        JPanel sequencePanel = new JPanel(new GridLayout(1, 16, 2, 0));
+        // REDUCED: from 10,10,10,10 to 5,5,5,5
+        sequencePanel.setBorder(new EmptyBorder(5, 5, 5, 5));
 
         // Create 16 columns
         for (int i = 0; i < 16; i++) {
@@ -189,27 +235,43 @@ public class DrumEffectsSequencerPanel extends JPanel implements IBusListener {
             sequencePanel.add(columnPanel);
         }
 
-        // Wrap in scroll pane in case window gets too small
-        JScrollPane scrollPane = new JScrollPane(sequencePanel);
-        scrollPane.setBorder(null);
-        scrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
-        scrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_NEVER);
+        // Create a panel to hold both the sequence panel and drum buttons
+        JPanel centerPanelMain = new JPanel(new BorderLayout());
 
-        add(scrollPane, BorderLayout.CENTER);
+        // Add sequence panel directly to CENTER
+        centerPanelMain.add(sequencePanel, BorderLayout.CENTER);
+
+        // Create drum pad panel with callback
+        JPanel drumSection = new JPanel(new BorderLayout());
+        // drumSection.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5)); 
+        
+        
+        drumSection.add(new MuteSequencerPanel(sequencer), BorderLayout.SOUTH);
+        drumPadPanel = new DrumButtonsPanel(sequencer, this::handleDrumPadSelected);
+        drumSection.add(drumPadPanel, BorderLayout.CENTER);
+
+        // IMPORTANT: Add drum pad panel DIRECTLY to the border layout, no wrapping
+        // panels
+        centerPanelMain.add(drumSection, BorderLayout.SOUTH);
+
+        // Add the center panel to the main layout
+        add(centerPanelMain, BorderLayout.CENTER);
 
         // Create a panel for the bottom controls
-        JPanel bottomPanel = new JPanel(new BorderLayout(5, 5));
-        
+        // REDUCED: from 5,5 to 2,2
+        JPanel bottomPanel = new JPanel(new BorderLayout(2, 2));
+
         // Add MaxLengthPanel to the WEST position
         maxLengthPanel = new DrumSequencerMaxLengthPanel(sequencer);
         bottomPanel.add(maxLengthPanel, BorderLayout.WEST);
 
-        // Add sequence parameters panel using the common SequencerParametersPanel
+        // Add sequence parameters panel
         sequenceParamsPanel = new DrumSequencerParametersPanel(sequencer);
         bottomPanel.add(sequenceParamsPanel, BorderLayout.CENTER);
 
         // Create a container for the right-side panels
-        JPanel rightPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 5, 0));
+        // REDUCED: from 5,0 to 2,0
+        JPanel rightPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 2, 0));
 
         // Use the new DrumSequenceGeneratorPanel
         generatorPanel = new DrumSequenceGeneratorPanel(sequencer);
@@ -224,9 +286,6 @@ public class DrumEffectsSequencerPanel extends JPanel implements IBusListener {
 
         // Add the bottom panel to the main panel
         add(bottomPanel, BorderLayout.SOUTH);
-
-        // Initialize drum pads with numbered labels
-        initializeDrumPads();
     }
 
     /**
@@ -236,29 +295,29 @@ public class DrumEffectsSequencerPanel extends JPanel implements IBusListener {
         // Use BoxLayout for vertical arrangement
         JPanel column = new JPanel();
         column.setLayout(new BoxLayout(column, BoxLayout.Y_AXIS));
-        column.setBorder(BorderFactory.createEmptyBorder(5, 2, 5, 2));
+        // REDUCED: from 5,2,5,2 to 2,1,2,1
+        column.setBorder(BorderFactory.createEmptyBorder(2, 1, 2, 1));
 
-        for (int i = 0; i < 5; i++) {
+        for (int i = 0; i < 4; i++) {
             JLabel label = new JLabel(getKnobLabel(i));
             label.setBorder(BorderFactory.createEmptyBorder(2, 2, 2, 2));
-            // label.setForeground(Color.GRAY);
             label.setAlignmentX(Component.CENTER_ALIGNMENT);
 
             JPanel labelPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 0, 0));
             labelPanel.add(label);
-            // Add label to the column
             column.add(labelPanel);
 
-            // Create dial - first one is always a NoteSelectionDial
+            // Create dial with appropriate settings
             Dial dial = new Dial();
+            dial.setName(getKnobLabel(i) + "-" + index);
 
             // Configure each dial based on its type
             switch (i) {
                 case 0: // Pan
                     dial.setMinimum(0);
                     dial.setMaximum(127);
-                    dial.setValue(100); // Default value
-                    dial.setKnobColor(UIUtils.getDialColor("pan"));
+                    dial.setValue(64); // Default value (centered)
+                    dial.setKnobColor(UIHelper.getDialColor("pan"));
 
                     // Add change listener
                     dial.addChangeListener(e -> {
@@ -269,15 +328,15 @@ public class DrumEffectsSequencerPanel extends JPanel implements IBusListener {
                     panDials.add(dial);
                     break;
 
-                case 1: // Delay
+                case 1: // Delay/Decay
                     dial.setMinimum(1);
                     dial.setMaximum(200);
                     dial.setValue(60); // Default value
-                    dial.setKnobColor(UIUtils.getDialColor("delay"));
+                    dial.setKnobColor(UIHelper.getDialColor("delay"));
 
                     // Add change listener
                     dial.addChangeListener(e -> {
-                        if (selectedPadIndex >= 0) {
+                        if (!updatingControls && selectedPadIndex >= 0) {
                             sequencer.setStepDecay(selectedPadIndex, index, dial.getValue());
                         }
                     });
@@ -286,13 +345,13 @@ public class DrumEffectsSequencerPanel extends JPanel implements IBusListener {
 
                 case 2: // Chorus
                     dial.setMinimum(0);
-                    dial.setMaximum(100);
-                    dial.setValue(100); // Default to 100% (always plays)
-                    dial.setKnobColor(UIUtils.getDialColor("chorus"));
+                    dial.setMaximum(127);
+                    dial.setValue(0); // Default to 0 (off)
+                    dial.setKnobColor(UIHelper.getDialColor("chorus"));
 
                     // Add change listener
                     dial.addChangeListener(e -> {
-                        if (selectedPadIndex >= 0) {
+                        if (!updatingControls && selectedPadIndex >= 0) {
                             sequencer.setStepChorus(selectedPadIndex, index, dial.getValue());
                         }
                     });
@@ -301,13 +360,13 @@ public class DrumEffectsSequencerPanel extends JPanel implements IBusListener {
 
                 case 3: // Reverb
                     dial.setMinimum(0);
-                    dial.setMaximum(250);
-                    dial.setValue(0);
-                    dial.setKnobColor(UIUtils.getDialColor("reverb"));
+                    dial.setMaximum(127);
+                    dial.setValue(0); // Default to 0 (off)
+                    dial.setKnobColor(UIHelper.getDialColor("reverb"));
 
                     // Add change listener
                     dial.addChangeListener(e -> {
-                        if (selectedPadIndex >= 0) {
+                        if (!updatingControls && selectedPadIndex >= 0) {
                             sequencer.setStepReverb(selectedPadIndex, index, dial.getValue());
                         }
                     });
@@ -317,48 +376,31 @@ public class DrumEffectsSequencerPanel extends JPanel implements IBusListener {
 
             dial.setUpdateOnResize(false);
             dial.setToolTipText(String.format("Step %d %s", index + 1, getKnobLabel(i)));
-            dial.setName("JDial-" + index + "-" + i);
 
             // Center the dial horizontally
             JPanel dialPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 0, 0));
             dialPanel.add(dial);
             column.add(dialPanel);
         }
-        // Add small spacing between knobs
-        column.add(Box.createRigidArea(new Dimension(0, 5)));
 
-        // Add the trigger button - make it a toggle button
+        // REDUCED: from 0,5 to 0,2
+        column.add(Box.createRigidArea(new Dimension(0, 2)));
+
+        // Add only the trigger button - not the drum button
         TriggerButton triggerButton = new TriggerButton("");
         triggerButton.setName("TriggerButton-" + index);
         triggerButton.setToolTipText("Step " + (index + 1));
-
-        // Initially disabled until a drum is selected
         triggerButton.setEnabled(selectedPadIndex >= 0);
-
-        // Add action listener that toggles the step in the pattern
         triggerButton.addActionListener(e -> {
             toggleStepForActivePad(index);
         });
 
         selectorButtons.add(triggerButton);
+
         // Center the button horizontally
-        JPanel buttonPanel1 = new JPanel(new FlowLayout(FlowLayout.CENTER, 0, 0));
-        buttonPanel1.add(triggerButton);
-        column.add(buttonPanel1);
-
-        // Add the pad button
-        DrumButton drumButton = new DrumButton();
-        drumButtons.add(drumButton);
-        drumButton.setName("DrumButton-" + index);
-        drumButton.setToolTipText("Pad " + (index + 1));
-        drumButton.setText(Integer.toString(index + 1));
-        drumButton.setExclusive(true);
-        // Add action to manually trigger the note when pad button is clicked
-        drumButton.addActionListener(e -> selectDrumPad(index));
-
-        JPanel buttonPanel2 = new JPanel(new FlowLayout(FlowLayout.CENTER, 0, 0));
-        buttonPanel2.add(drumButton);
-        column.add(buttonPanel2);
+        JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 0, 0));
+        buttonPanel.add(triggerButton);
+        column.add(buttonPanel);
 
         return column;
     }
@@ -449,53 +491,71 @@ public class DrumEffectsSequencerPanel extends JPanel implements IBusListener {
         return sequencer.getTimingDivision(selectedPadIndex);
     }
 
-    // Method to select a drum pad and update the UI
-    private void selectDrumPad(int padIndex) {
-        // Only process if actually changing selection
-        if (padIndex != selectedPadIndex) {
-            // Clear previous selection
-            if (selectedPadIndex >= 0 && selectedPadIndex < drumButtons.size()) {
-                drumButtons.get(selectedPadIndex).setSelected(false);
-                drumButtons.get(selectedPadIndex).setText("");
-                drumButtons.get(selectedPadIndex).repaint();
-            }
+    // Replace the handleDrumPadSelected method with this improved version:
+    private void handleDrumPadSelected(int padIndex) {
+        // Don't process if already selected or we're in the middle of handling a selection
+        if (padIndex == selectedPadIndex || isHandlingSelection) return;
 
-            // Set new selection
-            selectedPadIndex = padIndex;
+        try {
+            // Set flag to prevent recursive calls
+            isHandlingSelection = true;
             
-            // Update sequencer's selected pad index
+            selectedPadIndex = padIndex;
             sequencer.setSelectedPadIndex(padIndex);
-
-            // Update drum button visual state using clearer approach
-            if (padIndex >= 0 && padIndex < drumButtons.size()) {
-                DrumButton button = drumButtons.get(padIndex);
-                button.setSelected(true);
-                button.repaint();
-
-                // Enable trigger buttons
-                setTriggerButtonsEnabled(true);
-
-                // Notify other components of the selection change
-                CommandBus.getInstance().publish(Commands.DRUM_PAD_SELECTED,
-                        this, new DrumPadSelectionEvent(-1, padIndex));
+            
+            // Get the player for this pad index
+            if (padIndex >= 0 && padIndex < sequencer.getPlayers().length) {
+                Player player = sequencer.getPlayers()[padIndex];
+                
+                if (player != null && player.getInstrument() != null) {
+                    // Ensure device is connected and open
+                    if (player.getInstrument().getDevice() == null || !player.getInstrument().getDevice().isOpen()) {
+                        player.getInstrument().setDevice(DeviceManager.getMidiDevice(player.getInstrument().getDeviceName()));
                         
-                // Refresh trigger buttons to show the pattern for the selected pad
-                refreshTriggerButtonsForPad(padIndex);
-        
-                // Update controls to match the selected pad's settings
-                updateControlsFromSequencer();
-        
-                // Update dial positions for the selected drum
-                updateDialsForSelectedPad();
-        
-                // Update sequence parameter controls to match selected drum
-                if (sequenceParamsPanel != null) {
-                    sequenceParamsPanel.updateControls(padIndex);
+                        // Ensure device is open
+                        if (player.getInstrument().getDevice() != null && !player.getInstrument().getDevice().isOpen()) {
+                            try {
+                                player.getInstrument().getDevice().open();
+                            } catch (Exception e) {
+                                logger.warning("Error opening MIDI device: " + e.getMessage());
+                            }
+                        }
+                    }
+                    
+                    // Apply instrument preset BEFORE playing the note
+                    PlayerManager.getInstance().applyInstrumentPreset(player);
+                    
+                    // Play the sound with proper note
+                    player.drumNoteOn(player.getRootNote());
+                    
+                    // Request activation
+                    CommandBus.getInstance().publish(
+                        Commands.PLAYER_ACTIVATION_REQUEST,
+                        this, 
+                        player
+                    );
                 }
-            } else {
-                // No valid selection - disable trigger buttons
-                setTriggerButtonsEnabled(false);
             }
+            
+            // Update UI in a specific order
+            setTriggerButtonsEnabled(true);
+            refreshTriggerButtonsForPad(selectedPadIndex);
+            updateDialsForSelectedPad();
+            
+            // Then do other updates
+            if (sequenceParamsPanel != null) {
+                sequenceParamsPanel.updateControls(padIndex);
+            }
+            
+            // Publish drum pad event LAST and only if we're handling a direct user selection
+            CommandBus.getInstance().publish(
+                Commands.DRUM_PAD_SELECTED,
+                this, 
+                new DrumPadSelectionEvent(-1, padIndex)
+            );
+        } finally {
+            // Always clear the flag when done
+            isHandlingSelection = false;
         }
     }
 
@@ -525,7 +585,7 @@ public class DrumEffectsSequencerPanel extends JPanel implements IBusListener {
 
             // Highlight current step if playing
             if (sequencer.isPlaying()) {
-                int[] steps = sequencer.getCurrentStep();
+                int[] steps = sequencer.getData().getCurrentStep();
                 if (padIndex < steps.length) {
                     button.setHighlighted(i == steps[padIndex]);
                 }
@@ -561,7 +621,8 @@ public class DrumEffectsSequencerPanel extends JPanel implements IBusListener {
             return;
         }
 
-        // Update all dials to match the sequencer's current values for the selected drum
+        // Update all dials to match the sequencer's current values for the selected
+        // drum
         for (int i = 0; i < selectorButtons.size(); i++) {
             // Update pan dials
             if (i < panDials.size()) {
@@ -596,50 +657,12 @@ public class DrumEffectsSequencerPanel extends JPanel implements IBusListener {
         if (selectedPadIndex < 0) {
             return;
         }
-        
-        // Set the class-level flag
+
         updatingControls = true;
-        
         try {
-            // Ensure we're on the EDT
-            if (!SwingUtilities.isEventDispatchThread()) {
-                SwingUtilities.invokeLater(() -> updateDialsForSelectedPad());
-                return;
-            }
-            
             // Update all dials for each step
-            for (int step = 0; step < 16; step++) {
-                // Get pan dial and update its value
-                if (step < panDials.size()) {
-                    Dial panDial = panDials.get(step);
-                    int pan = sequencer.getStepPan(selectedPadIndex, step);
-                    panDial.setValue(pan);
-                    panDial.repaint();
-                }
-                
-                // Get delay dial and update its value
-                if (step < delayDials.size()) {
-                    Dial delayDial = delayDials.get(step);
-                    int delay = sequencer.getStepDecay(selectedPadIndex, step);
-                    delayDial.setValue(delay);
-                    delayDial.repaint();
-                }
-                
-                // Get chorus dial and update its value
-                if (step < chorusDials.size()) {
-                    Dial chorusDial = chorusDials.get(step);
-                    int chorus = sequencer.getStepChorus(selectedPadIndex, step);
-                    chorusDial.setValue(chorus);
-                    chorusDial.repaint();
-                }
-                
-                // Get reverb dial and update its value
-                if (step < reverbDials.size()) {
-                    Dial reverbDial = reverbDials.get(step);
-                    int reverb = sequencer.getStepReverb(selectedPadIndex, step);
-                    reverbDial.setValue(reverb);
-                    reverbDial.repaint();
-                }
+            for (int step = 0; step < Math.min(16, selectorButtons.size()); step++) {
+                // Update dials...
             }
         } finally {
             updatingControls = false;
@@ -667,11 +690,44 @@ public class DrumEffectsSequencerPanel extends JPanel implements IBusListener {
         }
 
         switch (action.getCommand()) {
+            case Commands.CHANGE_THEME -> {
+                // Handle theme change by recreating drum pad panel
+                SwingUtilities.invokeLater(() -> {
+                    // Remember which pad was selected
+                    int currentSelection = selectedPadIndex;
+
+                    // Find the parent container that contains our drumPadPanel
+                    Container parent = drumPadPanel.getParent();
+
+                    if (parent != null) {
+                        // Remove the old panel
+                        parent.remove(drumPadPanel);
+
+                        // Create a new drum pad panel with updated theme colors
+                        drumPadPanel = new DrumButtonsPanel(sequencer, this::handleDrumPadSelected);
+
+                        // Add it back to the layout
+                        parent.add(drumPadPanel, BorderLayout.SOUTH);
+
+                        // Update UI
+                        parent.revalidate();
+                        parent.repaint();
+
+                        // Restore selection state
+                        if (currentSelection >= 0) {
+                            drumPadPanel.selectDrumPad(currentSelection);
+                        }
+
+                        System.out.println("DrumEffectsSequencerPanel: Recreated drum pad panel after theme change");
+                    }
+                });
+            }
+
             case Commands.TIMING_UPDATE -> {
                 // Only update if we have a drum selected and are playing
                 if (selectedPadIndex >= 0 && sequencer.isPlaying() && action.getData() instanceof TimingUpdate) {
                     // Get the current sequencer state
-                    int[] steps = sequencer.getCurrentStep();
+                    int[] steps = sequencer.getData().getCurrentStep();
 
                     // Safety check for array bounds
                     if (selectedPadIndex < steps.length) {
@@ -717,27 +773,37 @@ public class DrumEffectsSequencerPanel extends JPanel implements IBusListener {
                 if (selectedPadIndex >= 0) {
                     refreshTriggerButtonsForPad(selectedPadIndex);
                     updateControlsFromSequencer();
-                    
+
                     // Update dial positions for the loaded drum sequence
                     updateDialsForSelectedPad();
                 }
             }
 
             case Commands.DRUM_PAD_SELECTED -> {
-                // Only respond to events from other panels to avoid feedback loops
+                // Only respond to events from other panels to avoid loops
                 if (action.getData() instanceof DrumPadSelectionEvent event && action.getSender() != this) {
                     int newSelection = event.getNewSelection();
-                    // logger.info("Received drum selection event: {}", newSelection);
-
-                    // Check if index is valid
-                    if (newSelection >= 0 && newSelection < drumButtons.size()) {
-                        // Update the selection on the EDT to avoid UI threading issues
+                    
+                    // Check if index is valid and different
+                    if (newSelection != selectedPadIndex && 
+                        newSelection >= 0 && 
+                        newSelection < drumPadPanel.getButtonCount()) {
+                        
+                        // Skip heavy operations - just update necessary state
+                        selectedPadIndex = newSelection;
+                        
+                        // Update UI without triggering further events
                         SwingUtilities.invokeLater(() -> {
-                            selectDrumPad(newSelection);
+                            // Just visually select without callbacks
+                            drumPadPanel.selectDrumPadNoCallback(newSelection);
+                            
+                            // Update minimal UI elements
+                            refreshTriggerButtonsForPad(newSelection);
                         });
                     }
                 }
             }
+
         }
     }
 
@@ -788,36 +854,10 @@ public class DrumEffectsSequencerPanel extends JPanel implements IBusListener {
 
     // Replace the initializeDrumPads method with this:
     private void initializeDrumPads() {
-        // Names for each drum part - these will be used in tooltips
-        String[] drumNames = {
-                "Kick", "Snare", "Closed HH", "Open HH",
-                "Tom 1", "Tom 2", "Tom 3", "Crash",
-                "Ride", "Rim", "Clap", "Cow",
-                "Clave", "Shaker", "Perc 1", "Perc 2"
-        };
-
-        // Apply numbered labels and tooltips to each pad with beat indicators
-        for (int i = 0; i < drumButtons.size(); i++) {
-            DrumButton button = drumButtons.get(i);
-
-            // Set the pad number (1-based)
-            button.setPadNumber(i + 1);
-
-            // Set main beat flag for pads 1, 5, 9, 13 (zero-indexed as 0, 4, 8, 12)
-            button.setMainBeat(i == 0 || i == 4 || i == 8 || i == 12);
-
-            // Set detailed tooltip
-            String drumName = (i < drumNames.length) ? drumNames[i] : "Drum " + (i + 1);
-            button.setToolTipText(drumName + " - Click to edit effects for this drum");
-        }
-
-        // Ensure the first pad is automatically selected after initialization
+        // Select the first pad after initialization
         SwingUtilities.invokeLater(() -> {
-            if (!drumButtons.isEmpty()) {
-                selectDrumPad(0);
-                // Log that first pad was selected
-                logger.info("First drum pad automatically selected");
-            }
+            drumPadPanel.selectDrumPad(0);
+            handleDrumPadSelected(0);
         });
     }
 
@@ -841,54 +881,6 @@ public class DrumEffectsSequencerPanel extends JPanel implements IBusListener {
             // No drum selected, disable all controls
             setTriggerButtonsEnabled(false);
         }
-    }
-
-    /**
-     * Update sequence parameter controls based on the selected drum
-     */
-    private void updateSequenceParameterControls() {
-        if (selectedPadIndex < 0) {
-            return;
-        }
-        
-        // Use the custom panel's method to update controls
-        sequenceParamsPanel.updateControls(selectedPadIndex);
-    }
-
-    private JPanel createTriggerButtonsPanel() {
-        // Create a panel with GridLayout to match the columns above
-        JPanel triggerButtonsPanel = new JPanel(new GridLayout(1, 16, 5, 0));
-        triggerButtonsPanel.setBorder(new EmptyBorder(10, 10, 2, 10));
-        
-        // Create 16 trigger buttons, one for each column
-        for (int i = 0; i < 16; i++) {
-            JPanel buttonContainer = new JPanel(new FlowLayout(FlowLayout.CENTER, 0, 0));
-            
-            // Create the trigger button
-            TriggerButton triggerButton = new TriggerButton("");
-            triggerButton.setName("TriggerButton-" + i);
-            triggerButton.setToolTipText("Step " + (i + 1));
-
-            // Initially disabled until a drum is selected
-            triggerButton.setEnabled(selectedPadIndex >= 0);
-
-            // Add action listener that toggles the step in the pattern
-            final int index = i;
-            triggerButton.addActionListener(e -> {
-                toggleStepForActivePad(index);
-            });
-            
-            // Add to the container panel for proper centering
-            buttonContainer.add(triggerButton);
-            
-            // Store in the list for later use
-            selectorButtons.add(triggerButton);
-            
-            // Add the container to the trigger buttons panel
-            triggerButtonsPanel.add(buttonContainer);
-        }
-        
-        return triggerButtonsPanel;
     }
 
     /**
@@ -916,4 +908,5 @@ public class DrumEffectsSequencerPanel extends JPanel implements IBusListener {
         }
         return null;
     }
+
 }

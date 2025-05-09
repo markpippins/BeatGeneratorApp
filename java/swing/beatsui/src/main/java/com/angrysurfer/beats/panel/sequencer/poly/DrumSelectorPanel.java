@@ -1,6 +1,8 @@
 package com.angrysurfer.beats.panel.sequencer.poly;
 
-import java.awt.*;
+import java.awt.Component;
+import java.awt.Container;
+import java.awt.GridLayout;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
@@ -10,19 +12,26 @@ import java.util.List;
 
 import javax.swing.BorderFactory;
 import javax.swing.JPanel;
+import javax.swing.JTabbedPane;
+import javax.swing.SwingUtilities;
 
-import com.angrysurfer.beats.panel.MainPanel;
+import com.angrysurfer.core.api.Command;
+import com.angrysurfer.core.api.CommandBus;
+import com.angrysurfer.core.api.Commands;
+import com.angrysurfer.core.api.IBusListener;
+import com.angrysurfer.core.sequencer.DrumSequenceData;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.angrysurfer.beats.panel.MainPanel;
 import com.angrysurfer.beats.widget.DrumSequencerButton;
-import com.angrysurfer.core.model.Strike;
+import com.angrysurfer.core.model.Player;
 import com.angrysurfer.core.sequencer.DrumSequencer;
 
 /**
  * Panel containing drum pad selectors
  */
-public class DrumSelectorPanel extends JPanel {
+public class DrumSelectorPanel extends JPanel implements IBusListener {
     private static final Logger logger = LoggerFactory.getLogger(DrumSelectorPanel.class);
     
     // Reference to the sequencer and parent panel
@@ -33,8 +42,11 @@ public class DrumSelectorPanel extends JPanel {
     private final List<DrumSequencerButton> drumButtons = new ArrayList<>();
     
     // Constants
-    private static final int DRUM_PAD_COUNT = DrumSequencer.DRUM_PAD_COUNT;
-    private static final int MIDI_DRUM_NOTE_OFFSET = DrumSequencer.MIDI_DRUM_NOTE_OFFSET;
+    private static final int DRUM_PAD_COUNT = DrumSequenceData.DRUM_PAD_COUNT;
+    private static final int MIDI_DRUM_NOTE_OFFSET = DrumSequenceData.MIDI_DRUM_NOTE_OFFSET;
+    
+    // Command bus for event handling
+    private final CommandBus commandBus = CommandBus.getInstance();
     
     /**
      * Creates a new DrumSelectorPanel
@@ -47,9 +59,124 @@ public class DrumSelectorPanel extends JPanel {
         
         // Use GridLayout for perfect vertical alignment with grid cells
         setLayout(new GridLayout(DRUM_PAD_COUNT, 1, 2, 2));
-        setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 10));
+        setBorder(BorderFactory.createEmptyBorder(0, 5, 0, 0));
         
         initializeButtons();
+        
+        // Register for events
+        commandBus.register(this);
+    }
+    
+    /**
+     * Handle command bus events
+     */
+    @Override
+    public void onAction(Command action) {
+        if (action == null || action.getCommand() == null) {
+            return;
+        }
+        
+        switch (action.getCommand()) {
+            case Commands.PLAYER_UPDATED:
+                if (action.getData() instanceof Player player) {
+                    // Check if this player belongs to our sequencer
+                    if (player.getOwner() == sequencer) {
+                        updateButtonForPlayer(player);
+                    }
+                }
+                break;
+                
+            case Commands.PLAYER_PRESET_CHANGED:
+                if (action.getData() instanceof Object[] data && data.length >= 2) {
+                    Long playerId = (Long) data[0];
+                    
+                    // Find player and update button if it belongs to this sequencer
+                    for (int i = 0; i < DRUM_PAD_COUNT; i++) {
+                        Player player = sequencer.getPlayer(i);
+                        if (player != null && playerId.equals(player.getId())) {
+                            updateButtonForPlayer(player);
+                            break;
+                        }
+                    }
+                }
+                break;
+                
+            case Commands.PLAYER_INSTRUMENT_CHANGED:
+                if (action.getData() instanceof Object[] data && data.length >= 2) {
+                    Long playerId = (Long) data[0];
+                    
+                    // Find player and update button if it belongs to this sequencer
+                    for (int i = 0; i < DRUM_PAD_COUNT; i++) {
+                        Player player = sequencer.getPlayer(i);
+                        if (player != null && playerId.equals(player.getId())) {
+                            updateButtonForPlayer(player);
+                            break;
+                        }
+                    }
+                }
+                break;
+                
+            case Commands.DRUM_PLAYER_INSTRUMENT_CHANGED:
+                if (action.getData() instanceof Object[] data && data.length >= 3) {
+                    DrumSequencer targetSequencer = (DrumSequencer) data[0];
+                    int drumIndex = (int) data[1];
+                    
+                    // Only update if this is our sequencer
+                    if (targetSequencer == sequencer && drumIndex >= 0 && drumIndex < DRUM_PAD_COUNT) {
+                        Player player = sequencer.getPlayer(drumIndex);
+                        if (player != null) {
+                            updateButtonForPlayer(player);
+                        }
+                    }
+                }
+                break;
+        }
+    }
+    
+    /**
+     * Update button text and tooltip for a player
+     */
+    private void updateButtonForPlayer(Player player) {
+        // Find which drum pad this player belongs to
+        for (int i = 0; i < DRUM_PAD_COUNT; i++) {
+            if (sequencer.getPlayer(i) == player) {
+                // We found the right player, update the corresponding button
+                updateButtonForDrumPad(i);
+                break;
+            }
+        }
+    }
+    
+    /**
+     * Update button text and tooltip for a specific drum pad
+     */
+    private void updateButtonForDrumPad(int drumIndex) {
+        if (drumIndex < 0 || drumIndex >= drumButtons.size()) {
+            return;
+        }
+        
+        // Get the button and player
+        DrumSequencerButton button = drumButtons.get(drumIndex);
+        Player player = sequencer.getPlayer(drumIndex);
+        
+        if (player == null) {
+            return;
+        }
+        
+        // Use SwingUtilities.invokeLater to ensure thread safety
+        SwingUtilities.invokeLater(() -> {
+            // Update button text with player name (which should reflect preset)
+            String buttonText = player.getName();
+            button.setText(buttonText);
+            
+            // Update tooltip with MIDI note information
+            Integer noteNumber = player.getRootNote();
+            button.setToolTipText("Select " + buttonText + (noteNumber != null ? 
+                    " (Note: " + noteNumber + ")" : ""));
+            
+            logger.debug("Updated drum button {} to '{}' (Note: {})", 
+                    drumIndex, buttonText, noteNumber);
+        });
     }
     
     /**
@@ -78,21 +205,45 @@ public class DrumSelectorPanel extends JPanel {
         for (int i = 0; i < DRUM_PAD_COUNT; i++) {
             final int drumIndex = i;
 
-            // Create a Strike object for this drum pad
-            Strike strike = new Strike();
-            strike.setName(drumNames[i]);
-            strike.setRootNote(defaultNotes[i]);
-            strike.setLevel(100); // Default velocity
-
-            // Set the strike in the sequencer
-            sequencer.setPlayer(drumIndex, strike);
+            // Get the existing Player from the sequencer instead of creating a new Strike
+            Player player = sequencer.getPlayer(drumIndex);
+            
+            // Configure the player if it exists
+            if (player != null) {
+                // Set name and root note only if they haven't been set yet
+                if (player.getName() == null || player.getName().isEmpty()) {
+                    player.setName(drumNames[i]);
+                }
+                
+                // Only update root note if not already set to a custom value
+                // Checks if it matches default sequencer initialization value
+                if (player.getRootNote() == MIDI_DRUM_NOTE_OFFSET + i) {
+                    player.setRootNote(defaultNotes[i]);
+                }
+                
+                // Set default velocity if not already set
+                if (player.getLevel() <= 0) {
+                    player.setLevel(100);
+                }
+                
+                logger.debug("Using existing player for drum {}: {}", i, player.getName());
+            } else {
+                logger.warn("Player for drum {} is null", i);
+            }
 
             // Create the drum button with proper selection handling
             DrumSequencerButton drumButton = new DrumSequencerButton(drumIndex, sequencer);
-            drumButton.setText(drumNames[i]);
-            drumButton.setToolTipText("Select " + drumNames[i] + " (Note: " + defaultNotes[i] + ")");
+            
+            // Use the player's name if available, otherwise use default
+            String buttonText = (player != null && player.getName() != null) ? 
+                               player.getName() : drumNames[i];
+            drumButton.setText(buttonText);
+            
+            // Show MIDI note in tooltip
+            int noteNumber = (player != null) ? player.getRootNote() : defaultNotes[i];
+            drumButton.setToolTipText("Select " + buttonText + " (Note: " + noteNumber + ")");
 
-            // Add action listener for drum selection
+            // Rest of the button setup remains the same
             drumButton.addActionListener(e -> parentPanel.selectDrumPad(drumIndex));
             
             // Add double-click support to navigate to params panel
@@ -100,45 +251,74 @@ public class DrumSelectorPanel extends JPanel {
                 @Override
                 public void mouseClicked(MouseEvent e) {
                     if (e.getClickCount() == 2) {
-                        // Select this drum first
+                        // Select the drum pad first
                         parentPanel.selectDrumPad(drumIndex);
                         
-                        // Then find MainPanel and switch to DrumParams tab
-                        MainPanel mainPanel = findMainPanel();
-                        if (mainPanel != null) {
-                            // Index 1 is the "Machine" tab with DrumParamsPanel
-                            mainPanel.setSelectedTab(1);
+                        // Find the parent tabbed pane that contains "Parameters" tab
+                        // This approach works regardless of the nesting structure
+                        Container parent = parentPanel;
+                        while (parent != null) {
+                            if (parent instanceof JTabbedPane) {
+                                JTabbedPane tabbedPane = (JTabbedPane) parent;
+                                // Check if this tabbed pane has a "Parameters" tab
+
+                                for (int i = 0; i < tabbedPane.getTabCount(); i++) {
+                                    if ("Parameters".equals(tabbedPane.getTitleAt(i))) {
+                                        // Found it - switch to the Parameters tab
+                                        tabbedPane.setSelectedIndex(i);
+                                        logger.debug("Double-clicked drum pad {} - switched to Parameters tab", drumIndex);
+                                        return;
+                                    }
+                                }
+                            }
+                            parent = parent.getParent();
                         }
+                        
+                        logger.warn("Could not find Parameters tab when double-clicking drum pad {}", drumIndex);
                     }
                 }
             });
             
-            // Add key listener for enter key
+            // Update key listener as well for consistency
             drumButton.addKeyListener(new KeyAdapter() {
                 @Override
                 public void keyPressed(KeyEvent e) {
                     if (e.getKeyCode() == KeyEvent.VK_ENTER) {
-                        // Select this drum first
+                        // Select the drum pad first
                         parentPanel.selectDrumPad(drumIndex);
                         
-                        // Then find MainPanel and switch to DrumParams tab
+                        // Find the MainPanel ancestor
                         MainPanel mainPanel = findMainPanel();
                         if (mainPanel != null) {
-                            // Index 1 is the "Machine" tab with DrumParamsPanel
-                            mainPanel.setSelectedTab(1);
+                            // Get the currently selected component from the main tabbed pane
+                            Component selectedComponent = mainPanel.getSelectedComponent();
+                            
+                            // If it's a JTabbedPane and likely our drumsTabbedPane
+                            if (selectedComponent instanceof JTabbedPane) {
+                                JTabbedPane drumsTabbedPane = (JTabbedPane) selectedComponent;
+                                
+                                // Switch to the "Parameters" tab (index 1)
+                                drumsTabbedPane.setSelectedIndex(1);
+                                
+                                logger.debug("Enter pressed on drum pad {} - switched to Parameters tab", drumIndex);
+                            }
                         }
                     }
                 }
             });
             
-            // Make button focusable for key events
             drumButton.setFocusable(true);
-
-            // Add to our tracking list
             drumButtons.add(drumButton);
-
-            // Add to the panel
             add(drumButton);
+        }
+    }
+    
+    /**
+     * Update all buttons to reflect current player names and settings
+     */
+    public void refreshAllButtons() {
+        for (int i = 0; i < DRUM_PAD_COUNT; i++) {
+            updateButtonForDrumPad(i);
         }
     }
     
@@ -168,5 +348,14 @@ public class DrumSelectorPanel extends JPanel {
         for (int i = 0; i < drumButtons.size(); i++) {
             drumButtons.get(i).setSelected(i == selectedIndex);
         }
+    }
+
+    public Integer getSelectedDrumPadIndex() {
+        for (int i = 0; i < drumButtons.size(); i++) {
+            if (drumButtons.get(i).isSelected()) {
+                return i;
+            }
+        }
+        return null; // No drum pad selected
     }
 }

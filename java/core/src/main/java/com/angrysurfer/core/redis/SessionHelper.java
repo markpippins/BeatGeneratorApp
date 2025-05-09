@@ -1,18 +1,27 @@
 package com.angrysurfer.core.redis;
 
+import java.lang.reflect.Field;
+import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+
+import javax.swing.JOptionPane;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.angrysurfer.core.api.CommandBus;
 import com.angrysurfer.core.api.Commands;
+import com.angrysurfer.core.model.InstrumentWrapper;
+import com.angrysurfer.core.model.Note;
 import com.angrysurfer.core.model.Player;
 import com.angrysurfer.core.model.Session;
+import com.angrysurfer.core.model.Strike;
+import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
 
 import lombok.Getter;
 import lombok.Setter;
@@ -21,7 +30,7 @@ import redis.clients.jedis.JedisPool;
 
 @Getter
 @Setter
-class SessionHelper {
+public class SessionHelper {
     private static final Logger logger = LoggerFactory.getLogger(SessionHelper.class.getName());
     private final JedisPool jedisPool;
     private final ObjectMapper objectMapper;
@@ -30,8 +39,15 @@ class SessionHelper {
 
     public SessionHelper(JedisPool jedisPool, ObjectMapper objectMapper) {
         this.jedisPool = jedisPool;
+
+        // Configure ObjectMapper to handle empty beans and ignore unknown properties
         this.objectMapper = objectMapper;
+        this.objectMapper.configure(SerializationFeature.FAIL_ON_EMPTY_BEANS, false);
+        this.objectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+
         this.playerHelper = new PlayerHelper(jedisPool, objectMapper);
+
+        logger.info("SessionHelper initialized with configured ObjectMapper");
     }
 
     public Session findSessionById(Long id) {
@@ -45,16 +61,25 @@ class SessionHelper {
                     session.setPlayers(new HashSet<>());
                 }
 
-                // Load players for this session
-                Set<String> playerKeys = jedis.smembers("session:" + id + ":players:strike");
-                if (!playerKeys.isEmpty()) {
-                    playerKeys.forEach(playerId -> {
-                        Player player = playerHelper.findPlayerById(Long.parseLong(playerId), "strike");
-                        if (player != null) {
-                            player.setSession(session);
-                            session.getPlayers().add(player);
+                // Check for different player types
+                String[] playerTypes = {"Strike", "Note"};
+                
+                for (String playerType : playerTypes) {
+                    // Load players for this session (using a consistent key format)
+                    String playerSetKey = "session:" + id + ":players:" + playerType.toLowerCase();
+                    Set<String> playerIds = jedis.smembers(playerSetKey);
+                    
+                    if (!playerIds.isEmpty()) {
+                        logger.info("Found {} {} players for session {}", playerIds.size(), playerType, id);
+                        
+                        for (String playerId : playerIds) {
+                            Player player = playerHelper.findPlayerById(Long.parseLong(playerId), playerType);
+                            if (player != null) {
+                                player.setSession(session);
+                                session.getPlayers().add(player);
+                            }
                         }
-                    });
+                    }
                 }
 
                 logger.info(String.format("Loaded session %d with %d players", id, session.getPlayers().size()));
@@ -62,7 +87,7 @@ class SessionHelper {
             }
             return null;
         } catch (Exception e) {
-            logger.error("Error finding session: " + e.getMessage());
+            JOptionPane.showMessageDialog(null, "Error finding session: " + e.getMessage());
             throw new RuntimeException("Failed to find session", e);
         }
     }
@@ -73,13 +98,21 @@ class SessionHelper {
                 session.setId(jedis.incr("seq:session"));
             }
 
-            // Save player relationships
-            String playerSetKey = "session:" + session.getId() + ":players:strike";
-            jedis.del(playerSetKey); // Clear existing relationships
+            // Clear existing player relationships for all types
+            String strikePlayerSetKey = "session:" + session.getId() + ":players:strike";
+            String notePlayerSetKey = "session:" + session.getId() + ":players:note";
+            jedis.del(strikePlayerSetKey);
+            jedis.del(notePlayerSetKey);
 
+            // Save player relationships by type
             if (session.getPlayers() != null) {
                 session.getPlayers().forEach(player -> {
+                    String className = player.getClass().getSimpleName().toLowerCase();
+                    String playerSetKey = "session:" + session.getId() + ":players:" + className;
                     jedis.sadd(playerSetKey, player.getId().toString());
+                    
+                    logger.debug("Added player {} of type {} to session {}", 
+                        player.getId(), className, session.getId());
                 });
             }
 
@@ -98,7 +131,7 @@ class SessionHelper {
                     session.getId(),
                     players != null ? players.size() : 0));
         } catch (Exception e) {
-            logger.error("Error saving session: " + e.getMessage());
+            JOptionPane.showMessageDialog(null, "Error saving session: " + e.getMessage());
             throw new RuntimeException("Failed to save session", e);
         }
     }
@@ -111,7 +144,7 @@ class SessionHelper {
                 try {
                     ids.add(Long.parseLong(key.split(":")[1]));
                 } catch (NumberFormatException e) {
-                    logger.error("Invalid session key: " + key);
+                    JOptionPane.showMessageDialog(null, "Invalid session key: " + key);
                 }
             }
             return ids;
@@ -156,7 +189,7 @@ class SessionHelper {
             commandBus.publish(Commands.SESSION_DELETED, this, sessionId);
             logger.info("Successfully deleted session " + sessionId + " and all related entities");
         } catch (Exception e) {
-            logger.error("Error deleting session " + sessionId + ": " + e.getMessage());
+            JOptionPane.showMessageDialog(null, "Error deleting session " + sessionId + ": " + e.getMessage());
             throw new RuntimeException("Failed to delete session", e);
         }
     }
@@ -182,7 +215,7 @@ class SessionHelper {
             logger.info("Created new session with ID: " + session.getId());
             return session;
         } catch (Exception e) {
-            logger.error("Error creating new session: " + e.getMessage());
+            JOptionPane.showMessageDialog(null, "Error creating new session: " + e.getMessage());
             throw new RuntimeException("Failed to create new session", e);
         }
     }
@@ -240,28 +273,94 @@ class SessionHelper {
         }
     }
 
-    // Add method to find session for a player
-
+    /**
+     * Find the session containing a specific player
+     */
     public Session findSessionForPlayer(Player player) {
         if (player == null || player.getId() == null) {
             return null;
         }
-        
+
         try (Jedis jedis = jedisPool.getResource()) {
+            // Determine player type from player class
+            String playerType = player.getClass().getSimpleName().toLowerCase();
+            logger.debug("Finding session for player {} of type {}", player.getId(), playerType);
+            
             Set<String> sessionKeys = jedis.keys("session:*");
             for (String sessionKey : sessionKeys) {
                 if (!sessionKey.contains(":players")) {
                     String sessionId = sessionKey.split(":")[1];
-                    String playersKey = "session:" + sessionId + ":players:strike";
+                    String playersKey = "session:" + sessionId + ":players:" + playerType;
                     
                     if (jedis.sismember(playersKey, player.getId().toString())) {
+                        logger.info("Found session {} for player {} of type {}", 
+                                   sessionId, player.getId(), playerType);
                         return findSessionById(Long.valueOf(sessionId));
                     }
                 }
             }
+            
+            logger.warn("No session found for player {} of type {}", player.getId(), playerType);
         } catch (Exception e) {
-            logger.error("Error finding session for player: " + e.getMessage());
+            JOptionPane.showMessageDialog(null, "Error finding session for player: " + e.getMessage());
         }
         return null;
     }
+
+
+    /**
+     * Helper method to add a player to a session
+     */
+    public void addPlayerToSession(Session session, Player player) {
+        if (session == null || player == null) {
+            logger.warn("Cannot add player to session: null reference");
+            return;
+        }
+
+        try {
+            // Set up relationships
+            player.setSession(session);
+            if (session.getPlayers() == null) {
+                session.setPlayers(new HashSet<>());
+            }
+            session.getPlayers().add(player);
+
+            // Save both entities
+            playerHelper.savePlayer(player);
+            saveSession(session);
+
+            logger.info("Successfully added player " + player.getId() +
+                    " (" + player.getName() + ") to session " + session.getId());
+        } catch (Exception e) {
+            JOptionPane.showMessageDialog(null, "Error adding player to session: " + e.getMessage());
+            throw new RuntimeException("Failed to add player to session", e);
+        }
+    }
+
+    /**
+     * Find all sessions
+     */
+    public List<Session> findAllSessions() {
+        List<Session> sessions = new ArrayList<>();
+        
+        try (Jedis jedis = jedisPool.getResource()) {
+            Set<String> keys = jedis.keys("session:*");
+            
+            for (String key : keys) {
+                try {
+                    String json = jedis.get(key);
+                    Session session = objectMapper.readValue(json, Session.class);
+                    if (session != null) {
+                        sessions.add(session);
+                    }
+                } catch (Exception e) {
+                    // Skip malformed sessions
+                    System.err.println("Error loading session: " + e.getMessage());
+                }
+            }
+        }
+        
+        return sessions;
+    }
+
 }

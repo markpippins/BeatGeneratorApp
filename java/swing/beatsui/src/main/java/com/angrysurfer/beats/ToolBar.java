@@ -12,10 +12,11 @@ import javax.swing.JTextField;
 import javax.swing.JToolBar;
 import javax.swing.SwingUtilities;
 
-import com.angrysurfer.beats.panel.MuteButtonsPanel;
-import com.angrysurfer.beats.panel.SessionControlPanel;
-import com.angrysurfer.beats.panel.SessionDisplayPanel;
 import com.angrysurfer.beats.panel.TransportPanel;
+import com.angrysurfer.beats.panel.player.SoundParametersPanel;
+import com.angrysurfer.beats.panel.sequencer.MuteButtonsPanel;
+import com.angrysurfer.beats.panel.session.SessionControlPanel;
+import com.angrysurfer.beats.panel.session.SessionDisplayPanel;
 import com.angrysurfer.core.api.Command;
 import com.angrysurfer.core.api.CommandBus;
 import com.angrysurfer.core.api.Commands;
@@ -58,7 +59,7 @@ public class ToolBar extends JToolBar {
                                 Session session = (Session) action.getData();
                                 displayPanel.setSession(session);
                                 controlPanel.setSession(session);
-                                transportPanel.updateTransportState(session);
+                                // transportPanel.updateTransportState(session);
                                 // sessionNameField.setText(session.getName());
                                 currentSession = session;
                             }
@@ -96,15 +97,13 @@ public class ToolBar extends JToolBar {
         add(displayPanel, BorderLayout.WEST);
 
         // Transport controls
-        transportPanel = new TransportPanel();
+        // transportPanel = new TransportPanel();
         // Let the transport panel take the center space
-        add(transportPanel, BorderLayout.CENTER);
-
-        // add(new MuteButtonsPanel(), BorderLayout.SOUTH);
-        // add(createSessioNamePanel(), BorderLayout.SOUTH); // Spacer to center the transport panel
-        // Session control panel
+        // add(transportPanel, BorderLayout.CENTER);
+        add(new SoundParametersPanel(), BorderLayout.CENTER);
+        
         controlPanel = new SessionControlPanel();
-        // Set maximum width to PANEL_WIDTHpx
+        
         controlPanel.setPreferredSize(new Dimension(PANEL_WIDTH, 80));
         controlPanel.setMaximumSize(new Dimension(PANEL_WIDTH, 80));
         add(controlPanel, BorderLayout.EAST);

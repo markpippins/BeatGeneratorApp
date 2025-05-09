@@ -23,33 +23,45 @@ public class Strike extends Player {
     public static List<Integer> kickParams = List.of(1, 2, 3, 4, 12, 13, 14, 15);
     public static List<Integer> snarePrams = List.of(16, 17, 18, 19, 20, 21, 22, 23);
 
+    /**
+     * Default constructor
+     */
     public Strike() {
-        setRootNote(KICK);
         setRules(new HashSet<>()); // Initialize rules set
+        setDrumPlayer(true);
     }
 
+    /**
+     * Main constructor for Strike with basic parameters
+     */
     public Strike(String name, Session session, InstrumentWrapper instrument, int note,
             List<Integer> allowedControlMessages) {
-        super(name, session, instrument, allowedControlMessages);
+        initialize(name, session, instrument, allowedControlMessages);
         setRootNote(note);
+        setDrumPlayer(true);
+        setDrumPlayer(true);
     }
 
+    /**
+     * Extended constructor with velocity parameters
+     */
     public Strike(String name, Session session, InstrumentWrapper instrument, int note,
             List<Integer> allowableControlMessages, int minVelocity, int maxVelocity) {
-        super(name, session, instrument, allowableControlMessages);
+        initialize(name, session, instrument, allowableControlMessages);
         setRootNote(note);
         setMinVelocity(minVelocity);
         setMaxVelocity(maxVelocity);
+        setDrumPlayer(true);
     }
 
     @Override
     public void onTick(TimingUpdate timingUpdate) {
         // Get additional timing values from the session
-        Session session = getSession();
-        if (session == null) {
-            System.err.println("Strike.onTick: No session available");
-            return;
-        }
+//        Session session = getSession();
+//        if (session == null) {
+//            System.err.println("Strike.onTick: No session available");
+//            return;
+//        }
 
         // Check if we should play based on the current timing
         boolean shouldPlayResult = shouldPlay(timingUpdate);

@@ -1,15 +1,6 @@
 package com.angrysurfer.beats.panel;
 
-import java.awt.BorderLayout;
-import java.awt.Color;
-import java.awt.Component;
-import java.awt.Dialog;
-import java.awt.Dimension;
-import java.awt.FlowLayout;
-import java.awt.Font;
-import java.awt.GridLayout;
-import java.awt.Insets;
-import java.awt.Point;
+import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.WindowAdapter;
@@ -24,7 +15,6 @@ import javax.swing.BoxLayout;
 import javax.swing.JButton;
 import javax.swing.JComponent;
 import javax.swing.JDialog;
-import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JSplitPane;
@@ -32,7 +22,8 @@ import javax.swing.JTabbedPane;
 import javax.swing.JToggleButton;
 import javax.swing.SwingConstants;
 import javax.swing.SwingUtilities;
-import javax.swing.border.EmptyBorder;
+
+import com.angrysurfer.beats.panel.instrument.InstrumentsPanel;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -40,22 +31,28 @@ import org.slf4j.LoggerFactory;
 import com.angrysurfer.beats.StatusBar;
 import com.angrysurfer.beats.Symbols;
 import com.angrysurfer.beats.panel.internalsynth.InternalSynthControlPanel;
+import com.angrysurfer.beats.panel.sample.SampleBrowserPanel;
+import com.angrysurfer.beats.panel.sequencer.MuteButtonsPanel;
+import com.angrysurfer.beats.panel.sequencer.SongPanel;
 import com.angrysurfer.beats.panel.sequencer.mono.MelodicSequencerPanel;
 import com.angrysurfer.beats.panel.sequencer.poly.DrumEffectsSequencerPanel;
 import com.angrysurfer.beats.panel.sequencer.poly.DrumParamsSequencerPanel;
 import com.angrysurfer.beats.panel.sequencer.poly.DrumSequencerPanel;
+import com.angrysurfer.beats.panel.session.SessionPanel;
 import com.angrysurfer.beats.widget.Dial;
 import com.angrysurfer.core.api.Command;
 import com.angrysurfer.core.api.CommandBus;
 import com.angrysurfer.core.api.Commands;
 import com.angrysurfer.core.api.IBusListener;
+import com.angrysurfer.core.event.StepUpdateEvent;
 import com.angrysurfer.core.sequencer.DrumSequencer;
 import com.angrysurfer.core.sequencer.MelodicSequencer;
-import com.angrysurfer.core.sequencer.StepUpdateEvent;
+import com.angrysurfer.core.service.ChannelManager;
 import com.angrysurfer.core.service.InternalSynthManager;
 import com.angrysurfer.core.service.SessionManager;
+import com.angrysurfer.core.model.Player;
 
-public class MainPanel extends JPanel implements AutoCloseable, IBusListener {
+public class MainPanel extends PlayerAwarePanel implements AutoCloseable, IBusListener {
     private static final Logger logger = LoggerFactory.getLogger(MainPanel.class.getName());
 
     static {
@@ -66,7 +63,8 @@ public class MainPanel extends JPanel implements AutoCloseable, IBusListener {
     private JTabbedPane tabbedPane;
     private final List<Dial> velocityDials = new ArrayList<>();
     private final List<Dial> gateDials = new ArrayList<>();
-
+    private LoggingPanel loggingPanel;
+        
     private int latencyCompensation = 20;
     private int lookAheadMs = 40;
     private boolean useAheadScheduling = true;
@@ -77,18 +75,22 @@ public class MainPanel extends JPanel implements AutoCloseable, IBusListener {
     private DrumEffectsSequencerPanel drumEffectsSequencerPanel;
 
     private InternalSynthControlPanel internalSynthControlPanel;
-    private MelodicSequencerPanel[] melodicPanels = new MelodicSequencerPanel[8];
-    private PopupMixerPanel strikeMixerPanel;
+    private MelodicSequencerPanel[] melodicPanels = new MelodicSequencerPanel[MelodicSequencer.SEQUENCER_CHANNELS.length];
+
     private MuteButtonsPanel muteButtonsPanel;
+
+    private JTabbedPane drumsTabbedPane;
+
+    private JTabbedPane modulationTabbedPane;
+
+    private JTabbedPane melodicTabbedPane;
 
     private Point dragStartPoint;
 
     public MainPanel(StatusBar statusBar) {
-        super(new BorderLayout());
-        setBorder(new EmptyBorder(2, 5, 2, 5));
-
+        super();
+        setLayout(new BorderLayout());
         CommandBus.getInstance().register(this);
-
         setupTabbedPane(statusBar);
         add(tabbedPane, BorderLayout.CENTER);
     }
@@ -97,37 +99,25 @@ public class MainPanel extends JPanel implements AutoCloseable, IBusListener {
         tabbedPane = new JTabbedPane();
 
         internalSynthControlPanel = new InternalSynthControlPanel();
+        tabbedPane.addTab("Multi", createDrumSequencersPanel());
 
-        for (int i = 0; i < melodicPanels.length; i++) {
-            melodicPanels[i] = createMelodicSequencerPanel(i + 1);
-        }
+        tabbedPane.addTab("Melo", createMelodicSequencersPanel());
 
-        tabbedPane.addTab("Drums", createDrumPanel());
-        tabbedPane.addTab("Params", createDrumParamsPanel());
-        tabbedPane.addTab("Effects", createDrumEffectsPanel());
-        tabbedPane.addTab("Mono 1", melodicPanels[0]);
-        tabbedPane.addTab("Mono 2", melodicPanels[1]);
-        tabbedPane.addTab("Mono 3", melodicPanels[2]);
-        tabbedPane.addTab("Mono 4", melodicPanels[3]);
-        tabbedPane.addTab("Mono 5", melodicPanels[4]);
-        tabbedPane.addTab("Mono 6", melodicPanels[5]);
-        tabbedPane.addTab("Mono 7", melodicPanels[6]);
-        tabbedPane.addTab("Mono 8", melodicPanels[7]);
         tabbedPane.addTab("Song", createSongPanel());
-        tabbedPane.addTab("Synth", internalSynthControlPanel);
-        tabbedPane.addTab("Modulation", createModulationMatrixPanel());
         tabbedPane.addTab("Mixer", createMixerPanel());
-
+        tabbedPane.addTab("Synth", internalSynthControlPanel);
+        tabbedPane.addTab("Matrix", createModulationMatrixPanel());
         tabbedPane.addTab("Players", new SessionPanel());
+       
+        tabbedPane.addTab("Launch", new LaunchPanel());
 
-        // Create combined panel for Instruments + Systems
+        tabbedPane.addTab("Samples", createSampleBrowserPanel());
         tabbedPane.addTab("Instruments", createCombinedInstrumentsSystemPanel());
 
-        tabbedPane.addTab("Launch", new LaunchPanel());
-        // Remove the separate Systems tab
-        // tabbedPane.addTab("System", new SystemsPanel());
+        loggingPanel = new LoggingPanel();
+        tabbedPane.addTab("Logs", loggingPanel);
 
-        tabbedPane.setBorder(BorderFactory.createEmptyBorder(0, 8, 0, 8));
+        tabbedPane.setBorder(BorderFactory.createEmptyBorder(0, 4, 0, 4));
 
         JPanel tabToolbar = new JPanel();
         tabToolbar.setLayout(new BoxLayout(tabToolbar, BoxLayout.X_AXIS));
@@ -140,12 +130,14 @@ public class MainPanel extends JPanel implements AutoCloseable, IBusListener {
         buttonPanel.setBorder(BorderFactory.createEmptyBorder(2, 8, 2, 8));
 
         // Add mix button first
+        // buttonPanel.add(new TransportIndicatorPanel());
         buttonPanel.add(createMixButton());
 
         // Add existing control buttons
         buttonPanel.add(createAllNotesOffButton());
         buttonPanel.add(createLoopToggleButton()); // Add the new loop toggle button
         buttonPanel.add(createMetronomeToggleButton());
+
         // buttonPanel.add(createRestartButton());
 
         // Create mute buttons toolbar early
@@ -153,6 +145,7 @@ public class MainPanel extends JPanel implements AutoCloseable, IBusListener {
 
         // Add the mute buttons toolbar
         add(muteButtonsToolbar, BorderLayout.NORTH);
+        // add(new SoundParametersPanel(), BorderLayout.SOUTH);
 
         tabToolbar.add(Box.createHorizontalStrut(10));
 
@@ -189,29 +182,185 @@ public class MainPanel extends JPanel implements AutoCloseable, IBusListener {
             }
         });
 
-        // Add change listener to handle tab selection events
-        tabbedPane.addChangeListener(e -> {
-            Component selectedComponent = tabbedPane.getSelectedComponent();
-            
-            // Request focus on the newly selected tab component
-            if (selectedComponent != null) {
-                SwingUtilities.invokeLater(() -> {
-                    selectedComponent.requestFocusInWindow();
-                    
-                    // If it's the params panel, give it focus
-                    if (selectedComponent instanceof DrumParamsSequencerPanel) {
-                        ((DrumParamsSequencerPanel) selectedComponent).requestFocusInWindow();
-                    }
+        addListeners(tabbedPane);
+        addListeners(melodicTabbedPane);
+        addListeners(drumsTabbedPane);
 
-                    if (selectedComponent instanceof DrumEffectsSequencerPanel) {
-                        ((DrumEffectsSequencerPanel) selectedComponent).requestFocusInWindow();
-                    }
-                });
-            }
-        });
-
-        // At the end of the method, update the mute buttons with sequencers
         updateMuteButtonSequencers();
+    }
+
+    /**
+     * Recursively adds listeners to all tabbedPanes and their nested components
+     * to ensure focus handling and player activation work correctly
+     * 
+     * @param component The component to process (starts with main tabbedPane)
+     */
+    private void addListenersRecursive(Component component) {
+        // Process JTabbedPane components
+        if (component instanceof JTabbedPane) {
+            JTabbedPane tabbedPane = (JTabbedPane) component;
+
+            // Add change listener to this tabbed pane
+            tabbedPane.addChangeListener(e -> {
+                // Get the selected component
+                Component selectedComponent = tabbedPane.getSelectedComponent();
+                handleComponentSelection(selectedComponent, tabbedPane);
+            });
+
+            // Process each child component in the tabbedPane
+            for (int i = 0; i < tabbedPane.getTabCount(); i++) {
+                Component tabComponent = tabbedPane.getComponentAt(i);
+                // Recursively process this component
+                addListenersRecursive(tabComponent);
+            }
+        }
+        // Process any container that might contain other components
+        else if (component instanceof Container) {
+            Container container = (Container) component;
+
+            // Process all child components
+            for (Component child : container.getComponents()) {
+                addListenersRecursive(child);
+            }
+        }
+    }
+
+    /**
+     * Unified method to handle component selection in any tabbed pane
+     * 
+     * @param selectedComponent The component that was selected
+     * @param sourceTabbedPane  The tabbed pane where selection occurred
+     */
+    private void handleComponentSelection(Component selectedComponent, JTabbedPane sourceTabbedPane) {
+        if (selectedComponent == null)
+            return;
+
+        // Request focus on the newly selected tab component
+        SwingUtilities.invokeLater(selectedComponent::requestFocusInWindow);
+
+        // Case 1: DrumSequencerPanel direct selection
+        if (selectedComponent == drumSequencerPanel &&
+                drumSequencerPanel.getDrumSelectorPanel().getSelectedDrumPadIndex() != null) {
+            Player player = drumSequencerPanel.getSequencer().getPlayer(
+                    drumSequencerPanel.getDrumSelectorPanel().getSelectedDrumPadIndex());
+            activatePlayer(player, "drum sequencer");
+        }
+
+        // Case 2: DrumParamsSequencerPanel direct selection
+        else if (selectedComponent == drumParamsSequencerPanel) {
+            Player player = drumParamsSequencerPanel.getSequencer().getPlayer(
+                    drumParamsSequencerPanel.getSelectedPadIndex());
+            activatePlayer(player, "drum params");
+        }
+
+        // Case 3: DrumEffectsSequencerPanel direct selection
+        else if (selectedComponent == drumEffectsSequencerPanel) {
+            Player player = drumEffectsSequencerPanel.getSequencer().getPlayer(
+                    drumEffectsSequencerPanel.getSelectedPadIndex());
+            activatePlayer(player, "drum effects");
+        }
+
+        // Case 4: MelodicSequencerPanel direct selection
+        else if (selectedComponent instanceof MelodicSequencerPanel) {
+            Player player = ((MelodicSequencerPanel) selectedComponent).getSequencer().getPlayer();
+            activatePlayer(player, "melodic");
+        }
+
+        // Case 5: Drums tabbed pane selection
+        else if (selectedComponent == drumsTabbedPane) {
+            Component selectedDrumsTab = drumsTabbedPane.getSelectedComponent();
+            Player player = null;
+
+            if (selectedDrumsTab instanceof DrumSequencerPanel) {
+                int playerIndex = ((DrumSequencerPanel) selectedDrumsTab)
+                        .getDrumSelectorPanel().getSelectedDrumPadIndex();
+                player = ((DrumSequencerPanel) selectedDrumsTab).getSequencer().getPlayer(playerIndex);
+            } else if (selectedDrumsTab instanceof DrumEffectsSequencerPanel) {
+                int playerIndex = ((DrumEffectsSequencerPanel) selectedDrumsTab).getSelectedPadIndex();
+                player = ((DrumEffectsSequencerPanel) selectedDrumsTab).getSequencer().getPlayer(playerIndex);
+            } else if (selectedDrumsTab instanceof DrumParamsSequencerPanel) {
+                int playerIndex = ((DrumParamsSequencerPanel) selectedDrumsTab).getSelectedPadIndex();
+                player = ((DrumParamsSequencerPanel) selectedDrumsTab).getSequencer().getPlayer(playerIndex);
+            }
+
+            activatePlayer(player, "drums tabbed pane");
+        }
+
+        // Case 6: Melodic tabbed pane selection
+        else if (selectedComponent == melodicTabbedPane) {
+            Component selectedMelodicTab = melodicTabbedPane.getSelectedComponent();
+            MelodicSequencerPanel melodicPanel = findMelodicSequencerPanel(selectedMelodicTab);
+
+            if (melodicPanel != null && melodicPanel.getSequencer() != null) {
+                Player player = melodicPanel.getSequencer().getPlayer();
+                activatePlayer(player, "melodic tabbed pane");
+            }
+        }
+
+        // Handle more specialized tab selections that might need additional processing
+        else if (sourceTabbedPane == tabbedPane) {
+            // Handle main tabbed pane selection for specific tab indices
+            int selectedIndex = tabbedPane.getSelectedIndex();
+            String tabName = tabbedPane.getTitleAt(selectedIndex);
+            logger.debug("Main tab selected: {} (index: {})", tabName, selectedIndex);
+
+            // Additional custom handling for specific tabs could go here
+        }
+    }
+
+    /**
+     * Helper method to activate a player and publish event
+     * 
+     * @param player The player to activate
+     * @param source Description of the source for logging
+     */
+    private void activatePlayer(Player player, String source) {
+        if (player != null) {
+            CommandBus.getInstance().publish(
+                    Commands.PLAYER_ACTIVATION_REQUEST,
+                    this,
+                    player);
+            logger.debug("Tab switched to {} - set player '{}' as active",
+                    source, player.getName());
+        }
+    }
+
+    /**
+     * Update the addListeners method to use the recursive implementation
+     */
+    private void addListeners(JTabbedPane tabbedPane) {
+        // Call the recursive implementation
+        addListenersRecursive(tabbedPane);
+    }
+
+    private JTabbedPane createDrumSequencersPanel() {
+
+        drumsTabbedPane = new JTabbedPane();
+        // drumsTabbedPane.setTabPlacement(JTabbedPane.BOTTOM);
+        drumsTabbedPane.addTab("Sequencer", createDrumPanel());
+        drumsTabbedPane.addTab("Parameters", createDrumParamsPanel());
+        drumsTabbedPane.addTab("Mix", createDrumEffectsPanel());
+
+        return drumsTabbedPane;
+    }
+
+    private JTabbedPane createMelodicSequencersPanel() {
+        melodicTabbedPane = new JTabbedPane();
+        // melodicTabbedPane.setTabPlacement(JTabbedPane.BOTTOM);
+
+        // Initialize all melodic sequencer panels with proper channel distribution
+        for (int i = 0; i < melodicPanels.length; i++) {
+            // Get channel from ChannelManager based on sequencer index
+            int channel = ChannelManager.getInstance().getChannelForSequencerIndex(i);
+
+            // Create panel with proper channel assignment
+            melodicPanels[i] = createMelodicSequencerPanel(i);
+
+            // Use channel number (1-based for display) in tab title
+            melodicTabbedPane.addTab("Mono " + (i + 1), melodicPanels[i]);
+        }
+
+        return melodicTabbedPane;
     }
 
     private boolean isDraggedFarEnough(Point currentPoint, Point startPoint) {
@@ -301,7 +450,7 @@ public class MainPanel extends JPanel implements AutoCloseable, IBusListener {
     }
 
     private Component createDrumPanel() {
-        drumSequencerPanel = new DrumSequencerPanel(noteEvent -> {  
+        drumSequencerPanel = new DrumSequencerPanel(noteEvent -> {
             logger.debug("Drum note event received: note={}, velocity={}",
                     noteEvent.getNote(), noteEvent.getVelocity());
 
@@ -328,18 +477,13 @@ public class MainPanel extends JPanel implements AutoCloseable, IBusListener {
         return drumParamsSequencerPanel;
     }
 
-    private MelodicSequencerPanel createMelodicSequencerPanel(int channel) {
-        return new MelodicSequencerPanel(channel, noteEvent -> {
-            logger.debug("Note event received from sequencer: note={}, velocity={}, duration={}",
-                    noteEvent.getNote(), noteEvent.getVelocity(), noteEvent.getDurationMs());
+    private MelodicSequencerPanel createMelodicSequencerPanel(int index) {
+        return new MelodicSequencerPanel(index, noteEvent -> {
 
             // Get the panel's sequencer to use as the event source
             MelodicSequencer sequencer = null;
-            for (MelodicSequencerPanel panel : melodicPanels) {
-                if (panel != null && panel.getSequencer().getChannel() == channel) {
-                    sequencer = panel.getSequencer();
-                    break;
-                }
+            if (index >= 0 && index < melodicPanels.length && melodicPanels[index] != null) {
+                sequencer = melodicPanels[index].getSequencer();
             }
 
             // Publish to CommandBus so MuteButtonsPanel can respond
@@ -350,9 +494,12 @@ public class MainPanel extends JPanel implements AutoCloseable, IBusListener {
     }
 
     private Component createModulationMatrixPanel() {
+
+        modulationTabbedPane = new JTabbedPane();
+
         // Create a main panel with a border
-        JPanel mainPanel = new JPanel(new BorderLayout(10, 10));
-        mainPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+        JPanel lfoPanel = new JPanel(new BorderLayout(10, 10));
+        lfoPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
 
         // Create a panel with GridLayout (1 row, 3 columns) with spacing
         JPanel lfoBankPanel = new JPanel(new GridLayout(1, 3, 15, 0));
@@ -379,15 +526,22 @@ public class MainPanel extends JPanel implements AutoCloseable, IBusListener {
         lfoBankPanel.add(lfo3);
 
         // Add the grid panel to the main panel
-        mainPanel.add(lfoBankPanel, BorderLayout.CENTER);
+        lfoPanel.add(lfoBankPanel, BorderLayout.CENTER);
 
         // Add a title header
-        JLabel titleLabel = new JLabel("Modulation Matrix", SwingConstants.CENTER);
-        titleLabel.setFont(new Font("Dialog", Font.BOLD, 16));
-        titleLabel.setBorder(BorderFactory.createEmptyBorder(0, 0, 10, 0));
-        mainPanel.add(titleLabel, BorderLayout.NORTH);
+        // JLabel titleLabel = new JLabel("Modulation Matrix", SwingConstants.CENTER);
+        // titleLabel.setFont(new Font("Dialog", Font.BOLD, 16));
+        // titleLabel.setBorder(BorderFactory.createEmptyBorder(0, 0, 10, 0));
+        // mainPanel.add(titleLabel, BorderLayout.NORTH);
 
-        return mainPanel;
+        modulationTabbedPane.addTab("LFOs", lfoPanel);
+        modulationTabbedPane.addTab("XY Pad", createXYPadPanel());
+
+        return modulationTabbedPane;
+    }
+
+    private QuadXYPadPanel createXYPadPanel() {
+        return new QuadXYPadPanel();
     }
 
     private Component createMixerPanel() {
@@ -430,7 +584,7 @@ public class MainPanel extends JPanel implements AutoCloseable, IBusListener {
 
                 // *** THIS IS ALSO CRITICAL - Set up melodic note event publisher ***
                 logger.info("Setting up melodic note event publisher for channel {}",
-                        seq.getChannel());
+                        seq.getPlayer().getChannel());
                 seq.setNoteEventPublisher(noteEvent -> {
                     logger.debug("Publishing melodic note event: note={}, velocity={}",
                             noteEvent.getNote(), noteEvent.getVelocity());
@@ -446,10 +600,6 @@ public class MainPanel extends JPanel implements AutoCloseable, IBusListener {
 
     public void playNote(int note, int velocity, int durationMs) {
         InternalSynthManager.getInstance().playNote(note, velocity, durationMs, activeMidiChannel);
-    }
-
-    public void playDrumNote(int note, int velocity) {
-        InternalSynthManager.getInstance().playDrumNote(note, velocity);
     }
 
     @Override
@@ -512,6 +662,16 @@ public class MainPanel extends JPanel implements AutoCloseable, IBusListener {
                 // TRANSPORT_STOPPED events
             }
         }
+    }
+
+    @Override
+    public void handlePlayerActivated() {
+
+    }
+
+    @Override
+    public void handlePlayerUpdated() {
+
     }
 
     private JToggleButton createMetronomeToggleButton() {
@@ -691,6 +851,13 @@ public class MainPanel extends JPanel implements AutoCloseable, IBusListener {
         return restartButton;
     }
 
+    /**
+     * Create the sample browser panel
+     */
+    private JPanel createSampleBrowserPanel() {
+        return new SampleBrowserPanel();
+    }
+
     private JButton createMixButton() {
         JButton mixButton = new JButton();
         // Use a mixer icon character instead of text to fit in a square button
@@ -774,7 +941,10 @@ public class MainPanel extends JPanel implements AutoCloseable, IBusListener {
     public void close() throws Exception {
         if (tabbedPane != null) {
             for (Component comp : tabbedPane.getComponents()) {
-                if (comp instanceof AutoCloseable) {
+                if (comp instanceof LoggingPanel) {
+                    ((LoggingPanel) comp).cleanup();
+                }
+                else if (comp instanceof AutoCloseable) {
                     try {
                         ((AutoCloseable) comp).close();
                     } catch (Exception e) {
@@ -783,5 +953,34 @@ public class MainPanel extends JPanel implements AutoCloseable, IBusListener {
                 }
             }
         }
+
+        // Release channels used by melodic panels
+        for (MelodicSequencerPanel panel : melodicPanels) {
+            if (panel != null && panel.getSequencer() != null) {
+                int channel = panel.getSequencer().getPlayer().getChannel();
+                ChannelManager.getInstance().releaseChannel(channel);
+                logger.info("Released channel {} on application close", channel);
+            }
+        }
+    }
+
+    /**
+     * Helper method to find MelodicSequencerPanel in component hierarchy
+     */
+    private MelodicSequencerPanel findMelodicSequencerPanel(Component component) {
+        if (component instanceof MelodicSequencerPanel) {
+            return (MelodicSequencerPanel) component;
+        } else if (component instanceof Container) {
+            // Search through container's children recursively
+            Container container = (Container) component;
+            for (Component child : container.getComponents()) {
+                MelodicSequencerPanel panel = findMelodicSequencerPanel(child);
+                if (panel != null) {
+                    return panel;
+                }
+            }
+        }
+        return null;
     }
 }
+

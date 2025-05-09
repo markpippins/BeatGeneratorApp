@@ -6,9 +6,9 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
+import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.stream.IntStream;
 
-import javax.sound.midi.InvalidMidiDataException;
 import javax.sound.midi.MidiDevice;
 import javax.sound.midi.MidiUnavailableException;
 
@@ -21,11 +21,13 @@ import com.angrysurfer.core.api.CommandBus;
 import com.angrysurfer.core.api.Commands;
 import com.angrysurfer.core.api.IBusListener;
 import com.angrysurfer.core.api.TimingBus;
-import com.angrysurfer.core.sequencer.LowLatencyMidiClock;
-import com.angrysurfer.core.sequencer.MidiClockSource;
 import com.angrysurfer.core.sequencer.Scale;
 import com.angrysurfer.core.sequencer.TimingUpdate;
 import com.angrysurfer.core.service.DeviceManager;
+import com.angrysurfer.core.service.InstrumentManager;
+import com.angrysurfer.core.service.PlayerManager;
+import com.angrysurfer.core.util.LowLatencyMidiClock;
+import com.angrysurfer.core.util.MidiClockSource;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import jakarta.persistence.Transient;
@@ -45,6 +47,10 @@ public class Session implements Serializable, IBusListener {
     @JsonIgnore
     @Transient
     public boolean isActive = false;
+
+    @JsonIgnore
+    @Transient
+    public boolean modified = false;
 
     @JsonIgnore
     @Transient
@@ -151,13 +157,46 @@ public class Session implements Serializable, IBusListener {
     @Transient
     private Set<Player> activePlayers = new HashSet<>();
 
-    // FindAll<ControlCodeCaption> getCaptionFindAll();
+    @JsonIgnore
+    private transient ConcurrentLinkedQueue<IBusListener> timingListeners;
+
+    // Add this method for proper initialization during deserialization
+    @JsonIgnore
+    private ConcurrentLinkedQueue<IBusListener> getTimingListeners() {
+        if (timingListeners == null) {
+            timingListeners = new ConcurrentLinkedQueue<>();
+        }
+        return timingListeners;
+    }
+
+    // Update the register method to use the getter
+    public void register(IBusListener listener) {
+        if (listener != null) {
+            getTimingListeners().add(listener);
+        }
+    }
+
+    // Update the unregister method similarly
+    public void unregister(IBusListener listener) {
+        if (listener != null && timingListeners != null) {
+            getTimingListeners().remove(listener);
+        }
+    }
+
     private LowLatencyMidiClock lowLatencyMidiClock;
 
+    // Add this to Session constructor to ensure proper registration
     public Session() {
         setSongLength(Long.MAX_VALUE);
+
+        // Initialize timing fields first
+        if (timingListeners == null) {
+            timingListeners = new ConcurrentLinkedQueue<>();
+        }
+
+        // Register with buses after fields are initialized
         commandBus.register(this);
-        timingBus.register(this); // Add this registration
+        timingBus.register(this);
     }
 
     public Session(float tempoInBPM, int bars, int beatsPerBar, int ticksPerBeat, int parts, int partLength) {
@@ -173,7 +212,6 @@ public class Session implements Serializable, IBusListener {
         beat = 1.0;
         bar = 1;
         part = 1;
-        // ... other initialization
     }
 
     public int getMetronomChannel() {
@@ -422,7 +460,7 @@ public class Session implements Serializable, IBusListener {
             getPlayers().forEach(p -> {
                 try {
                     if (p.getInstrument() != null) {
-                        p.getInstrument().noteOff(p.getChannel(), note, 0);
+                        p.getInstrument().noteOff(note, 0);
                     }
                 } catch (Exception e) {
                     logger.error("Error stopping note {} on channel {}: {}", note, p.getChannel(), e.getMessage(), e);
@@ -456,7 +494,8 @@ public class Session implements Serializable, IBusListener {
         return 60000 / getTempoInBPM() / getTicksPerBeat();
     }
 
-    private final Object soloLock = new Object();
+    @JsonIgnore
+    private Object soloLock;
 
     public Boolean hasSolos() {
         synchronized (soloLock) {
@@ -503,62 +542,187 @@ public class Session implements Serializable, IBusListener {
         sequencerManager.startSequence();
     }
 
+    /**
+     * Initialize devices for all players
+     */
     public void initializeDevices() {
-        // System.out.println("Session: Initializing devices for session " + getId());
-        List<MidiDevice> devices = DeviceManager.getMidiOutDevices();
-        // System.out.println("Session: Found " + devices.size() + " MIDI output
-        // devices");
-
-        if (getPlayers() == null || getPlayers().isEmpty()) {
-            // System.out.println("Session: No players to initialize!");
+        // Get available devices once to avoid repeated queries
+        List<MidiDevice> availableDevices;
+        try {
+            availableDevices = DeviceManager.getInstance().getAvailableOutputDevices();
+        } catch (MidiUnavailableException e) {
+            logger.error("Failed to get available devices: {}", e.getMessage());
             return;
         }
 
-        // System.out.println("Session: Initializing " + getPlayers().size() + "
-        // players");
-        getPlayers().forEach(p -> {
-            // System.out.println("Session: Initializing player " + p.getId() + " (" +
-            // p.getName() + ")");
-            initializePlayerDevice(p, devices);
-            initializePlayerPreset(p);
-            p.setSession(this);
-            p.setEnabled(true);
-            // System.out.println("Session: Player " + p.getId() + " initialized and
-            // enabled");
-        });
-        // System.out.println("Session: Device initialization complete");
-    }
+        // Make a defensive copy of players to avoid concurrent modification
+        Set<Player> playersCopy = new HashSet<>(players);
 
-    private void initializePlayerDevice(Player p, List<MidiDevice> devices) {
-        // System.out.println("Session: Initializing device for player " + p.getName());
-
-        if (p.getInstrument() == null) {
-            // System.out.println("WARNING: Player " + p.getName() + " has no instrument!");
-            return;
-        }
-
-        try {
-            // System.out.println("Session: Player " + p.getName() + " initialized with
-            // instrument " + p.getInstrument().getName());
-        } catch (Exception e) {
-            System.err.println("Error initializing player device: " + e.getMessage());
-            e.printStackTrace();
-        }
-    }
-
-    private void initializePlayerPreset(Player player) {
-        // System.out.println("Session: Setting preset for player " + player.getId());
-        try {
-            if (player.getPreset() > -1) {
-                // System.out.println( "Session: Setting preset " + player.getPreset() + " on
-                // channel " + player.getChannel());
-                player.getInstrument().programChange(player.getChannel(), player.getPreset(), 0);
-                // System.out.println("Session: Preset set successfully");
-            } else {
-                // System.out.println("Session: No preset configured for player");
+        // Initialize each player's device
+        for (Player player : playersCopy) {
+            try {
+                // Only initialize enabled players
+                if (player.getEnabled()) {
+                    initializePlayerDevice(player, availableDevices);
+                    initializePlayerPreset(player);
+                }
+            } catch (Exception e) {
+                logger.error("Error initializing player {}: {}",
+                        player.getName(), e.getMessage(), e);
             }
-        } catch (InvalidMidiDataException | MidiUnavailableException e) {
-            System.err.println("Session: Failed to set preset: " + e.getMessage());
+        }
+    }
+
+    /**
+     * Initialize a player's MIDI device connection
+     * 
+     * @param player  The player to initialize
+     * @param devices List of available MIDI output devices
+     */
+    private void initializePlayerDevice(Player player, List<MidiDevice> devices) {
+        logger.info("Initializing device for player {}", player.getName());
+
+        // Verify player has an instrument
+        InstrumentWrapper instrument = player.getInstrument();
+        if (instrument == null) {
+            logger.warn("Player {} has no instrument configured", player.getName());
+            return;
+        }
+
+        try {
+            // Check if device is already connected
+            if (instrument.getDevice() != null && instrument.getDevice().isOpen()) {
+                logger.info("Device for player {} is already open: {}",
+                        player.getName(), instrument.getDeviceInfo().getName());
+                return;
+            }
+
+            // Get device name from instrument
+            String deviceName = instrument.getDeviceName();
+            if (deviceName == null) {
+                logger.warn("Instrument {} has no device name", instrument.getName());
+                return;
+            }
+
+            // Find matching device by name
+            MidiDevice device = null;
+            for (MidiDevice availableDevice : devices) {
+                if (availableDevice.getDeviceInfo().getName().equals(deviceName)) {
+                    device = availableDevice;
+                    break;
+                }
+            }
+
+            // If device not found by exact match, try partial match
+            if (device == null) {
+                for (MidiDevice availableDevice : devices) {
+                    if (availableDevice.getDeviceInfo().getName().contains(deviceName) ||
+                            deviceName.contains(availableDevice.getDeviceInfo().getName())) {
+                        device = availableDevice;
+                        logger.info("Using partial device name match: {} -> {}",
+                                deviceName, availableDevice.getDeviceInfo().getName());
+                        break;
+                    }
+                }
+            }
+
+            // If still no device, get from DeviceManager
+            if (device == null) {
+                device = DeviceManager.getMidiDevice(deviceName);
+            }
+
+            // Connect and open device if found
+            if (device != null) {
+                // Connect device to instrument
+                instrument.setDevice(device);
+
+                // Open device if not already open
+                if (!device.isOpen()) {
+                    device.open();
+                }
+
+                // Mark instrument as available if device is open
+                instrument.setAvailable(device.isOpen());
+                logger.info("Connected player {} to device: {}, available: {}",
+                        player.getName(), device.getDeviceInfo().getName(), instrument.getAvailable());
+            } else {
+                logger.error("Could not find MIDI device '{}' for player {}",
+                        deviceName, player.getName());
+            }
+        } catch (Exception e) {
+            logger.error("Error initializing device for player {}: {}",
+                    player.getName(), e.getMessage(), e);
+        }
+    }
+
+    /**
+     * Initialize a player's preset by sending appropriate MIDI commands
+     */
+    private void initializePlayerPreset(Player player) {
+        if (player == null) {
+            logger.warn("Cannot initialize null player");
+            return;
+        }
+
+        // Check if instrument is null and try to assign a default one if needed
+        if (player.getInstrument() == null) {
+            logger.warn("Player {} has null instrument, attempting to assign default", player.getId());
+            try {
+                // Try to find or create an internal instrument
+                InstrumentWrapper defaultInstrument = InstrumentManager.getInstance()
+                        .findOrCreateInternalInstrument(player.getChannel());
+
+                if (defaultInstrument != null) {
+                    // Assign default instrument
+                    player.setInstrument(defaultInstrument);
+                    player.setUsingInternalSynth(true);
+
+                    defaultInstrument.setAssignedToPlayer(true);
+
+
+                    // Save the player to persist this change
+                    PlayerManager.getInstance().savePlayerProperties(player);
+
+                    logger.info("Assigned default internal instrument to player {}", player.getId());
+                } else {
+                    logger.error("Could not create default instrument for player {}", player.getId());
+                    return; // Skip this player
+                }
+            } catch (Exception e) {
+                logger.error("Failed to create default instrument: {}", e.getMessage());
+                return; // Skip this player
+            }
+        }
+
+        // Now check again before proceeding
+        if (player.getInstrument() == null) {
+            logger.error("Player {} still has null instrument after recovery attempt", player.getId());
+            return; // Skip this player
+        }
+
+        try {
+            // Get current instrument settings
+            InstrumentWrapper instrument = player.getInstrument();
+            int channel = player.getChannel();
+            Integer preset = instrument.getPreset();
+
+            if (preset != null) {
+                // Apply bank select if needed
+                if (instrument.getBankMSB() != 0 || instrument.getBankLSB() != 0) {
+                    instrument.controlChange(0, instrument.getBankMSB());
+                    instrument.controlChange(32, instrument.getBankLSB());
+                    logger.debug("Sent bank select MSB: {}, LSB: {} for player {}",
+                            instrument.getBankMSB(), instrument.getBankLSB(), player.getId());
+                }
+
+                // Send program change
+                instrument.programChange(preset, 0);
+                logger.info("Initialized player {} with instrument {} preset {} on channel {}",
+                        player.getId(), instrument.getName(), preset, channel);
+            }
+        } catch (Exception e) {
+            logger.error("Error initializing preset for player {}: {}",
+                    player.getId(), e.getMessage());
         }
     }
 
@@ -625,7 +789,6 @@ public class Session implements Serializable, IBusListener {
                 timingBus.publish(Commands.TIMING_BAR, this,
                         new TimingUpdate(tick, beat, bar, part, tickCount, beatCount, barCount, partCount));
             }
-
 
             // Part calculations on bar change - fix to only increment at partLength
             // boundaries
@@ -777,5 +940,55 @@ public class Session implements Serializable, IBusListener {
             lowLatencyMidiClock.stop();
         }
         // ...other stop cleanup code...
+    }
+
+    /**
+     * Add or update a player in the session
+     * 
+     * @param player The player to add or update
+     */
+    public void addOrUpdatePlayer(Player player) {
+        if (player == null || player.getId() == null) {
+            logger.warn("Cannot add null player or player without ID");
+            return;
+        }
+
+        // Store in players collection
+        players.add(player);
+
+        // Also store the player's instrument if it exists
+        if (player.getInstrument() != null) {
+            InstrumentManager.getInstance().updateInstrument(player.getInstrument());
+        }
+
+        // Flag session as modified
+        setModified(true);
+    }
+
+    /**
+     * Get a player by ID
+     * 
+     * @param playerId The player ID
+     * @return The player, or null if not found
+     */
+    public Player getPlayerById(String playerId) {
+        if (playerId == null)
+            return null;
+
+        for (Player player : players) {
+            if (playerId.equals(player.getId())) {
+                return player;
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Save all players to persistence
+     */
+    public void saveAllPlayers() {
+        for (Player player : players) {
+            PlayerManager.getInstance().savePlayerProperties(player);
+        }
     }
 }

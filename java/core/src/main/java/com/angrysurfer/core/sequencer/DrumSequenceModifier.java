@@ -48,9 +48,9 @@ public class DrumSequenceModifier {
                     }
                     
                     // Set default parameters for this step
-                    sequencer.setStepVelocity(drumIndex, step, DrumSequencer.DEFAULT_VELOCITY);
-                    sequencer.setStepDecay(drumIndex, step, DrumSequencer.DEFAULT_DECAY);
-                    sequencer.setStepProbability(drumIndex, step, DrumSequencer.DEFAULT_PROBABILITY);
+                    sequencer.setStepVelocity(drumIndex, step, DrumSequenceData.DEFAULT_VELOCITY);
+                    sequencer.setStepDecay(drumIndex, step, DrumSequenceData.DEFAULT_DECAY);
+                    sequencer.setStepProbability(drumIndex, step, DrumSequenceData.DEFAULT_PROBABILITY);
                     sequencer.setStepNudge(drumIndex, step, 0);
                 }
             }
@@ -96,7 +96,7 @@ public class DrumSequenceModifier {
         
         try {
             // Update lengths for all drums
-            for (int drumIndex = 0; drumIndex < DrumSequencer.DRUM_PAD_COUNT; drumIndex++) {
+            for (int drumIndex = 0; drumIndex < DrumSequenceData.DRUM_PAD_COUNT; drumIndex++) {
                 int currentLength = sequencer.getPatternLength(drumIndex);
                 
                 // Only update drums that exceed the new maximum
@@ -294,8 +294,8 @@ public class DrumSequenceModifier {
                     case "decay" -> {
                         shouldActivate = true;
                         // Set decreasing velocity for decay pattern
-                        int velocity = Math.max(DrumSequencer.DEFAULT_VELOCITY / 2, 
-                                         DrumSequencer.DEFAULT_VELOCITY - ((i - startStep) * 8));
+                        int velocity = Math.max(DrumSequenceData.DEFAULT_VELOCITY / 2,
+                                         DrumSequenceData.DEFAULT_VELOCITY - ((i - startStep) * 8));
                         sequencer.setStepVelocity(drumIndex, i, velocity);
                     }
                 }

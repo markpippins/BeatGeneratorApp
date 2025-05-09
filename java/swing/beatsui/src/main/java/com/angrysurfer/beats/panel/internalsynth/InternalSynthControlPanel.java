@@ -25,11 +25,12 @@ import javax.swing.JSlider;
 import javax.swing.JTabbedPane;
 import javax.swing.filechooser.FileNameExtensionFilter;
 
+import com.angrysurfer.core.service.SoundbankManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.angrysurfer.beats.widget.Dial;
-import com.angrysurfer.beats.widget.UIHelper;
+import com.angrysurfer.beats.util.UIHelper;
 import com.angrysurfer.core.service.InternalSynthManager;
 
 import lombok.Getter;
@@ -299,7 +300,7 @@ public class InternalSynthControlPanel extends JPanel {
         try {
             // Use the manager instance to initialize soundbanks
             InternalSynthManager manager = InternalSynthManager.getInstance();
-            manager.initializeSoundbanks();
+            manager.loadDefaultSoundbank();
 
             // Update UI with data from the manager
             soundbankCombo.removeAllItems();
@@ -342,8 +343,7 @@ public class InternalSynthControlPanel extends JPanel {
             currentSoundbankName = soundbankName;
 
             // Get the soundbank by name
-            InternalSynthManager manager = InternalSynthManager.getInstance();
-            Soundbank soundbank = manager.getSoundbankByName(soundbankName);
+            Soundbank soundbank = SoundbankManager.getInstance().getSoundbank(soundbankName);
 
             // Load the soundbank into the synthesizer if it's not null
             if (soundbank != null && getSynthesizer() != null && getSynthesizer().isOpen()) {
@@ -469,10 +469,10 @@ public class InternalSynthControlPanel extends JPanel {
             if (soundbankFile != null && soundbankFile.exists()) {
                 logger.info("Loading soundbank file: {}", soundbankFile.getAbsolutePath());
 
-                // Use the manager to load the soundbank
-                Soundbank soundbank = InternalSynthManager.getInstance().loadSoundbankFile(soundbankFile);
+                // Fix type mismatch: loadSoundbankFile returns a String (name), not a Soundbank
+                String soundbankName = SoundbankManager.getInstance().loadSoundbankFile(soundbankFile);
 
-                if (soundbank != null) {
+                if (soundbankName != null) {
                     // Update UI with the new soundbank list
                     List<String> names = InternalSynthManager.getInstance().getSoundbankNames();
                     soundbankCombo.removeAllItems();
@@ -480,7 +480,15 @@ public class InternalSynthControlPanel extends JPanel {
                         soundbankCombo.addItem(name);
                     }
 
-                    // Select the newly added soundbank
+                    // Find and select the newly added soundbank by name
+                    for (int i = 0; i < soundbankCombo.getItemCount(); i++) {
+                        if (soundbankCombo.getItemAt(i).equals(soundbankName)) {
+                            soundbankCombo.setSelectedIndex(i);
+                            return;
+                        }
+                    }
+                    
+                    // Fallback - select the last added soundbank
                     soundbankCombo.setSelectedIndex(soundbankCombo.getItemCount() - 1);
                 }
             }
@@ -859,13 +867,13 @@ public class InternalSynthControlPanel extends JPanel {
     /**
      * Add a method to play test notes using the InternalSynthManager
      */
-    public void playTestNote(int note, int velocity, int preset) {
-        if (getSynthesizer() != null && getSynthesizer().isOpen()) {
-            // Use the manager but pass the synthesizer and soundbank name explicitly
-            InternalSynthManager.getInstance().playTestNote(
-                    getSynthesizer(), midiChannel, note, velocity, preset, currentSoundbankName);
-        }
-    }
+//    public void playTestNote(int note, int velocity, int preset) {
+//        if (getSynthesizer() != null && getSynthesizer().isOpen()) {
+//            // Use the manager but pass the synthesizer and soundbank name explicitly
+//            InternalSynthManager.getInstance().playTestNote(
+//                    getSynthesizer(), midiChannel, note, velocity, preset, currentSoundbankName);
+//        }
+//    }
 
     /**
      * Play a test note

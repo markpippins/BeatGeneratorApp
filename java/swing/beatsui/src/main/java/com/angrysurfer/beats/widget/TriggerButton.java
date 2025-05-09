@@ -3,7 +3,7 @@ package com.angrysurfer.beats.widget;
 import java.awt.*;
 import javax.swing.JToggleButton;
 
-import com.angrysurfer.beats.UIUtils;
+import com.angrysurfer.beats.util.UIHelper;
 
 import java.awt.event.ActionListener;
 
@@ -13,9 +13,9 @@ public class TriggerButton extends JToggleButton {
     private boolean highlighted = false;
     private boolean toggleable = false;
     private static final Dimension BUTTON_SIZE = new Dimension(30, 20);
-    private static final Color defaultColor = Color.BLACK;
+    private static final Color defaultColor = UIHelper.agedOffWhite;
     private static final Color selectedColor = Color.GREEN;
-    private Color highlightColor = UIUtils.fadedOrange; // Default highlight color
+    private Color highlightColor = UIHelper.fadedOrange; // Default highlight color
 
     public TriggerButton(String text) {
         super(text);
@@ -23,7 +23,7 @@ public class TriggerButton extends JToggleButton {
     }
 
     private void setup() {
-        baseColor = UIUtils.deepOrange;
+        baseColor = UIHelper.deepOrange;
         activeColor = Color.GREEN;
         
         setContentAreaFilled(false);

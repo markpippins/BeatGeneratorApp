@@ -11,7 +11,7 @@ import javax.swing.JButton;
 import javax.swing.JToggleButton;
 import javax.swing.Timer;
 
-import com.angrysurfer.beats.UIUtils;
+import com.angrysurfer.beats.util.UIHelper;
 
 public class DrumSequencerGridButton extends JButton {
     
@@ -21,7 +21,7 @@ public class DrumSequencerGridButton extends JButton {
     private Color normalColor;
     private Color temporaryColor = new Color(200, 150, 40); // Amber highlight
     private boolean inPattern = true;
-    private Color highlightColor = UIUtils.fadedOrange; // Default highlight color
+    private Color highlightColor = UIHelper.fadedOrange; // Default highlight color
 
     /**
      * Create a new trigger button with label
@@ -187,22 +187,22 @@ public class DrumSequencerGridButton extends JButton {
      */
     private void updateAppearance() {
         if (!isEnabled()) {
-            setBackground(UIUtils.darkGray);
+            setBackground(UIHelper.darkGray);
             return;
         }
         
         if (!inPattern) {
             // Subdued appearance for steps outside the pattern length
-            setBackground(UIUtils.charcoalGray);
-            setBorder(BorderFactory.createLineBorder(UIUtils.slateGray, 1));
+            setBackground(UIHelper.charcoalGray);
+            setBorder(BorderFactory.createLineBorder(UIHelper.slateGray, 1));
             return;
         }
         
         // Regular appearance for steps in the pattern
         if (isSelected()) {
-            setBackground(isHighlighted() ? UIUtils.dustyAmber : UIUtils.deepOrange);
+            setBackground(isHighlighted() ? UIHelper.dustyAmber : UIHelper.deepOrange);
         } else {
-            setBackground(isHighlighted() ? UIUtils.fadedOrange : UIUtils.slateGray);
+            setBackground(isHighlighted() ? UIHelper.fadedOrange : UIHelper.slateGray);
         }
     }
 

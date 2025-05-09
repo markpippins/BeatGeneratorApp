@@ -118,9 +118,9 @@ public class RedisDemo {
     }
 
     private static Player createDrumPlayer(RedisService redis, String name, int note, Session session) {
-        Player player = redis.newPlayer();
+        Player player = redis.newStrike();
         player.setName(name);
-        player.setChannel(10); // General MIDI drum channel
+        player.setDefaultChannel(10); // General MIDI drum channel
         player.setRootNote(note);
         // redis.addPlayerToSession(session, player);
         logger.info("Created " + name + " player (ID: " + player.getId() + ")");

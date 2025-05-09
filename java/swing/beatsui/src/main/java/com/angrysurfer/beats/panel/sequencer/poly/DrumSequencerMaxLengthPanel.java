@@ -1,5 +1,6 @@
 package com.angrysurfer.beats.panel.sequencer.poly;
 
+import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
 
@@ -7,10 +8,12 @@ import javax.swing.BorderFactory;
 import javax.swing.JComboBox;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
+import javax.swing.border.TitledBorder;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.angrysurfer.beats.util.UIHelper;
 import com.angrysurfer.core.api.CommandBus;
 import com.angrysurfer.core.api.Commands;
 import com.angrysurfer.core.sequencer.DrumSequencer;
@@ -20,17 +23,13 @@ import com.angrysurfer.core.sequencer.DrumSequencer;
  */
 public class DrumSequencerMaxLengthPanel extends JPanel {
     private static final Logger logger = LoggerFactory.getLogger(DrumSequencerMaxLengthPanel.class);
-    
+
     // UI components
     private JComboBox<Integer> maxLengthCombo;
-    
+
     // References
     private final DrumSequencer sequencer;
-    
-    // UI constants
-    private static final int CONTROL_HEIGHT = 25;
-    private static final int MEDIUM_CONTROL_WIDTH = 60;
-    
+
     /**
      * Create a new MaxLengthPanel
      * 
@@ -38,45 +37,52 @@ public class DrumSequencerMaxLengthPanel extends JPanel {
      */
     public DrumSequencerMaxLengthPanel(DrumSequencer sequencer) {
         this.sequencer = sequencer;
-        
-        setBorder(BorderFactory.createTitledBorder("Sequencer Parameters"));
-        setLayout(new FlowLayout(FlowLayout.CENTER, 5, 2));
-        
+        // In DrumSequencerMaxLengthPanel's constructor
+        UIHelper.setWidgetPanelBorder(this, "Sequencer");
+
+        // REDUCED: from 5,2 to 2,1
+        setLayout(new FlowLayout(FlowLayout.CENTER, 2, 1));
+
         initializeComponents();
     }
-    
+
     /**
      * Initialize UI components
      */
     private void initializeComponents() {
-        add(new JLabel("Max Length:"));
+        // Create a label with minimum width
+        JLabel label = new JLabel("Length:");
+        label.setFont(label.getFont().deriveFont(11f)); // Smaller font
+        add(label);
 
         // Create combo box with standard pattern lengths
-        Integer[] maxLengths = {16, 32, 64, 128}; 
+        Integer[] maxLengths = { 16, 32, 64, 128 };
         maxLengthCombo = new JComboBox<>(maxLengths);
         maxLengthCombo.setSelectedItem(sequencer.getMaxPatternLength());
-        maxLengthCombo.setPreferredSize(new Dimension(MEDIUM_CONTROL_WIDTH, CONTROL_HEIGHT));
-        maxLengthCombo.setToolTipText("Set maximum pattern length");
         
+        // REDUCED: width from MEDIUM_CONTROL_WIDTH to SMALL_CONTROL_WIDTH + 10
+        maxLengthCombo.setPreferredSize(new Dimension(UIHelper.MEDIUM_CONTROL_WIDTH + 10, UIHelper.CONTROL_HEIGHT));
+        maxLengthCombo.setToolTipText("Set maximum pattern length");
+
         maxLengthCombo.addActionListener(e -> {
             int newMaxLength = (Integer) maxLengthCombo.getSelectedItem();
-            
+
             // Set new max pattern length in sequencer
             sequencer.setMaxPatternLength(newMaxLength);
-            
+
             logger.info("Set maximum pattern length to: {}", newMaxLength);
-            
+
             // First publish event for updating spinner constraints
             CommandBus.getInstance().publish(Commands.DRUM_SEQUENCE_MAX_LENGTH_CHANGED, this, newMaxLength);
-            
+
             // Then publish a command to recreate the grid
             CommandBus.getInstance().publish(Commands.DRUM_SEQUENCE_GRID_RECREATE_REQUESTED, this, newMaxLength);
         });
-        
+
         // Add components to panel
         add(maxLengthCombo);
     }
-    
+
     /**
      * Update the control to reflect current sequencer state
      */

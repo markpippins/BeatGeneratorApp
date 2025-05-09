@@ -16,7 +16,7 @@ import javax.swing.SwingConstants;
 import javax.swing.border.TitledBorder;
 
 import com.angrysurfer.beats.widget.Dial;
-import com.angrysurfer.beats.widget.UIHelper;
+import com.angrysurfer.beats.util.UIHelper;
 
 import lombok.Getter;
 import lombok.Setter;

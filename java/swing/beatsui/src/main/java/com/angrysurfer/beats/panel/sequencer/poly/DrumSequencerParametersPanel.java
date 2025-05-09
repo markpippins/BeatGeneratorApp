@@ -1,5 +1,6 @@
 package com.angrysurfer.beats.panel.sequencer.poly;
 
+import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.Insets;
@@ -14,10 +15,12 @@ import javax.swing.JPanel;
 import javax.swing.JSpinner;
 import javax.swing.JToggleButton;
 import javax.swing.SpinnerNumberModel;
+import javax.swing.border.TitledBorder;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.angrysurfer.beats.util.UIHelper;
 import com.angrysurfer.core.api.CommandBus;
 import com.angrysurfer.core.api.Commands;
 import com.angrysurfer.core.model.Direction;
@@ -40,12 +43,7 @@ public class DrumSequencerParametersPanel extends JPanel {
     // Reference to the sequencer
     private final DrumSequencer sequencer;
     
-    // UI constants
-    private static final int CONTROL_HEIGHT = 25;
-    private static final int SMALL_CONTROL_WIDTH = 40;
-    private static final int MEDIUM_CONTROL_WIDTH = 60;
-    private static final int LARGE_CONTROL_WIDTH = 90;
-    
+
     // Flag to prevent recursive events
     private boolean updatingControls = false;
     
@@ -55,8 +53,7 @@ public class DrumSequencerParametersPanel extends JPanel {
     public DrumSequencerParametersPanel(DrumSequencer sequencer) {
         this.sequencer = sequencer;
         
-        setBorder(BorderFactory.createTitledBorder("Sequence Parameters"));
-        setLayout(new FlowLayout(FlowLayout.LEFT, 10, 5));
+        UIHelper.setWidgetPanelBorder(this,"Sequence Parameters");
         
         initializeComponents();
     }
@@ -69,17 +66,19 @@ public class DrumSequencerParametersPanel extends JPanel {
         setLayout(new BoxLayout(this, BoxLayout.X_AXIS));
         
         // Create a panel to hold the main controls with FlowLayout
-        JPanel controlsPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 5));
+        // REDUCED: from 10,5 to 2,1
+        JPanel controlsPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 2, 1));
         
         // Last Step spinner
-        JPanel lastStepPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 5, 0));
+        // REDUCED: from 5,0 to 2,0
+        JPanel lastStepPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 2, 0));
         lastStepPanel.add(new JLabel("Last Step:"));
 
         // Create spinner model with range 1-sequencer.getMaxSteps()
         SpinnerNumberModel lastStepModel = new SpinnerNumberModel(
             sequencer.getDefaultPatternLength(), 1, sequencer.getMaxPatternLength(), 1);
         lastStepSpinner = new JSpinner(lastStepModel);
-        lastStepSpinner.setPreferredSize(new Dimension(MEDIUM_CONTROL_WIDTH, CONTROL_HEIGHT));
+        lastStepSpinner.setPreferredSize(new Dimension(UIHelper.MEDIUM_CONTROL_WIDTH, UIHelper.CONTROL_HEIGHT));
         lastStepSpinner.setToolTipText("Set the last step of the pattern (1-" + sequencer.getMaxPatternLength() + ")");
         lastStepSpinner.addChangeListener(e -> {
             if (updatingControls) return;
@@ -102,9 +101,10 @@ public class DrumSequencerParametersPanel extends JPanel {
         lastStepPanel.add(lastStepSpinner);
 
         // Direction combo
-        JPanel directionPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 5, 0));
+        // REDUCED: from 5,0 to 2,0
+        JPanel directionPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 2, 0));
         directionCombo = new JComboBox<>(new String[] { "Forward", "Backward", "Bounce", "Random" });
-        directionCombo.setPreferredSize(new Dimension(LARGE_CONTROL_WIDTH, CONTROL_HEIGHT));
+        directionCombo.setPreferredSize(new Dimension(UIHelper.LARGE_CONTROL_WIDTH + 15, UIHelper.CONTROL_HEIGHT));
         directionCombo.setToolTipText("Set the playback direction of the pattern");
         directionCombo.addActionListener(e -> {
             if (updatingControls) return;
@@ -128,9 +128,10 @@ public class DrumSequencerParametersPanel extends JPanel {
         directionPanel.add(directionCombo);
 
         // Timing division combo
-        JPanel timingPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 5, 0));
+        // REDUCED: from 5,0 to 2,0
+        JPanel timingPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 2, 0));
         timingCombo = new JComboBox<>(TimingDivision.getValuesAlphabetically());
-        timingCombo.setPreferredSize(new Dimension(LARGE_CONTROL_WIDTH, CONTROL_HEIGHT));
+        timingCombo.setPreferredSize(new Dimension(UIHelper.LARGE_CONTROL_WIDTH + 15, UIHelper.CONTROL_HEIGHT));
         timingCombo.addActionListener(e -> {
             if (updatingControls) return;
             
@@ -148,7 +149,7 @@ public class DrumSequencerParametersPanel extends JPanel {
         // Loop checkbox
         loopToggleButton = new JToggleButton("🔁", true); // Default to looping enabled
         loopToggleButton.setToolTipText("Loop this pattern");
-        loopToggleButton.setPreferredSize(new Dimension(SMALL_CONTROL_WIDTH, CONTROL_HEIGHT)); 
+        loopToggleButton.setPreferredSize(new Dimension(UIHelper.SMALL_CONTROL_WIDTH, UIHelper.CONTROL_HEIGHT)); 
         loopToggleButton.setMargin(new Insets(2, 2, 2, 2));
         loopToggleButton.addActionListener(e -> {
             if (updatingControls) return;
@@ -162,12 +163,13 @@ public class DrumSequencerParametersPanel extends JPanel {
         });
 
         // Create rotation panel for push/pull buttons
-        JPanel rotationPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 5, 0));
+        // REDUCED: from 5,0 to 2,0
+        JPanel rotationPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 2, 0));
 
         // Push forward button
         JButton pushForwardButton = new JButton("⟶");
         pushForwardButton.setToolTipText("Push pattern forward (right)");
-        pushForwardButton.setPreferredSize(new Dimension(SMALL_CONTROL_WIDTH, CONTROL_HEIGHT));
+        pushForwardButton.setPreferredSize(new Dimension(UIHelper.SMALL_CONTROL_WIDTH, UIHelper.CONTROL_HEIGHT));
         pushForwardButton.setMargin(new Insets(2, 2, 2, 2));
         pushForwardButton.addActionListener(e -> {
             sequencer.pushForward();
@@ -183,7 +185,7 @@ public class DrumSequencerParametersPanel extends JPanel {
         // Pull backward button
         JButton pullBackwardButton = new JButton("⟵");
         pullBackwardButton.setToolTipText("Pull pattern backward (left)");
-        pullBackwardButton.setPreferredSize(new Dimension(SMALL_CONTROL_WIDTH, CONTROL_HEIGHT));
+        pullBackwardButton.setPreferredSize(new Dimension(UIHelper.SMALL_CONTROL_WIDTH, UIHelper.CONTROL_HEIGHT));
         pullBackwardButton.setMargin(new Insets(2, 2, 2, 2));
         pullBackwardButton.addActionListener(e -> {
             sequencer.pullBackward();
@@ -210,7 +212,7 @@ public class DrumSequencerParametersPanel extends JPanel {
         // Create the clear button
         clearPatternButton = new JButton("🗑️");
         clearPatternButton.setToolTipText("Clear the pattern for this drum");
-        clearPatternButton.setPreferredSize(new Dimension(SMALL_CONTROL_WIDTH, CONTROL_HEIGHT));
+        clearPatternButton.setPreferredSize(new Dimension(UIHelper.SMALL_CONTROL_WIDTH, UIHelper.CONTROL_HEIGHT));
         clearPatternButton.setMargin(new Insets(2, 2, 2, 2));
         clearPatternButton.addActionListener(e -> {
             int selectedPadIndex = sequencer.getSelectedPadIndex();
@@ -230,7 +232,8 @@ public class DrumSequencerParametersPanel extends JPanel {
         add(Box.createHorizontalGlue());
         
         // Create right-side panel for clear button with some padding
-        JPanel rightPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 5));
+        // REDUCED: from 10,5 to 2,1
+        JPanel rightPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 2, 1));
         rightPanel.add(clearPatternButton);
         
         // Add right panel

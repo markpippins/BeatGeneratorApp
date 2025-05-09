@@ -8,6 +8,7 @@ import java.util.Map;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.angrysurfer.core.model.PatternSlot;
 import com.angrysurfer.core.service.DrumSequencerManager;
 import com.angrysurfer.core.service.MelodicSequencerManager;
 
@@ -61,7 +62,7 @@ public class PatternSequencer {
 
         // Initialize melodic sequencers
         for (MelodicSequencer sequencer : melodicSequencers) {
-            sequencer.setLooping(false);
+            sequencer.setLooping(true);
             logger.debug("Initialized melodic sequencer {}: looping disabled", sequencer.getId());
         }
 

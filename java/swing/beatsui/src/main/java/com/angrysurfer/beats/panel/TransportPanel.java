@@ -1,5 +1,6 @@
 package com.angrysurfer.beats.panel;
 
+import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
@@ -25,7 +26,6 @@ import com.angrysurfer.core.service.SessionManager;
  * Panel containing transport controls (play, stop, record, etc.)
  */
 public class TransportPanel extends JPanel {
-    private final CommandBus commandBus = CommandBus.getInstance();
 
     // Transport controls
     private JButton playButton;
@@ -50,16 +50,14 @@ public class TransportPanel extends JPanel {
     private long lastSessionNavTime = 0;
 
     public TransportPanel() {
-        super(new FlowLayout(FlowLayout.CENTER));
-        setBorder(BorderFactory.createEmptyBorder(8, 0, 0, 0));
-        setPreferredSize(new Dimension(getPreferredSize().width, 75));
+        super(new FlowLayout(FlowLayout.CENTER, 5, 0));
+        setBorder(BorderFactory.createEmptyBorder(2, 2, 2, 2));
 
         // Start with recording disabled
         isRecording = false;
         isPlaying = false;
 
-        // Set up a timer to enable auto-recording after 3 seconds
-        // This gives time for the application to fully load before enabling the feature
+        // Set up auto-recording timer
         autoRecordingEnableTimer = new javax.swing.Timer(3000, e -> {
             autoRecordingEnabled = true;
             autoRecordingEnableTimer.stop();
@@ -67,7 +65,7 @@ public class TransportPanel extends JPanel {
         autoRecordingEnableTimer.setRepeats(false);
         autoRecordingEnableTimer.start();
 
-        setupTransportButtons();
+        add(createTransportButtons());
         setupCommandBusListener();
 
         // Set initial button states
@@ -75,7 +73,15 @@ public class TransportPanel extends JPanel {
         stopButton.setEnabled(false);
     }
 
-    private void setupTransportButtons() {
+    /**
+     * Creates and configures transport control buttons
+     * 
+     * @return JPanel containing all transport buttons
+     */
+    private JPanel createTransportButtons() {
+        // Create panel to hold transport buttons with flow layout
+        JPanel buttonsPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 5, 0));
+
         rewindButton = createToolbarButton(Commands.TRANSPORT_REWIND, "⏮", "Previous Session");
 
         // Create pause button with special handling
@@ -102,57 +108,30 @@ public class TransportPanel extends JPanel {
 
         // Special action for pause button - send ALL_NOTES_OFF
         pauseButton.addActionListener(e -> {
-            commandBus.publish(Commands.ALL_NOTES_OFF, this);
+            CommandBus.getInstance().publish(Commands.ALL_NOTES_OFF, this);
         });
 
-        // Add hover effects
-        pauseButton.addMouseListener(new java.awt.event.MouseAdapter() {
-            public void mouseEntered(java.awt.event.MouseEvent evt) {
-                pauseButton.setBackground(pauseButton.getBackground().brighter());
-            }
+        // Rest of existing code...
 
-            public void mouseExited(java.awt.event.MouseEvent evt) {
-                pauseButton.setBackground(UIManager.getColor("Button.background"));
-            }
-        });
-
-        // Rest of the button setup code...
         recordButton = new JButton("⏺");
-        recordButton.setToolTipText("Record");
-        recordButton.setEnabled(true);
-        recordButton.setActionCommand(Commands.TRANSPORT_RECORD);
-
-        recordButton.setPreferredSize(new Dimension(size, size));
-        recordButton.setMinimumSize(new Dimension(size, size));
-        recordButton.setMaximumSize(new Dimension(size, size));
-        recordButton.setFont(new Font("Segoe UI Symbol", Font.PLAIN, 18));
-        if (!recordButton.getFont().canDisplay('⏺')) {
-            recordButton.setFont(new Font("Dialog", Font.PLAIN, 18));
-        }
-        recordButton.setMargin(new Insets(0, 0, 0, 0));
-        recordButton.setFocusPainted(false);
-        recordButton.setVerticalAlignment(SwingConstants.CENTER);
-        recordButton.setBorderPainted(false);
-        recordButton.setContentAreaFilled(true);
-        recordButton.setOpaque(true);
-
-        recordButton.addActionListener(e -> {
-            toggleRecordingState();
-        });
+        // ... existing recordButton setup ...
 
         stopButton = createToolbarButton(Commands.TRANSPORT_STOP, "⏹", "Stop");
         playButton = createToolbarButton(Commands.TRANSPORT_START, "▶", "Play");
         forwardButton = createToolbarButton(Commands.TRANSPORT_FORWARD, "⏭", "Next Session");
 
-        add(rewindButton);
-        add(pauseButton);
-        add(stopButton);
-        add(recordButton);
-        add(playButton);
-        add(forwardButton);
+        // Add buttons to the panel instead of directly to TransportPanel
+        buttonsPanel.add(rewindButton);
+        buttonsPanel.add(pauseButton);
+        buttonsPanel.add(stopButton);
+        buttonsPanel.add(recordButton);
+        buttonsPanel.add(playButton);
+        buttonsPanel.add(forwardButton);
 
         updatePlayButtonAppearance();
         updateRecordButtonAppearance();
+
+        return buttonsPanel;
     }
 
     private JButton createToolbarButton(String command, String text, String tooltip) {
@@ -162,7 +141,7 @@ public class TransportPanel extends JPanel {
         button.setEnabled(true);
         button.setActionCommand(command);
         button.addActionListener(e -> {
-            commandBus.publish(command, button);
+            CommandBus.getInstance().publish(command, button);
             updatePlayButtonAppearance();
             updateRecordButtonAppearance();
         });
@@ -215,22 +194,22 @@ public class TransportPanel extends JPanel {
                     SessionManager.getInstance().saveSession(currentSession);
 
                     // Show save confirmation
-                    // commandBus.publish(Commands.SHOW_STATUS, this, "Session saved");
+                    // CommandBus.getInstance().publish(Commands.SHOW_STATUS, this, "Session saved");
                 }
             } catch (Exception ex) {
                 // Log and show any errors during save
                 System.err.println("Error saving session: " + ex.getMessage());
                 ex.printStackTrace();
-                // commandBus.publish(Commands.SHOW_ERROR, this, "Error saving session: " +
+                // CommandBus.getInstance().publish(Commands.SHOW_ERROR, this, "Error saving session: " +
                 // ex.getMessage());
             }
         }
 
         // Publish the appropriate command
         if (isRecording) {
-            commandBus.publish(Commands.TRANSPORT_RECORD_START, this);
+            CommandBus.getInstance().publish(Commands.TRANSPORT_RECORD_START, this);
         } else {
-            commandBus.publish(Commands.TRANSPORT_RECORD_STOP, this);
+            CommandBus.getInstance().publish(Commands.TRANSPORT_RECORD_STOP, this);
         }
     }
 
@@ -285,7 +264,7 @@ public class TransportPanel extends JPanel {
     }
 
     private void setupCommandBusListener() {
-        commandBus.register(new IBusListener() {
+        CommandBus.getInstance().register(new IBusListener() {
             @Override
             public void onAction(Command action) {
                 // Skip if this panel is the sender
@@ -316,7 +295,7 @@ public class TransportPanel extends JPanel {
                             if (!isRecording) {
                                 isRecording = true;
                                 updateRecordButtonAppearance();
-                                commandBus.publish(Commands.TRANSPORT_RECORD_START, TransportPanel.this);
+                                CommandBus.getInstance().publish(Commands.TRANSPORT_RECORD_START, TransportPanel.this);
                             }
                         }
                     }

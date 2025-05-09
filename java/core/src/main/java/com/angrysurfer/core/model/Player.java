@@ -1,6 +1,8 @@
 package com.angrysurfer.core.model;
 
 import java.io.Serializable;
+import java.io.IOException;
+import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -10,8 +12,12 @@ import java.util.Objects;
 import java.util.Random;
 import java.util.Set;
 import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
 import java.util.stream.Collectors;
 
+import com.angrysurfer.core.service.InternalSynthManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -26,8 +32,14 @@ import com.angrysurfer.core.sequencer.TimingUpdate;
 import com.angrysurfer.core.util.Cycler;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
+import jakarta.persistence.Transient;
 import lombok.Getter;
 import lombok.Setter;
+
+import javax.sound.midi.InvalidMidiDataException;
+import javax.sound.midi.MidiDevice;
+import javax.sound.midi.MidiUnavailableException;
+import javax.sound.midi.ShortMessage;
 
 @Getter
 @Setter
@@ -44,11 +56,15 @@ public abstract class Player implements Callable<Boolean>, Serializable, IBusLis
     private Long instrumentId;
 
     @JsonIgnore
-    public boolean isSelected = false;
+    public transient boolean isSelected = false;
+
+    private boolean melodicPlayer = false;
+
+    private boolean drumPlayer = false;
 
     private String name = "Player";
 
-    private Integer channel = 0;
+    private Integer defaultChannel = 0;
 
     private Integer swing = 0;
 
@@ -59,8 +75,6 @@ public abstract class Player implements Callable<Boolean>, Serializable, IBusLis
     private Integer minVelocity = 100;
 
     private Integer maxVelocity = 110;
-
-    private Integer preset = 1;
 
     private Boolean stickyPreset = false;
 
@@ -149,36 +163,103 @@ public abstract class Player implements Callable<Boolean>, Serializable, IBusLis
     @JsonIgnore
     private Session session;
 
-    // Add TimingBus
+    @JsonIgnore
+    private transient Object owner;
+
+    @JsonIgnore
+    @Transient
     private final TimingBus timingBus = TimingBus.getInstance();
+
+    @JsonIgnore
+    @Transient
     private final CommandBus commandBus = CommandBus.getInstance();
 
-    public Player() {
+    // Add these fields to Player class
+    @JsonIgnore
+    private static final ExecutorService NOTE_EXECUTOR = Executors.newFixedThreadPool(4);
+    @JsonIgnore
+    private static final ScheduledExecutorService NOTE_OFF_SCHEDULER = Executors.newScheduledThreadPool(4);
+
+    // Add UI update throttling
+    @JsonIgnore
+    private long lastUiUpdateTime = 0;
+    private static final long MIN_UI_UPDATE_INTERVAL = 100; // Only update UI every 100ms max
+
+    // Add a new optimized method
+    private boolean usingInternalSynth = true;
+    private InternalSynthManager internalSynthManager = null;
+
+    // Update these fields
+    @JsonIgnore
+    private transient final ShortMessage reuseableMessage = new ShortMessage();
+
+    @JsonIgnore
+    private transient final Object messageLock = new Object();
+
+    private long lastNoteTime = 0;
+    private static final long NOTE_THROTTLE_THRESHOLD = 1; // 1ms minimum between notes
+
+    // Add initialization method
+    @JsonIgnore
+    private void initializeTransientFields() {
+        // No longer needed as reuseableMessage and messageLock are final
+    }
+
+    // Call this in noteOn, triggerNoteWithThrottle, etc.
+    private void ensureInitialized() {
+        // No longer needed as reuseableMessage and messageLock are final
+    }
+
+    /**
+     * Simple initialization for minimal player setup
+     */
+    protected void initialize(String name, Session session, InstrumentWrapper instrument,
+            List<Integer> allowedControlMessages) {
         // Register with command and timing buses
+        setName(name);
+        setSession(session);
+        setInstrument(instrument);
+        setAllowedControlMessages(allowedControlMessages);
+
         commandBus.register(this);
         timingBus.register(this);
-        // System.out.println("Player constructor: Registered with buses");
-    }
 
-    public Player(String name, Session session, InstrumentWrapper instrument) {
-        this(); // Call default constructor to ensure registration
-        setName(name);
-        setInstrument(instrument);
-        setSession(session);
-    }
-
-    public Player(String name, Session session, InstrumentWrapper instrument, List<Integer> allowedControlMessages) {
-        this(name, session, instrument);
-        setAllowedControlMessages(allowedControlMessages);
+        // Initialize rules collection
+        rules = new HashSet<>();
     }
 
     public void setInstrument(InstrumentWrapper instrument) {
+        if (instrument == null) {
+            return;
+        }
         this.instrument = instrument;
-        this.instrumentId = Objects.nonNull(instrument) ? instrument.getId() : null;
+        this.instrument.setChannel(getDefaultChannel());
+        this.instrumentId = instrument.getId();
     }
 
     public String getPlayerClassName() {
         return getClass().getSimpleName().toLowerCase();
+    }
+
+    @JsonIgnore
+    @Transient
+    public MidiDevice getDevice() {
+        return Objects.nonNull(getInstrument()) ? getInstrument().getDevice() : null; 
+    }
+
+    @JsonIgnore
+    @Transient
+    public Integer getChannel() {
+        if (getInstrument() != null)
+            return getInstrument().getChannel();
+
+        return getDefaultChannel();
+    }
+
+    public void setDefaultChannel(Integer channel) {
+        defaultChannel = channel;
+        if (getInstrument() != null)
+            getInstrument().setChannel(channel);
     }
 
     // public Long getSubPosition() {
@@ -200,89 +281,237 @@ public abstract class Player implements Callable<Boolean>, Serializable, IBusLis
         // Send note on message
         int randWeight = randomDegree > 0 ? rand.nextInt(randomDegree) : 0;
 
-        java.util.concurrent.Executors.newSingleThreadScheduledExecutor().schedule(() -> {
+        NOTE_OFF_SCHEDULER.schedule(() -> {
             try {
-                noteOn(note + randWeight + getSession().getNoteOffset(), velocity);
+                triggerNoteWithThrottle(note + randWeight + getSession().getNoteOffset(), velocity);
             } catch (Exception e) {
                 logger.error("Error in scheduled noteOff: {}", e.getMessage(), e);
             }
-        }, 0, // Shorter note duration (100ms instead of 2500ms)
-                java.util.concurrent.TimeUnit.MILLISECONDS);
+        }, 0, java.util.concurrent.TimeUnit.MILLISECONDS);
 
         // Schedule note off instead of blocking with Thread.sleep
         final int finalVelocity = velocity;
 
         // Use ScheduledExecutorService for note-off scheduling
-        java.util.concurrent.Executors.newSingleThreadScheduledExecutor().schedule(() -> {
+        NOTE_OFF_SCHEDULER.schedule(() -> {
             try {
                 noteOff(note, finalVelocity);
             } catch (Exception e) {
                 logger.error("Error in scheduled noteOff: {}", e.getMessage(), e);
             }
-        }, 200, // Shorter note duration (100ms instead of 2500ms)
-                java.util.concurrent.TimeUnit.MILLISECONDS);
+        }, 200, java.util.concurrent.TimeUnit.MILLISECONDS);
     }
 
+    /**
+     * Trigger a note with throttling to prevent MIDI buffer overflows
+     * 
+     * @param note     MIDI note number to play
+     * @param velocity Note velocity (0-127)
+     */
+    public void triggerNoteWithThrottle(int note, int velocity) {
+        // First check if we have an instrument to play through
+        if (instrument == null) {
+            return;
+        }
+
+        // Update player state
+        setPlaying(true);
+
+        // Throttle rapid note triggering
+        long now = System.nanoTime() / 1_000_000; // Current time in ms
+        long timeSinceLastNote = now - lastNoteTime;
+
+        if (timeSinceLastNote < NOTE_THROTTLE_THRESHOLD) {
+            // Use the executor to slightly delay the note if we're sending too many
+            NOTE_EXECUTOR.submit(() -> {
+                try {
+                    // Small sleep to prevent overwhelming the MIDI system
+                    Thread.sleep(NOTE_THROTTLE_THRESHOLD - timeSinceLastNote + 1);
+                    sendNoteOnMessage(note, velocity);
+                } catch (Exception e) {
+                    logger.error("Error in throttled note trigger: {}", e.getMessage(), e);
+                }
+            });
+        } else {
+            // Send note immediately if we're not throttling
+            sendNoteOnMessage(note, velocity);
+        }
+
+        // Always update the last note time
+        lastNoteTime = now;
+
+        // Update UI only if needed (throttled)
+        updateUIIfNeeded();
+    }
+
+    /**
+     * Helper method to send the actual MIDI note-on message
+     */
+    private void sendNoteOnMessage(int note, int velocity) {
+        try {
+            // Use synchronized block to prevent concurrent modification of the reusable
+            // message
+            synchronized (messageLock) {
+                reuseableMessage.setMessage(ShortMessage.NOTE_ON, note, velocity);
+                // Replace sendMessage with sendToDevice
+                instrument.sendMessage(reuseableMessage);
+            }
+        } catch (InvalidMidiDataException e) {
+            logger.error("Error sending note-on message: {}", e.getMessage(), e);
+        }
+    }
+
+    /**
+     * Facade method to play a note with standard duration
+     * 
+     * @param note     MIDI note number
+     * @param velocity Note velocity (0-127)
+     */
     public void noteOn(int note, int velocity) {
-        logger.debug("noteOn() - note: {}, velocity: {}", note, velocity);
-
-        int fixedVelocity = velocity < 126 ? velocity : 126;
+        // Update player state
+        setPlaying(true);
+        updateUIIfNeeded();
 
         try {
-            // Set playing state to true
-            setPlaying(true);
-
-            // Schedule UI refresh after a short delay
-            java.util.concurrent.Executors.newSingleThreadScheduledExecutor().schedule(
-                    () -> CommandBus.getInstance().publish(Commands.PLAYER_ROW_REFRESH, this, this), 50, // 50ms delay
-                    java.util.concurrent.TimeUnit.MILLISECONDS);
-
-            getInstrument().noteOn(getChannel(), note, fixedVelocity);
-        } catch (Exception e) {
+            // Delegate to instrument wrapper
+            if (instrument != null) {
+                synchronized (messageLock) {
+                    reuseableMessage.setMessage(ShortMessage.NOTE_ON, note, velocity);
+                    instrument.sendMessage(reuseableMessage); // Changed from sendMessage to sendToDevice
+                }
+            }
+        } catch (InvalidMidiDataException e) {
             logger.error("Error in noteOn: {}", e.getMessage(), e);
-            throw new RuntimeException(e);
         }
     }
 
+    /**
+     * Facade method to play a note with specified decay time
+     * 
+     * @param note     MIDI note number
+     * @param velocity Note velocity (0-127)
+     * @param decay    Note duration in ms
+     */
     public void noteOn(int note, int velocity, int decay) {
-        logger.debug("noteOn() - note: {}, velocity: {}", note, velocity);
-
-        int fixedVelocity = velocity < 126 ? velocity : 126;
+        // Update player state
+        setPlaying(true);
+        updateUIIfNeeded();
 
         try {
-            // Set playing state to true
-            setPlaying(true);
-
-            // Schedule UI refresh after a short delay
-            java.util.concurrent.Executors.newSingleThreadScheduledExecutor().schedule(
-                    () -> CommandBus.getInstance().publish(Commands.PLAYER_ROW_REFRESH, this, this), decay, // 50ms
-                                                                                                            // delay
-                    java.util.concurrent.TimeUnit.MILLISECONDS);
-
-            // getInstrument().noteOn(getChannel(), note, fixedVelocity);
-            getInstrument().playMidiNote(getChannel(), note, fixedVelocity, decay);
-
+            // Delegate to instrument wrapper
+            if (instrument != null) {
+                instrument.playMidiNote(note, velocity, decay);
+            }
         } catch (Exception e) {
-            logger.error("Error in noteOn: {}", e.getMessage(), e);
-            throw new RuntimeException(e);
+            logger.error("Error in noteOn with decay: {}", e.getMessage(), e);
         }
     }
 
-    public void noteOff(int note, int velocity) {
-        logger.debug("noteOff() - note: {}, velocity: {}", note, velocity);
-        try {
-            getInstrument().noteOff(getChannel(), note, velocity);
+    /**
+     * Facade method to play a note with specified gate time
+     * 
+     * @param note     MIDI note number
+     * @param velocity Note velocity (0-127)
+     * @param gate     Note gate time in ms
+     */
+    // public void noteOn(int note, int velocity, int gate) {
+    // // Update player state
+    // setPlaying(true);
+    // updateUIIfNeeded();
+    //
+    // // Skip note if player is muted
+    // if (level <= 0) {
+    // return;
+    // }
+    //
+    // try {
+    // // Delegate to instrument wrapper
+    // if (instrument != null) {
+    // synchronized (messageLock) {
+    // reuseableMessage.setMessage(ShortMessage.NOTE_ON, note, velocity);
+    // instrument.sendToDevice(reuseableMessage);
+    // }
+    // }
+    // } catch (Exception e) {
+    // logger.error("Error in noteOn: {}", e.getMessage(), e);
+    // }
+    // }
 
-            // Set playing state to false
+    /**
+     * Facade method to stop a note
+     * 
+     * @param note     MIDI note number
+     * @param velocity Release velocity (usually 0)
+     */
+    public void noteOff(int note, int velocity) {
+        try {
+            // Delegate to instrument wrapper
+            if (instrument != null) {
+                instrument.noteOff(note, velocity);
+            }
+
+            // Update player state
             setPlaying(false);
 
-            // Schedule UI refresh after a short delay
-            java.util.concurrent.Executors.newSingleThreadScheduledExecutor().schedule(
-                    () -> CommandBus.getInstance().publish(Commands.PLAYER_ROW_REFRESH, this, this), 50, // 50ms delay
-                    java.util.concurrent.TimeUnit.MILLISECONDS);
+            // Schedule UI update
+            NOTE_OFF_SCHEDULER.schedule(
+                    () -> CommandBus.getInstance().publish(Commands.PLAYER_ROW_REFRESH, this, this),
+                    50, java.util.concurrent.TimeUnit.MILLISECONDS);
         } catch (Exception e) {
             logger.error("Error in noteOff: {}", e.getMessage(), e);
-            throw new RuntimeException(e);
+        }
+    }
+
+    /**
+     * Sends All Notes Off message on player's channel
+     * Uses MIDI Control Change #123 to immediately stop all playing notes
+     */
+    public void allNotesOff() {
+        logger.debug("Sending All Notes Off for player {} on channel {}", getName(), getChannel());
+
+        try {
+            // First approach: Use control change 123 (All Notes Off)
+            if (instrument != null) {
+                instrument.controlChange(123, 0);
+                logger.debug("Sent All Notes Off message to instrument {}",
+                        instrument.getName());
+            }
+
+            // Second approach: Send explicit note off messages for safety
+            // Some hardware/software synths don't properly respond to CC 123
+            try {
+                // Send note off for all possible MIDI notes (0-127)
+                if (instrument != null) {
+                    for (int note = 0; note < 128; note++) {
+                        synchronized (messageLock) {
+                            reuseableMessage.setMessage(ShortMessage.NOTE_OFF, getChannel(), note, 0);
+                            instrument.sendMessage(reuseableMessage);
+                        }
+                    }
+                }
+            } catch (Exception e) {
+                logger.warn("Error sending explicit note-off messages: {}", e.getMessage());
+            }
+
+            // Update player state
+            setPlaying(false);
+
+            // Notify UI
+            updateUIIfNeeded();
+
+        } catch (Exception e) {
+            logger.error("Error in allNotesOff: {}", e.getMessage(), e);
+        }
+    }
+
+    /**
+     * Update the UI if sufficient time has passed since last update
+     */
+    private void updateUIIfNeeded() {
+        long now = System.currentTimeMillis();
+        if (now - lastUiUpdateTime > MIN_UI_UPDATE_INTERVAL) {
+            lastUiUpdateTime = now;
+            CommandBus.getInstance().publish(Commands.PLAYER_ROW_REFRESH, this, this);
         }
     }
 
@@ -321,20 +550,21 @@ public abstract class Player implements Callable<Boolean>, Serializable, IBusLis
     /**
      * Determines whether this player should play at the given position
      *
-     * @param tickPosition        Current position within beat (1-based)
-     * @param timingUpdate.beat() Current position within bar (1-based)
-     * @param timingUpdate.bar()  Current position within pattern (1-based)
-     * @param partPosition        Current position within arrangement (1-based)
-     * @param tickCount           Global tick counter (continuously increasing)
-     * @param beatCount           Global beat counter (continuously increasing)
-     * @param barCount            Global bar counter (continuously increasing)
-     * @param partCount           Global part counter (continuously increasing)
+     * @param timingUpdate Current TIMING_UPDATE
      */
     public boolean shouldPlay(TimingUpdate timingUpdate) {
-        // Early out if no applicable rules or player not enabled
-        if (rules == null || rules.isEmpty() || !getEnabled()) {
+        // Quick checks first
+        if (!getEnabled() || isMuted()) {
             return false;
         }
+
+        // CRITICAL CHANGE: Let sequencers play without rule checks
+        if (isMelodicPlayer() || isDrumPlayer()) {
+            return true;
+        }
+
+        // Rest of the method remains the same for players with rules
+        // ...
 
         boolean debug = false; // Set to true for verbose logging
         if (debug) {
@@ -800,6 +1030,7 @@ public abstract class Player implements Callable<Boolean>, Serializable, IBusLis
 
     /**
      * Set the pan position for this player
+     * 
      * @param pan The pan position (0-127, 64 is center)
      */
     public void setPan(int pan) {
@@ -808,17 +1039,41 @@ public abstract class Player implements Callable<Boolean>, Serializable, IBusLis
 
     /**
      * Set the chorus effect amount
+     * 
      * @param amount Chorus amount (0-100)
      */
     public void setChorus(int amount) {
-//        this.chorus = chorus;
+        // this.chorus = chorus;
     }
 
     /**
      * Set the reverb effect amount
+     * 
      * @param amount Reverb amount (0-100)
      */
-    public void setReverb(int amount)  {
-//        this.reverb = amount;
+    public void setReverb(int amount) {
+        // this.reverb = amount;
+    }
+
+    // Add cleanup method to shutdown pools on application exit
+    public static void shutdownExecutors() {
+        NOTE_EXECUTOR.shutdown();
+        NOTE_OFF_SCHEDULER.shutdown();
+    }
+
+    // Add this method to handle proper deserialization
+    private void readObject(java.io.ObjectInputStream in) throws IOException, ClassNotFoundException {
+        in.defaultReadObject();
+        // Reinitialize transient fields
+        try {
+            initializeTransientFields();
+        } catch (Exception e) {
+            // Log but continue - we can create a new one each time if needed
+            System.err.println("Error reinitializing MIDI message: " + e.getMessage());
+        }
+    }
+
+    public Integer getPreset() {
+        return Objects.nonNull(instrument) ? instrument.getPreset() : 0;
     }
 }

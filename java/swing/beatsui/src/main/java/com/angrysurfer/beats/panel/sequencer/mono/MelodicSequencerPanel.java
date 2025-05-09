@@ -1,50 +1,48 @@
 package com.angrysurfer.beats.panel.sequencer.mono;
 
 import java.awt.BorderLayout;
-import java.awt.Color;
-import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
-import java.awt.GridLayout;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
 import java.awt.Insets;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
 
 import javax.swing.BorderFactory;
-import javax.swing.Box;
-import javax.swing.BoxLayout;
 import javax.swing.JButton;
 import javax.swing.JComboBox;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
-import javax.swing.JSpinner;
 import javax.swing.JToggleButton;
-import javax.swing.border.EmptyBorder;
+import javax.swing.SwingUtilities;
 
-import com.angrysurfer.beats.event.MelodicScaleSelectionEvent;
-import com.angrysurfer.beats.panel.SessionControlPanel;
+import com.angrysurfer.beats.Symbols;
+import com.angrysurfer.beats.panel.player.ChannelComboPanel;
+import com.angrysurfer.beats.widget.*;
+import com.angrysurfer.core.api.*;
+import com.angrysurfer.core.event.MelodicScaleSelectionEvent;
+import com.angrysurfer.core.event.MelodicSequencerEvent;
+import com.angrysurfer.core.event.NoteEvent;
+
+import com.angrysurfer.core.event.PlayerRefreshEvent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.angrysurfer.beats.UIUtils;
-import com.angrysurfer.beats.widget.Dial;
-import com.angrysurfer.beats.widget.DrumButton;
-import com.angrysurfer.beats.widget.NoteSelectionDial;
-import com.angrysurfer.beats.widget.TriggerButton;
-import com.angrysurfer.core.api.Command;
-import com.angrysurfer.core.api.CommandBus;
-import com.angrysurfer.core.api.Commands;
-import com.angrysurfer.core.api.IBusListener;
-import com.angrysurfer.core.redis.MelodicSequencerHelper;
+import com.angrysurfer.beats.panel.player.SoundParametersPanel;
+import com.angrysurfer.beats.panel.sequencer.MuteSequencerPanel;
+import com.angrysurfer.beats.panel.sequencer.TiltSequencerPanel;
+import com.angrysurfer.beats.panel.session.SessionControlPanel;
+import com.angrysurfer.beats.util.UIHelper;
+import com.angrysurfer.core.model.Player;
+import com.angrysurfer.core.redis.MelodicSequenceDataHelper;
 import com.angrysurfer.core.redis.RedisService;
 import com.angrysurfer.core.sequencer.MelodicSequenceData;
 import com.angrysurfer.core.sequencer.MelodicSequencer;
-import com.angrysurfer.core.sequencer.NoteEvent;
 import com.angrysurfer.core.sequencer.TimingDivision;
-import com.angrysurfer.core.service.InternalSynthManager;
 import com.angrysurfer.core.service.MelodicSequencerManager;
+import com.angrysurfer.core.service.PlayerManager;
 
 import lombok.Getter;
 import lombok.Setter;
@@ -61,26 +59,12 @@ public class MelodicSequencerPanel extends JPanel implements IBusListener {
     private MelodicSequencer sequencer;
 
     // UI state variables - keep these in the panel
-    private List<TriggerButton> triggerButtons = new ArrayList<>();
-    private List<Dial> noteDials = new ArrayList<>();
-    private List<Dial> velocityDials = new ArrayList<>();
-    private List<Dial> gateDials = new ArrayList<>();
-    private List<DrumButton> melodicPadButtons = new ArrayList<>();
-    private List<Dial> probabilityDials = new ArrayList<>();
-    private List<Dial> nudgeDials = new ArrayList<>();
 
     // Labels and UI components
     private JLabel octaveLabel;
-    private JComboBox<String> rootNoteCombo;
-    private JComboBox<String> scaleCombo;
-    private JComboBox<String> directionCombo;
     private JComboBox<String> rangeCombo;
     private JComboBox<TimingDivision> timingCombo;
     private JToggleButton latchToggleButton;
-    private JSpinner lastStepSpinner;
-
-    private boolean listenersEnabled = true;
-    private boolean updatingUI = false;
 
     private MelodicSequenceNavigationPanel navigationPanel;
 
@@ -88,19 +72,26 @@ public class MelodicSequencerPanel extends JPanel implements IBusListener {
 
     private MelodicSequenceParametersPanel sequenceParamsPanel;
 
-    private JPanel southPanel;
-
     private TiltSequencerPanel tiltSequencerPanel;
 
+    private MelodicSequencerGridPanel gridPanel;
+
+    private MelodicSequencerScalePanel scalePanel;
+
+    private MelodicSequencerGeneratorPanel generatorPanel;
+
+    private JLabel instrumentInfoLabel;
+
+    private boolean updatingUI = false;
+
     /**
-     * Modify constructor to use only one step update mechanism (direct
-     * listener) and load the first sequence if available
+     * Constructor for MelodicSequencerPanel
      */
-    public MelodicSequencerPanel(Integer channel, Consumer<NoteEvent> noteEventConsumer) {
+    public MelodicSequencerPanel(int index, Consumer<NoteEvent> noteEventConsumer) {
         super(new BorderLayout());
 
-        // Create the sequencer
-        sequencer = MelodicSequencerManager.getInstance().newSequencer(channel);
+        // Create the sequencer with properly assigned channel
+        sequencer = MelodicSequencerManager.getInstance().newSequencer(index);
 
         // Set up the note event listener
         sequencer.setNoteEventListener(noteEventConsumer);
@@ -110,6 +101,9 @@ public class MelodicSequencerPanel extends JPanel implements IBusListener {
             updateStepHighlighting(event.getOldStep(), event.getNewStep());
         });
 
+        // Apply instrument preset immediately to ensure correct sound
+        PlayerManager.getInstance().applyInstrumentPreset(sequencer.getPlayer());
+
         // Initialize the UI
         initialize();
 
@@ -118,6 +112,8 @@ public class MelodicSequencerPanel extends JPanel implements IBusListener {
 
         // Register with command bus for other UI updates (not step highlighting)
         CommandBus.getInstance().register(this);
+
+        logger.info("Created MelodicSequencerPanel with index {}", index);
     }
 
     /**
@@ -130,76 +126,114 @@ public class MelodicSequencerPanel extends JPanel implements IBusListener {
             return;
         }
 
-        // Get the manager reference
-        MelodicSequencerManager manager = MelodicSequencerManager.getInstance();
+        try {
+            // Get the manager reference
+            MelodicSequencerManager manager = MelodicSequencerManager.getInstance();
 
-        // Check if this sequencer has any sequences
-        if (manager.hasSequences(sequencer.getId())) {
-            Long firstId = manager.getFirstSequenceId(sequencer.getId());
+            // Check if this sequencer has any sequences
+            if (manager.hasSequences(sequencer.getId())) {
+                Long firstId = manager.getFirstSequenceId(sequencer.getId());
 
-            if (firstId != null) {
-                logger.info("Loading first sequence {} for sequencer {}", firstId, sequencer.getId());
+                if (firstId != null) {
+                    MelodicSequenceData data = RedisService.getInstance().findMelodicSequenceById(firstId,
+                            sequencer.getId());
 
-                // Load the sequence
-                RedisService redisService = RedisService.getInstance();
-                MelodicSequenceData data = redisService.findMelodicSequenceById(firstId, sequencer.getId());
+                    // Check if data was actually found
+                    if (data == null) {
+                        logger.warn("No sequence data found for ID {} and sequencer {}, creating new pattern",
+                                firstId, sequencer.getId());
+                        // Handle case where no data is found - create a new sequence
+                        data = RedisService.getInstance().newMelodicSequence(sequencer.getId());
+                    }
 
-                // Log what we're loading
-                if (data.getHarmonicTiltValues() != null) {
-                    logger.info("Loaded sequence has {} tilt values", data.getHarmonicTiltValues().size());
+                    // Apply the sequence data
+                    RedisService.getInstance().applyMelodicSequenceToSequencer(data, sequencer);
+
+                    // Force UI update
+                    SwingUtilities.invokeLater(() -> {
+                        // Regular UI sync
+                        syncUIWithSequencer();
+
+                        // Be sure to update tilt panel after UI sync
+                        if (tiltSequencerPanel != null) {
+                            tiltSequencerPanel.syncWithSequencer();
+                        }
+                    });
+
+                    // Notify that a pattern was loaded
+                    CommandBus.getInstance().publish(
+                            Commands.MELODIC_SEQUENCE_LOADED,
+                            this,
+                            new MelodicSequencerEvent(
+                                    sequencer.getId(),
+                                    data.getId()));
+
+                    // If we have a navigation panel, update its display
+                    if (navigationPanel != null) {
+                        navigationPanel.updateSequenceIdDisplay();
+                    }
                 } else {
-                    logger.warn("Loaded sequence has no tilt values");
+                    // No sequence ID found, create a new one
+                    createDefaultSequence();
                 }
-
-                redisService.applyMelodicSequenceToSequencer(data, sequencer);
-
-                // Reset the sequencer to ensure proper step indicator state
-                sequencer.reset();
-
-                // Update the UI to reflect loaded sequence
-                syncUIWithSequencer();
-
-                // EXPLICIT CALL to update tilt panel
-                if (tiltSequencerPanel != null) {
-                    logger.info("Explicitly updating tilt panel after sequence load");
-                    tiltSequencerPanel.syncWithSequencer();
-                }
-
-                // Notify that a pattern was loaded
-                CommandBus.getInstance().publish(
-                        Commands.MELODIC_SEQUENCE_LOADED,
-                        this,
-                        new MelodicSequencerHelper.MelodicSequencerEvent(
-                                sequencer.getId(),
-                                sequencer.getMelodicSequenceId()));
-
-                // If we have a navigation panel, update its display
-                if (navigationPanel != null) {
-                    navigationPanel.updateSequenceIdDisplay();
-                }
+            } else {
+                logger.info("No saved sequences found for sequencer {}, creating default pattern",
+                        sequencer.getId());
+                createDefaultSequence();
             }
-        } else {
-            logger.info("No saved sequences found for sequencer {}, using default empty pattern",
-                    sequencer.getId());
+        } catch (Exception e) {
+            // Handle any exceptions during loading
+            logger.error("Error loading first sequence: {}", e.getMessage(), e);
+            createDefaultSequence();
         }
     }
 
+    /**
+     * Creates a default sequence when none exists
+     */
+    private void createDefaultSequence() {
+        try {
+            // Create a new sequence using the Redis service
+            MelodicSequenceData newData = RedisService.getInstance().newMelodicSequence(sequencer.getId());
+
+            // Apply it to the sequencer
+            RedisService.getInstance().applyMelodicSequenceToSequencer(newData, sequencer);
+
+            // Update UI
+            SwingUtilities.invokeLater(() -> {
+                syncUIWithSequencer();
+                if (tiltSequencerPanel != null) {
+                    tiltSequencerPanel.syncWithSequencer();
+                }
+            });
+
+            // Notify that a new sequence was created
+            CommandBus.getInstance().publish(
+                    Commands.MELODIC_SEQUENCE_CREATED,
+                    this,
+                    new MelodicSequencerEvent(sequencer.getId(), newData.getId()));
+
+            logger.info("Created default sequence for sequencer {}", sequencer.getId());
+        } catch (Exception e) {
+            logger.error("Error creating default sequence: {}", e.getMessage(), e);
+        }
+    }
+
+    /**
+     * Initialize the panel
+     */
     private void initialize() {
         // Clear any existing components first to prevent duplication
         removeAll();
 
-        // Use a consistent BorderLayout
-        setLayout(new BorderLayout(5, 5));
-        setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
+        setLayout(new BorderLayout(2, 2));
+        UIHelper.setPanelBorder(this);
 
-        // Create west panel to hold navigation
-        JPanel westPanel = new JPanel(new BorderLayout(5, 5));
+        JPanel westPanel = new JPanel(new BorderLayout(2, 2));
 
-        // Create east panel for sound parameters
-        JPanel eastPanel = new JPanel(new BorderLayout(5, 5));
+        JPanel eastPanel = new JPanel(new BorderLayout(2, 2));
 
-        // Create top panel to hold west and east panels
-        JPanel topPanel = new JPanel(new BorderLayout(5, 5));
+        JPanel topPanel = new JPanel(new BorderLayout(2, 2));
 
         // Create sequence navigation panel
         navigationPanel = new MelodicSequenceNavigationPanel(sequencer, this);
@@ -208,10 +242,31 @@ public class MelodicSequencerPanel extends JPanel implements IBusListener {
         sequenceParamsPanel = new MelodicSequenceParametersPanel(sequencer);
 
         // Navigation panel goes NORTH-WEST
-        westPanel.add(navigationPanel, BorderLayout.NORTH);
+        westPanel.add(navigationPanel, BorderLayout.WEST);
 
         // Sound parameters go NORTH-EAST
-        eastPanel.add(createSoundParametersPanel(), BorderLayout.NORTH);
+        // eastPanel.add(new SoundParametersPanel(), BorderLayout.NORTH);
+
+        // Create and add the center info panel with instrument info
+        JPanel centerPanel = new JPanel(new GridBagLayout()); // Use GridBagLayout for true vertical centering
+
+        // Create the instrument info label
+        // instrumentInfoLabel = new JLabel();
+        // instrumentInfoLabel.setFont(new Font(Font.SANS_SERIF, Font.BOLD, 12));
+        // updateInstrumentInfoLabel(); // Initialize with current values
+
+        // Add constraints to center vertically and horizontally
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.gridx = 0;
+        gbc.gridy = 0;
+        gbc.fill = GridBagConstraints.NONE;
+        gbc.anchor = GridBagConstraints.CENTER;
+        gbc.weightx = 1.0; // Give horizontal weight
+        gbc.weighty = 1.0; // Give vertical weight - this is key for vertical centering
+        // centerPanel.add(instrumentInfoLabel, gbc);
+
+        // Add centerPanel to the top panel
+        UIHelper.addSafely(topPanel, centerPanel, BorderLayout.CENTER);
 
         // Add panels to the top panel
         topPanel.add(westPanel, BorderLayout.WEST);
@@ -220,452 +275,212 @@ public class MelodicSequencerPanel extends JPanel implements IBusListener {
         // Add top panel to main layout
         add(topPanel, BorderLayout.NORTH);
 
-        // Create panel for the 16 columns
-        JPanel sequencePanel = new JPanel(new GridLayout(1, 16, 2, 0));
-        sequencePanel.setBorder(new EmptyBorder(5, 5, 5, 5));
-
-        // Create 16 columns
-        for (int i = 0; i < 16; i++) {
-            JPanel columnPanel = createSequenceColumn(i);
-            sequencePanel.add(columnPanel);
-        }
-
-        // Wrap in scroll pane in case window gets too small
-        JScrollPane scrollPane = new JScrollPane(sequencePanel);
+        // Create the grid panel and add to center
+        gridPanel = new MelodicSequencerGridPanel(sequencer);
+        JScrollPane scrollPane = new JScrollPane(gridPanel);
         scrollPane.setBorder(null);
         scrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
         scrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_NEVER);
-
-        // Add sequence grid to center
         add(scrollPane, BorderLayout.CENTER);
 
-        // Create a container panel for both southern panels - SWAPPED ORDER
-        southPanel = new JPanel(new BorderLayout(5, 5));
+        JPanel sequencersPanel = new JPanel(new BorderLayout(2, 1));
 
-        // Create tilt panel with LIMITED HEIGHT and add it to the TOP of the south
-        // panel
+        // Create the tilt panel and add it to the NORTH of bottom panel
+
         tiltSequencerPanel = new TiltSequencerPanel(sequencer);
-        southPanel.add(tiltSequencerPanel, BorderLayout.NORTH);
+        sequencersPanel.add(tiltSequencerPanel, BorderLayout.NORTH);
+        sequencersPanel.add(new MuteSequencerPanel(sequencer), BorderLayout.SOUTH);
+        // Create bottom panel with BorderLayout for proper positioning
+        JPanel bottomPanel = new JPanel(new BorderLayout(2, 1));
 
-        // Create a container for the bottom controls (parameters + generate)
-        JPanel bottomControlsPanel = new JPanel(new BorderLayout(5, 5));
+        bottomPanel.add(sequencersPanel, BorderLayout.NORTH);
 
-        // Add sequence parameters to the center of bottom controls
-        bottomControlsPanel.add(sequenceParamsPanel, BorderLayout.CENTER);
+        // Add the parameters panel to the CENTER of the bottom panel
+        bottomPanel.add(sequenceParamsPanel, BorderLayout.CENTER);
 
-        // Create a container for the right-side panels
-        JPanel rightPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 5, 0));
+        // Create right panel for additional controls
+        JPanel rightPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 2, 1));
 
-        // Create and add generate panel
-        JPanel generatePanel = createGeneratePanel();
-        rightPanel.add(generatePanel);
+        // Create and add the scale panel to the RIGHT of the bottom panel
+        scalePanel = new MelodicSequencerScalePanel(sequencer);
+        rightPanel.add(scalePanel);
 
-        // Create and add swing panel
+        generatorPanel = new MelodicSequencerGeneratorPanel(sequencer);
+        rightPanel.add(generatorPanel);
+
+        // Add swing panel to the right panel
         swingPanel = new MelodicSequencerSwingPanel(sequencer);
         rightPanel.add(swingPanel);
 
-        // Add the right panel container to the east position
-        bottomControlsPanel.add(rightPanel, BorderLayout.EAST);
+        // Add the right panel to the bottom panel's EAST region
+        bottomPanel.add(rightPanel, BorderLayout.EAST);
 
-        // Add the bottom controls container to the south panel
-        southPanel.add(bottomControlsPanel, BorderLayout.SOUTH);
+        // Add the bottom panel to the SOUTH region of the main panel
+        add(bottomPanel, BorderLayout.SOUTH);
 
-        // Add the south panel to the main layout
-        add(southPanel, BorderLayout.SOUTH);
+        JPanel buttonPanel = UIHelper.createSectionPanel("System");
+
+        // Create refresh button
+        JButton refreshButton = new JButton(Symbols.getSymbol(Symbols.CYCLE));
+        refreshButton.setToolTipText("Refresh all instrument presets");
+        refreshButton.setPreferredSize(new Dimension(UIHelper.SMALL_CONTROL_WIDTH, UIHelper.CONTROL_HEIGHT));
+        refreshButton.setMaximumSize(new Dimension(UIHelper.SMALL_CONTROL_WIDTH, UIHelper.CONTROL_HEIGHT));
+        refreshButton.addActionListener(e -> {
+            CommandBus.getInstance().publish(
+                    Commands.REFRESH_ALL_INSTRUMENTS,
+                    this,
+                    sequencer);
+        });
+        buttonPanel.add(refreshButton);
+        buttonPanel.add(createInstrumentRefreshButton());
+        buttonPanel.add(createRefreshButton());
+        // Add the button to the bottom panel
+        westPanel.add(buttonPanel, BorderLayout.EAST);
+
+        // Register for command updates
+        CommandBus.getInstance().register(this);
+    }
+
+    // Add this as a new method:
+    private JButton createInstrumentRefreshButton() {
+        JButton refreshButton = new JButton(Symbols.getSymbol(Symbols.CYCLE));
+        refreshButton.setToolTipText("Refresh all instrument sounds (fixes sound issues)");
+
+        refreshButton.addActionListener(e -> {
+            // First melodic sequencers
+            for (MelodicSequencer seq : MelodicSequencerManager
+                    .getInstance().getAllSequencers()) {
+                if (seq.getPlayer() != null && seq.getPlayer().getInstrument() != null) {
+                    com.angrysurfer.core.service.PlayerManager.getInstance().applyInstrumentPreset(seq.getPlayer());
+                }
+            }
+
+            // Then drum sequencers
+            for (com.angrysurfer.core.sequencer.DrumSequencer seq : com.angrysurfer.core.service.DrumSequencerManager
+                    .getInstance().getAllSequencers()) {
+                for (com.angrysurfer.core.model.Player player : seq.getPlayers()) {
+                    if (player != null && player.getInstrument() != null) {
+                        com.angrysurfer.core.service.PlayerManager.getInstance().applyInstrumentPreset(player);
+                    }
+                }
+                seq.ensureDeviceConnections();
+            }
+
+            // Notify user
+            com.angrysurfer.core.api.CommandBus.getInstance().publish(
+                    com.angrysurfer.core.api.Commands.STATUS_UPDATE,
+                    this,
+                    new StatusUpdate(
+                            "Sound Refresh", "Info", "Refreshed all instrument presets"));
+        });
+
+        return refreshButton;
+    }
+
+    private JButton createRefreshButton() {
+        JButton refreshButton = new JButton(Symbols.getSymbol(Symbols.CYCLE));
+        refreshButton.setToolTipText("Refresh instrument preset (fixes sound issues)");
+        refreshButton.setPreferredSize(new Dimension(UIHelper.SMALL_CONTROL_WIDTH,
+                                                    UIHelper.CONTROL_HEIGHT));
+        refreshButton.setMaximumSize(new Dimension(UIHelper.SMALL_CONTROL_WIDTH,
+                                                  UIHelper.CONTROL_HEIGHT));
+        
+        refreshButton.addActionListener(e -> {
+            if (sequencer != null && sequencer.getPlayer() != null && 
+                sequencer.getPlayer().getInstrument() != null) {
+                
+                // Log current instrument state
+                com.angrysurfer.core.model.InstrumentWrapper instr = sequencer.getPlayer().getInstrument();
+                logger.info("Refreshing instrument: {} (bank={}, program={})", 
+                          instr.getName(), instr.getBankIndex(), instr.getPreset());
+                
+                // Send the player-specific refresh event
+                PlayerRefreshEvent event = new PlayerRefreshEvent(sequencer.getPlayer());
+                com.angrysurfer.core.api.CommandBus.getInstance().publish(
+                    com.angrysurfer.core.api.Commands.PLAYER_REFRESH_EVENT,
+                    this,
+                    event
+                );
+                
+                // Update UI
+                com.angrysurfer.core.api.CommandBus.getInstance().publish(
+                    com.angrysurfer.core.api.Commands.STATUS_UPDATE, 
+                    this, 
+                    new com.angrysurfer.core.api.StatusUpdate(
+                        "Preset Refresh", "Info", "Refreshed instrument for " + sequencer.getPlayer().getName())
+                );
+            }
+        });
+        
+        return refreshButton;
     }
 
     /**
-     * Creates the sound parameters panel with preset selection and sound editing
-     */
-    private JPanel createSoundParametersPanel() {
-        // Size constants
-        final int SMALL_CONTROL_WIDTH = 30;
-        final int LARGE_CONTROL_WIDTH = 90;
-        final int CONTROL_HEIGHT = 25;
-
-        // Create the panel with a titled border
-        JPanel panel = new JPanel();
-        panel.setBorder(BorderFactory.createTitledBorder("Sound Parameters"));
-        panel.setLayout(new FlowLayout(FlowLayout.LEFT, 5, 2));
-
-        // Create preset combo
-        JComboBox<String> presetCombo = new JComboBox<>();
-        presetCombo.setPreferredSize(new Dimension(LARGE_CONTROL_WIDTH * 2, CONTROL_HEIGHT));
-        presetCombo.setToolTipText("Select instrument preset");
-        populatePresetCombo(presetCombo);
-
-        // Add listener for preset changes
-        presetCombo.addActionListener(e -> {
-            if (updatingUI || presetCombo.getSelectedIndex() < 0)
-                return;
-
-            int presetIndex = presetCombo.getSelectedIndex();
-            logger.info("Selected preset index: {}", presetIndex);
-
-            if (sequencer.getNotePlayer() != null) {
-                sequencer.getNotePlayer().setPreset(presetIndex);
-
-                // Inform the system about the preset change
-                CommandBus.getInstance().publish(
-                        Commands.PLAYER_UPDATED,
-                        this,
-                        sequencer.getNotePlayer());
-            }
-        });
-
-        // Create edit button with pencil icon and skinny width
-        JButton editButton = new JButton("✎");
-        editButton.setToolTipText("Edit sound for this sequencer");
-        editButton.setPreferredSize(new Dimension(SMALL_CONTROL_WIDTH, CONTROL_HEIGHT));
-        editButton.setMargin(new Insets(1, 1, 1, 1));
-        editButton.setFocusable(false);
-
-        // Add listener for edit button
-        editButton.addActionListener(e -> {
-            if (sequencer != null && sequencer.getNotePlayer() != null) {
-                logger.info("Opening player editor for: {}", sequencer.getNotePlayer().getName());
-                CommandBus.getInstance().publish(
-                        Commands.PLAYER_SELECTED,
-                        this,
-                        sequencer.getNotePlayer());
-
-                CommandBus.getInstance().publish(
-                        Commands.PLAYER_EDIT_REQUEST,
-                        this,
-                        sequencer.getNotePlayer());
-            } else {
-                logger.warn("Cannot edit player - Note player is not initialized");
-            }
-        });
-
-        // Add components to panel
-        panel.add(presetCombo);
-        panel.add(editButton);
-
-        return panel;
-    }
-
-    /**
-     * Create panel for sequence parameters (loop, direction, timing, etc.)
-     */
-    private JPanel createGeneratePanel() {
-        // Size constants
-        final int SMALL_CONTROL_WIDTH = 40;
-        final int MEDIUM_CONTROL_WIDTH = 90;
-        final int CONTROL_HEIGHT = 25;
-
-        JPanel panel = new JPanel();
-        panel.setBorder(BorderFactory.createTitledBorder("Generate"));
-        panel.setLayout(new FlowLayout(FlowLayout.LEFT, 5, 2));
-
-        // Range combo (moved from sequence parameters panel)
-        String[] rangeOptions = { "1 Octave", "2 Octaves", "3 Octaves", "4 Octaves" };
-        rangeCombo = new JComboBox<>(rangeOptions);
-        rangeCombo.setSelectedIndex(1); // Default to 2 octaves
-        rangeCombo.setPreferredSize(new Dimension(MEDIUM_CONTROL_WIDTH, CONTROL_HEIGHT));
-        rangeCombo.setToolTipText("Set the octave range for pattern generation");
-
-        // Generate button with consistent styling
-        JButton generateButton = new JButton("🎲");
-        generateButton.setToolTipText("Generate a random pattern");
-        generateButton.setPreferredSize(new Dimension(SMALL_CONTROL_WIDTH, CONTROL_HEIGHT));
-        generateButton.setMargin(new Insets(2, 2, 2, 2));
-        generateButton.addActionListener(e -> {
-            // Get selected octave range from the combo
-            int octaveRange = rangeCombo.getSelectedIndex() + 1;
-            int density = 50; // Fixed density for now
-            sequencer.generatePattern(octaveRange, density);
-            syncUIWithSequencer();
-        });
-
-        // Latch toggle button (moved from sequence parameters panel)
-        latchToggleButton = new JToggleButton("L", false);
-        latchToggleButton.setToolTipText("Generate new pattern each cycle");
-        latchToggleButton.setPreferredSize(new Dimension(SMALL_CONTROL_WIDTH, CONTROL_HEIGHT));
-        latchToggleButton.addActionListener(e -> {
-            sequencer.setLatchEnabled(latchToggleButton.isSelected());
-            logger.info("Latch mode set to: {}", latchToggleButton.isSelected());
-        });
-
-        panel.add(generateButton);
-        panel.add(rangeCombo);
-        panel.add(latchToggleButton);
-
-        return panel;
-    }
-
-    /**
-     * Populate the preset combo with General MIDI instrument names
-     */
-    private void populatePresetCombo(JComboBox<String> combo) {
-        updatingUI = true;
-        try {
-            combo.removeAllItems();
-
-            // Get the list of GM preset names from InternalSynthManager
-            List<String> presetNames = InternalSynthManager.getInstance().getGeneralMIDIPresetNames();
-
-            // Add each preset with its index
-            for (int i = 0; i < presetNames.size(); i++) {
-                combo.addItem(i + ": " + presetNames.get(i));
-            }
-
-            // Select current preset if available
-            if (sequencer.getNotePlayer() != null && sequencer.getNotePlayer().getPreset() != null) {
-                int currentPreset = sequencer.getNotePlayer().getPreset();
-                if (currentPreset >= 0 && currentPreset < presetNames.size()) {
-                    combo.setSelectedItem(currentPreset + ": " + presetNames.get(currentPreset));
-                }
-            }
-        } finally {
-            updatingUI = false;
-        }
-    }
-
-    private int parsePresetNumber(String presetString) {
-        try {
-            return Integer.parseInt(presetString.split(":")[0].trim());
-        } catch (NumberFormatException e) {
-            logger.error("Failed to parse preset number from: {}", presetString);
-            return -1;
-        }
-    }
-
-    // Update the createSequenceColumn method to make columns more compact
-    private JPanel createSequenceColumn(int index) {
-        // Use BoxLayout for vertical arrangement
-        JPanel column = new JPanel();
-        column.setLayout(new BoxLayout(column, BoxLayout.Y_AXIS));
-        column.setBorder(BorderFactory.createEmptyBorder(5, 2, 5, 2));
-
-        // Add 5 knobs
-        Dial[] noteDial = { null };
-        Dial[] velocityDial = { null };
-        Dial[] gateDial = { null };
-        Dial[] probabilityDial = { null };
-        Dial[] nudgeDial = { null };
-        TriggerButton[] triggerButton = { null };
-
-        for (int i = 0; i < 5; i++) {
-            JLabel label = new JLabel(getKnobLabel(i));
-            // Make label more compact with smaller padding
-            label.setBorder(BorderFactory.createEmptyBorder(2, 2, 2, 2));
-            // label.setForeground(Color.GRAY);
-            label.setAlignmentX(Component.CENTER_ALIGNMENT);
-
-            if (i < 4) {
-                JPanel labelPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 0, 0));
-                labelPanel.add(label);
-                column.add(labelPanel);
-            }
-
-            // Create dial - first one is always a NoteSelectionDial
-            Dial dial = i == 4 ? new NoteSelectionDial() : new Dial();
-
-            // Store the dial in the appropriate collection based on its type
-            switch (i) {
-                case 0 -> {
-                    velocityDial[0] = dial;
-                    velocityDials.add(dial);
-                    dial.setKnobColor(UIUtils.getDialColor("velocity"));
-                }
-                case 1 -> {
-                    gateDial[0] = dial;
-                    gateDials.add(dial);
-                    dial.setKnobColor(UIUtils.getDialColor("gate"));
-                }
-                case 4 -> {
-                    dial.setPreferredSize(new Dimension(75, 75)); // Reduced from 75x75
-                    noteDial[0] = dial;
-                    noteDials.add(dial);
-                }
-                case 2 -> {
-                    dial.setMinimum(0);
-                    dial.setMaximum(100);
-                    dial.setValue(100); // Default to 100%
-                    dial.setKnobColor(UIUtils.getDialColor("probability"));
-                    dial.addChangeListener(e -> {
-                        if (!listenersEnabled)
-                            return;
-                        sequencer.setProbabilityValue(index, dial.getValue());
-                    });
-                    probabilityDial[0] = dial;
-                    probabilityDials.add(dial);
-                }
-                case 3 -> {
-                    dial.setMinimum(0);
-                    dial.setMaximum(250);
-                    dial.setValue(0); // Default to no nudge
-                    dial.setKnobColor(UIUtils.getDialColor("nudge"));
-                    dial.addChangeListener(e -> {
-                        if (!listenersEnabled)
-                            return;
-                        sequencer.setNudgeValue(index, dial.getValue());
-                    });
-                    nudgeDial[0] = dial;
-                    nudgeDials.add(dial);
-                }
-            }
-
-            dial.setUpdateOnResize(false);
-            dial.setToolTipText(String.format("Step %d %s", index + 1, getKnobLabel(i)));
-            dial.setName("JDial-" + index + "-" + i);
-
-            // Center the dial horizontally with minimal padding
-            JPanel dialPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 0, 0));
-            dialPanel.add(dial);
-            column.add(dialPanel);
-        }
-
-        // Add minimal spacing between knobs
-        column.add(Box.createRigidArea(new Dimension(0, 2)));
-
-        // Make trigger button more compact
-        triggerButton[0] = new TriggerButton("");
-        triggerButton[0].setName("TriggerButton-" + index);
-        triggerButton[0].setToolTipText("Step " + (index + 1));
-        triggerButton[0].setPreferredSize(new Dimension(20, 20)); // Smaller size
-        triggerButton[0].setToggleable(true);
-
-        triggerButton[0].addActionListener(e -> {
-            boolean isSelected = triggerButton[0].isSelected();
-            // Get existing step data
-            int note = noteDials.get(index).getValue();
-            int velocity = velocityDials.get(index).getValue();
-            int gate = gateDials.get(index).getValue();
-            int probability = probabilityDials.get(index).getValue();
-            int nudge = nudgeDials.get(index).getValue();
-            // Update sequencer pattern data
-            sequencer.setStepData(index, isSelected, note, velocity, gate, probability, nudge);
-        });
-
-        triggerButtons.add(triggerButton[0]);
-        // Compact panel for trigger button
-        JPanel buttonPanel1 = new JPanel(new FlowLayout(FlowLayout.CENTER, 0, 0));
-        buttonPanel1.add(triggerButton[0]);
-        column.add(buttonPanel1);
-
-        noteDial[0].addChangeListener(e -> {
-            if (!listenersEnabled) {
-                return;
-            }
-
-            // Get probability and nudge values
-            int probability = 100;
-            int nudge = 0;
-
-            if (index < probabilityDials.size()) {
-                probability = probabilityDials.get(index).getValue();
-            }
-
-            if (index < nudgeDials.size()) {
-                nudge = nudgeDials.get(index).getValue();
-            }
-
-            // Update sequencer with all step data
-            sequencer.setStepData(index, triggerButton[0].isSelected(),
-                    noteDial[0].getValue(), velocityDial[0].getValue(),
-                    gateDial[0].getValue(), probability, nudge);
-        });
-
-        velocityDial[0].addChangeListener(e -> {
-            if (!listenersEnabled) {
-                return;
-            }
-
-            // Update sequencer pattern data
-            sequencer.setStepData(index, triggerButton[0].isSelected(),
-                    noteDial[0].getValue(), velocityDial[0].getValue(),
-                    gateDial[0].getValue(), probabilityDials.get(index).getValue(),
-                    nudgeDials.get(index).getValue());
-        });
-
-        gateDial[0].addChangeListener(e -> {
-            if (!listenersEnabled) {
-                return;
-            }
-
-            // Update sequencer pattern data
-            sequencer.setStepData(index, triggerButton[0].isSelected(),
-                    noteDial[0].getValue(), velocityDial[0].getValue(),
-                    gateDial[0].getValue(), probabilityDials.get(index).getValue(),
-                    nudgeDials.get(index).getValue());
-        });
-
-        return column;
-    }
-
-    private String getKnobLabel(int i) {
-        return i == 0 ? "Velocity" : i == 1 ? "Gate" : i == 2 ? "Probability" : i == 3 ? "Nudge" : "Unknown";
-    }
-
-    /**
-     * Update step highlighting based on sequence position
+     * Update step highlighting in the grid panel
      */
     private void updateStepHighlighting(int oldStep, int newStep) {
-        // Un-highlight old step
-        if (oldStep >= 0 && oldStep < triggerButtons.size()) {
-            triggerButtons.get(oldStep).setHighlighted(false);
-            triggerButtons.get(oldStep).repaint();
-        }
-        
-        // Highlight new step with color based on position
-        if (newStep >= 0 && newStep < triggerButtons.size()) {
-            Color highlightColor;
-            
-            if (newStep < 16) {
-                // First 16 steps - orange highlight
-                highlightColor = UIUtils.fadedOrange;
-            } else if (newStep < 32) {
-                // Steps 17-32
-                highlightColor = UIUtils.coolBlue;
-            } else if (newStep < 48) {
-                // Steps 33-48
-                highlightColor = UIUtils.deepNavy;
-            } else {
-                // Steps 49-64
-                highlightColor = UIUtils.mutedOlive;
-            }
-            
-            triggerButtons.get(newStep).setHighlighted(true);
-            triggerButtons.get(newStep).setHighlightColor(highlightColor);
-            triggerButtons.get(newStep).repaint();
+        // Delegate to grid panel
+        if (gridPanel != null) {
+            gridPanel.updateStepHighlighting(oldStep, newStep);
         }
     }
 
     private void updateOctaveLabel() {
         if (octaveLabel != null) {
-            octaveLabel.setText(Integer.toString(sequencer.getOctaveShift()));
+            octaveLabel.setText(Integer.toString(sequencer.getSequenceData().getOctaveShift()));
         }
     }
 
     /**
      * Synchronize all UI elements with the current sequencer state
      */
+
     private void syncUIWithSequencer() {
         updatingUI = true;
         try {
-            // Update trigger buttons
-            List<Boolean> activeSteps = sequencer.getActiveSteps();
-            for (int i = 0; i < Math.min(triggerButtons.size(), activeSteps.size()); i++) {
-                triggerButtons.get(i).setSelected(activeSteps.get(i));
-                triggerButtons.get(i).repaint();
-            }
 
-            // Update other controls like sequence parameters
+            // Update sequence parameters panel
             if (sequenceParamsPanel != null) {
                 sequenceParamsPanel.updateUI(sequencer);
             }
 
-            // Update swing panel if available
+            // Update scale panel
+            if (scalePanel != null) {
+                scalePanel.updateUI(sequencer);
+            }
+
+            // Update grid panel
+            if (gridPanel != null) {
+                gridPanel.syncWithSequencer();
+            }
+
+            // Update tilt sequencer panel - THIS WAS MISSING
+            if (tiltSequencerPanel != null) {
+                logger.debug("Syncing tilt panel with sequencer values: {}",
+                        sequencer.getHarmonicTiltValues().size());
+                tiltSequencerPanel.syncWithSequencer();
+            }
+
+            // Update swing panel - THIS WAS MISSING
             if (swingPanel != null) {
                 swingPanel.updateControls();
             }
 
-            // Update tilt sequencer panel directly
-            if (tiltSequencerPanel != null) {
-                logger.debug("Syncing tilt sequencer panel with sequencer state");
-                tiltSequencerPanel.syncWithSequencer();
+            // Update navigation panel - THIS WAS MISSING
+            if (navigationPanel != null) {
+                navigationPanel.updateSequenceIdDisplay();
+            }
+
+            // Update instrument info label - THIS WAS MISSING
+            // updateInstrumentInfoLabel();
+
+            // Check and update latch toggle button if needed - THIS WAS MISSING
+            if (latchToggleButton != null)
+                latchToggleButton.setSelected(sequencer.isLatchEnabled());
+
+            // Update generator panel
+            if (generatorPanel != null) {
+                generatorPanel.syncWithSequencer();
             }
 
         } finally {
@@ -675,49 +490,6 @@ public class MelodicSequencerPanel extends JPanel implements IBusListener {
         // Force revalidate and repaint
         revalidate();
         repaint();
-    }
-
-    /**
-     * Update the TiltSequencerPanel to reflect current sequencer state
-     */
-    private void updateTiltSequencerPanel() {
-        // Find and update any TiltSequencerPanel components
-        for (Component c : southPanel.getComponents()) {
-            if (c instanceof JPanel panel) {
-                for (Component innerComp : panel.getComponents()) {
-                    if (innerComp instanceof TiltSequencerPanel tiltPanel) {
-                        logger.info("Syncing TiltSequencerPanel with sequencer");
-                        tiltPanel.syncWithSequencer();
-                        break;
-                    }
-                }
-            } else if (c instanceof TiltSequencerPanel tiltPanel) {
-                logger.info("Syncing TiltSequencerPanel with sequencer");
-                tiltPanel.syncWithSequencer();
-            }
-        }
-    }
-
-    /**
-     * Initialize melodic pads and apply numbered labels with beat indicators.
-     */
-    private void initializeMelodicPads() {
-        // Apply numbered labels to each pad with beat indicators
-        for (int i = 0; i < melodicPadButtons.size(); i++) {
-            DrumButton pad = melodicPadButtons.get(i);
-
-            // Set the pad number (1-based)
-            pad.setPadNumber(i + 1);
-
-            // Set main beat flag for pads 1, 5, 9, 13 (zero-indexed as 0, 4, 8, 12)
-            pad.setMainBeat(i == 0 || i == 4 || i == 8 || i == 12);
-
-            // FORCE REPAINT for each pad
-            pad.repaint();
-        }
-
-        // FORCE LAYOUT UPDATE to ensure sizes are applied
-        revalidate();
     }
 
     /**
@@ -736,7 +508,7 @@ public class MelodicSequencerPanel extends JPanel implements IBusListener {
                     Commands.MELODIC_SEQUENCE_SELECTED,
                     Commands.MELODIC_SEQUENCE_UPDATED -> {
                 // Check if this event applies to our sequencer
-                if (action.getData() instanceof MelodicSequencerHelper.MelodicSequencerEvent event) {
+                if (action.getData() instanceof MelodicSequencerEvent event) {
                     if (event.getSequencerId().equals(sequencer.getId())) {
                         logger.info("Updating UI for sequence event: {}", action.getCommand());
                         syncUIWithSequencer();
@@ -748,33 +520,34 @@ public class MelodicSequencerPanel extends JPanel implements IBusListener {
             }
 
             case Commands.SCALE_SELECTED -> {
-                // Only update if this event is for our specific sequencer or from the global controller
+                // Only update if this event is for our specific sequencer or from the global
+                // controller
                 if (action.getData() instanceof MelodicScaleSelectionEvent event) {
                     // Check if this event is for our sequencer
                     if (event.getSequencerId() != null && event.getSequencerId().equals(sequencer.getId())) {
                         // Update the scale in the sequencer
-                        sequencer.setScale(event.getScale());
-                        
+                        sequencer.getSequenceData().setScale(event.getScale());
+
                         // Update the UI without publishing new events
-                        if (sequenceParamsPanel != null) {
-                            sequenceParamsPanel.setSelectedScale(event.getScale());
+                        if (scalePanel != null) {
+                            scalePanel.setSelectedScale(event.getScale());
                         }
-                        
+
                         // Log the specific change
                         logger.debug("Set scale to {} for sequencer {}", event.getScale(), sequencer.getId());
                     }
-                } 
+                }
                 // Handle global scale changes from session panel (separate implementation)
-                else if (action.getData() instanceof String scale && 
-                         (action.getSender() instanceof SessionControlPanel)) {
+                else if (action.getData() instanceof String scale &&
+                        (action.getSender() instanceof SessionControlPanel)) {
                     // This is a global scale change from the session panel
-                    sequencer.setScale(scale);
-                    
+                    sequencer.getSequenceData().setScale(scale);
+
                     // Update UI without publishing new events
-                    if (sequenceParamsPanel != null) {
-                        sequenceParamsPanel.setSelectedScale(scale);
+                    if (scalePanel != null) {
+                        scalePanel.setSelectedScale(scale);
                     }
-                    
+
                     logger.debug("Set scale to {} from global session change", scale);
                 }
             }
@@ -787,7 +560,17 @@ public class MelodicSequencerPanel extends JPanel implements IBusListener {
                 }
             }
 
-            // Add other cases with arrow syntax
+            case Commands.PLAYER_UPDATED, Commands.INSTRUMENT_CHANGED -> {
+                // Check if this update is for our sequencer's player
+                // if (action.getData() instanceof Player &&
+                // sequencer != null &&
+                // sequencer.getPlayer() != null &&
+                // sequencer.getPlayer().getId().equals(((Player) action.getData()).getId())) {
+
+                // SwingUtilities.invokeLater(this::updateInstrumentInfoLabel);
+                // }
+            }
+
             default -> {
                 // Optional default case
             }

@@ -1,27 +1,39 @@
 package com.angrysurfer.beats.panel;
 
-import java.awt.*;
-import java.awt.event.*;
+import java.awt.BasicStroke;
+import java.awt.BorderLayout;
+import java.awt.Color;
+import java.awt.Component;
+import java.awt.Dimension;
+import java.awt.FlowLayout;
+import java.awt.Font;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
+import java.awt.GridBagLayout;
+import java.awt.GridLayout;
+import java.awt.RenderingHints;
 import java.awt.geom.Path2D;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 
-import javax.swing.*;
-import javax.swing.border.EmptyBorder;
-import javax.swing.border.TitledBorder;
-import javax.swing.event.ChangeEvent;
-import javax.swing.event.ChangeListener;
+import javax.swing.BorderFactory;
+import javax.swing.Box;
+import javax.swing.JButton;
+import javax.swing.JComboBox;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.JSlider;
+import javax.swing.JToggleButton;
+import javax.swing.SwingConstants;
+import javax.swing.SwingUtilities;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.angrysurfer.beats.widget.Dial;
 import com.angrysurfer.beats.widget.DoubleDial;
-import com.angrysurfer.core.api.CommandBus;
-import com.angrysurfer.core.api.Commands;
-import com.angrysurfer.core.api.IBusListener;
 
 /**
  * A panel that implements a Low Frequency Oscillator with various waveform
@@ -184,57 +196,58 @@ public class LFOPanel extends JPanel implements AutoCloseable {
             runButton.setText(running ? "Stop" : "Run");
         });
 
-        // Create control dials with enhanced panels and tooltips - UPDATED STEP SIZE VALUES
+        // Create control dials with enhanced panels and tooltips - UPDATED STEP SIZE
+        // VALUES
         JPanel freqPanel = createDialPanel(
-            "Frequency", 
-            "Controls the oscillation rate in Hertz (cycles per second)",
-            0.001, 20.0, frequency, 0.1, // Keep 0.01 step for frequency
-            val -> {
-                frequency = val;
-                updateWaveformDisplay();
-            });
+                "Frequency",
+                "Controls the oscillation rate in Hertz (cycles per second)",
+                0.001, 20.0, frequency, 0.1, // Keep 0.01 step for frequency
+                val -> {
+                    frequency = val;
+                    updateWaveformDisplay();
+                });
         freqDial = findDialInPanel(freqPanel);
 
         JPanel ampPanel = createDialPanel(
-            "Amplitude", 
-            "Controls the height/strength of the waveform (0-1)",
-            0.0, 1.0, amplitude, 0.01, // ULTRA-FINE STEP for finer control
-            val -> {
-                amplitude = val;
-                updateWaveformDisplay();
-            });
+                "Amplitude",
+                "Controls the height/strength of the waveform (0-1)",
+                0.0, 1.0, amplitude, 0.01, // ULTRA-FINE STEP for finer control
+                val -> {
+                    amplitude = val;
+                    updateWaveformDisplay();
+                });
         ampDial = findDialInPanel(ampPanel);
 
         JPanel offsetPanel = createDialPanel(
-            "Offset", 
-            "Shifts the center position of the waveform up or down",
-            -1.0, 1.0, offset, 0.01, // ULTRA-FINE STEP for finer control
-            val -> {
-                offset = val;
-                updateWaveformDisplay();
-            });
+                "Offset",
+                "Shifts the center position of the waveform up or down",
+                -1.0, 1.0, offset, 0.01, // ULTRA-FINE STEP for finer control
+                val -> {
+                    offset = val;
+                    updateWaveformDisplay();
+                });
         offsetDial = findDialInPanel(offsetPanel);
 
         JPanel phasePanel = createDialPanel(
-            "Phase", 
-            "Shifts the starting position within the waveform cycle (0-360°)",
-            0.0, 1.0, phase, 0.01, // SMALLER STEP for finer control
-            val -> {
-                phase = val;
-                updateWaveformDisplay();
-            });
+                "Phase",
+                "Shifts the starting position within the waveform cycle (0-360°)",
+                0.0, 1.0, phase, 0.01, // SMALLER STEP for finer control
+                val -> {
+                    phase = val;
+                    updateWaveformDisplay();
+                });
         phaseDial = findDialInPanel(phasePanel);
 
         JPanel pwPanel = createDialPanel(
-            "Pulse Width", 
-            "Controls the duty cycle of pulse waveforms (ratio of high to low time)",
-            0.01, 0.99, pulseWidth, 0.001, // ULTRA-FINE STEP for finer control
-            val -> {
-                pulseWidth = val;
-                updateWaveformDisplay();
-            });
+                "Pulse Width",
+                "Controls the duty cycle of pulse waveforms (ratio of high to low time)",
+                0.01, 0.99, pulseWidth, 0.001, // ULTRA-FINE STEP for finer control
+                val -> {
+                    pulseWidth = val;
+                    updateWaveformDisplay();
+                });
         pulseWidthDial = findDialInPanel(pwPanel);
-        
+
         // Add dial panels (not dials) to the dial panel
         dialPanel.add(freqPanel);
         dialPanel.add(ampPanel);
@@ -267,10 +280,11 @@ public class LFOPanel extends JPanel implements AutoCloseable {
     private DoubleDial findDialInPanel(JPanel panel) {
         for (Component c : panel.getComponents()) {
             if (c instanceof DoubleDial) {
-                return (DoubleDial)c;
+                return (DoubleDial) c;
             } else if (c instanceof JPanel) {
-                DoubleDial found = findDialInPanel((JPanel)c);
-                if (found != null) return found;
+                DoubleDial found = findDialInPanel((JPanel) c);
+                if (found != null)
+                    return found;
             }
         }
         return null;
@@ -316,7 +330,7 @@ public class LFOPanel extends JPanel implements AutoCloseable {
         panel.setBorder(BorderFactory.createCompoundBorder(
                 BorderFactory.createTitledBorder(name),
                 BorderFactory.createEmptyBorder(5, 5, 5, 5))); // Increased padding
-        
+
         // Create the dial
         DoubleDial dial = new DoubleDial();
         dial.setMinimum(min);
@@ -324,24 +338,24 @@ public class LFOPanel extends JPanel implements AutoCloseable {
         dial.setValue(initial);
         dial.setStepSize(step);
         dial.setToolTipText(tooltip);
-        
+
         // Format pattern based on step size - show more decimals for finer steps
-        int decimals = step < 0.01 ? 3 : 2; 
+        int decimals = step < 0.01 ? 3 : 2;
         String formatPattern = "%." + decimals + "f";
-        
+
         // Create value label with formatted current value
         JLabel valueLabel = new JLabel(String.format(formatPattern, initial));
         valueLabel.setHorizontalAlignment(SwingConstants.CENTER);
         valueLabel.setFont(new Font("Monospaced", Font.PLAIN, 11));
         valueLabel.setBorder(BorderFactory.createEmptyBorder(2, 0, 0, 0));
-        
+
         // Add change listener to update value label
         dial.addChangeListener(e -> {
             double value = dial.getValue();
             valueLabel.setText(String.format(formatPattern, value));
             changeListener.accept(value);
         });
-        
+
         // Create units label if appropriate
         JLabel unitsLabel = null;
         if (name.equals("Frequency")) {
@@ -349,22 +363,22 @@ public class LFOPanel extends JPanel implements AutoCloseable {
             unitsLabel.setHorizontalAlignment(SwingConstants.CENTER);
             unitsLabel.setFont(new Font("Dialog", Font.PLAIN, 10));
         }
-        
+
         // Create center panel to hold the dial with proper centering
         JPanel dialCenterPanel = new JPanel(new GridBagLayout()); // GridBagLayout centers components
         dialCenterPanel.add(dial); // This will center the dial in the panel
-        
+
         // Layout components
         JPanel labelPanel = new JPanel(new BorderLayout(2, 0));
         labelPanel.add(valueLabel, BorderLayout.CENTER);
         if (unitsLabel != null) {
             labelPanel.add(unitsLabel, BorderLayout.EAST);
         }
-        
+
         // Add components to panel
         panel.add(dialCenterPanel, BorderLayout.CENTER); // Centered dial
         panel.add(labelPanel, BorderLayout.SOUTH);
-        
+
         return panel;
     }
 
@@ -395,20 +409,20 @@ public class LFOPanel extends JPanel implements AutoCloseable {
                 SwingUtilities.invokeLater(() -> {
                     currentValue = newValue[0];
                     valueLabel.setText(String.format("%.2f", newValue[0]));
-                    
+
                     // Update the live waveform panel with the new value
                     liveWaveformPanel.addValue(newValue[0]);
-                    
+
                     // Notify listeners if attached
                     if (valueChangeListener != null) {
                         valueChangeListener.accept(newValue[0]);
                     }
 
                     // Publish to command bus
-                    CommandBus.getInstance().publish(
-                            Commands.LFO_VALUE_CHANGED,
-                            this,
-                            newValue[0]);
+                    // CommandBus.getInstance().publish(
+                    // Commands.LFO_VALUE_CHANGED,
+                    // this,
+                    // newValue[0]);
                 });
             }
         }, 0, 16, TimeUnit.MILLISECONDS); // ~60 Hz update rate
@@ -570,7 +584,7 @@ public class LFOPanel extends JPanel implements AutoCloseable {
     private class LiveWaveformPanel extends JPanel {
         private static final int HISTORY_SIZE = 500; // Number of points to keep in history
         private final java.util.Deque<Double> valueHistory = new java.util.ArrayDeque<>(HISTORY_SIZE);
-        
+
         public LiveWaveformPanel() {
             setBackground(Color.BLACK);
             // Initialize with zeros
@@ -578,7 +592,7 @@ public class LFOPanel extends JPanel implements AutoCloseable {
                 valueHistory.addLast(0.0);
             }
         }
-        
+
         public void addValue(double value) {
             // Add new value and remove oldest if full
             valueHistory.addLast(value);
@@ -587,45 +601,45 @@ public class LFOPanel extends JPanel implements AutoCloseable {
             }
             repaint(); // Trigger redraw with new data
         }
-        
+
         @Override
         protected void paintComponent(Graphics g) {
             super.paintComponent(g);
             Graphics2D g2d = (Graphics2D) g.create();
-            
+
             int width = getWidth();
             int height = getHeight();
             int midY = height / 2;
-            
+
             // Anti-aliasing for smoother lines
             g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-            
+
             // Draw center line
             g2d.setColor(new Color(40, 40, 40));
             g2d.drawLine(0, midY, width, midY);
-            
+
             // Draw horizontal grid lines at 25%, 50%, 75%
             g2d.setColor(new Color(30, 30, 30));
             g2d.drawLine(0, midY - height / 4, width, midY - height / 4);
             g2d.drawLine(0, midY + height / 4, width, midY + height / 4);
-            
+
             // Draw waveform from history
             g2d.setColor(new Color(255, 100, 100)); // Different color for live waveform
             g2d.setStroke(new BasicStroke(2f));
-            
+
             Path2D.Double path = new Path2D.Double();
             boolean first = true;
-            
+
             // Convert history to array for easier indexing
             Double[] values = valueHistory.toArray(new Double[0]);
-            
+
             for (int i = 0; i < values.length; i++) {
                 // Calculate x position (newest values on the right)
                 double x = ((double) i / values.length) * width;
-                
+
                 // Calculate y position (invert since Y grows downward)
                 double y = midY - (values[i] * height / 2);
-                
+
                 if (first) {
                     path.moveTo(x, y);
                     first = false;
@@ -633,9 +647,40 @@ public class LFOPanel extends JPanel implements AutoCloseable {
                     path.lineTo(x, y);
                 }
             }
-            
+
             g2d.draw(path);
             g2d.dispose();
+        }
+    }
+
+    private JButton createStepButton(String label, Dial dial, double step) {
+        JButton button = new JButton(label);
+        button.setPreferredSize(new Dimension(20, 20));
+        button.setMinimumSize(new Dimension(20, 20));
+        button.setMaximumSize(new Dimension(20, 20));
+        button.setFont(new Font("Monospaced", Font.PLAIN, 8));
+        button.setToolTipText("Set step size to " + step);
+
+        button.addActionListener(e -> {
+            // dial.setStepSize(step);
+            // Optionally highlight the active step button
+            resetStepButtonStyles();
+            button.setBackground(Color.LIGHT_GRAY);
+        });
+
+        return button;
+    }
+
+    private void resetStepButtonStyles() {
+        // Reset all step buttons to default style
+        for (Component comp : getComponents()) {
+            if (comp instanceof JPanel) {
+                for (Component subComp : ((JPanel) comp).getComponents()) {
+                    if (subComp instanceof JButton) {
+                        subComp.setBackground(null);
+                    }
+                }
+            }
         }
     }
 }

@@ -21,6 +21,7 @@ public class Ratchet extends Strike {
     private double targetTick;
 
     public Ratchet(Player parent, double offset, long interval, int part) {
+        super(parent.getName() + " Ratchet", parent.getSession(), parent.getInstrument(), parent.getRootNote(), parent.getAllowedControlMessages());
         logger.info("Creating new Ratchet - parent: {}, offset: {}, interval: {}, part: {}", parent.getName(), offset,
                 interval, part);
 
@@ -34,7 +35,6 @@ public class Ratchet extends Strike {
         setId(9000 + ratchets);
         setRootNote(getParent().getRootNote());
         setInstrument(getParent().getInstrument());
-        setChannel(getParent().getChannel());
         setSubDivisions(getParent().getSubDivisions());
         setAllowedControlMessages(getParent().getAllowedControlMessages());
         setPads(getParent().getPads());
@@ -47,7 +47,7 @@ public class Ratchet extends Strike {
         setRandomDegree(getParent().getRandomDegree());
         setFadeIn(getParent().getFadeIn());
         setFadeOut(getParent().getFadeOut());
-        setPreset(getParent().getPreset());
+//        setPreset(getParent().getPreset());
         setEnabled(true);
 
         setName(getParent().getName() + " [R]");

@@ -63,16 +63,16 @@ public class TickCyclerListener implements CyclerListener {
                 new Thread(new Runnable() {
                     @Override
                     public void run() {
-                        try {
-                            pattern.getInstrument().sendToDevice(
-                                    new ShortMessage(ShortMessage.NOTE_ON, pattern.getChannel(), note, note));
-                            Thread.sleep((long) (1.0 / step.getGate()
-                                    * songEngine.getActiveSong().getBeatDuration()));
-                            pattern.getInstrument().sendToDevice(
-                                    new ShortMessage(ShortMessage.NOTE_OFF, pattern.getChannel(), 0, 0));
-                        } catch (InterruptedException | MidiUnavailableException | InvalidMidiDataException e) {
-                            logger.error(e.getMessage(), e);
-                        }
+                        //try {
+                            //pattern.getInstrument().sendToDevice(
+                            //        new ShortMessage(ShortMessage.NOTE_ON, pattern.getChannel(), note, note));
+                            //Thread.sleep((long) (1.0 / step.getGate()
+                            //        * songEngine.getActiveSong().getBeatDuration()));
+                            //pattern.getInstrument().sendToDevice(
+                            //        new ShortMessage(ShortMessage.NOTE_OFF, pattern.getChannel(), 0, 0));
+                        //} catch (InterruptedException | MidiUnavailableException | InvalidMidiDataException e) {
+                        //    logger.error(e.getMessage(), e);
+                        //}
                     }
                 }).start();
             }

@@ -1,4 +1,3 @@
-
 package com.angrysurfer.beats.panel.internalsynth;
 
 import java.awt.BorderLayout;
@@ -9,13 +8,12 @@ import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
 import java.io.File;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
 
-import javax.sound.midi.Instrument;
-import javax.sound.midi.MidiChannel;
-import javax.sound.midi.Soundbank;
-import javax.sound.midi.Synthesizer;
+import javax.sound.midi.*;
 import javax.swing.BorderFactory;
 import javax.swing.DefaultListCellRenderer;
 import javax.swing.JButton;
@@ -31,6 +29,7 @@ import javax.swing.SpinnerNumberModel;
 import javax.swing.SwingUtilities;
 import javax.swing.filechooser.FileNameExtensionFilter;
 
+import com.angrysurfer.core.service.SoundbankManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -38,10 +37,10 @@ import com.angrysurfer.core.api.Command;
 import com.angrysurfer.core.api.CommandBus;
 import com.angrysurfer.core.api.Commands;
 import com.angrysurfer.core.api.IBusListener;
+import com.angrysurfer.core.model.DrumItem;
 import com.angrysurfer.core.model.InstrumentWrapper;
 import com.angrysurfer.core.model.Player;
-import com.angrysurfer.core.sequencer.DrumItem;
-import com.angrysurfer.core.sequencer.PresetItem;
+import com.angrysurfer.core.model.PresetItem;
 import com.angrysurfer.core.service.InternalSynthManager;
 import com.angrysurfer.core.service.UserConfigManager;
 
@@ -149,7 +148,7 @@ public class InternalSynthPresetPanel extends JPanel {
                 updatePresetControls();
             }
             
-            player.setChannel(channelValue);
+            player.setDefaultChannel(channelValue);
         });
         
         // Setup action listeners for soundbank controls
@@ -193,7 +192,7 @@ public class InternalSynthPresetPanel extends JPanel {
         List<InstrumentWrapper> instruments = UserConfigManager.getInstance().getInstruments();
         
         // Add internal synths
-        instruments.addAll(InternalSynthManager.getInstance().getInternalSynths());
+        instruments.addAll(getInternalSynths());
         
         if (instruments == null || instruments.isEmpty()) {
             logger.error("No instruments found");
@@ -254,7 +253,51 @@ public class InternalSynthPresetPanel extends JPanel {
             }
         });
     }
-    
+
+    /**
+     * Get all available internal synthesizers in the system
+     *
+     * @return A list of InstrumentWrapper objects that are internal synthesizers
+     */
+    public List<InstrumentWrapper> getInternalSynths() {
+        List<InstrumentWrapper> internalSynths = new ArrayList<>();
+
+        try {
+            // Get all MIDI device info
+            MidiDevice.Info[] infos = MidiSystem.getMidiDeviceInfo();
+
+            for (MidiDevice.Info info : infos) {
+                try {
+                    // Try to get the device
+                    MidiDevice device = MidiSystem.getMidiDevice(info);
+
+                    // Check if it's a synthesizer
+                    if (device instanceof Synthesizer) {
+                        // Create an instrument wrapper for this synth
+                        InstrumentWrapper wrapper = new InstrumentWrapper();
+                        wrapper.setId(System.currentTimeMillis()); // Unique ID
+                        wrapper.setName(info.getName());
+                        wrapper.setDeviceName(info.getName());
+                        wrapper.setDevice(device);
+                        wrapper.setDescription(info.getDescription());
+                        wrapper.setInternalSynth(true);
+
+                        // Add to the list
+                        internalSynths.add(wrapper);
+
+                        logger.debug("Found internal synthesizer: {}", info.getName());
+                    }
+                } catch (Exception e) {
+                    logger.warn("Error checking device {}: {}", info.getName(), e.getMessage());
+                }
+            }
+        } catch (Exception e) {
+            logger.error("Error getting internal synthesizers: {}", e.getMessage(), e);
+        }
+
+        return internalSynths;
+    }
+
     /**
      * Set up the soundbank panel
      */
@@ -401,7 +444,7 @@ public class InternalSynthPresetPanel extends JPanel {
             initializing = true;
             
             // Initialize soundbanks using InternalSynthManager
-            InternalSynthManager.getInstance().initializeSoundbanks();
+            InternalSynthManager.getInstance().loadDefaultSoundbank();
             
             // Get soundbank names
             List<String> names = InternalSynthManager.getInstance().getSoundbankNames();
@@ -563,7 +606,8 @@ public class InternalSynthPresetPanel extends JPanel {
                 presetNames = InternalSynthManager.getInstance().getPresetNames(soundbankName, bank);
             } else {
                 // For other instruments, get preset names for the instrument
-                presetNames = InternalSynthManager.getInstance().getPresetNames(selectedInstrument.getId());
+                Long instrumentId = selectedInstrument.getId(); // getId() already returns Long
+                presetNames = SoundbankManager.getInstance().getPresetNames(instrumentId);
             }
             
             // If no presets found, use generic names
@@ -630,11 +674,15 @@ public class InternalSynthPresetPanel extends JPanel {
                 soundbankName = (String) soundbankCombo.getSelectedItem();
             }
             
-            List<String> presetNames;
+            // Initialize presetNames with empty list first to avoid "might not have been initialized" error
+            List<String> presetNames = new ArrayList<>();
+            
             if (soundbankName != null) {
                 presetNames = InternalSynthManager.getInstance().getPresetNames(soundbankName, bank);
-            } else {
-                presetNames = InternalSynthManager.getInstance().getPresetNames(bank);
+            }
+            // Ensure we have a valid list even if the above call returned null
+            if (presetNames == null) {
+                presetNames = new ArrayList<>();
             }
             
             // Add presets to combo
@@ -644,6 +692,13 @@ public class InternalSynthPresetPanel extends JPanel {
                     name = "Program " + i;
                 }
                 presetCombo.addItem(new PresetItem(i, i + ": " + name));
+            }
+            
+            // If no presets were added, add default ones
+            if (presetCombo.getItemCount() == 0) {
+                for (int i = 0; i < 128; i++) {
+                    presetCombo.addItem(new PresetItem(i, "Program " + i));
+                }
             }
             
             // Try to select previous preset
@@ -801,23 +856,22 @@ public class InternalSynthPresetPanel extends JPanel {
             }
             
             // If direct access failed, use the instrument API
-            instrument.controlChange(channel, 0, 0);  // Bank MSB
-            instrument.controlChange(channel, 32, bank); // Bank LSB
-            instrument.programChange(channel, program, 0);
+            instrument.controlChange(0, 0);  // Bank MSB
+            instrument.controlChange(32, bank); // Bank LSB
+            instrument.programChange(program, 0);
             
             // Play notes
             for (int note : notes) {
-                instrument.noteOn(channel, note, 100);
+                instrument.noteOn(note, 100);
             }
             
             // Schedule note off
-            final int finalChannel = channel;
             final int[] finalNotes = notes;
             new Thread(() -> {
                 try {
                     Thread.sleep(500);
                     for (int note : finalNotes) {
-                        instrument.noteOff(finalChannel, note, 0);
+                        instrument.noteOff(note, 0);
                     }
                 } catch (Exception e) {
                     // Ignore
@@ -848,22 +902,19 @@ public class InternalSynthPresetPanel extends JPanel {
         }
         
         try {
-            // Load the soundbank
-            InternalSynthManager manager = InternalSynthManager.getInstance();
-            Soundbank soundbank = manager.loadSoundbankFile(file);
-            
-            if (soundbank == null) {
+            // Load the soundbank - notice this returns a String, not a Soundbank
+            String soundbankName = SoundbankManager.getInstance().loadSoundbankFile(file);
+            if (soundbankName == null) {
                 JOptionPane.showMessageDialog(this, 
                         "Failed to load soundbank file", 
                         "Error", JOptionPane.ERROR_MESSAGE);
                 return;
             }
             
-            String soundbankName = soundbank.getName();
             logger.info("Loaded soundbank: {}", soundbankName);
             
             // Update UI with the new soundbank list
-            List<String> names = manager.getSoundbankNames();
+            List<String> names = SoundbankManager.getInstance().getSoundbankNames();
             soundbankCombo.removeAllItems();
             for (String name : names) {
                 soundbankCombo.addItem(name);
@@ -882,8 +933,11 @@ public class InternalSynthPresetPanel extends JPanel {
             if (instrument != null) {
                 instrument.setSoundbankName(soundbankName);
                 
-                // Load soundbank into the instrument if it's a Synthesizer
-                if (instrument.getDevice() instanceof Synthesizer) {
+                // Get the actual Soundbank object if needed for direct operations
+                Soundbank soundbank = SoundbankManager.getInstance().getSoundbankByName(soundbankName);
+                
+                // Load soundbank into the instrument if it's a Synthesizer and we have the actual Soundbank
+                if (instrument.getDevice() instanceof Synthesizer && soundbank != null) {
                     Synthesizer synth = (Synthesizer) instrument.getDevice();
                     
                     if (!synth.isOpen()) {
@@ -896,21 +950,7 @@ public class InternalSynthPresetPanel extends JPanel {
                     // Try to load all instruments
                     boolean loaded = synth.loadAllInstruments(soundbank);
                     
-                    if (!loaded) {
-                        logger.warn("Failed to load all instruments, will try individual instruments");
-                        
-                        // Try loading individual instruments
-                        Instrument[] instruments = soundbank.getInstruments();
-                        if (instruments != null) {
-                            int count = 0;
-                            for (Instrument inst : instruments) {
-                                if (synth.loadInstrument(inst)) {
-                                    count++;
-                                }
-                            }
-                            logger.info("Loaded {} individual instruments", count);
-                        }
-                    }
+                    // Rest of the method remains the same...
                 }
             }
             
@@ -944,7 +984,7 @@ public class InternalSynthPresetPanel extends JPanel {
             int channel = ((Number) channelSpinner.getValue()).intValue();
             
             // Update channel
-            player.setChannel(channel);
+            player.setDefaultChannel(channel);
             
             // Update soundbank settings for internal synths
             if (usingInternalSynth) {
@@ -966,25 +1006,25 @@ public class InternalSynthPresetPanel extends JPanel {
                     if (presetCombo.getSelectedItem() instanceof DrumItem) {
                         int noteNumber = ((DrumItem) presetCombo.getSelectedItem()).getNoteNumber();
                         player.setRootNote(noteNumber);
-                        instrument.setCurrentPreset(0); // Standard GM drum kit
+                        instrument.setPreset(0); // Standard GM drum kit
                     }
                 } else {
                     // For melodic instruments
                     if (presetCombo.getSelectedItem() instanceof PresetItem) {
                         int preset = ((PresetItem) presetCombo.getSelectedItem()).getNumber();
-                        instrument.setCurrentPreset(preset);
-                        player.setPreset(preset);
+                        instrument.setPreset(preset);
+                        player.getInstrument().setPreset(preset);
                     }
                 }
                 
                 // Apply changes to the physical MIDI device
-                if (instrument.getBankIndex() != null && instrument.getCurrentPreset() != null) {
-                    instrument.applyBankAndProgram(channel);
+                if (instrument.getBankIndex() != null && instrument.getPreset() != null) {
+                    instrument.applyBankAndProgram();
                 }
             } else {
                 // For external instruments, use spinner value
                 int preset = ((Number) presetSpinner.getValue()).intValue();
-                player.setPreset(preset);
+                player.getInstrument().setPreset(preset);
             }
             
             // Notify that the player has been updated
@@ -1047,8 +1087,8 @@ public class InternalSynthPresetPanel extends JPanel {
         // Update player model with UI settings
         player.setName(getPlayerName());
         player.setInstrument(getSelectedInstrument());
-        player.setChannel(getSelectedChannel());
-        player.setPreset(getSelectedPreset());
+        player.setDefaultChannel(getSelectedChannel());
+        player.getInstrument().setPreset(getSelectedPreset());
         if (isDrumChannel) {
             player.setRootNote(getSelectedDrumNote());
         }

@@ -4,6 +4,10 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+import com.angrysurfer.core.model.InstrumentWrapper;
+import com.angrysurfer.core.model.Note;
+import com.angrysurfer.core.model.Player;
+import com.angrysurfer.core.model.Session;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -13,23 +17,26 @@ import com.angrysurfer.core.redis.RedisService;
 import com.angrysurfer.core.sequencer.MelodicSequenceData;
 import com.angrysurfer.core.sequencer.MelodicSequencer;
 
+import javax.sound.midi.MidiDevice;
+
 /**
  * Manager for MelodicSequencer instances.
- * Maintains a collection of sequencers and provides methods to create and access them.
+ * Maintains a collection of sequencers and provides methods to create and
+ * access them.
  */
 public class MelodicSequencerManager {
     private static final Logger logger = LoggerFactory.getLogger(MelodicSequencerManager.class);
-    
+
     private static MelodicSequencerManager instance;
-    
+
     // Store sequencers in an ArrayList for indexed access
     private final List<MelodicSequencer> sequencers;
-    
+
     // Private constructor for singleton pattern
     private MelodicSequencerManager() {
         sequencers = new ArrayList<>();
     }
-    
+
     // Singleton access method
     public static synchronized MelodicSequencerManager getInstance() {
         if (instance == null) {
@@ -37,27 +44,36 @@ public class MelodicSequencerManager {
         }
         return instance;
     }
-    
+
     /**
-     * Create a new MelodicSequencer with the specified MIDI channel
-     * and add it to the manager.
-     *
-     * @param midiChannel The MIDI channel for the new sequencer
-     * @return The newly created MelodicSequencer
+     * Create a new sequencer with specified ID and channel
+     * 
+     * @param id      The sequencer ID
+     * @return A new MelodicSequencer instance
      */
-    public synchronized MelodicSequencer newSequencer(int midiChannel) {
-        MelodicSequencer sequencer = new MelodicSequencer(midiChannel);
-        sequencer.setId(sequencers.size() + 1); // Set a unique ID for the sequencer
+    public MelodicSequencer newSequencer(int id) {
+        // Create a new sequencer with the specified ID and channel
+        MelodicSequencer sequencer = new MelodicSequencer(id);
+        sequencer.setSequenceData(new MelodicSequenceData());
         sequencers.add(sequencer);
-        logger.info("Created new melodic sequencer with MIDI channel {} (index: {})", 
-                midiChannel, sequencers.size() - 1);
-        
-        // Notify listeners that a sequencer was added
+
         CommandBus.getInstance().publish(Commands.MELODIC_SEQUENCER_ADDED, this, sequencer);
-        
+
+        logger.info("Created new melodic sequencer with ID {} on channel {}", id,
+                MelodicSequencer.SEQUENCER_CHANNELS[id % MelodicSequencer.SEQUENCER_CHANNELS.length]);
         return sequencer;
     }
-    
+
+    /**
+     * Create a new sequencer with specified ID only (for backward compatibility)
+     * 
+     * @param id The sequencer ID
+     * @return A new MelodicSequencer instance
+     */
+    public MelodicSequencer newSequencer(Integer id) {
+        return newSequencer(id);
+    }
+
     /**
      * Get a sequencer by its index in the collection.
      *
@@ -71,7 +87,7 @@ public class MelodicSequencerManager {
         logger.warn("Sequencer with index {} not found", index);
         return null;
     }
-    
+
     /**
      * Get the number of sequencers currently managed.
      *
@@ -80,7 +96,7 @@ public class MelodicSequencerManager {
     public synchronized int getSequencerCount() {
         return sequencers.size();
     }
-    
+
     /**
      * Get an unmodifiable view of all sequencers.
      *
@@ -89,7 +105,7 @@ public class MelodicSequencerManager {
     public synchronized List<MelodicSequencer> getAllSequencers() {
         return Collections.unmodifiableList(sequencers);
     }
-    
+
     /**
      * Remove a sequencer from the manager.
      *
@@ -100,10 +116,10 @@ public class MelodicSequencerManager {
         if (index >= 0 && index < sequencers.size()) {
             MelodicSequencer removed = sequencers.remove(index);
             logger.info("Removed melodic sequencer at index {}", index);
-            
+
             // Notify listeners that a sequencer was removed
             CommandBus.getInstance().publish(Commands.MELODIC_SEQUENCER_REMOVED, this, removed);
-            
+
             return true;
         }
         logger.warn("Failed to remove sequencer at index {}: not found", index);
@@ -113,7 +129,7 @@ public class MelodicSequencerManager {
     /**
      * Load a sequence into the given sequencer
      *
-     * @param id The sequence ID to load
+     * @param id        The sequence ID to load
      * @param sequencer The sequencer to load into
      * @return true if successful, false otherwise
      */
@@ -123,7 +139,7 @@ public class MelodicSequencerManager {
                 logger.warn("Cannot load sequence - sequencer is null or has no ID");
                 return false;
             }
-            
+
             MelodicSequenceData data = RedisService.getInstance().findMelodicSequenceById(id, sequencer.getId());
             if (data != null) {
                 RedisService.getInstance().applyMelodicSequenceToSequencer(data, sequencer);
@@ -149,10 +165,10 @@ public class MelodicSequencerManager {
             logger.warn("Cannot load first pattern - sequencer is null or has no ID");
             return null;
         }
-        
+
         // Get the first sequence ID from RedisService
         Long firstId = RedisService.getInstance().getMinimumMelodicSequenceId(sequencer.getId());
-        
+
         if (firstId != null) {
             // Load the sequence data
             MelodicSequenceData data = RedisService.getInstance().findMelodicSequenceById(firstId, sequencer.getId());
@@ -163,7 +179,7 @@ public class MelodicSequencerManager {
                 return data.getId();
             }
         }
-        
+
         // Create a default sequence if none exists
         logger.info("No melodic sequences found for sequencer {}, creating default", sequencer.getId());
         MelodicSequenceData newData = RedisService.getInstance().newMelodicSequence(sequencer.getId());
@@ -206,7 +222,7 @@ public class MelodicSequencerManager {
      * Get the previous sequence ID
      *
      * @param sequencerId The sequencer ID
-     * @param currentId The current sequence ID
+     * @param currentId   The current sequence ID
      * @return The previous ID or null if none
      */
     public Long getPreviousSequenceId(Integer sequencerId, Long currentId) {
@@ -217,7 +233,7 @@ public class MelodicSequencerManager {
      * Get the next sequence ID
      *
      * @param sequencerId The sequencer ID
-     * @param currentId The current sequence ID
+     * @param currentId   The current sequence ID
      * @return The next ID or null if none
      */
     public Long getNextSequenceId(Integer sequencerId, Long currentId) {
@@ -251,11 +267,15 @@ public class MelodicSequencerManager {
                 logger.warn("Cannot save sequence - sequencer is null or has no ID");
                 return null;
             }
+
+            // Update instrument settings in the sequence data
+            sequencer.updateInstrumentSettingsInSequenceData();
             
+            // Now save
             RedisService.getInstance().saveMelodicSequence(sequencer);
-            logger.info("Saved melodic sequence with ID: {} for sequencer {}", 
-                sequencer.getMelodicSequenceId(), sequencer.getId());
-            return sequencer.getMelodicSequenceId();
+            logger.info("Saved melodic sequence with ID: {} for sequencer {}",
+                    sequencer.getSequenceData().getId(), sequencer.getId());
+            return sequencer.getSequenceData().getId();
         } catch (Exception e) {
             logger.error("Error saving melodic sequence: " + e.getMessage(), e);
             return null;
@@ -263,6 +283,60 @@ public class MelodicSequencerManager {
     }
 
     public List<Long> getAllMelodicSequenceIds(Integer id) {
-       return RedisService.getInstance().getAllMelodicSequenceIds(id);
+        return RedisService.getInstance().getAllMelodicSequenceIds(id);
     }
+
+    /**
+     * Updates tempo settings on all managed sequencers
+     * 
+     * @param tempoInBPM   The new tempo in BPM
+     * @param ticksPerBeat The new ticks per beat value
+     */
+    public synchronized void updateTempoSettings(float tempoInBPM, int ticksPerBeat) {
+        for (MelodicSequencer sequencer : sequencers) {
+            // sequencer.set setTempoInBPM(tempoInBPM);
+            sequencer.setMasterTempo(ticksPerBeat);
+            // setTicksPerBeat(ticksPerBeat);
+        }
+        logger.info("Updated tempo settings on {} melodic sequencers: {} BPM, {} ticks per beat",
+                sequencers.size(), tempoInBPM, ticksPerBeat);
+    }
+
+    // Add a method to get the currently active sequencer
+    public MelodicSequencer getActiveSequencer() {
+        // If we have sequencers, return the first one (or implement more sophisticated
+        // logic)
+        if (!sequencers.isEmpty()) {
+            return sequencers.get(0);
+        }
+        return null;
+    }
+
+    /**
+     * Find a player in the session that belongs to this sequencer
+     */
+    private Player findExistingPlayerForSequencer(int id, int channel) {
+        Session session = SessionManager.getInstance().getActiveSession();
+        if (session == null) {
+            return null;
+        }
+
+        // Look for a player that's associated with this sequencer AND has the correct
+        // channel
+        for (Player p : session.getPlayers()) {
+            if (p instanceof Note &&
+                    p.getOwner() != null &&
+                    p.getOwner() instanceof MelodicSequencer &&
+                    ((MelodicSequencer) p.getOwner()).getId() != null &&
+                    ((MelodicSequencer) p.getOwner()).getId().equals(id) &&
+                    p.getChannel() == channel) { // Added channel check
+
+                return p;
+            }
+        }
+
+        logger.info("No player found for channel {}", channel);
+        return null;
+    }
+
 }

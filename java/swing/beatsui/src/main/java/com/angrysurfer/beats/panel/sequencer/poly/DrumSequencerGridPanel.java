@@ -10,11 +10,12 @@ import javax.swing.BorderFactory;
 import javax.swing.JPanel;
 import javax.swing.SwingUtilities;
 
+import com.angrysurfer.core.sequencer.DrumSequenceData;
 import com.angrysurfer.core.service.DrumSequencerManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.angrysurfer.beats.UIUtils;
+import com.angrysurfer.beats.util.UIHelper;
 import com.angrysurfer.beats.widget.DrumSequencerGridButton;
 import com.angrysurfer.beats.widget.DrumSequencerGridPanelContextHandler;
 import com.angrysurfer.core.sequencer.DrumSequencer;
@@ -33,7 +34,7 @@ public class DrumSequencerGridPanel extends JPanel {
     private final DrumSequencerGridPanelContextHandler contextMenuHandler;
     
     // UI constants
-    private static final int DRUM_PAD_COUNT = DrumSequencer.DRUM_PAD_COUNT;
+    private static final int DRUM_PAD_COUNT = DrumSequenceData.DRUM_PAD_COUNT;
     private static final int GRID_BUTTON_SIZE = 24;
     
     // UI state
@@ -53,9 +54,11 @@ public class DrumSequencerGridPanel extends JPanel {
         this.contextMenuHandler = new DrumSequencerGridPanelContextHandler(sequencer, parentPanel);
         
         // Use GridLayout for perfect grid alignment
-        setLayout(new GridLayout(DRUM_PAD_COUNT, sequencer.getDefaultPatternLength(), 2, 2));
-        setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
-        
+        // REDUCED: from 2,2 to 1,1 - tighter grid spacing for more compact appearance
+        setLayout(new GridLayout(DRUM_PAD_COUNT, sequencer.getDefaultPatternLength(), 1, 1));
+        // REDUCED: from 5,5,5,5 to 2,2,2,2 - consistent with other panels
+        // setBorder(BorderFactory.createEmptyBorder(2, 2, 2, 2));
+        // setBorder(BorderFactory.createLoweredBevelBorder());
         // Initialize grid buttons array
         gridButtons = new DrumSequencerGridButton[DRUM_PAD_COUNT][sequencer.getDefaultPatternLength()];
         
@@ -158,7 +161,7 @@ public class DrumSequencerGridPanel extends JPanel {
                 if (isSelected) {
                     // Highlight the selected row's border
                     button.setBorder(BorderFactory.createLineBorder(
-                            UIUtils.dustyAmber, 1));
+                            UIHelper.dustyAmber, 1));
                 } else {
                     // Normal border for other rows
                     button.setBorder(BorderFactory.createLineBorder(
@@ -203,12 +206,12 @@ public class DrumSequencerGridPanel extends JPanel {
 
                 // Style based on whether step is active and in pattern
                 if (!isInPattern) {
-                    button.setBackground(UIUtils.charcoalGray);
+                    button.setBackground(UIHelper.charcoalGray);
                 } else {
                     if (isActive) {
-                        button.setBackground(UIUtils.deepOrange);
+                        button.setBackground(UIHelper.deepOrange);
                     } else {
-                        button.setBackground(UIUtils.slateGray);
+                        button.setBackground(UIHelper.slateGray);
                     }
                 }
 
@@ -250,16 +253,16 @@ public class DrumSequencerGridPanel extends JPanel {
                 
                 if (newStep < 16) {
                     // First 16 steps - orange
-                    highlightColor = UIUtils.fadedOrange;
+                    highlightColor = UIHelper.fadedOrange;
                 } else if (newStep < 32) {
                     // Steps 17-32 - blue
-                    highlightColor = UIUtils.coolBlue;
+                    highlightColor = UIHelper.coolBlue;
                 } else if (newStep < 48) {
                     // Steps 33-48 - navy
-                    highlightColor = UIUtils.deepNavy;
+                    highlightColor = UIHelper.deepNavy;
                 } else {
                     // Steps 49-64 - olive
-                    highlightColor = UIUtils.mutedOlive;
+                    highlightColor = UIHelper.mutedOlive;
                 }
                 
                 newButton.setHighlighted(true);
@@ -299,7 +302,7 @@ public class DrumSequencerGridPanel extends JPanel {
             return;
         }
 
-        logger.info("Refreshing entire grid UI for sequence {}", sequencer.getDrumSequenceId());
+        logger.info("Refreshing entire grid UI for sequence {}", sequencer.getData().getId());
 
         try {
             // Ensure we refresh ALL drums and ALL steps

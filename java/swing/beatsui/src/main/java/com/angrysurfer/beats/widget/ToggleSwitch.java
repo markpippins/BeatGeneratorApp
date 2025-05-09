@@ -14,7 +14,7 @@ import java.util.List;
 
 import javax.swing.JComponent;
 
-import com.angrysurfer.beats.UIUtils;
+import com.angrysurfer.beats.util.UIHelper;
 
 public class ToggleSwitch extends JComponent {
     private boolean selected = false;
@@ -61,11 +61,11 @@ public class ToggleSwitch extends JComponent {
         g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 
         // Draw background
-        g2d.setColor(selected ? UIUtils.deepNavy : Color.DARK_GRAY);
+        g2d.setColor(selected ? UIHelper.deepNavy : Color.DARK_GRAY);
         g2d.fillRoundRect(0, 0, width, height, height, height);
 
         // Draw toggle circle
-        g2d.setColor(UIUtils.warmOffWhite);
+        g2d.setColor(UIHelper.warmOffWhite);
         int toggleX = selected ? width - height + 2 : 2;
         g2d.fillOval(toggleX, 2, height - 4, height - 4);
 

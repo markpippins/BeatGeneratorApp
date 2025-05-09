@@ -76,13 +76,9 @@ public class SongEngine {
     }
 
     private void handlePresetChange(Pattern pattern, int updateValue) {
-        try {
-            pattern.setPreset(updateValue);
-            if (pattern.getInstrument() != null) {
-                pattern.getInstrument().programChange(pattern.getChannel(), updateValue, 0);
-            }
-        } catch (InvalidMidiDataException | MidiUnavailableException e) {
-            logger.error("Error changing preset: {}", e.getMessage(), e);
+        pattern.setPreset(updateValue);
+        if (pattern.getInstrument() != null) {
+            pattern.getInstrument().programChange(updateValue, 0);
         }
     }
 

@@ -1,6 +1,8 @@
 package com.angrysurfer.core;
 
 public class Constants {
+    public static boolean DEBUG = true;
+
     public static final double DEFAULT_BEAT_OFFSET = 1.0;
     public static int DEFAULT_PPQ = 48; // Update the default PPQ to 48 to work with both sequencers
     public static int DEFAULT_BAR_COUNT = 4;
