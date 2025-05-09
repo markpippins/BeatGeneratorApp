@@ -2,6 +2,7 @@ package com.angrysurfer.beats.panel;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
+import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.Font;
@@ -9,6 +10,8 @@ import java.awt.Insets;
 import java.util.Objects;
 
 import javax.swing.BorderFactory;
+import javax.swing.Box;
+import javax.swing.BoxLayout;
 import javax.swing.JButton;
 import javax.swing.JPanel;
 import javax.swing.SwingConstants;
@@ -50,7 +53,8 @@ public class TransportPanel extends JPanel {
     private long lastSessionNavTime = 0;
 
     public TransportPanel() {
-        super(new FlowLayout(FlowLayout.CENTER, 5, 0));
+        // Change to BorderLayout to better control vertical alignment
+        super(new BorderLayout());
         setBorder(BorderFactory.createEmptyBorder(2, 2, 2, 2));
 
         // Start with recording disabled
@@ -65,7 +69,12 @@ public class TransportPanel extends JPanel {
         autoRecordingEnableTimer.setRepeats(false);
         autoRecordingEnableTimer.start();
 
-        add(createTransportButtons());
+        // Create the buttons panel
+        JPanel buttonPanel = createTransportButtons();
+        
+        // Add to CENTER for vertical centering
+        add(buttonPanel, BorderLayout.CENTER);
+        
         setupCommandBusListener();
 
         // Set initial button states
@@ -79,58 +88,41 @@ public class TransportPanel extends JPanel {
      * @return JPanel containing all transport buttons
      */
     private JPanel createTransportButtons() {
-        // Create panel to hold transport buttons with flow layout
-        JPanel buttonsPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 5, 0));
-
+        // Create panel to hold transport buttons with a vertical BoxLayout to center
+        JPanel buttonsPanel = new JPanel();
+        buttonsPanel.setLayout(new BoxLayout(buttonsPanel, BoxLayout.Y_AXIS));
+        
+        // Row panel for buttons
+        JPanel buttonRow = new JPanel(new FlowLayout(FlowLayout.CENTER, 5, 0));
+        
+        // Create all buttons first - ensure none are null
         rewindButton = createToolbarButton(Commands.TRANSPORT_REWIND, "⏮", "Previous Session");
-
-        // Create pause button with special handling
-        pauseButton = new JButton("⏸");
-        pauseButton.setToolTipText("Pause (All Notes Off)");
-        pauseButton.setEnabled(false); // Initially disabled
-        pauseButton.setActionCommand(Commands.TRANSPORT_PAUSE);
-
-        // Style the pause button
-        int size = 32;
-        pauseButton.setPreferredSize(new Dimension(size, size));
-        pauseButton.setMinimumSize(new Dimension(size, size));
-        pauseButton.setMaximumSize(new Dimension(size, size));
-        pauseButton.setFont(new Font("Segoe UI Symbol", Font.PLAIN, 18));
-        if (!pauseButton.getFont().canDisplay('⏸')) {
-            pauseButton.setFont(new Font("Dialog", Font.PLAIN, 18));
-        }
-        pauseButton.setMargin(new Insets(0, 0, 0, 0));
-        pauseButton.setFocusPainted(false);
-        pauseButton.setVerticalAlignment(SwingConstants.CENTER);
-        pauseButton.setBorderPainted(false);
-        pauseButton.setContentAreaFilled(true);
-        pauseButton.setOpaque(true);
-
-        // Special action for pause button - send ALL_NOTES_OFF
-        pauseButton.addActionListener(e -> {
-            CommandBus.getInstance().publish(Commands.ALL_NOTES_OFF, this);
-        });
-
-        // Rest of existing code...
-
-        recordButton = new JButton("⏺");
-        // ... existing recordButton setup ...
-
+        pauseButton = createToolbarButton(Commands.TRANSPORT_PAUSE, "⏸", "Pause");
         stopButton = createToolbarButton(Commands.TRANSPORT_STOP, "⏹", "Stop");
+        recordButton = createToolbarButton(Commands.TRANSPORT_RECORD, "⏺", "Record");
         playButton = createToolbarButton(Commands.TRANSPORT_START, "▶", "Play");
         forwardButton = createToolbarButton(Commands.TRANSPORT_FORWARD, "⏭", "Next Session");
-
-        // Add buttons to the panel instead of directly to TransportPanel
-        buttonsPanel.add(rewindButton);
-        buttonsPanel.add(pauseButton);
-        buttonsPanel.add(stopButton);
-        buttonsPanel.add(recordButton);
-        buttonsPanel.add(playButton);
-        buttonsPanel.add(forwardButton);
-
-        updatePlayButtonAppearance();
-        updateRecordButtonAppearance();
-
+        
+        // Add buttons to the button row - check each one first
+        if (rewindButton != null) buttonRow.add(rewindButton);
+        if (pauseButton != null) buttonRow.add(pauseButton);
+        if (stopButton != null) buttonRow.add(stopButton);
+        if (recordButton != null) buttonRow.add(recordButton);
+        if (playButton != null) buttonRow.add(playButton);
+        if (forwardButton != null) buttonRow.add(forwardButton);
+        
+        // Add padding at top to push content down to center
+        buttonsPanel.add(Box.createVerticalGlue());
+        // Add the button row
+        buttonRow.setAlignmentX(Component.CENTER_ALIGNMENT);
+        buttonsPanel.add(buttonRow);
+        // Add padding at bottom to push content up to center
+        buttonsPanel.add(Box.createVerticalGlue());
+        
+        // Only call these methods if buttons are non-null
+        if (playButton != null) updatePlayButtonAppearance();
+        if (recordButton != null) updateRecordButtonAppearance();
+        
         return buttonsPanel;
     }
 

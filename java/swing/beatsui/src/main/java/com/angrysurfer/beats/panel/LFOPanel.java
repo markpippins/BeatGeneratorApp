@@ -1,39 +1,28 @@
 package com.angrysurfer.beats.panel;
 
-import java.awt.BasicStroke;
-import java.awt.BorderLayout;
-import java.awt.Color;
-import java.awt.Component;
-import java.awt.Dimension;
-import java.awt.FlowLayout;
-import java.awt.Font;
-import java.awt.Graphics;
-import java.awt.Graphics2D;
-import java.awt.GridBagLayout;
-import java.awt.GridLayout;
-import java.awt.RenderingHints;
+import java.awt.*;
+import java.awt.event.*;
 import java.awt.geom.Path2D;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 
-import javax.swing.BorderFactory;
-import javax.swing.Box;
-import javax.swing.JButton;
-import javax.swing.JComboBox;
-import javax.swing.JLabel;
-import javax.swing.JPanel;
-import javax.swing.JSlider;
-import javax.swing.JToggleButton;
-import javax.swing.SwingConstants;
-import javax.swing.SwingUtilities;
+import javax.swing.*;
+import javax.swing.border.EmptyBorder;
+import javax.swing.border.TitledBorder;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
 
+import com.angrysurfer.core.api.ModulationBus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.angrysurfer.beats.widget.Dial;
 import com.angrysurfer.beats.widget.DoubleDial;
+import com.angrysurfer.core.api.CommandBus;
+import com.angrysurfer.core.api.Commands;
+import com.angrysurfer.core.api.IBusListener;
 
 /**
  * A panel that implements a Low Frequency Oscillator with various waveform
@@ -196,8 +185,7 @@ public class LFOPanel extends JPanel implements AutoCloseable {
             runButton.setText(running ? "Stop" : "Run");
         });
 
-        // Create control dials with enhanced panels and tooltips - UPDATED STEP SIZE
-        // VALUES
+        // Create control dials with enhanced panels and tooltips - UPDATED STEP SIZE VALUES
         JPanel freqPanel = createDialPanel(
                 "Frequency",
                 "Controls the oscillation rate in Hertz (cycles per second)",
@@ -280,11 +268,10 @@ public class LFOPanel extends JPanel implements AutoCloseable {
     private DoubleDial findDialInPanel(JPanel panel) {
         for (Component c : panel.getComponents()) {
             if (c instanceof DoubleDial) {
-                return (DoubleDial) c;
+                return (DoubleDial)c;
             } else if (c instanceof JPanel) {
-                DoubleDial found = findDialInPanel((JPanel) c);
-                if (found != null)
-                    return found;
+                DoubleDial found = findDialInPanel((JPanel)c);
+                if (found != null) return found;
             }
         }
         return null;
@@ -294,7 +281,7 @@ public class LFOPanel extends JPanel implements AutoCloseable {
      * Creates a Dial with label and value display
      */
     private DoubleDial createDial(String name, double min, double max, double initial, double step,
-            Consumer<Double> changeListener) {
+                                  Consumer<Double> changeListener) {
         JPanel panel = new JPanel(new BorderLayout(2, 2));
         panel.setBorder(BorderFactory.createTitledBorder(name));
 
@@ -324,7 +311,7 @@ public class LFOPanel extends JPanel implements AutoCloseable {
      * Updated to center the dial within its container
      */
     private JPanel createDialPanel(String name, String tooltip, double min, double max, double initial, double step,
-            Consumer<Double> changeListener) {
+                                   Consumer<Double> valueChangeListener) {
         // Create panel with border layout
         JPanel panel = new JPanel(new BorderLayout(2, 2));
         panel.setBorder(BorderFactory.createCompoundBorder(
@@ -353,7 +340,7 @@ public class LFOPanel extends JPanel implements AutoCloseable {
         dial.addChangeListener(e -> {
             double value = dial.getValue();
             valueLabel.setText(String.format(formatPattern, value));
-            changeListener.accept(value);
+            dial.setValue(value);
         });
 
         // Create units label if appropriate
@@ -419,10 +406,10 @@ public class LFOPanel extends JPanel implements AutoCloseable {
                     }
 
                     // Publish to command bus
-                    // CommandBus.getInstance().publish(
-                    // Commands.LFO_VALUE_CHANGED,
-                    // this,
-                    // newValue[0]);
+                    ModulationBus.getInstance().publish(
+                            Commands.LFO_VALUE_CHANGED,
+                            this,
+                            newValue[0]);
                 });
             }
         }, 0, 16, TimeUnit.MILLISECONDS); // ~60 Hz update rate
@@ -650,37 +637,6 @@ public class LFOPanel extends JPanel implements AutoCloseable {
 
             g2d.draw(path);
             g2d.dispose();
-        }
-    }
-
-    private JButton createStepButton(String label, Dial dial, double step) {
-        JButton button = new JButton(label);
-        button.setPreferredSize(new Dimension(20, 20));
-        button.setMinimumSize(new Dimension(20, 20));
-        button.setMaximumSize(new Dimension(20, 20));
-        button.setFont(new Font("Monospaced", Font.PLAIN, 8));
-        button.setToolTipText("Set step size to " + step);
-
-        button.addActionListener(e -> {
-            // dial.setStepSize(step);
-            // Optionally highlight the active step button
-            resetStepButtonStyles();
-            button.setBackground(Color.LIGHT_GRAY);
-        });
-
-        return button;
-    }
-
-    private void resetStepButtonStyles() {
-        // Reset all step buttons to default style
-        for (Component comp : getComponents()) {
-            if (comp instanceof JPanel) {
-                for (Component subComp : ((JPanel) comp).getComponents()) {
-                    if (subComp instanceof JButton) {
-                        subComp.setBackground(null);
-                    }
-                }
-            }
         }
     }
 }
