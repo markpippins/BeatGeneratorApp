@@ -33,8 +33,8 @@ import javax.sound.midi.MidiDevice;
 
 @Getter
 @Setter
-class DrumSequenceHelper {
-    private static final Logger logger = LoggerFactory.getLogger(DrumSequenceHelper.class.getName());
+class DrumSequenceDataHelper {
+    private static final Logger logger = LoggerFactory.getLogger(DrumSequenceDataHelper.class.getName());
     private final JedisPool jedisPool;
     private final ObjectMapper objectMapper;
     private final CommandBus commandBus = CommandBus.getInstance();
@@ -43,7 +43,7 @@ class DrumSequenceHelper {
     private static final int DRUM_PAD_COUNT = 16;
     private static final int MAX_STEPS = 64;
 
-    public DrumSequenceHelper(JedisPool jedisPool, ObjectMapper objectMapper) {
+    public DrumSequenceDataHelper(JedisPool jedisPool, ObjectMapper objectMapper) {
         this.jedisPool = jedisPool;
         this.objectMapper = objectMapper;
     }
