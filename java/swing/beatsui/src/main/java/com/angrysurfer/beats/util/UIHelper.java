@@ -31,7 +31,6 @@ import com.angrysurfer.core.api.CommandBus;
 import com.angrysurfer.core.api.Commands;
 import com.angrysurfer.core.config.TableState;
 import com.angrysurfer.core.redis.RedisService;
-import com.angrysurfer.core.service.PlayerManager;
 
 /**
  * Utility class providing static UI helper methods
@@ -502,7 +501,7 @@ public class UIHelper {
         if (buttonText != null) {
             refreshButton = new JButton(buttonText);
         } else {
-            refreshButton = new JButton(Symbols.getSymbol(Symbols.REFRESH));
+            refreshButton = new JButton(Symbols.get(Symbols.REFRESH));
         }
         
         refreshButton.setToolTipText("Refresh instrument sound");

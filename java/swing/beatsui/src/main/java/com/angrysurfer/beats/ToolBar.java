@@ -100,7 +100,7 @@ public class ToolBar extends JToolBar {
         // transportPanel = new TransportPanel();
         // Let the transport panel take the center space
         // add(transportPanel, BorderLayout.CENTER);
-        add(new SoundParametersPanel(), BorderLayout.CENTER);
+        //add(new SoundParametersPanel(), BorderLayout.CENTER);
         
         controlPanel = new SessionControlPanel();
         

@@ -141,7 +141,7 @@ public class DrumSequencer implements IBusListener {
                 players[i].setName(InternalSynthManager.getInstance().getDrumName(DrumSequenceData.MIDI_DRUM_NOTE_OFFSET + i));
 
                 // Use PlayerManager to initialize the instrument
-                PlayerManager.getInstance().initializeInternalInstrument(players[i], false);
+                PlayerManager.getInstance().initializeInternalInstrument(players[i], true, i);
                 players[i].getInstrument().setChannel(9);
                 // Initialize device connections
                 initializeDrumPadConnections(i, defaultDevice);

@@ -1,128 +1,124 @@
 package com.angrysurfer.beats.panel.player;
 
-import java.awt.Dimension;
 import java.awt.FlowLayout;
-import java.awt.Insets;
 
 import javax.swing.JButton;
-import javax.swing.JComboBox;
-import javax.swing.JLabel;
-import javax.swing.JPanel;
-import javax.swing.JToggleButton;
+import javax.swing.SwingUtilities;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.angrysurfer.beats.panel.PlayerAwarePanel;
 import com.angrysurfer.beats.util.UIHelper;
-import com.angrysurfer.core.api.CommandBus;
-import com.angrysurfer.core.api.Commands;
-import com.angrysurfer.core.sequencer.DrumSequencer;
+import com.angrysurfer.beats.widget.AddInstrumentButton;
+import com.angrysurfer.beats.widget.InstrumentCombo;
+import com.angrysurfer.core.model.Player;
 
 /**
- * Panel for generating random patterns in the drum sequencer
+ * Panel containing an InstrumentCombo with proper PlayerAwarePanel integration
  */
-public class InstrumentComboPanel extends JPanel {
+public class InstrumentComboPanel extends PlayerAwarePanel {
     private static final Logger logger = LoggerFactory.getLogger(InstrumentComboPanel.class);
 
     // UI components
-    private JComboBox<String> densityCombo;
-    private JButton generateButton;
+    private InstrumentCombo combo;
+    private JButton addButton;
 
-    // Reference to the sequencer
-    private final DrumSequencer sequencer;
-
-    /**
-     * Create a new DrumSequenceGeneratorPanel with standardized layout
-     * 
-     * @param sequencer The drum sequencer
-     */
-    public InstrumentComboPanel(DrumSequencer sequencer) {
-        this.sequencer = sequencer;
-        UIHelper.setWidgetPanelBorder(this, "Generate");
-
-        // Use compact spacing like other panels
+    public InstrumentComboPanel() {
+        super();
         setLayout(new FlowLayout(FlowLayout.LEFT, 2, 1));
+        UIHelper.setWidgetPanelBorder(this, "Instrument");
 
         initializeComponents();
+    }
+
+    @Override
+    public void handlePlayerActivated() {
+        Player player = getPlayer();
+        if (player != null) {
+            logger.debug("Activating player in InstrumentComboPanel: {}", player.getName());
+            
+            // Update the panel title with player name
+            UIHelper.setWidgetPanelBorder(this, "Instrument - " + player.getName());
+            
+            // Set the player in the combo box - this will refresh the instruments
+            combo.setCurrentPlayer(player);
+        } else {
+            logger.warn("Null player activated in InstrumentComboPanel");
+            UIHelper.setWidgetPanelBorder(this, "Instrument");
+        }
+    }
+
+    @Override
+    public void handlePlayerUpdated() {
+        Player player = getPlayer();
+        if (player != null) {
+            logger.debug("Updating player in InstrumentComboPanel: {}", player.getName());
+            
+            // Update title if needed
+            UIHelper.setWidgetPanelBorder(this, "Instrument - " + player.getName());
+            
+            // Update the selected instrument in the combo
+            // This won't trigger a refresh if not needed
+            updateComboFromPlayer(player);
+        }
+    }
+
+    /**
+     * Update the combo box based on the player information
+     */
+    private void updateComboFromPlayer(Player player) {
+        if (player == null || combo == null) return;
+        
+        // Schedule update on EDT for thread safety
+        SwingUtilities.invokeLater(() -> {
+            // First check if player is already set as current
+            if (combo.getCurrentPlayer() == null || 
+                !player.getId().equals(combo.getCurrentPlayer().getId())) {
+                // Different player, set it as current
+                combo.setCurrentPlayer(player);
+            } else {
+                // Same player, just update selected instrument
+                combo.updateSelectedInstrument(player);
+            }
+        });
     }
 
     /**
      * Initialize UI components with standardized sizing
      */
     private void initializeComponents() {
-        // Create density combo without a label
-        String[] densityOptions = { "25%", "50%", "75%", "100%" };
-        densityCombo = new JComboBox<>(densityOptions);
-        densityCombo.setSelectedIndex(1); // Default to 50%
+        // Create instrument combo
+        combo = new InstrumentCombo();
+        addButton = new AddInstrumentButton();
 
-        // Standardize control size to match other panels
-        densityCombo.setPreferredSize(new Dimension(UIHelper.MEDIUM_CONTROL_WIDTH + 5, UIHelper.CONTROL_HEIGHT));
-        densityCombo.setToolTipText("Set pattern density");
+        // Initialize with current player if available
+        Player player = getPlayer();
+        if (player != null) {
+            combo.setCurrentPlayer(player);
+            UIHelper.setWidgetPanelBorder(this, "Instrument - " + player.getName());
+        }
 
-        // Generate button with dice icon - standardize size
-        generateButton = new JButton("🎲");
-        generateButton.setToolTipText("Generate a random pattern");
-        generateButton.setPreferredSize(new Dimension(UIHelper.SMALL_CONTROL_WIDTH, UIHelper.CONTROL_HEIGHT));
-        generateButton.setMargin(new Insets(2, 2, 2, 2)); // Match margins used in nav panel
-        
-        generateButton.addActionListener(e -> {
-            // Get selected density from the combo
-            int density = (densityCombo.getSelectedIndex() + 1) * 25;
-            logger.info("Generating pattern with density: {}%", density);
-
-            // Generate pattern in the sequencer
-            sequencer.generatePattern(density);
-
-            // Publish event to refresh UI
-            CommandBus.getInstance().publish(
-                    Commands.DRUM_GRID_REFRESH_REQUESTED,
-                    this,
-                    null);
-        });
-
-        // Latch toggle button (moved from sequence parameters panel)
-        JToggleButton latchToggleButton = new JToggleButton("L", false);
-        latchToggleButton.setToolTipText("Generate new pattern each cycle");
-        latchToggleButton.setPreferredSize(new Dimension(UIHelper.SMALL_CONTROL_WIDTH, UIHelper.CONTROL_HEIGHT));
-        latchToggleButton.setMargin(new Insets(2, 2, 2, 2)); // Standardize margins
-        
-        latchToggleButton.addActionListener(e -> {
-            // sequencer.setLatchEnabled(latchToggleButton.isSelected());
-            logger.info("Latch mode set to: {}", latchToggleButton.isSelected());
-        });
-        latchToggleButton.setEnabled(false);
-
-        // Add density label for consistency with other panels
-        JLabel densityLabel = new JLabel("D:");
-
-        // Add components to panel with consistent spacing
-        add(generateButton);
-        add(densityLabel);
-        add(densityCombo);
-        add(latchToggleButton);
+        add(combo);
+        add(addButton);
     }
 
     /**
-     * Set the density value
-     * 
-     * @param densityPercent Density percentage (25, 50, 75, 100)
+     * Public method to manually refresh the combo
      */
-    public void setDensity(int densityPercent) {
-        // Convert percentage to index (0-3)
-        int index = (densityPercent / 25) - 1;
-
-        // Ensure index is within bounds
-        if (index >= 0 && index < densityCombo.getItemCount()) {
-            densityCombo.setSelectedIndex(index);
+    public void refreshInstruments() {
+        if (combo != null) {
+            Player player = getPlayer();
+            if (player != null) {
+                combo.setCurrentPlayer(player);
+            }
         }
     }
-
+    
     /**
-     * Get the current density percentage value
-     * 
-     * @return The density percentage (25, 50, 75, 100)
+     * Get the selected instrument from the combo
      */
-    public int getDensity() {
-        return (densityCombo.getSelectedIndex() + 1) * 25;
+    public Object getSelectedInstrument() {
+        return combo != null ? combo.getSelectedItem() : null;
     }
 }

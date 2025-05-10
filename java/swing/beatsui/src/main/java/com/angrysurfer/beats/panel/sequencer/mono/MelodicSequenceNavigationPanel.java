@@ -102,7 +102,7 @@ public class MelodicSequenceNavigationPanel extends JPanel {
         button.setFocusable(false);
 
         // Set consistent size and margins to match other panels
-        button.setPreferredSize(new Dimension(UIHelper.SMALL_CONTROL_WIDTH, UIHelper.CONTROL_HEIGHT));
+        button.setPreferredSize(new Dimension(24, 24));
         button.setMargin(new Insets(2, 2, 2, 2));
 
         return button;

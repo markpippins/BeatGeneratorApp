@@ -21,6 +21,6 @@ public class PresetItem {
 
     @Override
     public String toString() {
-        return name;
+        return name + " - " + number;
     }
 }

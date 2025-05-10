@@ -115,7 +115,7 @@ public class DialogManager implements IBusListener {
                     setNewPlayerInstrument(newPlayer);
 
                     // Create panel and dialog
-                    PlayerEditPanel panel = new PlayerEditPanel();
+                    PlayerEditPanel panel = new PlayerEditPanel(newPlayer);
                     panel.setPlayer(newPlayer);
                     Dialog<Player> dialog = frame.createDialog(newPlayer, panel);
                     dialog.setTitle("Add Player");
@@ -214,7 +214,7 @@ public class DialogManager implements IBusListener {
                     logger.debug("Opening editor for player: {} (ID: {})", player.getName(), player.getId());
 
                     // Create panel with the player
-                    PlayerEditPanel panel = new PlayerEditPanel();
+                    PlayerEditPanel panel = new PlayerEditPanel(player);
                     panel.setPlayer(player);
                     Dialog<Player> dialog = frame.createDialog(player, panel);
                     dialog.setTitle(getPlayerTitle(player));
@@ -682,7 +682,7 @@ public class DialogManager implements IBusListener {
                         // If still null, create a default one
                         if (player.getInstrument() == null) {
                             player.setInstrument(
-                                    InstrumentManager.getInstance().getOrCreateInternalSynthInstrument(9, false));
+                                    InstrumentManager.getInstance().getOrCreateInternalSynthInstrument(9, true, i + 1));
                         }
                     }
 

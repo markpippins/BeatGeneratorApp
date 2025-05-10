@@ -94,9 +94,9 @@ public class MuteSequencerPanel extends JPanel implements IBusListener {
         setLayout(new BorderLayout(2, 2));
         UIHelper.setWidgetPanelBorder(this, "Mutes");
 
-        // Set both preferred and maximum height to 40px
+        // Correct the height settings
         setPreferredSize(new Dimension(800, 44));
-        setMaximumSize(new Dimension(Integer.MAX_VALUE, 4));
+        setMaximumSize(new Dimension(Integer.MAX_VALUE, 44)); // Match preferred height
         
         JPanel buttonPanel = new JPanel(new GridLayout(1, STEP_COUNT, 2, 0));
         buttonPanel.setBackground(getBackground());

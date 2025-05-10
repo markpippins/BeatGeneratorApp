@@ -192,11 +192,11 @@ public class Symbols {
         SYMBOLS = Collections.unmodifiableMap(map);
     }
 
-    public static String getSymbol(String key) {
+    public static String get(String key) {
         return SYMBOLS.getOrDefault(key, "❓"); // Return a default symbol if not found
     }
 
-    public static String getSymbol(String key, String defaultSymbol) {
+    public static String get(String key, String defaultSymbol) {
         return SYMBOLS.getOrDefault(key, defaultSymbol); // Return a custom default symbol if not found
     }
 }

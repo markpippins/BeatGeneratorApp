@@ -64,7 +64,8 @@ public class DrumSequenceGeneratorPanel extends JPanel {
         // Generate button with dice icon
         generateButton = new JButton("🎲");
         generateButton.setToolTipText("Generate a random pattern");
-        generateButton.setPreferredSize(new Dimension(UIHelper.SMALL_CONTROL_WIDTH, UIHelper.CONTROL_HEIGHT));
+        generateButton.setPreferredSize(new Dimension(24
+                , 24));
         generateButton.setMargin(new Insets(2, 2, 2, 2));
         generateButton.addActionListener(e -> {
             // Get selected density from the combo
@@ -84,7 +85,7 @@ public class DrumSequenceGeneratorPanel extends JPanel {
         // Latch toggle button (moved from sequence parameters panel)
         JToggleButton latchToggleButton = new JToggleButton("L", false);
         latchToggleButton.setToolTipText("Generate new pattern each cycle");
-        latchToggleButton.setPreferredSize(new Dimension(UIHelper.SMALL_CONTROL_WIDTH, UIHelper.CONTROL_HEIGHT));
+        latchToggleButton.setPreferredSize(new Dimension(24, 24));
         latchToggleButton.addActionListener(e -> {
             // sequencer.setLatchEnabled(latchToggleButton.isSelected());
             logger.info("Latch mode set to: {}", latchToggleButton.isSelected());

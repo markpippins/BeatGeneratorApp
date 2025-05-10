@@ -161,7 +161,7 @@ public class InstrumentCombo extends JComboBox<InstrumentWrapper> implements IBu
      * Update selected instrument to match the player
      * Fixed to prevent recursion
      */
-    private void updateSelectedInstrument(Player player) {
+    public void updateSelectedInstrument(Player player) {
         if (player == null || player.getInstrument() == null) return;
         
         // Set flag to prevent recursion

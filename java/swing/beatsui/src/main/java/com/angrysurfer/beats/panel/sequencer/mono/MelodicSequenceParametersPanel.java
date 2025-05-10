@@ -153,7 +153,7 @@ public class MelodicSequenceParametersPanel extends JPanel {
     private void createLoopButton(JPanel parentPanel) {
         loopToggleButton = new JToggleButton("🔁", true); // Default to looping enabled
         loopToggleButton.setToolTipText("Loop this pattern");
-        loopToggleButton.setPreferredSize(new Dimension(UIHelper.SMALL_CONTROL_WIDTH, UIHelper.CONTROL_HEIGHT));
+        loopToggleButton.setPreferredSize(new Dimension(24, 24));
         loopToggleButton.setMargin(new Insets(2, 2, 2, 2)); // Reduce internal padding
         loopToggleButton.addActionListener(e -> {
             if (!updatingUI) {
@@ -173,7 +173,7 @@ public class MelodicSequenceParametersPanel extends JPanel {
         // Rotate Left button
         JButton rotateLeftButton = new JButton("⟵");
         rotateLeftButton.setToolTipText("Rotate pattern one step left");
-        rotateLeftButton.setPreferredSize(new Dimension(UIHelper.SMALL_CONTROL_WIDTH, UIHelper.CONTROL_HEIGHT));
+        rotateLeftButton.setPreferredSize(new Dimension(24, 24));
         rotateLeftButton.setMargin(new Insets(2, 2, 2, 2));
         rotateLeftButton.addActionListener(e -> {
             sequencer.getSequenceData().rotatePatternLeft();
@@ -188,7 +188,7 @@ public class MelodicSequenceParametersPanel extends JPanel {
         // Rotate Right button
         JButton rotateRightButton = new JButton("⟶");
         rotateRightButton.setToolTipText("Rotate pattern one step right");
-        rotateRightButton.setPreferredSize(new Dimension(UIHelper.SMALL_CONTROL_WIDTH, UIHelper.CONTROL_HEIGHT));
+        rotateRightButton.setPreferredSize(new Dimension(24, 24));
         rotateRightButton.setMargin(new Insets(2, 2, 2, 2));
         rotateRightButton.addActionListener(e -> {
             sequencer.getSequenceData().rotatePatternRight();
@@ -215,7 +215,7 @@ public class MelodicSequenceParametersPanel extends JPanel {
     private JButton createClearButton() {
         JButton clearButton = new JButton("🗑️");
         clearButton.setToolTipText("Clear pattern");
-        clearButton.setPreferredSize(new Dimension(UIHelper.SMALL_CONTROL_WIDTH, UIHelper.CONTROL_HEIGHT));
+        clearButton.setPreferredSize(new Dimension(24, 24));
         clearButton.setMargin(new Insets(2, 2, 2, 2));
         clearButton.addActionListener(e -> {
             sequencer.getSequenceData().clearPattern();

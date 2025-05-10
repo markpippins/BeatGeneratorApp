@@ -16,9 +16,8 @@ class GridPanel extends JPanel {
     private GridButton[][] buttons;
     private Visualizer gridSaver;
 
-    static int GRID_ROWS = 12;
-    static int GRID_COLS = 65;
-
+    static int GRID_ROWS = 32;
+    static int GRID_COLS = 64;
 
     public GridPanel() {
         super(new GridLayout(GRID_ROWS, GRID_COLS, 2, 2));

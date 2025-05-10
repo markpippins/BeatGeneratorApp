@@ -185,7 +185,7 @@ public class MelodicSequencer implements IBusListener {
     public void ensurePlayerHasInstrument() {
         if (player != null && player.getInstrument() == null) {
             logger.warn("Player {} has no instrument, initializing default", SEQUENCER_CHANNELS[id]);
-            PlayerManager.getInstance().initializeInternalInstrument(player, true);
+            PlayerManager.getInstance().initializeInternalInstrument(player, true, player.getId().intValue());
         }
     }
 
@@ -490,13 +490,13 @@ public class MelodicSequencer implements IBusListener {
             player.setDefaultChannel(playerChannel);
 
             InstrumentWrapper instrument = InstrumentManager.getInstance()
-                    .getOrCreateInternalSynthInstrument(playerChannel, true);
+                    .getOrCreateInternalSynthInstrument(playerChannel, true, player.getId().intValue());
 
             if (instrument != null) {
                 player.setInstrument(instrument);
             } else {
                 logger.warn("Could not create instrument for melodic sequencer {}", id);
-                PlayerManager.getInstance().initializeInternalInstrument(player, true);
+                PlayerManager.getInstance().initializeInternalInstrument(player, true, player.getId().intValue());
             }
 
             if (player.getInstrument() != null) {
@@ -784,7 +784,7 @@ public class MelodicSequencer implements IBusListener {
 
             if (player.getInstrument() == null) {
                 logger.warn("Player has no instrument, initializing...");
-                PlayerManager.getInstance().initializeInternalInstrument(player, true);
+                PlayerManager.getInstance().initializeInternalInstrument(player, true, player.getId().intValue());
             }
 
             InstrumentWrapper instrument = player.getInstrument();
