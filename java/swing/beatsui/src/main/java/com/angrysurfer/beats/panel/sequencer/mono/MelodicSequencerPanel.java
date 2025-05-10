@@ -5,11 +5,8 @@ import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
-import java.awt.Insets;
-import java.util.List;
 import java.util.function.Consumer;
 
-import javax.swing.BorderFactory;
 import javax.swing.JButton;
 import javax.swing.JComboBox;
 import javax.swing.JLabel;
@@ -19,8 +16,7 @@ import javax.swing.JToggleButton;
 import javax.swing.SwingUtilities;
 
 import com.angrysurfer.beats.Symbols;
-import com.angrysurfer.beats.panel.player.ChannelComboPanel;
-import com.angrysurfer.beats.widget.*;
+import com.angrysurfer.beats.panel.player.SoundParametersPanel;
 import com.angrysurfer.core.api.*;
 import com.angrysurfer.core.event.MelodicScaleSelectionEvent;
 import com.angrysurfer.core.event.MelodicSequencerEvent;
@@ -30,13 +26,10 @@ import com.angrysurfer.core.event.PlayerRefreshEvent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.angrysurfer.beats.panel.player.SoundParametersPanel;
 import com.angrysurfer.beats.panel.sequencer.MuteSequencerPanel;
 import com.angrysurfer.beats.panel.sequencer.TiltSequencerPanel;
 import com.angrysurfer.beats.panel.session.SessionControlPanel;
 import com.angrysurfer.beats.util.UIHelper;
-import com.angrysurfer.core.model.Player;
-import com.angrysurfer.core.redis.MelodicSequenceDataHelper;
 import com.angrysurfer.core.redis.RedisService;
 import com.angrysurfer.core.sequencer.MelodicSequenceData;
 import com.angrysurfer.core.sequencer.MelodicSequencer;
@@ -245,7 +238,7 @@ public class MelodicSequencerPanel extends JPanel implements IBusListener {
         westPanel.add(navigationPanel, BorderLayout.WEST);
 
         // Sound parameters go NORTH-EAST
-        // eastPanel.add(new SoundParametersPanel(), BorderLayout.NORTH);
+        eastPanel.add(new SoundParametersPanel(), BorderLayout.NORTH);
 
         // Create and add the center info panel with instrument info
         JPanel centerPanel = new JPanel(new GridBagLayout()); // Use GridBagLayout for true vertical centering
@@ -321,9 +314,9 @@ public class MelodicSequencerPanel extends JPanel implements IBusListener {
         JPanel buttonPanel = UIHelper.createSectionPanel("System");
 
         // Create refresh button
-        JButton refreshButton = new JButton(Symbols.getSymbol(Symbols.CYCLE));
+        JButton refreshButton = new JButton(Symbols.get(Symbols.CYCLE));
         refreshButton.setToolTipText("Refresh all instrument presets");
-        refreshButton.setPreferredSize(new Dimension(UIHelper.SMALL_CONTROL_WIDTH, UIHelper.CONTROL_HEIGHT));
+        refreshButton.setPreferredSize(new Dimension(24, 24));
         refreshButton.setMaximumSize(new Dimension(UIHelper.SMALL_CONTROL_WIDTH, UIHelper.CONTROL_HEIGHT));
         refreshButton.addActionListener(e -> {
             CommandBus.getInstance().publish(
@@ -343,7 +336,7 @@ public class MelodicSequencerPanel extends JPanel implements IBusListener {
 
     // Add this as a new method:
     private JButton createInstrumentRefreshButton() {
-        JButton refreshButton = new JButton(Symbols.getSymbol(Symbols.CYCLE));
+        JButton refreshButton = new JButton(Symbols.get(Symbols.CYCLE));
         refreshButton.setToolTipText("Refresh all instrument sounds (fixes sound issues)");
 
         refreshButton.addActionListener(e -> {
@@ -378,7 +371,7 @@ public class MelodicSequencerPanel extends JPanel implements IBusListener {
     }
 
     private JButton createRefreshButton() {
-        JButton refreshButton = new JButton(Symbols.getSymbol(Symbols.CYCLE));
+        JButton refreshButton = new JButton(Symbols.get(Symbols.CYCLE));
         refreshButton.setToolTipText("Refresh instrument preset (fixes sound issues)");
         refreshButton.setPreferredSize(new Dimension(UIHelper.SMALL_CONTROL_WIDTH,
                                                     UIHelper.CONTROL_HEIGHT));

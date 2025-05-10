@@ -90,7 +90,6 @@ public class StatusBar extends JPanel implements IBusListener {
     private void setup() {
         // Global panel setup
         setLayout(new BorderLayout());
-        // setBorder(BorderFactory.createEmptyBorder(5, 8, 5, 8));
         
         // Create main panel with horizontal layout
         JPanel statusPanel = new JPanel();
@@ -99,7 +98,14 @@ public class StatusBar extends JPanel implements IBusListener {
         // Create and add all sections
         statusPanel.add(createMonitoringSection());
         statusPanel.add(Box.createHorizontalStrut(SECTION_SPACING));
-        statusPanel.add(new TransportPanel());
+        
+        // Create a wrapper panel for the TransportPanel to control its vertical alignment
+        JPanel transportWrapper = new JPanel(new BorderLayout());
+        transportWrapper.add(new TransportPanel(), BorderLayout.CENTER);
+        
+        // Add the wrapper instead of directly adding the TransportPanel
+        statusPanel.add(transportWrapper);
+        
         statusPanel.add(Box.createHorizontalStrut(SECTION_SPACING));
         statusPanel.add(createMessageSection());
 

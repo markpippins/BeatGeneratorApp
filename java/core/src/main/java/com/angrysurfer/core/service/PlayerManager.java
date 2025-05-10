@@ -676,7 +676,7 @@ public class PlayerManager implements IBusListener {
         logger.info("Channel consistency check completed");
     }
 
-    public void initializeInternalInstrument(Player player, boolean exclusive) {
+    public void initializeInternalInstrument(Player player, boolean exclusive, int tag) {
         if (player == null) {
             logger.warn("Cannot initialize internal instrument for null player");
             return;
@@ -685,7 +685,7 @@ public class PlayerManager implements IBusListener {
         try {
             // Get an internal instrument from InstrumentManager
             InstrumentWrapper internalInstrument = InstrumentManager.getInstance()
-                    .getOrCreateInternalSynthInstrument(player.getChannel(), exclusive);
+                    .getOrCreateInternalSynthInstrument(player.getChannel(), exclusive, tag);
 
             if (internalInstrument != null) {
                 // Assign to player
@@ -710,7 +710,7 @@ public class PlayerManager implements IBusListener {
      * Initialize the instrument for this sequencer
      * Called by PlayerManager during setup
      */
-    public void initializeInstrument(Player player, boolean exclusive) {
+    public void initializeInstrument(Player player, boolean exclusive, int tag) {
         // If we don't have a player yet, exit
         if (player == null) {
             logger.warn("Cannot initialize instrument - no player assigned to sequencer");
@@ -724,7 +724,7 @@ public class PlayerManager implements IBusListener {
                 // First try to find an existing instrument for this channel
                 int channel = player.getChannel();
                 player.setInstrument(InstrumentManager.getInstance()
-                        .getOrCreateInternalSynthInstrument(channel, exclusive));
+                        .getOrCreateInternalSynthInstrument(channel, exclusive, tag));
 
                 logger.info("Created default instrument for sequencer on channel {}", channel);
             }

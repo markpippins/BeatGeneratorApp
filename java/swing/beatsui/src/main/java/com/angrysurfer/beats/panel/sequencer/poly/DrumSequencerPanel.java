@@ -20,13 +20,13 @@ import javax.swing.JToggleButton;
 import javax.swing.SwingUtilities;
 
 import com.angrysurfer.beats.Symbols;
+import com.angrysurfer.beats.panel.player.SoundParametersPanel;
 import com.angrysurfer.core.api.*;
 import com.angrysurfer.core.sequencer.DrumSequenceData;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.angrysurfer.beats.panel.player.SoundParametersPanel;
 import com.angrysurfer.beats.util.UIHelper;
 import com.angrysurfer.beats.visualization.Visualizer;
 import com.angrysurfer.core.event.DrumPadSelectionEvent;
@@ -176,7 +176,7 @@ public class DrumSequencerPanel extends JPanel implements IBusListener {
 
         westPanel.add(navigationPanel, BorderLayout.WEST);
 
-        //eastPanel.add(new SoundParametersPanel(), BorderLayout.NORTH);
+        eastPanel.add(new SoundParametersPanel(), BorderLayout.NORTH);
 
         topPanel.add(westPanel, BorderLayout.WEST);
         topPanel.add(eastPanel, BorderLayout.EAST);
@@ -215,9 +215,9 @@ public class DrumSequencerPanel extends JPanel implements IBusListener {
         JPanel buttonPanel = UIHelper.createSectionPanel("Presets");
 
         // Create preset selection button
-        JButton presetButton = new JButton(Symbols.getSymbol(Symbols.LOAD));
+        JButton presetButton = new JButton(Symbols.get(Symbols.LOAD));
         presetButton.setToolTipText("Select preset instruments for each drum");
-        presetButton.setPreferredSize(new Dimension(UIHelper.SMALL_CONTROL_WIDTH, UIHelper.CONTROL_HEIGHT));
+        presetButton.setPreferredSize(new Dimension(24, 24));
         presetButton.setMaximumSize(new Dimension(UIHelper.SMALL_CONTROL_WIDTH, UIHelper.CONTROL_HEIGHT));
         presetButton.addActionListener(e -> {
             CommandBus.getInstance().publish(
@@ -237,7 +237,7 @@ public class DrumSequencerPanel extends JPanel implements IBusListener {
     // Add this as a new method:
     private JButton createRefreshButton() {
         JButton refreshButton = new JButton(
-                Symbols.getSymbol(Symbols.CYCLE));
+                Symbols.get(Symbols.CYCLE));
         refreshButton.setToolTipText("Refresh drum instruments (fixes sound issues)");
         refreshButton.setPreferredSize(new Dimension(com.angrysurfer.beats.util.UIHelper.SMALL_CONTROL_WIDTH,
                 com.angrysurfer.beats.util.UIHelper.CONTROL_HEIGHT));

@@ -498,7 +498,7 @@ public class PlayerEditBasicPropertiesPanel extends JPanel {
         if (player != null && drumCombo.getSelectedItem() instanceof DrumItem) {
             DrumItem drum = (DrumItem) drumCombo.getSelectedItem();
             player.setRootNote(drum.getNoteNumber());
-            
+            player.setName(InternalSynthManager.getInstance().getDrumName(player.getRootNote()));
             // Apply changes
             applyChanges();
         }

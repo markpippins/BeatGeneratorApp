@@ -185,6 +185,24 @@ public class PlayerRowRenderer extends DefaultTableCellRenderer implements IBusL
                 }
             }
             
+            // Add special handling for Owner column - highlight different owner types with colors
+            boolean isOwnerColumn = modelColumnIndex == table.getColumnIndex(PlayersTableModel.COL_OWNER);
+            if (isOwnerColumn && value instanceof String) {
+                String ownerType = (String)value;
+                
+                // Set a tooltip with more info
+                label.setToolTipText("Owner: " + ownerType);
+                
+                // Color code different owner types
+                if ("DrumSequencer".equals(ownerType)) {
+                    label.setForeground(isSelected ? Color.WHITE : new Color(0, 128, 0)); // Dark green
+                } else if ("MelodicSequencer".equals(ownerType)) {
+                    label.setForeground(isSelected ? Color.WHITE : new Color(0, 0, 160)); // Dark blue
+                } else if (ownerType.contains("Sequencer")) {
+                    label.setForeground(isSelected ? Color.WHITE : new Color(128, 0, 128)); // Purple
+                }
+            }
+            
             // For all other columns, handle numeric vs non-numeric formatting
             boolean isNumeric = false;
             for (int numericCol : numericColumns) {

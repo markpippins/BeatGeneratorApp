@@ -26,7 +26,10 @@ import com.angrysurfer.core.api.Command;
  */
 public class LoggingPanel extends JPanel {
     private static final Logger logger = LoggerFactory.getLogger(LoggingPanel.class);
-    
+
+    // TODO: add this to dynamically change levels: 
+    // ((ch.qos.logback.classic.Logger) LoggerFactory.getLogger("com.angrysurfer")).setLevel(Level.DEBUG);
+
     // UI Components
     private JTextPane logTextPane;
     private JScrollPane scrollPane;

@@ -66,14 +66,14 @@ public class MelodicSequencerGeneratorPanel extends JPanel {
         // Generate button with consistent styling
         JButton generateButton = new JButton("🎲");
         generateButton.setToolTipText("Generate a random pattern");
-        generateButton.setPreferredSize(new Dimension(UIHelper.SMALL_CONTROL_WIDTH, UIHelper.CONTROL_HEIGHT));
+        generateButton.setPreferredSize(new Dimension(24, 24));
         generateButton.setMargin(new Insets(2, 2, 2, 2));
         generateButton.addActionListener(e -> generatePattern());
         
         // Latch toggle button
         latchToggleButton = new JToggleButton("L", false);
         latchToggleButton.setToolTipText("Generate new pattern each cycle");
-        latchToggleButton.setPreferredSize(new Dimension(UIHelper.SMALL_CONTROL_WIDTH, UIHelper.CONTROL_HEIGHT));
+        latchToggleButton.setPreferredSize(new Dimension(24, 24));
         latchToggleButton.addActionListener(e -> {
             if (sequencer != null) {
                 sequencer.setLatchEnabled(latchToggleButton.isSelected());

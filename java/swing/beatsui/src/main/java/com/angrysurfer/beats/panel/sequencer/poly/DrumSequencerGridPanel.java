@@ -10,6 +10,7 @@ import javax.swing.BorderFactory;
 import javax.swing.JPanel;
 import javax.swing.SwingUtilities;
 
+import com.angrysurfer.beats.visualization.Visualizer;
 import com.angrysurfer.core.sequencer.DrumSequenceData;
 import com.angrysurfer.core.service.DrumSequencerManager;
 import org.slf4j.Logger;
@@ -61,9 +62,9 @@ public class DrumSequencerGridPanel extends JPanel {
         // setBorder(BorderFactory.createLoweredBevelBorder());
         // Initialize grid buttons array
         gridButtons = new DrumSequencerGridButton[DRUM_PAD_COUNT][sequencer.getDefaultPatternLength()];
-        
         // Create the grid buttons
         createGridButtons();
+        // Visualizer gridSaver = new Visualizer(this, gridButtons);
     }
     
     /**

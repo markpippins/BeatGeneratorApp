@@ -362,9 +362,9 @@ public class InstrumentManager implements IBusListener {
      * @param channel MIDI channel
      * @return The instrument, creating it if necessary
      */
-    public InstrumentWrapper getOrCreateInternalSynthInstrument(int channel, boolean exclusive) {
+    public InstrumentWrapper getOrCreateInternalSynthInstrument(int channel, boolean exclusive, int tag) {
         // First try to find an existing instrument
-        Long id = 9985L + channel;
+        Long id = 9985L + tag;
 
         // Try to find by ID first
         InstrumentWrapper instrument = instrumentCache.get(id);
@@ -390,7 +390,7 @@ public class InstrumentManager implements IBusListener {
         // No instrument found, create a new one using InternalSynthManager
         boolean isDrumChannel = (channel == 9);
         instrument = InternalSynthManager.getInstance().createInternalInstrument(
-                channel, isDrumChannel, null);
+                channel, isDrumChannel, isDrumChannel ? "Internal Drums " + tag : "Unknown " + channel + "-" + tag);
 
         if (instrument != null) {
             // Store in our cache
@@ -636,7 +636,8 @@ public void refreshCache(List<InstrumentWrapper> instruments) {
     /**
      * Get instrument for a drum pad
      * 
-     * @param channel Should be 9 for drums (MIDI channel 10)
+     * @param id
+     * @param name
      * @return The instrument, creating it if necessary
      */
     public InstrumentWrapper getDrumInstrument(Long id, String name) {

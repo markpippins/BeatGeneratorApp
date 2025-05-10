@@ -95,10 +95,10 @@ public class Visualizer implements IBusListener {
             case Commands.TRANSPORT_START:
             case Commands.TRANSPORT_STATE_CHANGED: // <-- Add this case
                 // For state changed, check if it's true (playing)
-                if (Commands.TRANSPORT_STATE_CHANGED.equals(action.getCommand())
-                        && !(action.getData() instanceof Boolean && (Boolean) action.getData())) {
-                    break; // Only proceed if transport is starting
-                }
+                // if (Commands.TRANSPORT_STATE_CHANGED.equals(action.getCommand())
+                //         && !(action.getData() instanceof Boolean && (Boolean) action.getData())) {
+                //     break; // Only proceed if transport is starting
+                // }
 
                 stopVisualizer();
                 // Find and start the ScrollingSequencerVisualization

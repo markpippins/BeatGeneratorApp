@@ -18,17 +18,10 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 
-import javax.swing.BorderFactory;
-import javax.swing.Box;
-import javax.swing.JButton;
-import javax.swing.JComboBox;
-import javax.swing.JLabel;
-import javax.swing.JPanel;
-import javax.swing.JSlider;
-import javax.swing.JToggleButton;
-import javax.swing.SwingConstants;
-import javax.swing.SwingUtilities;
+import javax.swing.*;
 
+import lombok.Getter;
+import lombok.Setter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -40,6 +33,8 @@ import com.angrysurfer.beats.widget.DoubleDial;
  * types
  * and visualization.
  */
+@Getter
+@Setter
 public class LFOPanel extends JPanel implements AutoCloseable {
     private static final Logger logger = LoggerFactory.getLogger(LFOPanel.class.getName());
 
@@ -74,6 +69,7 @@ public class LFOPanel extends JPanel implements AutoCloseable {
 
     // Value change listener
     private Consumer<Double> valueChangeListener;
+    private JComponent incrementButton;
 
     // Waveform types
     public enum WaveformType {
@@ -100,7 +96,7 @@ public class LFOPanel extends JPanel implements AutoCloseable {
      * Creates a new LFO Panel
      */
     public LFOPanel() {
-        super(new BorderLayout(10, 10));
+        super(new BorderLayout(2, 2));
         // setBorder(new EmptyBorder(10, 10, 10, 10));
         setBorder(BorderFactory.createTitledBorder("LFO"));
 
@@ -155,14 +151,14 @@ public class LFOPanel extends JPanel implements AutoCloseable {
 
         // Create waveform visualization panel - MAKE IT SMALLER
         waveformPanel = new WaveformPanel();
-        waveformPanel.setPreferredSize(new Dimension(600, 120)); // Reduced height to ~1/4
+        waveformPanel.setPreferredSize(new Dimension(600, 80)); // Reduced height to ~1/4
         waveformPanelContainer.setBorder(BorderFactory.createTitledBorder("Waveform Shape"));
         waveformPanelContainer.add(waveformPanel, BorderLayout.CENTER);
 
         // Create live waveform panel to replace the value display
         liveWaveformPanel = new LiveWaveformPanel();
-        liveWaveformPanel.setMinimumSize(new Dimension(600, 300));
-        liveWaveformPanel.setPreferredSize(new Dimension(600, 300));
+        liveWaveformPanel.setMinimumSize(new Dimension(600, 200));
+        liveWaveformPanel.setPreferredSize(new Dimension(600, 200));
         JPanel liveWaveformContainer = new JPanel(new BorderLayout(5, 5));
         liveWaveformContainer.setBorder(BorderFactory.createTitledBorder("Live Output"));
         liveWaveformContainer.add(liveWaveformPanel, BorderLayout.CENTER);
@@ -294,7 +290,7 @@ public class LFOPanel extends JPanel implements AutoCloseable {
      * Creates a Dial with label and value display
      */
     private DoubleDial createDial(String name, double min, double max, double initial, double step,
-            Consumer<Double> changeListener) {
+                                  Consumer<Double> changeListener) {
         JPanel panel = new JPanel(new BorderLayout(2, 2));
         panel.setBorder(BorderFactory.createTitledBorder(name));
 
@@ -321,10 +317,10 @@ public class LFOPanel extends JPanel implements AutoCloseable {
 
     /**
      * Creates a Dial with proper label, value display, and tooltip
-     * Updated to center the dial within its container
+     * Updated to add increment/decrement buttons for step size control
      */
     private JPanel createDialPanel(String name, String tooltip, double min, double max, double initial, double step,
-            Consumer<Double> changeListener) {
+                                   Consumer<Double> changeListener) {
         // Create panel with border layout
         JPanel panel = new JPanel(new BorderLayout(2, 2));
         panel.setBorder(BorderFactory.createCompoundBorder(
@@ -368,16 +364,73 @@ public class LFOPanel extends JPanel implements AutoCloseable {
         JPanel dialCenterPanel = new JPanel(new GridBagLayout()); // GridBagLayout centers components
         dialCenterPanel.add(dial); // This will center the dial in the panel
 
-        // Layout components
+        // Create increment/decrement buttons panel
+        JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 4, 0));
+        
+        // Determine appropriate step multipliers based on parameter type
+        double smallerStep, largerStep;
+        
+        if (name.equals("Frequency")) {
+            smallerStep = step / 10;  // Even finer control for frequency
+            largerStep = step * 10;   // Coarser adjustment
+        } else if (name.equals("Pulse Width")) {
+            smallerStep = 0.0005;     // Very fine for pulse width
+            largerStep = 0.01;        // Larger step
+        } else {
+            smallerStep = step / 5;   // Finer control
+            largerStep = step * 5;    // Coarser adjustment
+        }
+
+        // Create decrement button (makes steps smaller)
+        JButton decrementButton = new JButton("÷");
+        decrementButton.setFont(new Font("Dialog", Font.BOLD, 10));
+        decrementButton.setPreferredSize(new Dimension(20, 20));
+        decrementButton.setToolTipText("Decrease step size to " + String.format("%.5f", smallerStep));
+        decrementButton.addActionListener(e -> {
+            double currentStep = dial.getStepSize();
+            dial.setStepSize(smallerStep);
+            decrementButton.setEnabled(smallerStep > min/1000); // Disable if too small
+            valueLabel.setText(String.format(formatPattern, dial.getValue()));
+            // Update tooltip with new value
+            decrementButton.setToolTipText("Step size decreased to " + String.format("%.5f", smallerStep));
+            incrementButton.setToolTipText("Increase step size to " + String.format("%.5f", currentStep));
+        });
+        
+        // Create increment button (makes steps larger)
+        JButton incrementButton = new JButton("×");
+        incrementButton.setFont(new Font("Dialog", Font.BOLD, 10));
+        incrementButton.setPreferredSize(new Dimension(20, 20));
+        incrementButton.setToolTipText("Increase step size to " + String.format("%.5f", largerStep));
+        incrementButton.addActionListener(e -> {
+            double currentStep = dial.getStepSize();
+            dial.setStepSize(largerStep);
+            incrementButton.setEnabled(largerStep < (max-min)/2); // Disable if too large
+            valueLabel.setText(String.format(formatPattern, dial.getValue()));
+            // Update tooltip with new value
+            incrementButton.setToolTipText("Step size increased to " + String.format("%.5f", largerStep));
+            decrementButton.setToolTipText("Decrease step size to " + String.format("%.5f", currentStep));
+        });
+
+        // Add buttons to panel
+        buttonPanel.add(decrementButton);
+        buttonPanel.add(incrementButton);
+
+        // Create a combined panel for value display and buttons
+        JPanel southPanel = new JPanel(new BorderLayout(2, 2));
+        
+        // Layout for labels (value + units)
         JPanel labelPanel = new JPanel(new BorderLayout(2, 0));
         labelPanel.add(valueLabel, BorderLayout.CENTER);
         if (unitsLabel != null) {
             labelPanel.add(unitsLabel, BorderLayout.EAST);
         }
+        
+        southPanel.add(labelPanel, BorderLayout.NORTH);
+        southPanel.add(buttonPanel, BorderLayout.SOUTH);
 
         // Add components to panel
         panel.add(dialCenterPanel, BorderLayout.CENTER); // Centered dial
-        panel.add(labelPanel, BorderLayout.SOUTH);
+        panel.add(southPanel, BorderLayout.SOUTH);
 
         return panel;
     }

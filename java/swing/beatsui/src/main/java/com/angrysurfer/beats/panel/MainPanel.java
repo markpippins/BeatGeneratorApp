@@ -60,6 +60,8 @@ public class MainPanel extends PlayerAwarePanel implements AutoCloseable, IBusLi
         System.setProperty("org.slf4j.simpleLogger.log.com.angrysurfer.core.api.CommandBus", "debug");
     }
 
+    private static final int DEFAULT_MONO_SEQUENCERS = 1;
+
     private JTabbedPane tabbedPane;
     private final List<Dial> velocityDials = new ArrayList<>();
     private final List<Dial> gateDials = new ArrayList<>();
@@ -116,7 +118,8 @@ public class MainPanel extends PlayerAwarePanel implements AutoCloseable, IBusLi
 
         loggingPanel = new LoggingPanel();
         tabbedPane.addTab("Logs", loggingPanel);
-
+        // tabbedPane.addTab("Visualizer", new GridPanel());
+        
         tabbedPane.setBorder(BorderFactory.createEmptyBorder(0, 4, 0, 4));
 
         JPanel tabToolbar = new JPanel();
@@ -349,7 +352,7 @@ public class MainPanel extends PlayerAwarePanel implements AutoCloseable, IBusLi
         // melodicTabbedPane.setTabPlacement(JTabbedPane.BOTTOM);
 
         // Initialize all melodic sequencer panels with proper channel distribution
-        for (int i = 0; i < melodicPanels.length; i++) {
+        for (int i = 0; i < DEFAULT_MONO_SEQUENCERS; i++) {
             // Get channel from ChannelManager based on sequencer index
             int channel = ChannelManager.getInstance().getChannelForSequencerIndex(i);
 
@@ -494,7 +497,6 @@ public class MainPanel extends PlayerAwarePanel implements AutoCloseable, IBusLi
     }
 
     private Component createModulationMatrixPanel() {
-
         modulationTabbedPane = new JTabbedPane();
 
         // Create a main panel with a border
@@ -528,13 +530,9 @@ public class MainPanel extends PlayerAwarePanel implements AutoCloseable, IBusLi
         // Add the grid panel to the main panel
         lfoPanel.add(lfoBankPanel, BorderLayout.CENTER);
 
-        // Add a title header
-        // JLabel titleLabel = new JLabel("Modulation Matrix", SwingConstants.CENTER);
-        // titleLabel.setFont(new Font("Dialog", Font.BOLD, 16));
-        // titleLabel.setBorder(BorderFactory.createEmptyBorder(0, 0, 10, 0));
-        // mainPanel.add(titleLabel, BorderLayout.NORTH);
-
+        // Add tabs to the modulation tabbed pane
         modulationTabbedPane.addTab("LFOs", lfoPanel);
+        modulationTabbedPane.addTab("Complex LFO", new ComplexLFOPanel());
         modulationTabbedPane.addTab("XY Pad", createXYPadPanel());
 
         return modulationTabbedPane;
@@ -676,7 +674,7 @@ public class MainPanel extends PlayerAwarePanel implements AutoCloseable, IBusLi
 
     private JToggleButton createMetronomeToggleButton() {
         JToggleButton metronomeButton = new JToggleButton();
-        metronomeButton.setText(Symbols.getSymbol(Symbols.METRONOME)); // Unicode metronome symbol
+        metronomeButton.setText(Symbols.get(Symbols.METRONOME)); // Unicode metronome symbol
         // Set equal width and height to ensure square shape
         metronomeButton.setPreferredSize(new Dimension(28, 28));
         metronomeButton.setMinimumSize(new Dimension(28, 28));
@@ -734,7 +732,7 @@ public class MainPanel extends PlayerAwarePanel implements AutoCloseable, IBusLi
 
     private JToggleButton createLoopToggleButton() {
         JToggleButton loopButton = new JToggleButton();
-        loopButton.setText(Symbols.getSymbol(Symbols.LOOP)); // Unicode loop symbol
+        loopButton.setText(Symbols.get(Symbols.LOOP)); // Unicode loop symbol
 
         // Set equal width and height to ensure square shape
         loopButton.setPreferredSize(new Dimension(28, 28));
@@ -793,7 +791,7 @@ public class MainPanel extends PlayerAwarePanel implements AutoCloseable, IBusLi
 
     private JButton createAllNotesOffButton() {
         JButton notesOffButton = new JButton();
-        notesOffButton.setText(Symbols.getSymbol(Symbols.ALL_NOTES_OFF)); // Unicode all notes off symbol
+        notesOffButton.setText(Symbols.get(Symbols.ALL_NOTES_OFF)); // Unicode all notes off symbol
         // Set equal width and height to ensure square shape
         notesOffButton.setPreferredSize(new Dimension(28, 28));
         notesOffButton.setMinimumSize(new Dimension(28, 28));
@@ -862,7 +860,7 @@ public class MainPanel extends PlayerAwarePanel implements AutoCloseable, IBusLi
         JButton mixButton = new JButton();
         // Use a mixer icon character instead of text to fit in a square button
         // mixButton.setText("🎛️");
-        mixButton.setText(Symbols.getSymbol(Symbols.MIX)); // Unicode mixer sy
+        mixButton.setText(Symbols.get(Symbols.MIX)); // Unicode mixer sy
 
         // Set equal width and height to ensure square shape
         mixButton.setPreferredSize(new Dimension(28, 28));
@@ -899,6 +897,7 @@ public class MainPanel extends PlayerAwarePanel implements AutoCloseable, IBusLi
                 JDialog mixerDialog = new JDialog(SwingUtilities.getWindowAncestor(this),
                         "Pop-Up Mixer",
                         Dialog.ModalityType.MODELESS); // Non-modal dialog
+                mixerDialog.setResizable(false);
                 mixerDialog.setContentPane(mixerPanel);
                 mixerDialog.pack();
                 mixerDialog.setLocationRelativeTo(this);

@@ -6,7 +6,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import com.angrysurfer.core.model.Strike;
 import com.angrysurfer.core.service.DeviceManager;
+import com.angrysurfer.core.service.InternalSynthManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -31,8 +33,8 @@ import javax.sound.midi.MidiDevice;
 
 @Getter
 @Setter
-class DrumSequenceHelper {
-    private static final Logger logger = LoggerFactory.getLogger(DrumSequenceHelper.class.getName());
+class DrumSequenceDataHelper {
+    private static final Logger logger = LoggerFactory.getLogger(DrumSequenceDataHelper.class.getName());
     private final JedisPool jedisPool;
     private final ObjectMapper objectMapper;
     private final CommandBus commandBus = CommandBus.getInstance();
@@ -41,7 +43,7 @@ class DrumSequenceHelper {
     private static final int DRUM_PAD_COUNT = 16;
     private static final int MAX_STEPS = 64;
 
-    public DrumSequenceHelper(JedisPool jedisPool, ObjectMapper objectMapper) {
+    public DrumSequenceDataHelper(JedisPool jedisPool, ObjectMapper objectMapper) {
         this.jedisPool = jedisPool;
         this.objectMapper = objectMapper;
     }
@@ -83,55 +85,54 @@ class DrumSequenceHelper {
                     Player player = sequencer.getPlayer(i);
                     if (player != null) {
                         // Try to get the instrument by ID
-                        InstrumentWrapper instrument = 
-                            InstrumentManager.getInstance().getInstrumentById(data.getInstrumentIds()[i]);
-                        
+                        InstrumentWrapper instrument = InstrumentManager.getInstance()
+                                .getInstrumentById(data.getInstrumentIds()[i]);
+
                         if (instrument != null) {
                             // Set the instrument
                             player.setInstrument(instrument);
                             player.setInstrumentId(instrument.getId());
-                            
+
                             // Apply saved preset and bank if available
                             if (data.getPresets() != null && data.getPresets()[i] != null) {
                                 instrument.setPreset(data.getPresets()[i]);
                             }
-                            
+
                             if (data.getBankIndices() != null && data.getBankIndices()[i] != null) {
                                 instrument.setBankIndex(data.getBankIndices()[i]);
                             }
-                            
+
                             // Apply the instrument preset
                             PlayerManager.getInstance().applyInstrumentPreset(player);
                         } else if (data.getDeviceNames() != null && data.getDeviceNames()[i] != null) {
                             // If instrument not found by ID, try to create one with the saved parameters
                             String deviceName = data.getDeviceNames()[i];
                             MidiDevice device = DeviceManager.getInstance().acquireDevice(deviceName);
-                            
+
                             InstrumentWrapper newInstrument = new InstrumentWrapper(
-                                data.getInstrumentNames() != null ? data.getInstrumentNames()[i] : "Drum " + i,
-                                device,
-                                DrumSequenceData.MIDI_DRUM_CHANNEL
-                            );
-                            
+                                    data.getInstrumentNames() != null ? data.getInstrumentNames()[i] : "Drum " + i,
+                                    device,
+                                    DrumSequenceData.MIDI_DRUM_CHANNEL);
+
                             if (data.getSoundbankNames() != null && data.getSoundbankNames()[i] != null) {
                                 newInstrument.setSoundbankName(data.getSoundbankNames()[i]);
                             }
-                            
+
                             if (data.getPresets() != null && data.getPresets()[i] != null) {
                                 newInstrument.setPreset(data.getPresets()[i]);
                             }
-                            
+
                             if (data.getBankIndices() != null && data.getBankIndices()[i] != null) {
                                 newInstrument.setBankIndex(data.getBankIndices()[i]);
                             }
-                            
+
                             // Save the instrument
                             InstrumentManager.getInstance().updateInstrument(newInstrument);
-                            
+
                             // Set the instrument on the player
                             player.setInstrument(newInstrument);
                             player.setInstrumentId(newInstrument.getId());
-                            
+
                             // Apply the instrument preset
                             PlayerManager.getInstance().applyInstrumentPreset(player);
                         }
@@ -193,6 +194,24 @@ class DrumSequenceHelper {
                 }
             }
 
+            // Apply root notes to players if available
+            if (data.getRootNotes() != null) {
+                for (int i = 0; i < Math.min(data.getRootNotes().length, DrumSequenceData.DRUM_PAD_COUNT); i++) {
+                    Player player = sequencer.getPlayer(i);
+                    if (player != null) {
+                        int rootNote = data.getRootNotes()[i];
+                        // Only update if valid (non-zero)
+                        if (rootNote > 0) {
+                            player.setRootNote(rootNote);
+                            // TODO: account for non-internal instruments
+                            if (player instanceof Strike)
+                                player.setName(InternalSynthManager.getInstance().getDrumName(rootNote));
+                            logger.debug("Applied root note {} to drum player {}", rootNote, i);
+                        }
+                    }
+                }
+            }
+
             // Notify that pattern has updated
             commandBus.publish(Commands.DRUM_SEQUENCE_UPDATED, this, sequencer.getData().getId());
 
@@ -208,12 +227,12 @@ class DrumSequenceHelper {
         try (Jedis jedis = jedisPool.getResource()) {
             // Create a data transfer object
             DrumSequenceData data = sequencer.getData();
-            
+            logger.info(data.toString());
             // Set or generate ID
             if (data.getId() <= 0) {
                 data.setId(jedis.incr("seq:drumsequence"));
             }
-            
+
             // Copy instrument data for each drum
             for (int i = 0; i < DrumSequenceData.DRUM_PAD_COUNT; i++) {
                 Player player = sequencer.getPlayer(i);
@@ -226,8 +245,10 @@ class DrumSequenceHelper {
                     data.getDeviceNames()[i] = instrument.getDeviceName();
                     data.getInstrumentNames()[i] = instrument.getName();
                 }
+                if (player != null)
+                    data.getRootNotes()[i] = player.getRootNote();
             }
-            
+
             // Copy pattern data
             data.setPatternLengths(Arrays.copyOf(sequencer.getData().getPatternLengths(), DRUM_PAD_COUNT));
             data.setDirections(Arrays.copyOf(sequencer.getData().getDirections(), DRUM_PAD_COUNT));
@@ -248,7 +269,7 @@ class DrumSequenceHelper {
             // Save to Redis
             String json = objectMapper.writeValueAsString(data);
             jedis.set("drumseq:" + data.getId(), json);
-            
+
             // Also store in the hash for faster lookup
             jedis.hset("drum-sequences", String.valueOf(data.getId()), json);
 
@@ -318,6 +339,13 @@ class DrumSequenceHelper {
             // Save to Redis
             String json = objectMapper.writeValueAsString(data);
             jedis.set("drumseq:" + data.getId(), json);
+
+            // Initialize root notes array with standard GM drum mapping
+            int[] rootNotes = new int[DRUM_PAD_COUNT];
+            for (int i = 0; i < DRUM_PAD_COUNT; i++) {
+                rootNotes[i] = DrumSequenceData.MIDI_DRUM_NOTE_OFFSET + i;
+            }
+            data.setRootNotes(rootNotes);
 
             logger.info("Created new drum sequence with ID: {}", data.getId());
             return data;
@@ -432,6 +460,7 @@ class DrumSequenceHelper {
 
     /**
      * Delete a drum sequence by ID
+     * 
      * @param id The ID of the drum sequence to delete
      * @return true if successfully deleted, false otherwise
      */
@@ -440,35 +469,35 @@ class DrumSequenceHelper {
             logger.warn("Cannot delete drum sequence with null ID");
             return false;
         }
-        
+
         try (Jedis jedis = jedisPool.getResource()) {
             String key = "drumseq:" + id;
-            
+
             // Check if the sequence exists
             if (!jedis.exists(key)) {
                 logger.warn("Drum sequence with ID {} not found", id);
                 return false;
             }
-            
+
             // Delete the sequence
             Long result = jedis.del(key);
-            
+
             // Also remove from the hash if it exists there
             String hashKey = id.toString();
             if (jedis.hexists("drum-sequences", hashKey)) {
                 jedis.hdel("drum-sequences", hashKey);
             }
-            
+
             boolean success = result != null && result > 0;
             if (success) {
                 logger.info("Successfully deleted drum sequence with ID {}", id);
-                
+
                 // Notify listeners
                 commandBus.publish(Commands.DRUM_SEQUENCE_DELETED, this, id);
             } else {
                 logger.warn("Failed to delete drum sequence with ID {}", id);
             }
-            
+
             return success;
         } catch (Exception e) {
             logger.error("Error deleting drum sequence with ID {}: {}", id, e.getMessage(), e);

@@ -70,11 +70,10 @@ public class PlayersTable extends JTable {
     }
 
     private void setupTable() {
-        // Hide the ID column
-        getColumnModel().getColumn(tableModel.getColumnIndex(PlayersTableModel.COL_ID)).setMinWidth(30);
-        getColumnModel().getColumn(tableModel.getColumnIndex(PlayersTableModel.COL_ID)).setMaxWidth(30);
-        getColumnModel().getColumn(tableModel.getColumnIndex(PlayersTableModel.COL_ID)).setWidth(0);
-        getColumnModel().getColumn(tableModel.getColumnIndex(PlayersTableModel.COL_ID)).setPreferredWidth(30);
+        // Modify the ID column to make it visible with reasonable width
+        getColumnModel().getColumn(tableModel.getColumnIndex(PlayersTableModel.COL_ID)).setMinWidth(60);
+        getColumnModel().getColumn(tableModel.getColumnIndex(PlayersTableModel.COL_ID)).setMaxWidth(100);
+        getColumnModel().getColumn(tableModel.getColumnIndex(PlayersTableModel.COL_ID)).setPreferredWidth(80);
 
         // Set column widths for Name column
         getColumnModel().getColumn(tableModel.getColumnIndex(PlayersTableModel.COL_NAME)).setMinWidth(100);
@@ -97,6 +96,12 @@ public class PlayersTable extends JTable {
         getColumnModel().getColumn(presetColumnIndex).setMinWidth(80);
         getColumnModel().getColumn(presetColumnIndex).setPreferredWidth(100);
         getColumnModel().getColumn(presetColumnIndex).setMaxWidth(140);
+
+        // Set up Owner column width
+        int ownerColumnIndex = tableModel.getColumnIndex(PlayersTableModel.COL_OWNER);
+        getColumnModel().getColumn(ownerColumnIndex).setMinWidth(80);
+        getColumnModel().getColumn(ownerColumnIndex).setPreferredWidth(120);
+        getColumnModel().getColumn(ownerColumnIndex).setMaxWidth(160);
 
         // Set fixed widths for other columns - skip Preset and Instrument columns
         for (int i = 2; i < getColumnCount(); i++) {
@@ -511,6 +516,13 @@ public class PlayersTable extends JTable {
                     tableModel.getColumnIndex(PlayersTableModel.COL_PRESET));
             tableModel.setValueAt(player.getPanPosition(), modelRow,
                     tableModel.getColumnIndex(PlayersTableModel.COL_PAN));
+
+            // Update owner display
+            String ownerName = "None";
+            if (player.getOwner() != null) {
+                ownerName = player.getOwner().getClass().getSimpleName();
+            }
+            tableModel.setValueAt(ownerName, modelRow, tableModel.getColumnIndex(PlayersTableModel.COL_OWNER));
 
             // Special handling for instrument column
             tableModel.updateInstrumentCell(tableModel.getDataVector().get(modelRow),

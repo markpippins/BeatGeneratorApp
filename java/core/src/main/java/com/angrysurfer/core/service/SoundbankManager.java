@@ -14,6 +14,8 @@ import javax.sound.midi.MidiSystem;
 import javax.sound.midi.Soundbank;
 import javax.sound.midi.Synthesizer;
 
+import com.angrysurfer.core.event.PlayerPresetChangeEvent;
+import com.angrysurfer.core.event.PlayerUpdateEvent;
 import com.angrysurfer.core.model.*;
 import org.slf4j.LoggerFactory;
 
@@ -1079,6 +1081,8 @@ public class SoundbankManager implements IBusListener {
      * @param presetNumber The number of the selected preset
      * @return true if the update was successful
      */
+
+    // TODO: handle external vs internal instrument thing
     public boolean updatePlayerSound(Player player, String soundbankName, Integer bankIndex, Integer presetNumber) {
         if (player == null || player.getInstrument() == null) {
             logger.warn("Cannot update sound for null player or instrument");
@@ -1087,34 +1091,45 @@ public class SoundbankManager implements IBusListener {
         
         try {
             InstrumentWrapper instrument = player.getInstrument();
-            
+
             // Update soundbank if specified
             if (soundbankName != null && !soundbankName.isEmpty()) {
                 instrument.setSoundbankName(soundbankName);
             }
-            
+
             // Update bank if specified
             if (bankIndex != null) {
                 instrument.setBankIndex(bankIndex);
             }
-            
-            // Update preset if specified
-            if (presetNumber != null) {
-                instrument.setPreset(presetNumber);
+
+                // Update preset if specified
+            if (presetNumber != null && instrument.getChannel() != 9) {
+                    instrument.setPreset(presetNumber);
+
+                // Apply the changes
+                if (bankIndex != null && presetNumber != null) {
+                    applyPresetChangeToPlayer(player, bankIndex, presetNumber);
+                }
+
+                // Create a preset change event
+                CommandBus.getInstance().publish(
+                    Commands.PLAYER_PRESET_CHANGE_EVENT,
+                    this,
+                    new PlayerPresetChangeEvent(player, bankIndex, presetNumber)
+                );
             }
-            
-            // Apply the changes
-            if (bankIndex != null && presetNumber != null) {
-                applyPresetChangeToPlayer(player, bankIndex, presetNumber);
+            else if (presetNumber != null && instrument.getChannel() == 9) {
+                player.setRootNote(presetNumber);
+                player.setName(InternalSynthManager.getInstance().getDrumName(presetNumber));
+                // Create a preset change event
+                CommandBus.getInstance().publish(
+                        Commands.PLAYER_UPDATE_EVENT,
+                        this,
+                        new PlayerUpdateEvent(player)
+                );
+
             }
-            
-            // Create a preset change event
-            CommandBus.getInstance().publish(
-                Commands.PLAYER_PRESET_CHANGE_EVENT,
-                this,
-                new com.angrysurfer.core.event.PlayerPresetChangeEvent(player, bankIndex, presetNumber)
-            );
-            
+
             return true;
         } catch (Exception e) {
             logger.error("Error updating player sound: {}", e.getMessage());

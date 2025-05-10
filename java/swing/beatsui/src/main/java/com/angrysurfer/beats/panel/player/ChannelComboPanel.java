@@ -9,19 +9,16 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 
 import com.angrysurfer.beats.Symbols;
+import com.angrysurfer.beats.panel.PlayerAwarePanel;
 import com.angrysurfer.beats.util.UIHelper;
 import com.angrysurfer.beats.widget.ChannelCombo;
-import com.angrysurfer.core.model.Player;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import com.angrysurfer.core.api.CommandBus;
-import com.angrysurfer.core.api.Commands;
 
 /**
  * Panel for generating random patterns in the drum player
  */
-public class ChannelComboPanel extends JPanel {
+public class ChannelComboPanel extends PlayerAwarePanel {
     private static final Logger logger = LoggerFactory.getLogger(ChannelComboPanel.class);
 
     // UI components
@@ -35,14 +32,14 @@ public class ChannelComboPanel extends JPanel {
         channelCombo = new ChannelCombo();
         
         // Standardize size to match other controls
-        channelCombo.setPreferredSize(new Dimension(UIHelper.MEDIUM_CONTROL_WIDTH + 10, UIHelper.CONTROL_HEIGHT));
+        channelCombo.setPreferredSize(new Dimension(UIHelper.MEDIUM_CONTROL_WIDTH * 2, UIHelper.CONTROL_HEIGHT));
         channelCombo.setToolTipText("Player MIDI Channel");
 
-        editButton = new JButton(Symbols.getSymbol(Symbols.GRID));
+        editButton = new JButton(Symbols.get(Symbols.GRID));
         editButton.setToolTipText("Edit...");
         
         // Match button size and margins to other panels
-        editButton.setPreferredSize(new Dimension(UIHelper.SMALL_CONTROL_WIDTH, UIHelper.CONTROL_HEIGHT));
+        editButton.setPreferredSize(new Dimension(24, 24));
         editButton.setMargin(new Insets(2, 2, 2, 2));
         
         editButton.addActionListener(e -> {
@@ -53,11 +50,6 @@ public class ChannelComboPanel extends JPanel {
             //        null);
         });
 
-        // Add label for better UI consistency
-        JLabel channelLabel = new JLabel("Ch:");
-        
-        // Add components to panel with compact spacing
-        add(channelLabel);
         add(channelCombo);
         add(editButton);
     }
@@ -72,5 +64,15 @@ public class ChannelComboPanel extends JPanel {
         setLayout(new FlowLayout(FlowLayout.LEFT, 2, 1));
         
         initializeComponents();
+    }
+
+    @Override
+    public void handlePlayerActivated() {
+        channelCombo.setCurrentPlayer(getPlayer());
+    }
+
+    @Override
+    public void handlePlayerUpdated() {
+        channelCombo.setCurrentPlayer(getPlayer());
     }
 }

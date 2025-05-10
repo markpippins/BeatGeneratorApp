@@ -62,7 +62,7 @@ public class RedisService implements IBusListener {
     private final InstrumentHelper instrumentHelper;
     private final SessionHelper sessionHelper;
     private final UserConfigHelper userConfigHelper;
-    private final DrumSequenceHelper drumSequenceHelper;
+    private final DrumSequenceDataHelper drumSequenceHelper;
     private final MelodicSequenceDataHelper melodicSequencerHelper;
     // private final RedisConfigHelper configHelper;
 
@@ -79,7 +79,7 @@ public class RedisService implements IBusListener {
         this.songHelper = new SongHelper(jedisPool, objectMapper);
         this.instrumentHelper = new InstrumentHelper(jedisPool, objectMapper);
         this.userConfigHelper = new UserConfigHelper(jedisPool, objectMapper);
-        this.drumSequenceHelper = new DrumSequenceHelper(jedisPool, objectMapper);
+        this.drumSequenceHelper = new DrumSequenceDataHelper(jedisPool, objectMapper);
         this.melodicSequencerHelper = new MelodicSequenceDataHelper(jedisPool, objectMapper);
         // this.configHelper = new RedisConfigHelper(jedisPool, objectMapper);
 

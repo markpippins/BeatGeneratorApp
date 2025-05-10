@@ -37,8 +37,9 @@ public class PlayerEditPanel extends PlayerAwarePanel {
     /**
      * Constructor
      */
-    public PlayerEditPanel() {
+    public PlayerEditPanel(Player player) {
         super();
+        setTargetPlayer(player);
         initComponents();
         layoutComponents();
     }
@@ -82,8 +83,8 @@ public class PlayerEditPanel extends PlayerAwarePanel {
      */
     private void initComponents() {
         // Create panels - will be updated when a player is activated
-        basicPropertiesPanel = new PlayerEditBasicPropertiesPanel(null);
-        detailPanel = new PlayerEditDetailPanel(null);
+        basicPropertiesPanel = new PlayerEditBasicPropertiesPanel(getTargetPlayer());
+        detailPanel = new PlayerEditDetailPanel(getTargetPlayer());
     }
 
     /**
