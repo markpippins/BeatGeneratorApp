@@ -6,7 +6,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import com.angrysurfer.core.model.Strike;
 import com.angrysurfer.core.service.DeviceManager;
+import com.angrysurfer.core.service.InternalSynthManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -201,6 +203,9 @@ class DrumSequenceHelper {
                         // Only update if valid (non-zero)
                         if (rootNote > 0) {
                             player.setRootNote(rootNote);
+                            // TODO: account for non-internal instruments
+                            if (player instanceof Strike)
+                                player.setName(InternalSynthManager.getInstance().getDrumName(rootNote));
                             logger.debug("Applied root note {} to drum player {}", rootNote, i);
                         }
                     }

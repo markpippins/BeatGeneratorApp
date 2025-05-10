@@ -46,16 +46,17 @@ public class PlayersTableModel extends DefaultTableModel {
     public static final String COL_PAN = "Pan";
     public static final String COL_PRESERVE = "Preserve";
     public static final String COL_SPARSE = "Sparse";
+    public static final String COL_OWNER = "Owner";
 
     public static final Set<String> COLUMNS = new LinkedHashSet<>(
             Arrays.asList(COL_ID, COL_NAME, COL_INSTRUMENT, COL_CHANNEL, COL_PRESET, COL_NOTE, COL_LEVEL, COL_PAN,
                     COL_MIN_VEL, COL_MAX_VEL, COL_SWING, COL_PROBABILITY, COL_RANDOM, COL_SPARSE, COL_RATCHET_COUNT,
-                    COL_RATCHET_INTERVAL, COL_INT_BEATS, COL_INT_BARS, COL_MUTE, COL_STICKY, COL_PRESERVE));
+                    COL_RATCHET_INTERVAL, COL_INT_BEATS, COL_INT_BARS, COL_MUTE, COL_STICKY, COL_PRESERVE, COL_OWNER));
 
     // IMPORTANT: Make the ID column hidden
     private static final Set<String> HIDDEN_COLUMN_NAMES = Set.of(COL_ID);
 
-    private static final Set<String> STRING_COLUMN_NAMES = Set.of(COL_ID, COL_NAME, COL_INSTRUMENT);
+    private static final Set<String> STRING_COLUMN_NAMES = Set.of(COL_ID, COL_NAME, COL_INSTRUMENT, COL_OWNER);
     private static final Set<String> BOOLEAN_COLUMN_NAMES = Set.of(COL_MUTE, COL_STICKY, COL_PRESERVE);
 
     private static final int[] BOOLEAN_COLUMNS = BOOLEAN_COLUMN_NAMES.stream()
@@ -166,6 +167,13 @@ public class PlayersTableModel extends DefaultTableModel {
             setValueAt(player.getPreset(), modelRow, getColumnIndex(COL_PRESET));
             setValueAt(player.getPanPosition(), modelRow, getColumnIndex(COL_PAN));
 
+            // Extract owner name
+            String ownerName = "None";
+            if (player.getOwner() != null) {
+                ownerName = player.getOwner().getClass().getSimpleName();
+            }
+            setValueAt(ownerName, modelRow, getColumnIndex(COL_OWNER));
+
             // Special handling for instrument column
             updateInstrumentCell(getDataVector().get(modelRow), getColumnIndex(COL_INSTRUMENT), player);
 
@@ -240,6 +248,13 @@ public class PlayersTableModel extends DefaultTableModel {
         rowData[getColumnIndex(COL_PAN)] = player.getPanPosition();
         rowData[getColumnIndex(COL_PRESERVE)] = player.getPreserveOnPurge();
         rowData[getColumnIndex(COL_SPARSE)] = player.getSparse();
+
+        // Extract owner name from player's owner object
+        String ownerName = "None";
+        if (player.getOwner() != null) {
+            ownerName = player.getOwner().getClass().getSimpleName();
+        }
+        rowData[getColumnIndex(COL_OWNER)] = ownerName;
 
         // Handle instrument separately
         Vector<Object> vectorData = new Vector<>(Arrays.asList(rowData));

@@ -14,6 +14,8 @@ import javax.sound.midi.MidiSystem;
 import javax.sound.midi.Soundbank;
 import javax.sound.midi.Synthesizer;
 
+import com.angrysurfer.core.event.PlayerPresetChangeEvent;
+import com.angrysurfer.core.event.PlayerUpdateEvent;
 import com.angrysurfer.core.model.*;
 import org.slf4j.LoggerFactory;
 
@@ -1108,14 +1110,25 @@ public class SoundbankManager implements IBusListener {
                 if (bankIndex != null && presetNumber != null) {
                     applyPresetChangeToPlayer(player, bankIndex, presetNumber);
                 }
-            }
 
-            // Create a preset change event
-            CommandBus.getInstance().publish(
-                Commands.PLAYER_PRESET_CHANGE_EVENT,
-                this,
-                new com.angrysurfer.core.event.PlayerPresetChangeEvent(player, bankIndex, presetNumber)
-            );
+                // Create a preset change event
+                CommandBus.getInstance().publish(
+                    Commands.PLAYER_PRESET_CHANGE_EVENT,
+                    this,
+                    new PlayerPresetChangeEvent(player, bankIndex, presetNumber)
+                );
+            }
+            else if (presetNumber != null && instrument.getChannel() == 9) {
+                player.setRootNote(presetNumber);
+                player.setName(InternalSynthManager.getInstance().getDrumName(presetNumber));
+                // Create a preset change event
+                CommandBus.getInstance().publish(
+                        Commands.PLAYER_UPDATE_EVENT,
+                        this,
+                        new PlayerUpdateEvent(player)
+                );
+
+            }
 
             return true;
         } catch (Exception e) {

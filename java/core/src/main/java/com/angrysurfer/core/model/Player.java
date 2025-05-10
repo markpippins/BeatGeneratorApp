@@ -36,10 +36,7 @@ import jakarta.persistence.Transient;
 import lombok.Getter;
 import lombok.Setter;
 
-import javax.sound.midi.InvalidMidiDataException;
-import javax.sound.midi.MidiDevice;
-import javax.sound.midi.MidiUnavailableException;
-import javax.sound.midi.ShortMessage;
+import javax.sound.midi.*;
 
 @Getter
 @Setter
@@ -235,6 +232,8 @@ public abstract class Player implements Callable<Boolean>, Serializable, IBusLis
         this.instrument = instrument;
         this.instrument.setChannel(getDefaultChannel());
         this.instrumentId = instrument.getId();
+        if (this.getInstrument().getDeviceName().contains("Gervill"))
+            getInstrument().setInternal(true);
     }
 
     public String getPlayerClassName() {
