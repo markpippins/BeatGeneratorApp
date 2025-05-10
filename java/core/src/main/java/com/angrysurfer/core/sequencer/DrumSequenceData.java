@@ -136,6 +136,9 @@ public class DrumSequenceData {
     private String[] deviceNames; // Store device names for each drum
     private String[] instrumentNames; // Store instrument names for each drum
 
+    // Root notes for each drum pad
+    private int[] rootNotes; // Store root note for each drum pad
+
     /**
      * Initialize drum sequencer data with default values
      */
@@ -235,6 +238,14 @@ public class DrumSequenceData {
         // Initialize with defaults
         java.util.Arrays.fill(presets, 0); // Default drum kit preset
         java.util.Arrays.fill(bankIndices, 0); // Default bank
+
+        // Initialize root notes
+        rootNotes = new int[DRUM_PAD_COUNT];
+
+        // Initialize with default values (standard GM drum kit starting at note 36)
+        for (int i = 0; i < DRUM_PAD_COUNT; i++) {
+            rootNotes[i] = MIDI_DRUM_NOTE_OFFSET + i; // Default to standard GM drum mapping
+        }
     }
 
     /**

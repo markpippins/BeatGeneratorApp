@@ -60,6 +60,8 @@ public class MainPanel extends PlayerAwarePanel implements AutoCloseable, IBusLi
         System.setProperty("org.slf4j.simpleLogger.log.com.angrysurfer.core.api.CommandBus", "debug");
     }
 
+    private static final int DEFAULT_MONO_SEQUENCERS = 1;
+
     private JTabbedPane tabbedPane;
     private final List<Dial> velocityDials = new ArrayList<>();
     private final List<Dial> gateDials = new ArrayList<>();
@@ -350,7 +352,7 @@ public class MainPanel extends PlayerAwarePanel implements AutoCloseable, IBusLi
         // melodicTabbedPane.setTabPlacement(JTabbedPane.BOTTOM);
 
         // Initialize all melodic sequencer panels with proper channel distribution
-        for (int i = 0; i < melodicPanels.length; i++) {
+        for (int i = 0; i < DEFAULT_MONO_SEQUENCERS; i++) {
             // Get channel from ChannelManager based on sequencer index
             int channel = ChannelManager.getInstance().getChannelForSequencerIndex(i);
 
