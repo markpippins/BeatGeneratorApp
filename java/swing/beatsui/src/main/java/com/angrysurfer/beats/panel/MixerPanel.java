@@ -26,6 +26,7 @@ import javax.swing.JToggleButton;
 import javax.swing.SwingConstants;
 import javax.swing.border.TitledBorder;
 
+import com.angrysurfer.core.Constants;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -46,7 +47,6 @@ public class MixerPanel extends JPanel implements IBusListener {
 
     // Constants
     private static final int CHANNEL_OFFSET = 1; // Mono channels start at 2
-    private static final int DRUMS_CHANNEL = 9; // Standard MIDI drum channel
 
     // MIDI CC values
     private static final int CC_VOLUME = 7;
@@ -65,7 +65,7 @@ public class MixerPanel extends JPanel implements IBusListener {
     };
 
     private final int[] trackChannels = {
-            DRUMS_CHANNEL, DRUMS_CHANNEL,
+            Constants.MIDI_DRUM_CHANNEL, Constants.MIDI_DRUM_CHANNEL,
             CHANNEL_OFFSET, CHANNEL_OFFSET + 1, CHANNEL_OFFSET + 2, CHANNEL_OFFSET + 3,
             CHANNEL_OFFSET + 4, CHANNEL_OFFSET + 5, CHANNEL_OFFSET + 6, CHANNEL_OFFSET + 8,
             CHANNEL_OFFSET + 9, CHANNEL_OFFSET + 10, CHANNEL_OFFSET + 11, CHANNEL_OFFSET + 12,

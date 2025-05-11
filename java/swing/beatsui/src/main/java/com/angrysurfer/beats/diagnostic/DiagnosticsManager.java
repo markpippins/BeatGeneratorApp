@@ -12,18 +12,16 @@ import javax.sound.midi.MidiSystem;
 import javax.sound.midi.Receiver;
 import javax.sound.midi.ShortMessage;
 import javax.sound.midi.Synthesizer;
-import javax.swing.BorderFactory;
 import javax.swing.JButton;
 import javax.swing.JDialog;
 import javax.swing.JFrame;
-import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
 import javax.swing.SwingUtilities;
 
-import com.angrysurfer.beats.diagnostic.helper.*;
+import com.angrysurfer.beats.diagnostic.suite.*;
 import com.angrysurfer.core.api.CommandBus;
 import com.angrysurfer.core.api.Commands;
 import com.angrysurfer.core.service.DeviceManager;
@@ -41,20 +39,20 @@ public class DiagnosticsManager {
     private final CommandBus commandBus;
     
     // Helper instances
-    private final MidiDiagnosticsHelper midiHelper;
+    private final MidiDiagnostics midiHelper;
     private final DrumSequencerDiagnostics sequencerHelper;
-    private final PlayerDiagnosticsHelper playerHelper;
-    private final InstrumentDiagnosticsHelper instrumentHelper;
-    private final SessionDiagnosticsHelper sessionHelper;
-    private final UserConfigDiagnosticsHelper configHelper;
+    private final PlayerDiagnostics playerHelper;
+    private final InstrumentDiagnostics instrumentHelper;
+    private final SessionDiagnostics sessionHelper;
+    private final UserConfigDiagnostics configHelper;
     private final ChannelManagerDiagnostics channelHelper;
     private final DeviceManagerDiagnostics deviceHelper;
-    private final ReceiverManagerDiagnosticsHelper receiverHelper;
-    private final PlayerManagerDiagnosticsHelper playerManagerHelper;
-    private final SessionManagerDiagnosticsHelper sessionManagerHelper;
-    private final UserConfigManagerDiagnosticsHelper userConfigManagerHelper;
-    private final MelodicSequencerDiagnosticsHelper melodicSequencerHelper;
-    private final MelodicSequencerManagerDiagnosticsHelper melodicSequencerManagerHelper;
+    private final ReceiverManagerDiagnostics receiverHelper;
+    private final PlayerManagerDiagnostics playerManagerHelper;
+    private final SessionManagerDiagnostics sessionManagerHelper;
+    private final UserConfigManagerDiagnostics userConfigManagerHelper;
+    private final MelodicSequencerDiagnostics melodicSequencerHelper;
+    private final MelodicSequencerManagerDiagnostics melodicSequencerManagerHelper;
     
     /**
      * Private constructor for singleton pattern
@@ -64,20 +62,20 @@ public class DiagnosticsManager {
         this.commandBus = commandBus;
         
         // Initialize helpers
-        this.midiHelper = new MidiDiagnosticsHelper(parentFrame);
+        this.midiHelper = new MidiDiagnostics(parentFrame);
         this.sequencerHelper = new DrumSequencerDiagnostics();
-        this.playerHelper = new PlayerDiagnosticsHelper();
-        this.instrumentHelper = new InstrumentDiagnosticsHelper();
-        this.sessionHelper = new SessionDiagnosticsHelper();
-        this.configHelper = new UserConfigDiagnosticsHelper();
+        this.playerHelper = new PlayerDiagnostics();
+        this.instrumentHelper = new InstrumentDiagnostics();
+        this.sessionHelper = new SessionDiagnostics();
+        this.configHelper = new UserConfigDiagnostics();
         this.channelHelper = new ChannelManagerDiagnostics();
         this.deviceHelper = new DeviceManagerDiagnostics();
-        this.receiverHelper = new ReceiverManagerDiagnosticsHelper();
-        this.playerManagerHelper = new PlayerManagerDiagnosticsHelper();
-        this.sessionManagerHelper = new SessionManagerDiagnosticsHelper();
-        this.userConfigManagerHelper = new UserConfigManagerDiagnosticsHelper();
-        this.melodicSequencerHelper = new MelodicSequencerDiagnosticsHelper();
-        this.melodicSequencerManagerHelper = new MelodicSequencerManagerDiagnosticsHelper();
+        this.receiverHelper = new ReceiverManagerDiagnostics();
+        this.playerManagerHelper = new PlayerManagerDiagnostics();
+        this.sessionManagerHelper = new SessionManagerDiagnostics();
+        this.userConfigManagerHelper = new UserConfigManagerDiagnostics();
+        this.melodicSequencerHelper = new MelodicSequencerDiagnostics();
+        this.melodicSequencerManagerHelper = new MelodicSequencerManagerDiagnostics();
     }
     
     /**
@@ -194,7 +192,7 @@ public class DiagnosticsManager {
             try {
                 // Redis diagnostics
                 splash.setProgress(0, "Testing Redis connection...");
-                DiagnosticLogBuilder redisLog = RedisDiagnosticsHelper.runAllRedisDiagnostics();
+                DiagnosticLogBuilder redisLog = RedisServiceDiagnostics.runAllRedisDiagnostics();
                 masterLog.addSection("1. Redis Diagnostics");
                 masterLog.addLine(redisLog.buildWithoutHeader());
                 
@@ -220,9 +218,9 @@ public class DiagnosticsManager {
 
                 // User config tests
                 splash.setProgress(3, "Testing user configurations...");
-                DiagnosticLogBuilder configLog = testUserConfig();
-                masterLog.addSection("4. User Configuration");
-                masterLog.addLine(configLog.buildWithoutHeader());
+                // DiagnosticLogBuilder configLog = testUserConfig();
+                // masterLog.addSection("4. User Configuration");
+                // masterLog.addLine(configLog.buildWithoutHeader());
 
                 // DrumSequencer diagnostics
                 splash.setProgress(4, "Testing DrumSequencer...");
@@ -294,8 +292,13 @@ public class DiagnosticsManager {
                 splash.setProgress(15, "Completed all diagnostics");
                 
                 // Compile errors and warnings from all logs
+//                for (DiagnosticLogBuilder log : Arrays.asList(
+//                        redisLog, midiLog, sessionLog, configLog, sequencerLog,
+//                        melodicSequencerLog, playerLog, soundLog, channelLog, deviceLog, receiverLog,
+//                        playerManagerLog, sessionManagerLog, userConfigManagerLog, melodicSequencerManagerLog)) {
+
                 for (DiagnosticLogBuilder log : Arrays.asList(
-                        redisLog, midiLog, sessionLog, configLog, sequencerLog, 
+                        redisLog, midiLog, sessionLog, sequencerLog,
                         melodicSequencerLog, playerLog, soundLog, channelLog, deviceLog, receiverLog,
                         playerManagerLog, sessionManagerLog, userConfigManagerLog, melodicSequencerManagerLog)) {
                     if (log != null) {
@@ -399,9 +402,9 @@ public class DiagnosticsManager {
     /**
      * Test user config
      */
-    public DiagnosticLogBuilder testUserConfig() {
-        return configHelper.testUserConfigDiagnostics();
-    }
+//    public DiagnosticLogBuilder testUserConfig() {
+//        return configHelper.testUserConfigDiagnostics();
+//    }
     
     /**
      * Test channel manager functionality
@@ -476,9 +479,9 @@ public class DiagnosticsManager {
     /**
      * Test config transaction support
      */
-    public DiagnosticLogBuilder testConfigTransactions() {
-        return userConfigManagerHelper.testConfigTransactions();
-    }
+//    public DiagnosticLogBuilder testConfigTransactions() {
+//        return userConfigManagerHelper.testConfigTransactions();
+//    }
 
     /**
      * Test MelodicSequencer functionality

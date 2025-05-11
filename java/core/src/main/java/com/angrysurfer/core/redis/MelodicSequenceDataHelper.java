@@ -11,7 +11,7 @@ import org.slf4j.LoggerFactory;
 import com.angrysurfer.core.api.CommandBus;
 import com.angrysurfer.core.api.Commands;
 import com.angrysurfer.core.event.MelodicSequencerEvent;
-import com.angrysurfer.core.model.Direction;
+import com.angrysurfer.core.sequencer.Direction;
 import com.angrysurfer.core.model.InstrumentWrapper;
 import com.angrysurfer.core.model.Player;
 import com.angrysurfer.core.sequencer.MelodicSequenceData;

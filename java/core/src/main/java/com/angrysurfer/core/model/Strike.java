@@ -4,6 +4,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.stream.LongStream;
 
+import com.angrysurfer.core.Constants;
 import com.angrysurfer.core.sequencer.TimingUpdate;
 
 import lombok.Getter;
@@ -52,6 +53,11 @@ public class Strike extends Player {
         setMinVelocity(minVelocity);
         setMaxVelocity(maxVelocity);
         setDrumPlayer(true);
+    }
+
+    @Override
+    public Integer getDefaultChannel() {
+        return Constants.MIDI_DRUM_CHANNEL;
     }
 
     @Override

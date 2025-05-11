@@ -8,6 +8,7 @@ import java.util.Set;
 import javax.sound.midi.MidiDevice;
 import javax.sound.midi.MidiUnavailableException;
 
+import com.angrysurfer.core.Constants;
 import com.angrysurfer.core.model.Rule;
 import com.angrysurfer.core.model.Session;
 import org.slf4j.Logger;
@@ -141,7 +142,7 @@ public class PlayerManager implements IBusListener {
 
             Long previousInstrumentId = player.getInstrumentId();
 
-            boolean isDrumPlayer = player.getChannel() == 9;
+            boolean isDrumPlayer = player.getChannel() == Constants.MIDI_DRUM_CHANNEL;
             boolean isPartOfSequencer = false;
             DrumSequencer owningSequencer = null;
             int playerIndexInSequencer = -1;
@@ -596,7 +597,7 @@ public class PlayerManager implements IBusListener {
                 Integer channel = player.getChannel();
 
                 // Skip drum channel 9 which can have multiple assignments
-                if (channel == 9)
+                if (channel == Constants.MIDI_DRUM_CHANNEL)
                     continue;
 
                 if (channelToPlayerId.containsKey(channel)) {
@@ -623,7 +624,7 @@ public class PlayerManager implements IBusListener {
                     Integer channel = player.getChannel();
 
                     // Skip drum channel
-                    if (channel == 9)
+                    if (channel == Constants.MIDI_DRUM_CHANNEL)
                         continue;
 
                     // If this player's channel has a conflict
@@ -654,7 +655,7 @@ public class PlayerManager implements IBusListener {
         // Final pass: ensure all players have valid channels
         for (Player player : playerCache.values()) {
             if (player != null && (player.getChannel() == null ||
-                    (!player.isDrumPlayer() && player.getChannel() == 9))) {
+                    (!player.isDrumPlayer() && player.getChannel() == Constants.MIDI_DRUM_CHANNEL))) {
                 // Assign an appropriate channel
                 int newChannel = player.isDrumPlayer() ? 9 : channelManager.getNextAvailableMelodicChannel();
 

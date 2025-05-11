@@ -26,7 +26,7 @@ import javax.swing.SwingConstants;
 import javax.swing.SwingUtilities;
 
 import com.angrysurfer.beats.util.UIHelper;
-import com.angrysurfer.core.sequencer.DrumSequenceData;
+import com.angrysurfer.core.Constants;
 import com.angrysurfer.core.sequencer.DrumSequencer;
 import com.angrysurfer.core.sequencer.MelodicSequencer;
 import com.angrysurfer.core.service.MelodicSequencerManager;
@@ -67,7 +67,7 @@ public class PopupMixerPanel extends JPanel {
         }
         
         // Initialize drum state arrays
-        int drumCount = DrumSequenceData.DRUM_PAD_COUNT;
+        int drumCount = Constants.DRUM_PAD_COUNT;
         drumMuteStates = new boolean[drumCount];
         drumSoloStates = new boolean[drumCount];
         drumVolumeSliders = new JSlider[drumCount];
@@ -107,10 +107,10 @@ public class PopupMixerPanel extends JPanel {
         JPanel mainPanel = new JPanel(new BorderLayout());
         
         // Main panel for channel strips
-        JPanel channelStripsPanel = new JPanel(new GridLayout(1, DrumSequenceData.DRUM_PAD_COUNT));
+        JPanel channelStripsPanel = new JPanel(new GridLayout(1, Constants.DRUM_PAD_COUNT));
         
         // Create drum channel strips
-        for (int i = 0; i < DrumSequenceData.DRUM_PAD_COUNT; i++) {
+        for (int i = 0; i < Constants.DRUM_PAD_COUNT; i++) {
             channelStripsPanel.add(createDrumChannelStrip(i));
         }
         
@@ -125,7 +125,7 @@ public class PopupMixerPanel extends JPanel {
         JPanel drumControls = new JPanel(new FlowLayout(FlowLayout.LEFT));
         JButton allMuteButton = new JButton("Mute All Drums");
         allMuteButton.addActionListener(e -> {
-            for (int i = 0; i < DrumSequenceData.DRUM_PAD_COUNT; i++) {
+            for (int i = 0; i < Constants.DRUM_PAD_COUNT; i++) {
                 drumMuteButtons[i].setSelected(true);
                 drumMuteStates[i] = true;
                 drumSequencer.setVelocity(i, 0);
@@ -136,7 +136,7 @@ public class PopupMixerPanel extends JPanel {
         
         JButton clearDrumMuteButton = new JButton("Clear Drum Mutes");
         clearDrumMuteButton.addActionListener(e -> {
-            for (int i = 0; i < DrumSequenceData.DRUM_PAD_COUNT; i++) {
+            for (int i = 0; i < Constants.DRUM_PAD_COUNT; i++) {
                 drumMuteButtons[i].setSelected(false);
                 drumMuteStates[i] = false;
             }
@@ -146,7 +146,7 @@ public class PopupMixerPanel extends JPanel {
         
         JButton clearDrumSoloButton = new JButton("Clear Drum Solos");
         clearDrumSoloButton.addActionListener(e -> {
-            for (int i = 0; i < DrumSequenceData.DRUM_PAD_COUNT; i++) {
+            for (int i = 0; i < Constants.DRUM_PAD_COUNT; i++) {
                 drumSoloButtons[i].setSelected(false);
                 drumSoloStates[i] = false;
             }
@@ -409,7 +409,7 @@ public class PopupMixerPanel extends JPanel {
         soloButton.setForeground(Color.WHITE);
         
         // Store original velocities for all channels to restore when un-soloing
-        final int[][] originalVelocities = {new int[DrumSequenceData.DRUM_PAD_COUNT]};
+        final int[][] originalVelocities = {new int[Constants.DRUM_PAD_COUNT]};
         
         soloButton.addActionListener(e -> {
             boolean soloed = soloButton.isSelected();
@@ -418,7 +418,7 @@ public class PopupMixerPanel extends JPanel {
             if (soloed) {
                 // First time a solo is activated, save all channel volumes
                 if (!drumSoloActive) {
-                    for (int i = 0; i < DrumSequenceData.DRUM_PAD_COUNT; i++) {
+                    for (int i = 0; i < Constants.DRUM_PAD_COUNT; i++) {
                         originalVelocities[0][i] = drumSequencer.getVelocity(i);
                     }
                     drumSoloActive = true;
@@ -542,7 +542,7 @@ public class PopupMixerPanel extends JPanel {
     private void updateDrumChannelStates() {
         // When any solo is active, only soloed channels play
         if (drumSoloActive) {
-            for (int i = 0; i < DrumSequenceData.DRUM_PAD_COUNT; i++) {
+            for (int i = 0; i < Constants.DRUM_PAD_COUNT; i++) {
                 if (drumSoloStates[i]) {
                     // Solo trumps mute
                     if (!drumMuteStates[i]) {
@@ -562,7 +562,7 @@ public class PopupMixerPanel extends JPanel {
             }
         } else {
             // No solos active - respect only mute state
-            for (int i = 0; i < DrumSequenceData.DRUM_PAD_COUNT; i++) {
+            for (int i = 0; i < Constants.DRUM_PAD_COUNT; i++) {
                 if (drumMuteStates[i]) {
                     // Muted - should be silent
                     drumSequencer.setVelocity(i, 0);

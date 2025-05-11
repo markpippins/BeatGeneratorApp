@@ -21,8 +21,9 @@ import javax.swing.SwingUtilities;
 
 import com.angrysurfer.beats.Symbols;
 import com.angrysurfer.beats.panel.player.SoundParametersPanel;
+import com.angrysurfer.core.Constants;
 import com.angrysurfer.core.api.*;
-import com.angrysurfer.core.sequencer.DrumSequenceData;
+import com.angrysurfer.core.api.midi.MIDIConstants;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -70,15 +71,15 @@ public class DrumSequencerPanel extends JPanel implements IBusListener {
     private JSpinner densitySpinner;
 
     // Replace the local DRUM_PAD_COUNT constant with DrumSequencer's version
-    private static final int DRUM_PAD_COUNT = DrumSequenceData.DRUM_PAD_COUNT;
+    private static final int DRUM_PAD_COUNT = Constants.DRUM_PAD_COUNT;
 
     // Add these constants referencing DrumSequencer constants
-    private static final int DEFAULT_VELOCITY = DrumSequenceData.DEFAULT_VELOCITY;
-    private static final int DEFAULT_DECAY = DrumSequenceData.DEFAULT_DECAY;
-    private static final int DEFAULT_PROBABILITY = DrumSequenceData.DEFAULT_PROBABILITY;
-    private static final int MIN_SWING = DrumSequenceData.MIN_SWING;
-    private static final int MAX_SWING = DrumSequenceData.MAX_SWING;
-    private static final int MIDI_DRUM_NOTE_OFFSET = DrumSequenceData.MIDI_DRUM_NOTE_OFFSET;
+    private static final int DEFAULT_VELOCITY = MIDIConstants.DEFAULT_VELOCITY;
+    private static final int DEFAULT_DECAY = MIDIConstants.DEFAULT_DECAY;
+    private static final int DEFAULT_PROBABILITY = MIDIConstants.DEFAULT_PROBABILITY;
+    private static final int MIN_SWING = MIDIConstants.MIN_SWING;
+    private static final int MAX_SWING = MIDIConstants.MAX_SWING;
+    private static final int MIDI_DRUM_NOTE_OFFSET = MIDIConstants.MIDI_DRUM_NOTE_OFFSET;
 
     // UI constants
     private static final int DRUM_BUTTON_SIZE = 28;

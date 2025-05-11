@@ -6,8 +6,8 @@ import javax.swing.*;
 import java.awt.*;
 import java.util.List;
 
-import com.angrysurfer.beats.widget.ChannelCombo;
-import com.angrysurfer.core.model.PresetItem;
+import com.angrysurfer.core.Constants;
+import com.angrysurfer.core.model.preset.PresetItem;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -15,8 +15,8 @@ import com.angrysurfer.beats.util.UIHelper;
 import com.angrysurfer.core.api.CommandBus;
 import com.angrysurfer.core.model.Player;
 import com.angrysurfer.core.service.SoundbankManager;
-import com.angrysurfer.core.model.BankItem;
-import com.angrysurfer.core.model.SoundbankItem;
+import com.angrysurfer.core.model.preset.BankItem;
+import com.angrysurfer.core.model.preset.SoundbankItem;
 import com.angrysurfer.core.service.InternalSynthManager;
 
 /**
@@ -149,7 +149,7 @@ public class SoundParametersPanel extends PlayerAwarePanel {
                     Integer bankIndex = bankItem != null ? bankItem.getIndex() : null;
 
                     // For drum channel, update root note
-                    if (currentPlayer.getChannel() == 9) {
+                    if (currentPlayer.getChannel() == Constants.MIDI_DRUM_CHANNEL) {
                         currentPlayer.setRootNote(item.getNumber());
                     }
 
@@ -270,7 +270,7 @@ public class SoundParametersPanel extends PlayerAwarePanel {
         try {
             // UIHelper.setWidgetPanelBorder(this, getTargetPlayer().getName());
 
-            boolean isDrumChannel = player.getChannel() == 9;
+            boolean isDrumChannel = player.getChannel() == Constants.MIDI_DRUM_CHANNEL;
             boolean isInternalSynth = player.getInstrument() != null &&
                     InternalSynthManager.getInstance().isInternalSynthInstrument(player.getInstrument());
 

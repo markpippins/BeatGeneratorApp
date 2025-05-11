@@ -1,18 +1,14 @@
 package com.angrysurfer.beats.panel.sequencer.mono;
 
-import com.angrysurfer.core.model.Direction;
+import com.angrysurfer.core.sequencer.Direction;
 import com.angrysurfer.core.sequencer.MelodicSequencer;
-import com.angrysurfer.core.sequencer.Scale;
 import com.angrysurfer.core.sequencer.TimingDivision;
 import com.angrysurfer.beats.util.UIHelper;
 import com.angrysurfer.core.api.CommandBus;
 import com.angrysurfer.core.api.Commands;
-import com.angrysurfer.core.event.MelodicScaleSelectionEvent;
 
 import javax.swing.*;
-import javax.swing.border.TitledBorder;
 import java.awt.*;
-import java.awt.event.ItemEvent;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

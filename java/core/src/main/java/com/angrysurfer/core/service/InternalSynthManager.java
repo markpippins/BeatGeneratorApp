@@ -16,17 +16,16 @@ import javax.sound.midi.MidiDevice;
 import javax.sound.midi.MidiSystem;
 import javax.sound.midi.MidiUnavailableException;
 import javax.sound.midi.Receiver;
-import javax.sound.midi.ShortMessage;
 import javax.sound.midi.Soundbank;
 import javax.sound.midi.Synthesizer;
 
+import com.angrysurfer.core.Constants;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.angrysurfer.core.model.DrumItem;
+import com.angrysurfer.core.model.preset.DrumItem;
 import com.angrysurfer.core.model.InstrumentWrapper;
-import com.angrysurfer.core.model.SynthData;
-import com.angrysurfer.core.redis.RedisService;
+import com.angrysurfer.core.model.preset.SynthData;
 
 /**
  * Manager for internal synthesizer instruments and presets. This singleton
@@ -364,7 +363,7 @@ public class InternalSynthManager {
                     channels[channel].programChange(preset);
                     
                     // For percussion channel, ensure drum mode is enabled
-                    if (channel == 9) {
+                    if (channel == Constants.MIDI_DRUM_CHANNEL) {
                         channels[channel].controlChange(0, 120);
                     }
                     

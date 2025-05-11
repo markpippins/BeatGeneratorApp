@@ -19,7 +19,8 @@ import javax.swing.JTextField;
 import javax.swing.SwingUtilities;
 import javax.swing.filechooser.FileFilter;
 
-import com.angrysurfer.core.model.PresetItem;
+import com.angrysurfer.core.Constants;
+import com.angrysurfer.core.model.preset.PresetItem;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -28,7 +29,7 @@ import com.angrysurfer.beats.widget.InstrumentCombo;
 import com.angrysurfer.core.api.CommandBus;
 import com.angrysurfer.core.api.Commands;
 import com.angrysurfer.core.event.PlayerUpdateEvent;
-import com.angrysurfer.core.model.DrumItem;
+import com.angrysurfer.core.model.preset.DrumItem;
 import com.angrysurfer.core.model.Player;
 import com.angrysurfer.core.service.InternalSynthManager;
 import com.angrysurfer.core.service.SoundbankManager;
@@ -90,7 +91,7 @@ public class PlayerEditBasicPropertiesPanel extends JPanel {
      */
     private void updatePlayerState() {
         if (player != null) {
-            isDrumChannel = player.getChannel() == 9;
+            isDrumChannel = player.getChannel() == Constants.MIDI_DRUM_CHANNEL;
             isInternalSynth = player.getInstrument() != null && 
                     synthManager.isInternalSynth(player.getInstrument());
         }
@@ -122,7 +123,7 @@ public class PlayerEditBasicPropertiesPanel extends JPanel {
                 if (!initializing.get() && player != null) {
                     // Check if we switched to/from drum channel
                     boolean wasDrumChannel = isDrumChannel;
-                    isDrumChannel = player.getChannel() == 9;
+                    isDrumChannel = player.getChannel() == Constants.MIDI_DRUM_CHANNEL;
                     
                     if (wasDrumChannel != isDrumChannel) {
                         SwingUtilities.invokeLater(this::updateControls);

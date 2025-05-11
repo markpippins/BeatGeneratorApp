@@ -5,6 +5,8 @@ import java.util.Random;
 
 import com.angrysurfer.beats.visualization.IVisualizationHandler;
 import com.angrysurfer.beats.visualization.VisualizationCategory;
+import com.angrysurfer.core.Constants;
+
 import javax.swing.JButton;
 
 public class TicTacToeVisualization implements IVisualizationHandler {
@@ -60,7 +62,7 @@ public class TicTacToeVisualization implements IVisualizationHandler {
         }
         
         // Reset game if finished
-        if (isGameOver() || moveCounter >= 9) {
+        if (isGameOver() || moveCounter >= Constants.MIDI_DRUM_CHANNEL) {
             if (frameCounter >= MOVE_DELAY * 2) {
                 resetGame();
             }

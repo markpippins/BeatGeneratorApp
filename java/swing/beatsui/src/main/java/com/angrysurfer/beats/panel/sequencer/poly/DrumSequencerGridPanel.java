@@ -10,8 +10,7 @@ import javax.swing.BorderFactory;
 import javax.swing.JPanel;
 import javax.swing.SwingUtilities;
 
-import com.angrysurfer.beats.visualization.Visualizer;
-import com.angrysurfer.core.sequencer.DrumSequenceData;
+import com.angrysurfer.core.Constants;
 import com.angrysurfer.core.service.DrumSequencerManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -35,7 +34,7 @@ public class DrumSequencerGridPanel extends JPanel {
     private final DrumSequencerGridPanelContextHandler contextMenuHandler;
     
     // UI constants
-    private static final int DRUM_PAD_COUNT = DrumSequenceData.DRUM_PAD_COUNT;
+    private static final int DRUM_PAD_COUNT = Constants.DRUM_PAD_COUNT;
     private static final int GRID_BUTTON_SIZE = 24;
     
     // UI state

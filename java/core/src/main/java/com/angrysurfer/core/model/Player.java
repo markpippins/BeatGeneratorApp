@@ -52,6 +52,8 @@ public abstract class Player implements Callable<Boolean>, Serializable, IBusLis
 
     private Long instrumentId;
 
+    private Boolean defaultPlayer = false;
+    
     @JsonIgnore
     public transient boolean isSelected = false;
 
@@ -126,8 +128,6 @@ public abstract class Player implements Callable<Boolean>, Serializable, IBusLis
     private String scale = "Chromatic";
 
     private Integer duration = 100;
-
-    private Boolean x0xPlayer = false;
 
     @JsonIgnore
     private Boolean enabled = false;

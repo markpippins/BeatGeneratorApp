@@ -40,7 +40,7 @@ import com.angrysurfer.core.api.Commands;
 import com.angrysurfer.core.api.IBusListener;
 import com.angrysurfer.core.api.TimingBus;
 import com.angrysurfer.core.event.PatternSwitchEvent;
-import com.angrysurfer.core.model.PatternSlot;
+import com.angrysurfer.core.sequencer.PatternSlot;
 import com.angrysurfer.core.sequencer.DrumSequencer;
 import com.angrysurfer.core.sequencer.MelodicSequencer;
 import com.angrysurfer.core.sequencer.TimingUpdate;

@@ -15,11 +15,12 @@ import javax.swing.JPanel;
 import javax.swing.JTabbedPane;
 import javax.swing.SwingUtilities;
 
+import com.angrysurfer.core.Constants;
 import com.angrysurfer.core.api.Command;
 import com.angrysurfer.core.api.CommandBus;
 import com.angrysurfer.core.api.Commands;
 import com.angrysurfer.core.api.IBusListener;
-import com.angrysurfer.core.sequencer.DrumSequenceData;
+import com.angrysurfer.core.api.midi.MIDIConstants;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -42,8 +43,8 @@ public class DrumSelectorPanel extends JPanel implements IBusListener {
     private final List<DrumSequencerButton> drumButtons = new ArrayList<>();
     
     // Constants
-    private static final int DRUM_PAD_COUNT = DrumSequenceData.DRUM_PAD_COUNT;
-    private static final int MIDI_DRUM_NOTE_OFFSET = DrumSequenceData.MIDI_DRUM_NOTE_OFFSET;
+    private static final int DRUM_PAD_COUNT = Constants.DRUM_PAD_COUNT;
+    private static final int MIDI_DRUM_NOTE_OFFSET = MIDIConstants.MIDI_DRUM_NOTE_OFFSET;
     
     // Command bus for event handling
     private final CommandBus commandBus = CommandBus.getInstance();

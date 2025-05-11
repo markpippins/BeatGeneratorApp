@@ -1,14 +1,10 @@
 package com.angrysurfer.core.util;
 
-import javax.sound.midi.InvalidMidiDataException;
-import javax.sound.midi.MidiUnavailableException;
-import javax.sound.midi.ShortMessage;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.angrysurfer.core.model.Step;
-import com.angrysurfer.core.service.SongEngine;
+import com.angrysurfer.core.sequencer.SongEngine;
 
 import lombok.Getter;
 import lombok.Setter;

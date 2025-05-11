@@ -89,15 +89,15 @@ public class MainPanel extends PlayerAwarePanel implements AutoCloseable, IBusLi
 
     private Point dragStartPoint;
 
-    public MainPanel(StatusBar statusBar) {
+    public MainPanel() {
         super();
         setLayout(new BorderLayout());
         CommandBus.getInstance().register(this);
-        setupTabbedPane(statusBar);
+        setupTabbedPane();
         add(tabbedPane, BorderLayout.CENTER);
     }
 
-    private void setupTabbedPane(StatusBar statusBar) {
+    private void setupTabbedPane() {
         tabbedPane = new JTabbedPane();
 
         internalSynthControlPanel = new InternalSynthControlPanel();

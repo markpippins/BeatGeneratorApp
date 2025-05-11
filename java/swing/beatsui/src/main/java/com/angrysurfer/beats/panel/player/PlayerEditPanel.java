@@ -4,14 +4,11 @@ import java.awt.*;
 import javax.swing.*;
 
 import com.angrysurfer.beats.panel.PlayerAwarePanel;
-import com.angrysurfer.core.sequencer.DrumSequenceData;
+import com.angrysurfer.core.Constants;
 import com.angrysurfer.core.service.PlayerManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.angrysurfer.core.api.Command;
-import com.angrysurfer.core.api.CommandBus;
-import com.angrysurfer.core.api.Commands;
 import com.angrysurfer.core.model.InstrumentWrapper;
 import com.angrysurfer.core.model.Player;
 import com.angrysurfer.core.sequencer.DrumSequencer;
@@ -54,7 +51,7 @@ public class PlayerEditPanel extends PlayerAwarePanel {
         // Cache initial state for comparison when saving
         Player player = getPlayer();
         if (player != null) {
-            initialIsDrumPlayer = player.getChannel() == 9;
+            initialIsDrumPlayer = player.getChannel() == Constants.MIDI_DRUM_CHANNEL;
             initialInstrument = player.getInstrument();
 
             // Check if this is part of a drum sequencer
@@ -168,7 +165,7 @@ public class PlayerEditPanel extends PlayerAwarePanel {
         }
 
         // Check if this is a drum player now
-        boolean isDrumPlayer = player.getChannel() == 9;
+        boolean isDrumPlayer = player.getChannel() == Constants.MIDI_DRUM_CHANNEL;
 
         // Check if instrument changed
         boolean instrumentChanged = false;
@@ -189,7 +186,7 @@ public class PlayerEditPanel extends PlayerAwarePanel {
 
             if (response == JOptionPane.YES_OPTION) {
                 // Apply to all drum pads
-                for (int i = 0; i < DrumSequenceData.DRUM_PAD_COUNT; i++) {
+                for (int i = 0; i < Constants.DRUM_PAD_COUNT; i++) {
                     Player drumPlayer = owningSequencer.getPlayers()[i];
                     if (drumPlayer != null && !drumPlayer.equals(player)) {
                         // Update instrument for this pad

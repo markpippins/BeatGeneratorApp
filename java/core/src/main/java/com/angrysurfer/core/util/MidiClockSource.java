@@ -16,6 +16,7 @@ import javax.sound.midi.Synthesizer;
 import javax.sound.midi.Track;
 import javax.sound.midi.Transmitter;
 
+import com.angrysurfer.core.Constants;
 import com.angrysurfer.core.api.Command;
 import com.angrysurfer.core.api.CommandBus;
 import com.angrysurfer.core.api.Commands;
@@ -34,7 +35,7 @@ public class MidiClockSource implements IBusListener {
     private static final Logger logger = Logger.getLogger(MidiClockSource.class.getName());
 
     private boolean metronomeAudible = false;
-    public int metronomeChannel = 9;
+    public int metronomeChannel = Constants.MIDI_DRUM_CHANNEL;
     private int metronomeNote = 60;
     private int metronomeVelocity = 100;
 

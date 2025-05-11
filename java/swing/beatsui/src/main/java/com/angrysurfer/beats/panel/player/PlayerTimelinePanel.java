@@ -23,6 +23,7 @@ import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.SwingUtilities;
 
+import com.angrysurfer.core.Constants;
 import com.angrysurfer.core.api.Command;
 import com.angrysurfer.core.api.CommandBus;
 import com.angrysurfer.core.api.Commands;
@@ -800,7 +801,7 @@ public class PlayerTimelinePanel extends JPanel implements IBusListener {
                 Long presetNumber = player.getPreset().longValue();
 
                 // For channel 9 (MIDI channel 10), show drum name instead of preset
-                if (player.getChannel() == 9) {
+                if (player.getChannel() == Constants.MIDI_DRUM_CHANNEL) {
                     // Get drum name for the note
                     String drumName = InternalSynthManager.getInstance().getDrumName(player.getRootNote().intValue());
                     playerInfo.append(" - ").append(drumName);

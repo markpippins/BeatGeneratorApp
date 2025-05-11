@@ -12,13 +12,11 @@ import java.util.List;
 import java.util.function.Consumer;
 import java.util.logging.Logger;
 
-import javax.sound.midi.MidiDevice;
 import javax.swing.BorderFactory;
 import javax.swing.Box;
 import javax.swing.BoxLayout;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
-import javax.swing.JScrollPane;
 import javax.swing.SwingUtilities;
 import javax.swing.border.EmptyBorder;
 
@@ -36,14 +34,13 @@ import com.angrysurfer.core.api.TimingBus;
 import com.angrysurfer.core.event.DrumPadSelectionEvent;
 import com.angrysurfer.core.event.DrumStepUpdateEvent;
 import com.angrysurfer.core.event.NoteEvent;
-import com.angrysurfer.core.model.Direction;
+import com.angrysurfer.core.sequencer.Direction;
 import com.angrysurfer.core.model.Player;
 import com.angrysurfer.core.sequencer.DrumSequencer;
 import com.angrysurfer.core.sequencer.TimingDivision;
 import com.angrysurfer.core.sequencer.TimingUpdate;
 import com.angrysurfer.core.service.DeviceManager;
 import com.angrysurfer.core.service.DrumSequencerManager;
-import com.angrysurfer.core.service.InstrumentManager;
 import com.angrysurfer.core.service.PlayerManager;
 
 /**

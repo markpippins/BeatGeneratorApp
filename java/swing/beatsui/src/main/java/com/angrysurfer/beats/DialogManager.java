@@ -21,6 +21,7 @@ import javax.swing.SwingUtilities;
 import javax.swing.filechooser.FileNameExtensionFilter;
 
 import com.angrysurfer.beats.panel.sequencer.poly.DrumPresetPanel;
+import com.angrysurfer.core.Constants;
 import com.angrysurfer.core.api.*;
 import com.angrysurfer.core.service.InstrumentManager;
 import org.slf4j.Logger;
@@ -233,7 +234,7 @@ public class DialogManager implements IBusListener {
 
                         // If this was a drum player in a sequencer whose instrument changed,
                         // other drum players may have been updated too
-                        if (updatedPlayer.getChannel() == 9 && updatedPlayer.getOwner() instanceof DrumSequencer) {
+                        if (updatedPlayer.getChannel() == Constants.MIDI_DRUM_CHANNEL && updatedPlayer.getOwner() instanceof DrumSequencer) {
                             DrumSequencer sequencer = (DrumSequencer) updatedPlayer.getOwner();
                             for (Player drumPlayer : sequencer.getPlayers()) {
                                 if (drumPlayer != null && !drumPlayer.equals(updatedPlayer)) {
@@ -688,7 +689,7 @@ public class DialogManager implements IBusListener {
 
                     // Ensure instrument has channel set
                     if (player.getInstrument() != null && player.getInstrument().getChannel() == null) {
-                        player.getInstrument().setChannel(9); // Set drum channel
+                        player.getInstrument().setChannel(Constants.MIDI_DRUM_CHANNEL); // Set drum channel
                     }
                 }
             }

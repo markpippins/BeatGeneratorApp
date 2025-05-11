@@ -3,9 +3,9 @@ package com.angrysurfer.core.service;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.Optional;
 import java.util.function.Consumer;
 
+import com.angrysurfer.core.Constants;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -419,7 +419,7 @@ public class DrumSequencerManager implements IBusListener {
      */
     public synchronized void setSelectedPadIndex(int index) {
         // Validate the index first
-        if (index >= 0 && index < DrumSequenceData.DRUM_PAD_COUNT) {
+        if (index >= 0 && index < Constants.DRUM_PAD_COUNT) {
             selectedPadIndex = index;
             
             // Also update the selected pad index in sequencers

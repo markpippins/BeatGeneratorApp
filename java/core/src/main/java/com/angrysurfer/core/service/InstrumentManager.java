@@ -4,10 +4,9 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 import javax.sound.midi.MidiDevice;
-import javax.sound.midi.MidiUnavailableException;
 
+import com.angrysurfer.core.Constants;
 import com.angrysurfer.core.model.Player;
-import com.angrysurfer.core.sequencer.DrumSequenceData;
 import com.angrysurfer.core.sequencer.DrumSequencer;
 import com.angrysurfer.core.sequencer.MelodicSequencer;
 import org.slf4j.Logger;
@@ -388,7 +387,7 @@ public class InstrumentManager implements IBusListener {
         }
 
         // No instrument found, create a new one using InternalSynthManager
-        boolean isDrumChannel = (channel == 9);
+        boolean isDrumChannel = (channel == Constants.MIDI_DRUM_CHANNEL);
         instrument = InternalSynthManager.getInstance().createInternalInstrument(
                 channel, isDrumChannel, isDrumChannel ? "Internal Drums " + tag : "Unknown " + channel + "-" + tag);
 
@@ -591,7 +590,7 @@ public void refreshCache(List<InstrumentWrapper> instruments) {
                 }
                 
                 // If not found, try partial matches
-                if (!found && defaultKit.size() < DrumSequenceData.DRUM_PAD_COUNT) {
+                if (!found && defaultKit.size() < Constants.DRUM_PAD_COUNT) {
                     String lowerDrumName = drumName.toLowerCase();
                     for (InstrumentWrapper instr : allDrums) {
                         String lowerInstrName = instr.getName().toLowerCase();
@@ -604,7 +603,7 @@ public void refreshCache(List<InstrumentWrapper> instruments) {
                 }
                 
                 // Still not found, add any drum
-                if (!found && defaultKit.size() < DrumSequenceData.DRUM_PAD_COUNT && !allDrums.isEmpty()) {
+                if (!found && defaultKit.size() < Constants.DRUM_PAD_COUNT && !allDrums.isEmpty()) {
                     // Take the first available
                     defaultKit.add(allDrums.get(0));
                     // Remove to avoid duplicates
@@ -614,13 +613,13 @@ public void refreshCache(List<InstrumentWrapper> instruments) {
                 }
                 
                 // If we've filled all 16 slots, stop
-                if (defaultKit.size() >= DrumSequenceData.DRUM_PAD_COUNT) {
+                if (defaultKit.size() >= Constants.DRUM_PAD_COUNT) {
                     break;
                 }
             }
             
             // Fill remaining slots if needed
-            while (defaultKit.size() < DrumSequenceData.DRUM_PAD_COUNT && !allDrums.isEmpty()) {
+            while (defaultKit.size() < Constants.DRUM_PAD_COUNT && !allDrums.isEmpty()) {
                 defaultKit.add(allDrums.get(0));
                 allDrums.remove(0);
             }
@@ -668,13 +667,13 @@ public void refreshCache(List<InstrumentWrapper> instruments) {
                 instrument.setPreset(0);
                 
                 // CRITICAL - Set channel for drums
-                instrument.setChannel(9); // Channel 10 in MIDI (indexed from 0)
+                instrument.setChannel(Constants.MIDI_DRUM_CHANNEL); // Channel 10 in MIDI (indexed from 0)
                 
                 // Register with manager
                 updateInstrument(instrument);
             } else if (instrument.getChannel() == null) {
                 // Ensure channel is set for existing instrument
-                instrument.setChannel(9);
+                instrument.setChannel(Constants.MIDI_DRUM_CHANNEL);
                 updateInstrument(instrument);
             }
         }

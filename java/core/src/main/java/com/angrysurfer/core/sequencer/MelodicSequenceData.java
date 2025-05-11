@@ -8,8 +8,6 @@ import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.angrysurfer.core.model.Direction;
-
 import lombok.Getter;
 import lombok.Setter;
 
@@ -36,7 +34,7 @@ public class MelodicSequenceData {
     private Boolean swingEnabled = false;
     private Integer patternLength = 16;
     private Boolean looping = true;
-    private com.angrysurfer.core.model.Direction direction = com.angrysurfer.core.model.Direction.FORWARD;
+    private Direction direction = Direction.FORWARD;
     private Integer shuffleAmount = 0;
     private Boolean quantizeEnabled = true;
     private Integer rootNote = 0; // C

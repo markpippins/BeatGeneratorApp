@@ -6,6 +6,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import com.angrysurfer.core.Constants;
+import com.angrysurfer.core.api.midi.MIDIConstants;
 import com.angrysurfer.core.model.Strike;
 import com.angrysurfer.core.service.DeviceManager;
 import com.angrysurfer.core.service.InternalSynthManager;
@@ -14,7 +16,7 @@ import org.slf4j.LoggerFactory;
 
 import com.angrysurfer.core.api.CommandBus;
 import com.angrysurfer.core.api.Commands;
-import com.angrysurfer.core.model.Direction;
+import com.angrysurfer.core.sequencer.Direction;
 import com.angrysurfer.core.model.InstrumentWrapper;
 import com.angrysurfer.core.model.Player;
 import com.angrysurfer.core.sequencer.DrumSequenceData;
@@ -80,7 +82,7 @@ class DrumSequenceDataHelper {
             sequencer.getData().setId(data.getId());
 
             // Apply instrument data
-            for (int i = 0; i < DrumSequenceData.DRUM_PAD_COUNT; i++) {
+            for (int i = 0; i < Constants.DRUM_PAD_COUNT; i++) {
                 if (data.getInstrumentIds() != null && data.getInstrumentIds()[i] != null) {
                     Player player = sequencer.getPlayer(i);
                     if (player != null) {
@@ -112,7 +114,7 @@ class DrumSequenceDataHelper {
                             InstrumentWrapper newInstrument = new InstrumentWrapper(
                                     data.getInstrumentNames() != null ? data.getInstrumentNames()[i] : "Drum " + i,
                                     device,
-                                    DrumSequenceData.MIDI_DRUM_CHANNEL);
+                                    MIDIConstants.MIDI_DRUM_CHANNEL);
 
                             if (data.getSoundbankNames() != null && data.getSoundbankNames()[i] != null) {
                                 newInstrument.setSoundbankName(data.getSoundbankNames()[i]);
@@ -196,7 +198,7 @@ class DrumSequenceDataHelper {
 
             // Apply root notes to players if available
             if (data.getRootNotes() != null) {
-                for (int i = 0; i < Math.min(data.getRootNotes().length, DrumSequenceData.DRUM_PAD_COUNT); i++) {
+                for (int i = 0; i < Math.min(data.getRootNotes().length, Constants.DRUM_PAD_COUNT); i++) {
                     Player player = sequencer.getPlayer(i);
                     if (player != null) {
                         int rootNote = data.getRootNotes()[i];
@@ -234,7 +236,7 @@ class DrumSequenceDataHelper {
             }
 
             // Copy instrument data for each drum
-            for (int i = 0; i < DrumSequenceData.DRUM_PAD_COUNT; i++) {
+            for (int i = 0; i < Constants.DRUM_PAD_COUNT; i++) {
                 Player player = sequencer.getPlayer(i);
                 if (player != null && player.getInstrument() != null) {
                     InstrumentWrapper instrument = player.getInstrument();
@@ -343,7 +345,7 @@ class DrumSequenceDataHelper {
             // Initialize root notes array with standard GM drum mapping
             int[] rootNotes = new int[DRUM_PAD_COUNT];
             for (int i = 0; i < DRUM_PAD_COUNT; i++) {
-                rootNotes[i] = DrumSequenceData.MIDI_DRUM_NOTE_OFFSET + i;
+                rootNotes[i] = MIDIConstants.MIDI_DRUM_NOTE_OFFSET + i;
             }
             data.setRootNotes(rootNotes);
 

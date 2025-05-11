@@ -14,9 +14,11 @@ import javax.sound.midi.MidiSystem;
 import javax.sound.midi.Soundbank;
 import javax.sound.midi.Synthesizer;
 
+import com.angrysurfer.core.Constants;
 import com.angrysurfer.core.event.PlayerPresetChangeEvent;
 import com.angrysurfer.core.event.PlayerUpdateEvent;
 import com.angrysurfer.core.model.*;
+import com.angrysurfer.core.model.preset.*;
 import org.slf4j.LoggerFactory;
 
 import com.angrysurfer.core.api.Command;
@@ -1020,7 +1022,7 @@ public class SoundbankManager implements IBusListener {
         }
         
         // Handle special case for drum channel (channel 9)
-        if (player.getChannel() == 9) {
+        if (player.getChannel() == Constants.MIDI_DRUM_CHANNEL) {
             return getDrumPresets();
         }
         
@@ -1103,7 +1105,7 @@ public class SoundbankManager implements IBusListener {
             }
 
                 // Update preset if specified
-            if (presetNumber != null && instrument.getChannel() != 9) {
+            if (presetNumber != null && instrument.getChannel() != Constants.MIDI_DRUM_CHANNEL) {
                     instrument.setPreset(presetNumber);
 
                 // Apply the changes
@@ -1118,7 +1120,7 @@ public class SoundbankManager implements IBusListener {
                     new PlayerPresetChangeEvent(player, bankIndex, presetNumber)
                 );
             }
-            else if (presetNumber != null && instrument.getChannel() == 9) {
+            else if (presetNumber != null && instrument.getChannel() == Constants.MIDI_DRUM_CHANNEL) {
                 player.setRootNote(presetNumber);
                 player.setName(InternalSynthManager.getInstance().getDrumName(presetNumber));
                 // Create a preset change event
@@ -1254,7 +1256,7 @@ public class SoundbankManager implements IBusListener {
                 applyPresetChangeToPlayer(player, bankIndex, preset);
                 
                 // For drum channel, play root note or default kick drum
-                if (player.getChannel() == 9) {
+                if (player.getChannel() == Constants.MIDI_DRUM_CHANNEL) {
                     int noteNumber = player.getRootNote() != null ? player.getRootNote() : 36; // Default to kick
                     InternalSynthManager.getInstance().playNote(noteNumber, 100, durationMs, 9);
                 } else {

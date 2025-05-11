@@ -7,6 +7,7 @@ import javax.swing.JLabel;
 import javax.swing.JTable;
 import javax.swing.table.DefaultTableCellRenderer;
 
+import com.angrysurfer.core.Constants;
 import com.angrysurfer.core.api.Command;
 import com.angrysurfer.core.api.CommandBus;
 import com.angrysurfer.core.api.Commands;
@@ -96,7 +97,7 @@ public class PlayerRowRenderer extends DefaultTableCellRenderer implements IBusL
             // Special handling for preset column
             if (isPresetColumn) {
                 // For drum channel (channel 9), show drum name instead of preset
-                if (player.getChannel() == 9) {
+                if (player.getChannel() == Constants.MIDI_DRUM_CHANNEL) {
                     // Get the current note value from the player WITH offset applied
                     int noteValue = player.getRootNote() != null ? player.getRootNote().intValue() : 0;
                     

@@ -6,6 +6,7 @@ import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
 import javax.swing.UIManager;
 
+import com.angrysurfer.core.service.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -19,12 +20,6 @@ import com.angrysurfer.core.config.FrameState;
 import com.angrysurfer.core.model.InstrumentWrapper;
 import com.angrysurfer.core.redis.InstrumentHelper;
 import com.angrysurfer.core.redis.RedisService;
-import com.angrysurfer.core.service.DeviceManager;
-import com.angrysurfer.core.service.InstrumentManager;
-import com.angrysurfer.core.service.InternalSynthManager;
-import com.angrysurfer.core.service.PlayerManager;
-import com.angrysurfer.core.service.SessionManager;
-import com.angrysurfer.core.service.SoundbankManager;
 import com.formdev.flatlaf.FlatLightLaf;
 
 public class App implements IBusListener {
@@ -47,7 +42,7 @@ public class App implements IBusListener {
 
             // Create and initialize splash screen synchronously
             splash = new SplashScreen();
-            splash.setTaskCount(7);
+            splash.setTaskCount(8);
 
             // Show splash screen using SwingUtilities.invokeLater
             SwingUtilities.invokeLater(() -> {
@@ -206,6 +201,9 @@ public class App implements IBusListener {
             InstrumentManager.getInstance().refreshInstruments();
             splash.completeTask("Loaded instrument configurations");
 
+            UserConfigManager.getInstance();
+            splash.completeTask("Loaded user configuration");
+            
             // Initialize SessionManager AFTER instruments are loaded
             SessionManager sessionManager = SessionManager.getInstance();
             sessionManager.initialize();

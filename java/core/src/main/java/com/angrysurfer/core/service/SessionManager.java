@@ -14,6 +14,7 @@ import com.angrysurfer.core.model.Rule;
 import com.angrysurfer.core.model.Session;
 import com.angrysurfer.core.redis.RedisService;
 
+import com.angrysurfer.core.sequencer.SongEngine;
 import lombok.Getter;
 import lombok.Setter;
 
