@@ -1,4 +1,4 @@
-package com.angrysurfer.beats.panel.sequencer;
+package com.angrysurfer.beats.panel;
 
 import java.awt.Color;
 import java.awt.Dimension;
@@ -36,8 +36,8 @@ import com.angrysurfer.core.service.PlayerManager;
 /**
  * Panel that handles all mute buttons for both drum and melodic sequencers
  */
-public class MuteButtonsPanel extends JPanel implements IBusListener {
-    private static final Logger logger = LoggerFactory.getLogger(MuteButtonsPanel.class);
+public class GlobalMuteButtonsPanel extends JPanel implements IBusListener {
+    private static final Logger logger = LoggerFactory.getLogger(GlobalMuteButtonsPanel.class);
 
     // Button lists
     private final List<JToggleButton> drumMuteButtons = new ArrayList<>();
@@ -62,7 +62,7 @@ public class MuteButtonsPanel extends JPanel implements IBusListener {
     /**
      * Create a new mute buttons panel (without sequencers initially)
      */
-    public MuteButtonsPanel() {
+    public GlobalMuteButtonsPanel() {
         initializeUI();
         registerWithCommandBus();
         // Add debug message
@@ -73,7 +73,7 @@ public class MuteButtonsPanel extends JPanel implements IBusListener {
     /**
      * Create a new mute buttons panel with sequencers
      */
-    public MuteButtonsPanel(DrumSequencer drumSequencer, List<MelodicSequencer> melodicSequencers) {
+    public GlobalMuteButtonsPanel(DrumSequencer drumSequencer, List<MelodicSequencer> melodicSequencers) {
         this.drumSequencer = drumSequencer;
         this.melodicSequencers = melodicSequencers;
         initializeUI();

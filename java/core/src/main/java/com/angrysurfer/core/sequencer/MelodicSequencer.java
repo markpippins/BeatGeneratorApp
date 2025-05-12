@@ -82,6 +82,8 @@ public class MelodicSequencer implements IBusListener {
 
     private int currentTilt = 0;
 
+    private boolean currentlyMuted = false;
+
     public MelodicSequencer(Integer id) {
 
         setId(id);
@@ -714,11 +716,47 @@ public class MelodicSequencer implements IBusListener {
                     }
 
                     if (update.bar() != null) {
-                        currentBar = update.bar() - 1; // Adjust for 0-based index
-                        logger.debug("Current bar updated to {}", currentBar);
-                        if (getHarmonicTiltValues() != null && getHarmonicTiltValues().size() > currentBar) {
-                            currentTilt = getHarmonicTiltValues().get(currentBar);
-                            logger.debug("Current tilt value for bar {}: {}", currentBar, currentTilt);
+                        int newBar = update.bar() - 1; // Adjust for 0-based index
+                        
+                        // Only process if bar actually changed
+                        if (currentBar == null || newBar != currentBar) {
+                            currentBar = newBar;
+                            logger.debug("Current bar updated to {}", currentBar);
+                            
+                            // Process tilt values
+                            if (getHarmonicTiltValues() != null && getHarmonicTiltValues().size() > currentBar) {
+                                currentTilt = getHarmonicTiltValues().get(currentBar);
+                                logger.debug("Current tilt value for bar {}: {}", currentBar, currentTilt);
+                            }
+                            
+                            // Process mute values
+                            if (sequenceData.getMuteValues() != null && sequenceData.getMuteValues().size() > currentBar) {
+                                int muteValue = sequenceData.getMuteValue(currentBar);
+                                boolean shouldMute = muteValue > 0;
+                                
+                                // Only update if mute state changes
+                                if (shouldMute != currentlyMuted) {
+                                    currentlyMuted = shouldMute;
+                                    
+                                    // Apply mute state if player exists
+                                    if (player != null) {
+                                        int originalLevel = player.getOriginalLevel() > 0 ? 
+                                                player.getOriginalLevel() : 100;
+                                        
+                                        player.setLevel(shouldMute ? 0 : originalLevel);
+                                        
+                                        logger.debug("Bar {}: Player {} {}",
+                                                currentBar, player.getName(), 
+                                                shouldMute ? "muted" : "unmuted");
+                                        
+                                        // Notify system of level change
+                                        CommandBus.getInstance().publish(
+                                                Commands.PLAYER_UPDATED,
+                                                this,
+                                                player);
+                                    }
+                                }
+                            }
                         }
                     }
                 }
@@ -772,6 +810,30 @@ public class MelodicSequencer implements IBusListener {
                 result.size(), rawValues.length);
 
         return result;
+    }
+
+    public List<Integer> getMuteValues() {
+        if (sequenceData == null) {
+            logger.error("sequenceData is null in getMuteValues()");
+            return new ArrayList<>();
+        }
+        
+        return sequenceData.getMuteValues();
+    }
+
+    public void setMuteValues(List<Integer> muteValues) {
+        if (sequenceData == null || muteValues == null) {
+            logger.error("Cannot set mute values: sequenceData or muteValues is null");
+            return;
+        }
+        
+        int[] muteArray = new int[Math.max(sequenceData.getPatternLength(), muteValues.size())];
+        for (int i = 0; i < muteValues.size(); i++) {
+            muteArray[i] = muteValues.get(i);
+        }
+        
+        sequenceData.setMuteValues(muteArray);
+        logger.info("Set {} mute values in sequencer", muteValues.size());
     }
 
     public void repairMidiConnections() {

@@ -163,20 +163,17 @@ public class MuteSequencerPanel extends JPanel implements IBusListener {
     }
     
     private void handleTimingUpdate(TimingUpdate update) {
-        // Check if this is a step update by examining the tick value
-        // Assuming 24 ticks per step (96 PPQN / 4 = 24 ticks per 16th note)
-        if (update.tick() != null && update.tick() % 24 == 0) {
-            // Calculate step from tick (0-15)
-            int step = update.bar() - 1; //(int)((update.bar() / 24) % STEP_COUNT);
+        // Check for bar updates instead of step/tick updates
+        if (update.bar() != null) {
+            int bar = update.bar() - 1; // Convert to 0-based index
             
-            // Only process if step changed
-            if (step != currentStep) {
-                // Update buttons
-                highlightStep(step);
+            // Only highlight if bar changed
+            if (bar != currentStep) {
+                // Update highlight
+                highlightStep(bar);
                 
-                // Apply mute for this step
-                currentStep = step;
-                applyMute();
+                // Update current bar/step reference
+                currentStep = bar;
             }
         }
     }
@@ -267,12 +264,27 @@ public class MuteSequencerPanel extends JPanel implements IBusListener {
             return;
         }
         
-        boolean[] pattern = new boolean[STEP_COUNT];
-        for (int i = 0; i < muteButtons.size(); i++) {
-            pattern[i] = muteButtons.get(i).isSelected();
+        if (sequencer instanceof MelodicSequencer) {
+            // For melodic sequencer, gather mute values from the UI
+            MelodicSequencer melodicSequencer = (MelodicSequencer) sequencer;
+            List<Integer> muteValues = new ArrayList<>();
+            
+            for (int i = 0; i < muteButtons.size(); i++) {
+                muteValues.add(muteButtons.get(i).isSelected() ? 1 : 0);
+            }
+            
+            // Update the sequencer
+            melodicSequencer.setMuteValues(muteValues);
+            
+        } else {
+            // For drum sequencer, use existing map approach
+            boolean[] pattern = new boolean[STEP_COUNT];
+            for (int i = 0; i < muteButtons.size(); i++) {
+                pattern[i] = muteButtons.get(i).isSelected();
+            }
+            
+            playerMutePatterns.put(currentPlayer.getId().toString(), pattern);
         }
-        
-        playerMutePatterns.put(currentPlayer.getId().toString(), pattern);
     }
     
     /**
@@ -283,25 +295,39 @@ public class MuteSequencerPanel extends JPanel implements IBusListener {
             return;
         }
         
-        String playerId = currentPlayer.getId().toString();
-        
-        // Create pattern if it doesn't exist
-        if (!playerMutePatterns.containsKey(playerId)) {
-            playerMutePatterns.put(playerId, new boolean[STEP_COUNT]);
-        }
-        
-        boolean[] pattern = playerMutePatterns.get(playerId);
-        
-        // Update buttons
-        SwingUtilities.invokeLater(() -> {
-            for (int i = 0; i < muteButtons.size(); i++) {
-                muteButtons.get(i).setSelected(pattern[i]);
-                muteButtons.get(i).repaint();
+        // For melodic sequencer, load mute values from sequenceData
+        if (sequencer instanceof MelodicSequencer) {
+            MelodicSequencer melodicSequencer = (MelodicSequencer) sequencer;
+            List<Integer> muteValues = melodicSequencer.getMuteValues();
+            
+            // Update UI to reflect loaded pattern
+            SwingUtilities.invokeLater(() -> {
+                for (int i = 0; i < muteButtons.size(); i++) {
+                    boolean isMuted = i < muteValues.size() && muteValues.get(i) > 0;
+                    muteButtons.get(i).setSelected(isMuted);
+                    muteButtons.get(i).repaint();
+                }
+            });
+            
+        } else {
+            // For drum sequencer, use the existing map-based approach
+            String playerId = currentPlayer.getId().toString();
+            
+            // Create pattern if it doesn't exist
+            if (!playerMutePatterns.containsKey(playerId)) {
+                playerMutePatterns.put(playerId, new boolean[STEP_COUNT]);
             }
-        });
-        
-        // Apply current mute state
-        applyMute();
+            
+            boolean[] pattern = playerMutePatterns.get(playerId);
+            
+            // Update buttons
+            SwingUtilities.invokeLater(() -> {
+                for (int i = 0; i < muteButtons.size(); i++) {
+                    muteButtons.get(i).setSelected(pattern[i]);
+                    muteButtons.get(i).repaint();
+                }
+            });
+        }
     }
     
     /**
@@ -353,9 +379,31 @@ public class MuteSequencerPanel extends JPanel implements IBusListener {
             return;
         }
         
-        boolean[] pattern = getCurrentPattern();
-        if (pattern != null && step >= 0 && step < pattern.length) {
-            pattern[step] = muted;
+        // Handle differently based on sequencer type
+        if (sequencer instanceof MelodicSequencer) {
+            MelodicSequencer melodicSequencer = (MelodicSequencer) sequencer;
+            List<Integer> muteValues = new ArrayList<>(melodicSequencer.getMuteValues());
+            
+            // Ensure list is large enough
+            while (muteValues.size() <= step) {
+                muteValues.add(0);
+            }
+            
+            // Update the mute value at this position
+            muteValues.set(step, muted ? 1 : 0);
+            
+            // Save back to sequencer
+            melodicSequencer.setMuteValues(muteValues);
+            
+            // We don't need to apply mute directly here, as that will happen
+            // when the sequencer processes the next bar update
+            
+        } else {
+            // For drum sequencer, use the existing pattern approach
+            boolean[] pattern = getCurrentPattern();
+            if (pattern != null && step >= 0 && step < pattern.length) {
+                pattern[step] = muted;
+            }
         }
     }
     

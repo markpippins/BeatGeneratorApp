@@ -32,7 +32,6 @@ import org.slf4j.LoggerFactory;
 import com.angrysurfer.beats.Symbols;
 import com.angrysurfer.beats.panel.internalsynth.InternalSynthControlPanel;
 import com.angrysurfer.beats.panel.sample.SampleBrowserPanel;
-import com.angrysurfer.beats.panel.sequencer.MuteButtonsPanel;
 import com.angrysurfer.beats.panel.sequencer.SongPanel;
 import com.angrysurfer.beats.panel.sequencer.mono.MelodicSequencerPanel;
 import com.angrysurfer.beats.panel.sequencer.poly.DrumEffectsSequencerPanel;
@@ -79,7 +78,7 @@ public class MainPanel extends PlayerAwarePanel implements AutoCloseable, IBusLi
     private InternalSynthControlPanel internalSynthControlPanel;
     private MelodicSequencerPanel[] melodicPanels = new MelodicSequencerPanel[MIDIConstants.SEQUENCER_CHANNELS.length];
 
-    private MuteButtonsPanel muteButtonsPanel;
+    private GlobalMuteButtonsPanel muteButtonsPanel;
 
     private JTabbedPane drumsTabbedPane;
 
@@ -548,7 +547,7 @@ public class MainPanel extends PlayerAwarePanel implements AutoCloseable, IBusLi
 
     private JPanel createMuteButtonsToolbar() {
         // Create the mute buttons panel
-        muteButtonsPanel = new MuteButtonsPanel();
+        muteButtonsPanel = new GlobalMuteButtonsPanel();
 
         // We'll update the sequencers after they're created
         return muteButtonsPanel;

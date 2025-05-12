@@ -304,8 +304,8 @@ public class SoundParametersPanel extends PlayerAwarePanel {
      */
     private void updateExternalPresetCombo() {
         // Hide soundbank and bank panels for external synth
-        soundbankPanel.setVisible(false);
-        bankPanel.setVisible(false);
+        soundbankPanel.setEnabled(false);
+        bankPanel.setEnabled(false);
 
         // Simply add generic presets 0-127
         presetCombo.removeAllItems();
@@ -468,8 +468,8 @@ public class SoundParametersPanel extends PlayerAwarePanel {
                 return;
 
             // Hide soundbank and bank panels for drums
-            soundbankPanel.setVisible(false);
-            bankPanel.setVisible(false);
+            soundbankPanel.setEnabled(false);
+            bankPanel.setEnabled(false);
 
             // Use new helper method
             List<PresetItem> drumPresets = SoundbankManager.getInstance().getDrumPresets();

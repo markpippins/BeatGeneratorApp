@@ -169,7 +169,7 @@ public class MelodicSequenceParametersPanel extends JPanel {
         // Rotate Left button
         JButton rotateLeftButton = new JButton("⟵");
         rotateLeftButton.setToolTipText("Rotate pattern one step left");
-        rotateLeftButton.setPreferredSize(new Dimension(24, 24));
+        rotateLeftButton.setPreferredSize(new Dimension(UIHelper.SMALL_CONTROL_WIDTH, 24));
         rotateLeftButton.setMargin(new Insets(2, 2, 2, 2));
         rotateLeftButton.addActionListener(e -> {
             sequencer.getSequenceData().rotatePatternLeft();
@@ -184,7 +184,7 @@ public class MelodicSequenceParametersPanel extends JPanel {
         // Rotate Right button
         JButton rotateRightButton = new JButton("⟶");
         rotateRightButton.setToolTipText("Rotate pattern one step right");
-        rotateRightButton.setPreferredSize(new Dimension(24, 24));
+        rotateRightButton.setPreferredSize(new Dimension(UIHelper.SMALL_CONTROL_WIDTH, 24));
         rotateRightButton.setMargin(new Insets(2, 2, 2, 2));
         rotateRightButton.addActionListener(e -> {
             sequencer.getSequenceData().rotatePatternRight();

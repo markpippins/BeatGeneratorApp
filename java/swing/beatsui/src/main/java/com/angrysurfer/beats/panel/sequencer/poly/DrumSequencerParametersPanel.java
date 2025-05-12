@@ -166,7 +166,7 @@ public class DrumSequencerParametersPanel extends JPanel {
         // Push forward button
         JButton pushForwardButton = new JButton("⟶");
         pushForwardButton.setToolTipText("Push pattern forward (right)");
-        pushForwardButton.setPreferredSize(new Dimension(24, 24));
+        pushForwardButton.setPreferredSize(new Dimension(UIHelper.SMALL_CONTROL_WIDTH, 24));
         pushForwardButton.setMargin(new Insets(2, 2, 2, 2));
         pushForwardButton.addActionListener(e -> {
             sequencer.pushForward();
@@ -182,7 +182,7 @@ public class DrumSequencerParametersPanel extends JPanel {
         // Pull backward button
         JButton pullBackwardButton = new JButton("⟵");
         pullBackwardButton.setToolTipText("Pull pattern backward (left)");
-        pullBackwardButton.setPreferredSize(new Dimension(24, 24));
+        pullBackwardButton.setPreferredSize(new Dimension(UIHelper.SMALL_CONTROL_WIDTH, 24));
         pullBackwardButton.setMargin(new Insets(2, 2, 2, 2));
         pullBackwardButton.addActionListener(e -> {
             sequencer.pullBackward();
