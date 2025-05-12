@@ -1010,6 +1010,14 @@ public class UserConfigManager {
         }
     }
 
+    public boolean defaultPlayersExist(UserConfig config) {
+        boolean hasPlayers = config.getDefaultStrikes() != null && !config.getDefaultStrikes().isEmpty() &&
+                config.getDefaultNotes() != null && !config.getDefaultNotes().isEmpty();
+
+        return hasPlayers && config.getDefaultStrikes().size() == 16 &&
+                config.getDefaultNotes().size() == MIDIConstants.DEFAULT_MONO_SEQUENCERS;
+    }
+
     public boolean defaultInstrumentsExist(UserConfig config) {
 
         boolean result = false;
@@ -1022,19 +1030,16 @@ public class UserConfigManager {
                     .filter(i -> Boolean.TRUE.equals(i.getIsDefault()))
                     .collect(Collectors.toList());
 
-            boolean hasDefaultInstruments = !defaultInstruments.isEmpty();
-
             // Test for specific instrument types
             long drumInstrumentCount = defaultInstruments.stream()
-                    .filter(i -> i.getName() != null && i.getName().startsWith("DefaultDrum"))
+                    .filter(i -> i.getIsDefault() && i.getName() != null && i.getChannel() == Constants.MIDI_DRUM_CHANNEL)
                     .count();
 
             long melodicInstrumentCount = defaultInstruments.stream()
-                    .filter(i -> i.getName() != null && i.getName().startsWith("DefaultMelo"))
+                    .filter(i -> i.getIsDefault() && i.getName() != null && i.getChannel() != Constants.MIDI_DRUM_CHANNEL)
                     .count();
 
-            result = (drumInstrumentCount == 16) &&
-                    (melodicInstrumentCount == MIDIConstants.DEFAULT_MONO_SEQUENCERS);
+            result = drumInstrumentCount == 16 && melodicInstrumentCount == MIDIConstants.DEFAULT_MONO_SEQUENCERS;
         }
 
         return result;
@@ -1042,7 +1047,7 @@ public class UserConfigManager {
 }
     /**
      * Tests whether a UserConfig has default instruments and players
-     * 
+     *
      * @param config The configuration to test (defaults to current config if null)
      * @return DiagnosticResult containing test results
      */
