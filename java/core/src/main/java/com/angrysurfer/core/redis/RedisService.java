@@ -80,7 +80,7 @@ public class RedisService implements IBusListener {
         this.instrumentHelper = new InstrumentHelper(jedisPool, objectMapper);
         this.userConfigHelper = new UserConfigHelper(jedisPool, objectMapper);
         this.drumSequenceHelper = new DrumSequenceDataHelper(jedisPool, objectMapper);
-        this.melodicSequencerHelper = new MelodicSequenceDataHelper(jedisPool, objectMapper);
+        this.melodicSequencerHelper = new MelodicSequenceDataHelper(jedisPool);
         // this.configHelper = new RedisConfigHelper(jedisPool, objectMapper);
 
         commandBus.register(this);

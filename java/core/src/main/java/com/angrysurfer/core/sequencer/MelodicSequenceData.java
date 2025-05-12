@@ -8,6 +8,8 @@ import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.fasterxml.jackson.annotation.JsonFilter;
+
 import lombok.Getter;
 import lombok.Setter;
 
@@ -37,7 +39,7 @@ public class MelodicSequenceData {
     private Direction direction = Direction.FORWARD;
     private Integer shuffleAmount = 0;
     private Boolean quantizeEnabled = true;
-    private Integer rootNote = 0; // C
+        private Integer rootNote = 0; // C
     private String scale = "Major";
     private Integer octaveShift = 0;
     private TimingDivision timingDivision = TimingDivision.SIXTEENTH;
@@ -59,6 +61,7 @@ public class MelodicSequenceData {
     private int[] probabilityValues = new int[MAX_STEPS];
     private int[] nudgeValues = new int[MAX_STEPS];
     private int[] tiltValues = new int[MAX_STEPS];
+    
     
     /**
      * Default constructor

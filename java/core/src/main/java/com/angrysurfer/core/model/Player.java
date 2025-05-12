@@ -52,7 +52,7 @@ public abstract class Player implements Callable<Boolean>, Serializable, IBusLis
 
     private Long instrumentId;
 
-    private Boolean defaultPlayer = false;
+    private Boolean isDefault = false;
     
     @JsonIgnore
     public transient boolean isSelected = false;

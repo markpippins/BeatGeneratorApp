@@ -190,18 +190,23 @@ public class UserConfigManagerDiagnostics {
             UserConfigManager manager = UserConfigManager.getInstance();
 
             UserConfig config = manager.getCurrentConfig();
-            if (config != null || config.getPlayers() == null || config.getPlayers().isEmpty())
+            if (config != null || config.getHasDefaults())
                 manager.populateDefaults();
 
-            if (config == null || config.getPlayers() == null || config.getPlayers().isEmpty()) {
-                log.addError("No configuration or players available for testing");
-                return log;
-            }
+//            if (config == null || config.getPlayers() == null || config.getPlayers().isEmpty()) {
+//                log.addError("No configuration or players available for testing");
+//                return log;
+//            }
             
             // Filter for default players only
-            List<Player> defaultPlayers = config.getPlayers().stream()
-                .filter(p -> p.getDefaultPlayer() != null && p.getDefaultPlayer())
-                .collect(Collectors.toList());
+            List<Player> defaultPlayers = new ArrayList<>();
+            defaultPlayers.addAll(config.getDefaultNotes().stream()
+                    .filter(p -> p.getIsDefault())
+                    .collect(Collectors.toList()));
+
+            defaultPlayers.addAll(config.getDefaultStrikes().stream()
+                .filter(p -> p.getIsDefault())
+                .collect(Collectors.toList()));
             
             log.addLine("Found " + defaultPlayers.size() + " default players to test");
             
@@ -223,9 +228,14 @@ public class UserConfigManagerDiagnostics {
                     if (success) {
                         // Get the updated players list
                         config = manager.getCurrentConfig();
-                        defaultPlayers = config.getPlayers().stream()
-                            .filter(p -> p.getDefaultPlayer() != null && p.getDefaultPlayer())
-                            .collect(Collectors.toList());
+                        defaultPlayers = new ArrayList<>();
+                        defaultPlayers.addAll(config.getDefaultNotes().stream()
+                                .filter(p -> p.getIsDefault())
+                                .collect(Collectors.toList()));
+
+                        defaultPlayers.addAll(config.getDefaultStrikes().stream()
+                                .filter(p -> p.getIsDefault())
+                                .collect(Collectors.toList()));
                         
                         log.addLine("Created " + defaultPlayers.size() + " default players");
                     } else {
@@ -496,7 +506,10 @@ public class UserConfigManagerDiagnostics {
         }
 
         // Test players
-        List<Player> players = config.getPlayers();
+        List<Player> players = new ArrayList<>();
+        players.addAll(config.getDefaultNotes());
+        players.addAll(config.getDefaultStrikes());
+
         log.addLine("Players: " + (players != null ? players.size() : "None"));
 
         if (players != null && !players.isEmpty()) {
@@ -511,7 +524,7 @@ public class UserConfigManagerDiagnostics {
                     melodicPlayers++;
                 }
 
-                if (player.getDefaultPlayer() != null && player.getDefaultPlayer()) {
+                if (player.getIsDefault()) {
                     defaultPlayers++;
                 }
             }

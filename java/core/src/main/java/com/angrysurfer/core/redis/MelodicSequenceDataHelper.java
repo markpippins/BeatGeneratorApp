@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import com.angrysurfer.core.util.MelodicSequenceDataDeserializer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -20,6 +21,8 @@ import com.angrysurfer.core.sequencer.Scale;
 import com.angrysurfer.core.sequencer.TimingDivision;
 import com.angrysurfer.core.service.PlayerManager;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.databind.module.SimpleModule;
 
 import lombok.Getter;
 import lombok.Setter;
@@ -37,9 +40,21 @@ public class MelodicSequenceDataHelper {
     // Constants
     private static final int MAX_STEPS = 16;
 
-    public MelodicSequenceDataHelper(JedisPool jedisPool, ObjectMapper objectMapper) {
+    public MelodicSequenceDataHelper(JedisPool jedisPool) {
         this.jedisPool = jedisPool;
-        this.objectMapper = objectMapper;
+        this.objectMapper = new ObjectMapper();
+        configureObjectMapper();  // Add this line
+    }
+
+    private void configureObjectMapper() {
+        // Register custom deserializer for MelodicSequenceData
+        SimpleModule module = new SimpleModule();
+        module.addDeserializer(MelodicSequenceData.class, new MelodicSequenceDataDeserializer());
+        this.objectMapper.registerModule(module);
+        
+        // Enable more tolerant deserialization
+        this.objectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+        this.objectMapper.configure(DeserializationFeature.READ_UNKNOWN_ENUM_VALUES_AS_NULL, true);
     }
 
     /**

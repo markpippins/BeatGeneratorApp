@@ -9,6 +9,8 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import com.angrysurfer.core.model.Player;
+import com.angrysurfer.core.util.PlayerDeserializer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -16,6 +18,8 @@ import com.angrysurfer.core.config.UserConfig;
 import com.angrysurfer.core.util.ErrorHandler;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
+import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.databind.module.SimpleModule;
 
 import lombok.Getter;
 import redis.clients.jedis.Jedis;
@@ -32,6 +36,18 @@ public class UserConfigHelper {
     public UserConfigHelper(JedisPool jedisPool, ObjectMapper objectMapper) {
         this.jedisPool = jedisPool;
         this.objectMapper = objectMapper;
+        configureObjectMapper();  // Add this line
+    }
+
+    private void configureObjectMapper() {
+        // Register the Player deserializer
+        SimpleModule module = new SimpleModule();
+        module.addDeserializer(Player.class, new PlayerDeserializer());
+        this.objectMapper.registerModule(module);
+        
+        // Enable more tolerant deserialization
+        this.objectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+        this.objectMapper.configure(DeserializationFeature.READ_UNKNOWN_ENUM_VALUES_AS_NULL, true);
     }
     
     /**
@@ -257,10 +273,14 @@ public class UserConfigHelper {
             config.setInstruments(new ArrayList<>());
         }
         
-        if (config.getPlayers() == null) {
-            config.setPlayers(new ArrayList<>());
+        if (config.getDefaultStrikes() == null) {
+            config.setDefaultStrikes(new ArrayList<>());
         }
-        
+
+        if (config.getDefaultNotes() == null) {
+            config.setDefaultNotes(new ArrayList<>());
+        }
+
         // Ensure the configuration has an ID
         if (config.getId() == null) {
             config.setId(generateNewConfigId());

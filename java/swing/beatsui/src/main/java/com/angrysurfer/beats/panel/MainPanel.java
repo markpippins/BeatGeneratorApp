@@ -60,7 +60,7 @@ public class MainPanel extends PlayerAwarePanel implements AutoCloseable, IBusLi
         System.setProperty("org.slf4j.simpleLogger.log.com.angrysurfer.core.api.CommandBus", "debug");
     }
 
-    private static final int DEFAULT_MONO_SEQUENCERS = 1;
+    private static final int DEFAULT_MONO_SEQUENCERS = 8;
 
     private JTabbedPane tabbedPane;
     private final List<Dial> velocityDials = new ArrayList<>();

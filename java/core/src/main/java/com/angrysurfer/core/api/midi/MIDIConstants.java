@@ -1,6 +1,9 @@
 package com.angrysurfer.core.api.midi;
 
 public class MIDIConstants {
+
+    public static final int DEFAULT_MONO_SEQUENCERS = 8;
+
     // MIDI CC values
     public static final int CC_VOLUME = 7;
     public static final int CC_PAN = 10;
