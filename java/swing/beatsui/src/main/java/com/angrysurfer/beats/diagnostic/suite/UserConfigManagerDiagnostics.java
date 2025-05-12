@@ -36,11 +36,10 @@ public class UserConfigManagerDiagnostics {
         DiagnosticLogBuilder log = new DiagnosticLogBuilder("UserConfigManager Diagnostics");
 
         try {
-            UserConfigManager manager = UserConfigManager.getInstance();
-            log.addLine("UserConfigManager instance obtained: " + (manager != null));
+            log.addLine("UserConfigManager instance obtained: " + (UserConfigManager.getInstance() != null));
 
             // Get current configuration
-            UserConfig config = manager.getCurrentConfig();
+            UserConfig config = UserConfigManager.getInstance().getCurrentConfig();
             log.addLine("Current configuration: " + (config != null ? "Available" : "Null"));
 
             if (config != null) {
@@ -52,14 +51,14 @@ public class UserConfigManagerDiagnostics {
 
             // Test instrument retrieval
             log.addSection("Instrument Retrieval Test");
-            List<InstrumentWrapper> instruments = manager.getInstruments();
+            List<InstrumentWrapper> instruments = UserConfigManager.getInstance().getInstruments();
             log.addLine("Retrieved " + instruments.size() + " instruments");
 
             if (!instruments.isEmpty()) {
                 InstrumentWrapper firstInstrument = instruments.get(0);
                 log.addLine("Testing instrument lookup by ID: " + firstInstrument.getId());
 
-                InstrumentWrapper found = manager.findInstrumentById(firstInstrument.getId());
+                InstrumentWrapper found = UserConfigManager.getInstance().findInstrumentById(firstInstrument.getId());
                 log.addLine("Lookup result: " + (found != null ? "Found" : "Not found"));
 
                 if (found != null) {
@@ -79,7 +78,7 @@ public class UserConfigManagerDiagnostics {
                             Math.min(3, firstInstrument.getName().length()));
 
                     log.addLine("Testing instrument lookup by name fragment: \"" + nameFragment + "\"");
-                    List<InstrumentWrapper> foundByName = manager.findInstrumentsByName(nameFragment);
+                    List<InstrumentWrapper> foundByName = UserConfigManager.getInstance().findInstrumentsByName(nameFragment);
                     log.addLine("Found " + foundByName.size() + " instruments containing \"" + nameFragment + "\"");
                 }
             }
@@ -187,11 +186,9 @@ public class UserConfigManagerDiagnostics {
         DiagnosticLogBuilder log = new DiagnosticLogBuilder("Default Players Sound Test");
         
         try {
-            UserConfigManager manager = UserConfigManager.getInstance();
-
-            UserConfig config = manager.getCurrentConfig();
+            UserConfig config = UserConfigManager.getInstance().getCurrentConfig();
             if (config != null || config.getHasDefaults())
-                manager.populateDefaults();
+                UserConfigManager.getInstance().populateDefaults();
 
 //            if (config == null || config.getPlayers() == null || config.getPlayers().isEmpty()) {
 //                log.addError("No configuration or players available for testing");
@@ -222,12 +219,12 @@ public class UserConfigManagerDiagnostics {
                 
                 if (createDefaults) {
                     log.addLine("Creating default instruments and players...");
-                    boolean success = manager.populateDefaults();
+                    boolean success = UserConfigManager.getInstance().populateDefaults();
                     log.addLine("Default population result: " + (success ? "Success" : "Failed"));
                     
                     if (success) {
                         // Get the updated players list
-                        config = manager.getCurrentConfig();
+                        config = UserConfigManager.getInstance().getCurrentConfig();
                         defaultPlayers = new ArrayList<>();
                         defaultPlayers.addAll(config.getDefaultNotes().stream()
                                 .filter(p -> p.getIsDefault())

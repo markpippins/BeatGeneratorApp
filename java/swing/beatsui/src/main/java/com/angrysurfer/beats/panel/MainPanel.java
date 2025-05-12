@@ -25,10 +25,10 @@ import javax.swing.SwingUtilities;
 
 import com.angrysurfer.beats.panel.instrument.InstrumentsPanel;
 
+import com.angrysurfer.core.api.midi.MIDIConstants;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.angrysurfer.beats.StatusBar;
 import com.angrysurfer.beats.Symbols;
 import com.angrysurfer.beats.panel.internalsynth.InternalSynthControlPanel;
 import com.angrysurfer.beats.panel.sample.SampleBrowserPanel;
@@ -77,7 +77,7 @@ public class MainPanel extends PlayerAwarePanel implements AutoCloseable, IBusLi
     private DrumEffectsSequencerPanel drumEffectsSequencerPanel;
 
     private InternalSynthControlPanel internalSynthControlPanel;
-    private MelodicSequencerPanel[] melodicPanels = new MelodicSequencerPanel[MelodicSequencer.SEQUENCER_CHANNELS.length];
+    private MelodicSequencerPanel[] melodicPanels = new MelodicSequencerPanel[MIDIConstants.SEQUENCER_CHANNELS.length];
 
     private MuteButtonsPanel muteButtonsPanel;
 

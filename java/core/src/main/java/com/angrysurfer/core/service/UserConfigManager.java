@@ -1,6 +1,7 @@
 package com.angrysurfer.core.service;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.Date;
 import java.util.List;
 import java.util.function.Function;
@@ -45,8 +46,10 @@ public class UserConfigManager {
     // Make constructor private for singleton pattern
     private UserConfigManager() {
         isInitializing = true;
-        RedisService redisService = RedisService.getInstance();
-        this.configHelper = redisService.getUserConfigHelper();
+        this.configHelper = RedisService.getInstance().getUserConfigHelper();
+    }
+
+    public void initialize() {
         try {
             loadConfiguration();
         } finally {
@@ -70,7 +73,7 @@ public class UserConfigManager {
     public void loadConfiguration() {
         logger.info("Loading user configuration from Redis");
         try {
-            // Try to get the first available config
+            // Try to get the first available config ID
             Integer firstId = configHelper.findFirstConfigId();
 
             if (firstId != null) {
@@ -80,6 +83,10 @@ public class UserConfigManager {
                     initialized = true;
 
                     logger.info("Loaded user configuration with ID: {}", config.getId());
+                    
+                    // Ensure defaults exist in the loaded configuration
+                    ensureDefaultsExist();
+                    
                     if (!isInitializing) {
                         commandBus.publish(Commands.USER_CONFIG_LOADED, this, this.currentConfig);
                     }
@@ -97,6 +104,9 @@ public class UserConfigManager {
 
             initialized = true;
             logger.info("Created new default configuration with ID: 1");
+            
+            // Ensure defaults exist in the new configuration
+            ensureDefaultsExist();
 
         } catch (Exception e) {
             logger.error("Error loading user configuration: {}", e.getMessage());
@@ -462,12 +472,12 @@ public class UserConfigManager {
                 drumInst.setReceiver(synthManager.getSynthesizer().getReceiver());
 
                 // Set drum-specific properties
-                drumInst.setBankIndex(128); // Standard drum bank
-                drumInst.setPreset(i % 5); // Cycle through drum kits (0-4)
+                // drumInst.setBankIndex(128); // Standard drum bank
+                // drumInst.setPreset(i % 5); // Cycle through drum kits (0-4)
 
                 // Set appropriate note range for drums
                 drumInst.setLowestNote(35);
-                drumInst.setHighestNote(81);
+                drumInst.setHighestNote(50);
 
                 // Additional properties
                 drumInst.setDescription("Default drum instrument " + i);
@@ -671,7 +681,7 @@ public class UserConfigManager {
             // Configure sequence properties
             player.setProbability(100);
             player.setLevel(90);
-            player.setRatchetCount(1);
+            player.setRatchetCount(0);
             player.setRatchetInterval(40);
             player.setSparse(0);
             player.setRandomDegree(0);
@@ -718,7 +728,7 @@ public class UserConfigManager {
 
             // Assign instrument preset (program change)
             instrument.setPreset(preset);
-
+            String name = InternalSynthManager.getInstance().getGeneralMIDIPresetNames().get(preset);
             // Send program change to the device if possible
             try {
                 if (instrument.getReceiver() != null) {
@@ -736,8 +746,7 @@ public class UserConfigManager {
             // Create the melodic player
             Note player = new Note();
             player.setId(RedisService.getInstance().getNextPlayerId());
-            player.setName("Default Melodic " + (i + 1));
-            // + " (" + InternalSynthManager.getInstance().getDrumName()Name(preset) + ")");
+            player.setName(name);
             player.setIsDefault(true);
             player.setMelodicPlayer(true);
             player.setRootNote(rootNote);
@@ -922,6 +931,9 @@ public class UserConfigManager {
 
                 // Initialize any required components
                 initializeInstruments();
+                
+                // Ensure defaults exist in the loaded configuration
+                ensureDefaultsExist();
 
                 // Notify listeners
                 commandBus.publish(Commands.USER_CONFIG_LOADED, this, currentConfig);
@@ -1044,114 +1056,122 @@ public class UserConfigManager {
 
         return result;
     }
-}
+
     /**
-     * Tests whether a UserConfig has default instruments and players
-     *
-     * @param config The configuration to test (defaults to current config if null)
-     * @return DiagnosticResult containing test results
+     * Ensures that the user configuration has default instruments and players
+     * If they don't exist, they will be created and the config will be saved
+     * 
+     * @return True if defaults existed or were successfully created, false otherwise
      */
-//    public DiagnosticResult testDefaultsExist(UserConfig config) {
-//        logger.info("Testing for presence of default instruments and players");
-//
-//        DiagnosticResult result = new DiagnosticResult();
-//        result.setTimestamp(new Date());
-//        result.setSuccess(true); // Start with success, will set to false if issues found
-//
-//        // Use current config if none provided
-//        if (config == null) {
-//            config = this.currentConfig;
-//        }
-//
-//        // ----- Instrument Tests -----
-//        boolean hasInstruments = config.getInstruments() != null && !config.getInstruments().isEmpty();
-//        result.addDetail("Has instruments", hasInstruments);
-//
-//        if (hasInstruments) {
-//            // Check for default instruments
-//            List<InstrumentWrapper> defaultInstruments = config.getInstruments().stream()
-//                .filter(i -> Boolean.TRUE.equals(i.getIsDefault()))
-//                .collect(Collectors.toList());
-//
-//            boolean hasDefaultInstruments = !defaultInstruments.isEmpty();
-//            result.addDetail("Has default instruments", hasDefaultInstruments);
-//            result.addDetail("Default instrument count", defaultInstruments.size());
-//
-//            // Test for specific instrument types
-//            long drumInstrumentCount = defaultInstruments.stream()
-//                .filter(i -> i.getName() != null && i.getName().startsWith("DefaultDrum"))
-//                .count();
-//
-//            long melodicInstrumentCount = defaultInstruments.stream()
-//                .filter(i -> i.getName() != null && i.getName().startsWith("DefaultMelo"))
-//                .count();
-//
-//            result.addDetail("Default drum instruments", drumInstrumentCount);
-//            result.addDetail("Default melodic instruments", melodicInstrumentCount);
-//
-//            if (drumInstrumentCount == 0 || melodicInstrumentCount == 0) {
-//                result.setSuccess(false);
-//                result.addIssue("Missing some default instruments");
-//            }
-//        } else {
-//            result.setSuccess(false);
-//            result.addIssue("No instruments found in configuration");
-//        }
-//
-//        // ----- Player Tests -----
-//        boolean hasDefaultNotes = config.getDefaultNotes() != null && !config.getDefaultNotes().isEmpty();
-//        boolean hasDefaultStrikes = config.getDefaultStrikes() != null && !config.getDefaultStrikes().isEmpty();
-//
-//        result.addDetail("Has default melodic players", hasDefaultNotes);
-//        result.addDetail("Has default drum players", hasDefaultStrikes);
-//
-//        if (hasDefaultNotes) {
-//            result.addDetail("Default melodic player count", config.getDefaultNotes().size());
-//        } else {
-//            result.setSuccess(false);
-//            result.addIssue("No default melodic players found");
-//        }
-//
-//        if (hasDefaultStrikes) {
-//            result.addDetail("Default drum player count", config.getDefaultStrikes().size());
-//        } else {
-//            result.setSuccess(false);
-//            result.addIssue("No default drum players found");
-//        }
-//
-//        // ----- Test player-instrument associations -----
-//        if (hasDefaultNotes && hasInstruments) {
-//            List<Note> invalidNotes = config.getDefaultNotes().stream()
-//                .filter(n -> n.getInstrument() == null ||
-//                             !config.getInstruments().contains(n.getInstrument()))
-//                .collect(Collectors.toList());
-//
-//            if (!invalidNotes.isEmpty()) {
-//                result.setSuccess(false);
-//                result.addIssue("Found " + invalidNotes.size() +
-//                               " melodic players with missing/invalid instrument references");
-//            }
-//        }
-//
-//        if (hasDefaultStrikes && hasInstruments) {
-//            List<Strike> invalidStrikes = config.getDefaultStrikes().stream()
-//                .filter(s -> s.getInstrument() == null ||
-//                             !config.getInstruments().contains(s.getInstrument()))
-//                .collect(Collectors.toList());
-//
-//            if (!invalidStrikes.isEmpty()) {
-//                result.setSuccess(false);
-//                result.addIssue("Found " + invalidStrikes.size() +
-//                               " drum players with missing/invalid instrument references");
-//            }
-//        }
-//
-//        // Add summary
-//        if (result.isSuccess()) {
-//            result.setSummary("Default instruments and players are properly configured");
-//        } else {
-//            result.setSummary("Default configuration is incomplete or invalid");
-//        }
-//
-//        return result;
-//    }
+    public boolean ensureDefaultsExist() {
+        logger.info("Checking if default instruments and players exist");
+        
+        boolean needsSaving = false;
+        
+        // First check if default instruments exist
+        if (!currentConfig.getHasDefaults()) {
+            logger.info("Default instruments don't exist, creating them");
+            if (!defaultInstrumentsExist(currentConfig)) {
+                boolean success = populateDefaultInstruments();
+                if (!success) {
+                    logger.error("Failed to create default instruments");
+                    return false;
+                }
+                needsSaving = true;
+            }
+
+            // Now check if default players exist
+            if (!defaultPlayersExist(currentConfig)) {
+                logger.info("Default players don't exist, creating them");
+                boolean success = populateDefaultPlayers();
+                if (!success) {
+                    logger.error("Failed to create default players");
+                    return false;
+                }
+                needsSaving = true;
+            }
+
+            // Save the config if we created defaults
+            if (needsSaving) {
+                logger.info("Saving configuration with newly created defaults");
+                try {
+                    saveConfiguration(currentConfig);
+                } catch (Exception e) {
+                    logger.error("Error saving configuration with defaults: {}", e.getMessage(), e);
+                    return false;
+                }
+            }
+        }
+
+        return true;
+    }
+
+    /**
+     * Get all Strike objects ordered by ID
+     *
+     * @return List of Strike objects sorted by ID
+     */
+    public List<Strike> getStrikesOrderedById() {
+        if (currentConfig == null || currentConfig.getDefaultStrikes() == null) {
+            return new ArrayList<>();
+        }
+
+        return currentConfig.getDefaultStrikes().stream()
+                .sorted(Comparator.comparing(Strike::getId, Comparator.nullsLast(Comparator.naturalOrder())))
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * Get all Note objects ordered by ID
+     *
+     * @return List of Note objects sorted by ID
+     */
+    public List<Note> getNotesOrderedById() {
+        if (currentConfig == null || currentConfig.getDefaultNotes() == null) {
+            return new ArrayList<>();
+        }
+
+        return currentConfig.getDefaultNotes().stream()
+                .sorted(Comparator.comparing(Note::getId, Comparator.nullsLast(Comparator.naturalOrder())))
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * Get all InstrumentWrapper objects ordered by ID
+     *
+     * @return List of InstrumentWrapper objects sorted by ID
+     */
+    public List<InstrumentWrapper> getInstrumentsOrderedById() {
+        if (currentConfig == null || currentConfig.getInstruments() == null) {
+            return new ArrayList<>();
+        }
+
+        return currentConfig.getInstruments().stream()
+                .sorted(Comparator.comparing(InstrumentWrapper::getId, Comparator.nullsLast(Comparator.naturalOrder())))
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * Get all Player objects (both Notes and Strikes) ordered by ID
+     *
+     * @return List of Player objects sorted by ID
+     */
+    public List<Player> getAllPlayersOrderedById() {
+        List<Player> allPlayers = new ArrayList<>();
+
+        // Add Notes
+        if (currentConfig != null && currentConfig.getDefaultNotes() != null) {
+            allPlayers.addAll(currentConfig.getDefaultNotes());
+        }
+
+        // Add Strikes
+        if (currentConfig != null && currentConfig.getDefaultStrikes() != null) {
+            allPlayers.addAll(currentConfig.getDefaultStrikes());
+        }
+
+        // Sort by ID
+        return allPlayers.stream()
+                .sorted(Comparator.comparing(Player::getId, Comparator.nullsLast(Comparator.naturalOrder())))
+                .collect(Collectors.toList());
+    }
+}

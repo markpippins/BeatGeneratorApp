@@ -4,7 +4,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-import com.angrysurfer.core.model.InstrumentWrapper;
+import com.angrysurfer.core.api.midi.MIDIConstants;
 import com.angrysurfer.core.model.Note;
 import com.angrysurfer.core.model.Player;
 import com.angrysurfer.core.model.Session;
@@ -16,8 +16,6 @@ import com.angrysurfer.core.api.Commands;
 import com.angrysurfer.core.redis.RedisService;
 import com.angrysurfer.core.sequencer.MelodicSequenceData;
 import com.angrysurfer.core.sequencer.MelodicSequencer;
-
-import javax.sound.midi.MidiDevice;
 
 /**
  * Manager for MelodicSequencer instances.
@@ -55,12 +53,13 @@ public class MelodicSequencerManager {
         // Create a new sequencer with the specified ID and channel
         MelodicSequencer sequencer = new MelodicSequencer(id);
         sequencer.setSequenceData(new MelodicSequenceData());
+        sequencer.getPlayer().noteOn(60, 100);
         sequencers.add(sequencer);
 
         CommandBus.getInstance().publish(Commands.MELODIC_SEQUENCER_ADDED, this, sequencer);
 
         logger.info("Created new melodic sequencer with ID {} on channel {}", id,
-                MelodicSequencer.SEQUENCER_CHANNELS[id % MelodicSequencer.SEQUENCER_CHANNELS.length]);
+                MIDIConstants.SEQUENCER_CHANNELS[id % MIDIConstants.SEQUENCER_CHANNELS.length]);
         return sequencer;
     }
 
@@ -312,31 +311,5 @@ public class MelodicSequencerManager {
         return null;
     }
 
-    /**
-     * Find a player in the session that belongs to this sequencer
-     */
-    private Player findExistingPlayerForSequencer(int id, int channel) {
-        Session session = SessionManager.getInstance().getActiveSession();
-        if (session == null) {
-            return null;
-        }
-
-        // Look for a player that's associated with this sequencer AND has the correct
-        // channel
-        for (Player p : session.getPlayers()) {
-            if (p instanceof Note &&
-                    p.getOwner() != null &&
-                    p.getOwner() instanceof MelodicSequencer &&
-                    ((MelodicSequencer) p.getOwner()).getId() != null &&
-                    ((MelodicSequencer) p.getOwner()).getId().equals(id) &&
-                    p.getChannel() == channel) { // Added channel check
-
-                return p;
-            }
-        }
-
-        logger.info("No player found for channel {}", channel);
-        return null;
-    }
 
 }

@@ -5,10 +5,9 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import com.angrysurfer.core.api.midi.MIDIConstants;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import com.fasterxml.jackson.annotation.JsonFilter;
 
 import lombok.Getter;
 import lombok.Setter;
@@ -20,11 +19,7 @@ public class MelodicSequenceData {
     
     // Constants
     public static final int MAX_STEPS = 16;
-    public static final int DEFAULT_NOTE = 60; // Middle C
-    public static final int DEFAULT_VELOCITY = 100;
-    public static final int DEFAULT_GATE = 75;
-    public static final int DEFAULT_PROBABILITY = 100;
-    
+
     // Id and metadata
     private Long id = 0L;
     private String name = "New Pattern";
@@ -76,10 +71,10 @@ public class MelodicSequenceData {
     private void initializeArrays() {
         // Initialize all arrays with default values
         Arrays.fill(activeSteps, false);
-        Arrays.fill(noteValues, DEFAULT_NOTE);
-        Arrays.fill(velocityValues, DEFAULT_VELOCITY);
-        Arrays.fill(gateValues, DEFAULT_GATE);
-        Arrays.fill(probabilityValues, DEFAULT_PROBABILITY);
+        Arrays.fill(noteValues, MIDIConstants.DEFAULT_NOTE);
+        Arrays.fill(velocityValues, MIDIConstants.DEFAULT_VELOCITY);
+        Arrays.fill(gateValues, MIDIConstants.DEFAULT_GATE);
+        Arrays.fill(probabilityValues, MIDIConstants.DEFAULT_PROBABILITY);
         Arrays.fill(nudgeValues, 0);
         Arrays.fill(tiltValues, 0);
         
@@ -125,7 +120,7 @@ public class MelodicSequenceData {
         if (step >= 0 && step < MAX_STEPS) {
             return noteValues[step];
         }
-        return DEFAULT_NOTE;
+        return MIDIConstants.DEFAULT_NOTE;
     }
     
     /**
@@ -148,7 +143,7 @@ public class MelodicSequenceData {
         if (step >= 0 && step < MAX_STEPS) {
             return velocityValues[step];
         }
-        return DEFAULT_VELOCITY;
+        return MIDIConstants.DEFAULT_VELOCITY;
     }
     
     /**
@@ -171,7 +166,7 @@ public class MelodicSequenceData {
         if (step >= 0 && step < MAX_STEPS) {
             return gateValues[step];
         }
-        return DEFAULT_GATE;
+        return MIDIConstants.DEFAULT_GATE;
     }
     
     /**
@@ -194,7 +189,7 @@ public class MelodicSequenceData {
         if (step >= 0 && step < MAX_STEPS) {
             return probabilityValues[step];
         }
-        return DEFAULT_PROBABILITY;
+        return MIDIConstants.DEFAULT_PROBABILITY;
     }
     
     /**
@@ -538,10 +533,10 @@ public class MelodicSequenceData {
      */
     public void clearPattern() {
         Arrays.fill(activeSteps, false);
-        Arrays.fill(noteValues, DEFAULT_NOTE);
-        Arrays.fill(velocityValues, DEFAULT_VELOCITY);
-        Arrays.fill(gateValues, DEFAULT_GATE);
-        Arrays.fill(probabilityValues, DEFAULT_PROBABILITY);
+        Arrays.fill(noteValues, MIDIConstants.DEFAULT_NOTE);
+        Arrays.fill(velocityValues, MIDIConstants.DEFAULT_VELOCITY);
+        Arrays.fill(gateValues, MIDIConstants.DEFAULT_GATE);
+        Arrays.fill(probabilityValues, MIDIConstants.DEFAULT_PROBABILITY);
         Arrays.fill(nudgeValues, 0);
     }
     

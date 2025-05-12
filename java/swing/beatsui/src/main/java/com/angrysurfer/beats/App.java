@@ -202,6 +202,8 @@ public class App implements IBusListener {
             splash.completeTask("Loaded instrument configurations");
 
             UserConfigManager.getInstance();
+            UserConfigManager.getInstance().initialize();
+
             splash.completeTask("Loaded user configuration");
             
             // Initialize SessionManager AFTER instruments are loaded
