@@ -63,9 +63,9 @@ public class ComplexLFOPanel extends JPanel implements AutoCloseable {
      */
     public ComplexLFOPanel() {
         super(new BorderLayout(5, 5));
-        setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createTitledBorder("Complex LFO"),
-                BorderFactory.createEmptyBorder(5, 5, 5, 5)));
+        // setBorder(BorderFactory.createCompoundBorder(
+        //         BorderFactory.createTitledBorder("Complex LFO"),
+        //         BorderFactory.createEmptyBorder(5, 5, 5, 5)));
         
         initializeUI();
         startUpdateThread();
@@ -77,13 +77,9 @@ public class ComplexLFOPanel extends JPanel implements AutoCloseable {
         // Main panel uses BorderLayout
         setLayout(new BorderLayout(5, 5));
         
-        // 1. TOP ROW - PRESET SELECTOR
-        JPanel presetPanel = createPresetPanel();
-        add(presetPanel, BorderLayout.NORTH);
-        
-        // 2. MIDDLE ROW - ALL CONTROLS HORIZONTALLY
+        // MIDDLE ROW - LFOs and MODULATION MATRIX
         JPanel controlsPanel = new JPanel(new GridLayout(1, 3, 10, 0));
-        controlsPanel.setBorder(BorderFactory.createEmptyBorder(5, 5, 10, 5));
+        controlsPanel.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
         
         // Create the modulator LFO (left side)
         modulatorLFO = new LFOPanel();
@@ -93,18 +89,29 @@ public class ComplexLFOPanel extends JPanel implements AutoCloseable {
         carrierLFO = new LFOPanel();
         carrierLFO.setBorder(BorderFactory.createTitledBorder("Carrier LFO"));
         
-        // Create modulation matrix (right side)
-        JPanel modulationMatrixPanel = createModulationMatrixPanel();
+        // Create right panel that will contain preset selector and modulation matrix
+        JPanel rightPanel = new JPanel(new BorderLayout(0, 5));
         
-        // Add all controls to the horizontal panel
+        // Create preset panel at the top of right panel
+        JPanel presetPanel = createPresetPanel();
+        presetPanel.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createTitledBorder("Presets"),
+                BorderFactory.createEmptyBorder(5, 5, 5, 5)));
+        rightPanel.add(presetPanel, BorderLayout.NORTH);
+        
+        // Create modulation matrix below preset panel
+        JPanel modulationMatrixPanel = createModulationMatrixPanel();
+        rightPanel.add(modulationMatrixPanel, BorderLayout.CENTER);
+        
+        // Add all panels to the horizontal controls panel
         controlsPanel.add(modulatorLFO);
         controlsPanel.add(carrierLFO);
-        controlsPanel.add(modulationMatrixPanel);
+        controlsPanel.add(rightPanel);
         
         // Add controls panel to main layout
         add(controlsPanel, BorderLayout.CENTER);
         
-        // 3. BOTTOM ROW - WAVEFORM DISPLAYS HORIZONTALLY
+        // BOTTOM ROW - WAVEFORM DISPLAYS HORIZONTALLY
         JPanel waveformsPanel = new JPanel(new GridLayout(1, 3, 10, 0));
         waveformsPanel.setBorder(BorderFactory.createEmptyBorder(0, 5, 5, 5));
         
@@ -149,7 +156,6 @@ public class ComplexLFOPanel extends JPanel implements AutoCloseable {
     
     private JPanel createPresetPanel() {
         JPanel panel = new JPanel(new FlowLayout(FlowLayout.LEFT));
-        panel.setBorder(BorderFactory.createEmptyBorder(0, 0, 5, 0));
         
         panel.add(new JLabel("Preset:"));
         
@@ -168,12 +174,80 @@ public class ComplexLFOPanel extends JPanel implements AutoCloseable {
         saveButton.addActionListener(e -> {
             String name = JOptionPane.showInputDialog(this, "Enter preset name:");
             if (name != null && !name.trim().isEmpty()) {
-                // Save preset functionality would go here
                 logger.info("Saving preset: {}", name);
             }
         });
         panel.add(saveButton);
         
+        return panel;
+    }
+    
+    private JPanel createModulationMatrixPanel() {
+        JPanel panel = new JPanel(new BorderLayout(5, 10));
+        panel.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createTitledBorder("Modulation Matrix"),
+                BorderFactory.createEmptyBorder(5, 5, 5, 5)));
+        
+        // Create header panel
+        JPanel headerPanel = new JPanel(new GridLayout(1, 3));
+        headerPanel.add(new JLabel("Parameter", SwingConstants.CENTER));
+        headerPanel.add(new JLabel("Enable", SwingConstants.CENTER));
+        headerPanel.add(new JLabel("Amount", SwingConstants.CENTER));
+        panel.add(headerPanel, BorderLayout.NORTH);
+        
+        // Create matrix panel with two rows of parameters
+        JPanel matrixPanel = new JPanel(new GridLayout(3, 2, 5, 10)); // 3 rows, 2 columns (2 params per row)
+        
+        // Parameters arranged in two columns
+        for (int i = 0; i < PARAMETERS.length; i++) {
+            String param = PARAMETERS[i];
+            
+            // Create a panel for each parameter row
+            JPanel paramPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 5, 0));
+            
+            // Parameter name
+            JLabel nameLabel = new JLabel(param);
+            nameLabel.setPreferredSize(new Dimension(75, 20));
+            paramPanel.add(nameLabel);
+            
+            // Enable switch
+            JToggleButton enableSwitch = new JToggleButton();
+            enableSwitch.setPreferredSize(new Dimension(20, 20));
+            enableSwitch.addActionListener(e -> updateModulation());
+            paramPanel.add(enableSwitch);
+            modulationEnableSwitches.put(param, enableSwitch);
+            
+            // Amount dial
+            DoubleDial amountDial = new DoubleDial();
+            amountDial.setMinimum(0.0);
+            amountDial.setMaximum(1.0);
+            amountDial.setValue(0.0);
+            amountDial.setStepSize(0.01);
+            amountDial.setToolTipText("Modulation amount for " + param);
+            amountDial.addChangeListener(e -> updateModulation());
+            
+            // Create a panel for the dial with a value label
+            JPanel dialPanel = new JPanel(new BorderLayout());
+            dialPanel.add(amountDial, BorderLayout.CENTER);
+            
+            JLabel valueLabel = new JLabel("0.00");
+            valueLabel.setFont(new Font("Monospaced", Font.PLAIN, 10));
+            valueLabel.setHorizontalAlignment(SwingConstants.CENTER);
+            dialPanel.add(valueLabel, BorderLayout.SOUTH);
+            
+            // Update label when dial changes
+            amountDial.addChangeListener(e -> {
+                valueLabel.setText(String.format("%.2f", amountDial.getValue()));
+            });
+            
+            paramPanel.add(dialPanel);
+            modulationAmountDials.put(param, amountDial);
+            
+            // Add to the matrix panel
+            matrixPanel.add(paramPanel);
+        }
+        
+        panel.add(matrixPanel, BorderLayout.CENTER);
         return panel;
     }
     
@@ -350,76 +424,6 @@ public class ComplexLFOPanel extends JPanel implements AutoCloseable {
         modulationAmountDials.get("PulseWidth").setValue(0.2);
     }
     
-    private JPanel createModulationMatrixPanel() {
-        JPanel panel = new JPanel(new GridBagLayout());
-        panel.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createTitledBorder("Modulation Matrix"),
-                BorderFactory.createEmptyBorder(5, 5, 5, 5)));
-        
-        GridBagConstraints gbc = new GridBagConstraints();
-        gbc.insets = new Insets(5, 5, 5, 5);
-        
-        // Create column headers
-        gbc.gridx = 0;
-        gbc.gridy = 0;
-        gbc.anchor = GridBagConstraints.CENTER;
-        panel.add(new JLabel("Parameter"), gbc);
-        
-        gbc.gridx = 1;
-        panel.add(new JLabel("Enable"), gbc);
-        
-        gbc.gridx = 2;
-        panel.add(new JLabel("Amount"), gbc);
-        
-        // Create rows for each parameter
-        for (int i = 0; i < PARAMETERS.length; i++) {
-            String param = PARAMETERS[i];
-            
-            gbc.gridx = 0;
-            gbc.gridy = i + 1;
-            gbc.anchor = GridBagConstraints.WEST;
-            panel.add(new JLabel(param), gbc);
-            
-            // Enable switch
-            gbc.gridx = 1;
-            gbc.anchor = GridBagConstraints.CENTER;
-            JToggleButton enableSwitch = new JToggleButton();
-            enableSwitch.setPreferredSize(new Dimension(20, 20));
-            enableSwitch.addActionListener(e -> updateModulation());
-            panel.add(enableSwitch, gbc);
-            modulationEnableSwitches.put(param, enableSwitch);
-            
-            // Amount dial
-            gbc.gridx = 2;
-            DoubleDial amountDial = new DoubleDial();
-            amountDial.setMinimum(0.0);
-            amountDial.setMaximum(1.0);
-            amountDial.setValue(0.0);
-            amountDial.setStepSize(0.01);
-            amountDial.setToolTipText("Modulation amount for " + param);
-            amountDial.addChangeListener(e -> updateModulation());
-            
-            // Create a panel for the dial with a value label
-            JPanel dialPanel = new JPanel(new BorderLayout());
-            dialPanel.add(amountDial, BorderLayout.CENTER);
-            
-            JLabel valueLabel = new JLabel("0.00");
-            valueLabel.setFont(new Font("Monospaced", Font.PLAIN, 10));
-            valueLabel.setHorizontalAlignment(SwingConstants.CENTER);
-            dialPanel.add(valueLabel, BorderLayout.SOUTH);
-            
-            // Update label when dial changes
-            amountDial.addChangeListener(e -> {
-                valueLabel.setText(String.format("%.2f", amountDial.getValue()));
-            });
-            
-            panel.add(dialPanel, gbc);
-            modulationAmountDials.put(param, amountDial);
-        }
-        
-        return panel;
-    }
-    
     private void startUpdateThread() {
         // Create a scheduled executor to update the modulation
         executor = Executors.newSingleThreadScheduledExecutor();
@@ -558,7 +562,7 @@ public class ComplexLFOPanel extends JPanel implements AutoCloseable {
         
         public ComplexWaveformPanel() {
             setBackground(Color.BLACK);
-            setPreferredSize(new Dimension(400, 200));
+            setPreferredSize(new Dimension(400, 160));
             
             // Initialize with zeros
             for (int i = 0; i < HISTORY_SIZE; i++) {
@@ -666,7 +670,7 @@ public class ComplexLFOPanel extends JPanel implements AutoCloseable {
         
         public ModulatorWaveformPanel() {
             setBackground(Color.BLACK);
-            setPreferredSize(new Dimension(300, 160));
+            setPreferredSize(new Dimension(300, 130));
             
             // Initialize with zeros
             for (int i = 0; i < HISTORY_SIZE; i++) {
@@ -753,7 +757,7 @@ public class ComplexLFOPanel extends JPanel implements AutoCloseable {
         
         public CarrierWaveformPanel() {
             setBackground(Color.BLACK);
-            setPreferredSize(new Dimension(300, 160));
+            setPreferredSize(new Dimension(300, 130));
             
             // Initialize with zeros
             for (int i = 0; i < HISTORY_SIZE; i++) {

@@ -20,6 +20,11 @@ import java.util.function.Consumer;
 
 import javax.swing.*;
 
+import com.angrysurfer.core.api.Command;
+import com.angrysurfer.core.api.Commands;
+import com.angrysurfer.core.api.IBusListener;
+import com.angrysurfer.core.api.TimingBus;
+import com.angrysurfer.core.sequencer.TimingUpdate;
 import lombok.Getter;
 import lombok.Setter;
 import org.slf4j.Logger;
@@ -56,11 +61,13 @@ public class LFOPanel extends JPanel implements AutoCloseable {
     private DoubleDial pulseWidthDial;
     private JLabel valueLabel;
     private JToggleButton runButton;
+    private JToggleButton syncButton;
     private JSlider bipolarSlider; // Shows current value as a slider
 
     // Update thread
     private ScheduledExecutorService executor;
     private boolean running = false;
+    private boolean syncMode = false;
     private long startTimeMs = 0;
 
     // Current waveform type and value
@@ -70,6 +77,17 @@ public class LFOPanel extends JPanel implements AutoCloseable {
     // Value change listener
     private Consumer<Double> valueChangeListener;
     private JComponent incrementButton;
+
+    // Timing listener
+    private IBusListener timingListener;
+    private double currentBeat;
+
+    // New fields for timing division and tempo
+    private JSlider divisionSlider;
+    private JLabel divisionLabel;
+    private int timingDivision = 16; // Default 1/16th note
+    private double lastTickValue = 0;
+    private double tempo = 120.0; // Default tempo, will be updated from TimingUpdate
 
     // Waveform types
     public enum WaveformType {
@@ -256,6 +274,59 @@ public class LFOPanel extends JPanel implements AutoCloseable {
         topControlPanel.add(waveformCombo);
         topControlPanel.add(Box.createHorizontalStrut(20));
         topControlPanel.add(runButton);
+
+        // Add sync button
+        syncButton = new JToggleButton("Sync");
+        syncButton.setToolTipText("Synchronize with timing events");
+        syncButton.addActionListener(e -> {
+            syncMode = syncButton.isSelected();
+            if (syncMode) {
+                // Disable run button when in sync mode
+                runButton.setSelected(false);
+                running = false;
+                runButton.setText("Run");
+                runButton.setEnabled(false);
+                
+                // Register for timing events
+                registerForTimingEvents();
+            } else {
+                // Re-enable run button when not in sync mode
+                runButton.setEnabled(true);
+                unregisterFromTimingEvents();
+            }
+            logger.info("Sync mode " + (syncMode ? "enabled" : "disabled"));
+        });
+        topControlPanel.add(syncButton);
+
+        // Add the division slider
+        JPanel divisionPanel = new JPanel(new BorderLayout(5, 0));
+        divisionPanel.setBorder(BorderFactory.createEmptyBorder(0, 10, 0, 0));
+        divisionLabel = new JLabel("1/16");
+        divisionLabel.setPreferredSize(new Dimension(36, 16));
+        divisionLabel.setHorizontalAlignment(SwingConstants.CENTER);
+        divisionLabel.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 5));
+
+        // Create slider for timing division
+        String[] divisions = {"1/32", "1/16", "1/8", "1/4", "1/2", "1/1"};
+        divisionSlider = new JSlider(JSlider.HORIZONTAL, 0, divisions.length - 1, 1); // Default 1/16
+        divisionSlider.setPreferredSize(new Dimension(120, 20));
+        divisionSlider.setSnapToTicks(true);
+        divisionSlider.setPaintTicks(true);
+        divisionSlider.setMajorTickSpacing(1);
+        divisionSlider.addChangeListener(e -> {
+            int index = divisionSlider.getValue();
+            divisionLabel.setText(divisions[index]);
+            // Convert from display value to actual division (32, 16, 8, 4, 2, 1)
+            timingDivision = 32 / (int)Math.pow(2, index);
+            logger.debug("Timing division set to 1/" + timingDivision);
+        });
+
+        divisionPanel.add(new JLabel("Division:"), BorderLayout.WEST);
+        divisionPanel.add(divisionSlider, BorderLayout.CENTER);
+        divisionPanel.add(divisionLabel, BorderLayout.EAST);
+
+        // Add the division panel to top controls
+        topControlPanel.add(divisionPanel);
 
         // Add components to main panels
         controlPanel.add(topControlPanel, BorderLayout.NORTH);
@@ -512,6 +583,122 @@ public class LFOPanel extends JPanel implements AutoCloseable {
      */
     private interface LFO {
         double getValue(double timeInSeconds);
+    }
+
+    /**
+     * Register this LFO as a listener for timing events
+     */
+    private void registerForTimingEvents() {
+        // Create a timing listener that follows the same pattern as SessionDisplayPanel
+        if (timingListener == null) {
+            timingListener = new IBusListener() {
+                @Override
+                public void onAction(Command action) {
+                    if (action.getCommand() == Commands.TIMING_UPDATE && syncMode) {
+                        if (action.getData() instanceof TimingUpdate update) {
+                            // Get the tick value from the update
+                            if (update.tick() != null) {
+                                // Use SwingUtilities.invokeLater to ensure UI updates happen on EDT
+                                SwingUtilities.invokeLater(() -> {
+                                    processTimingUpdate(update);
+                                });
+                            }
+                            
+                            // Also capture tempo if available
+//                            if (update.tempo() != null) {
+//                                tempo = update.tempo();
+//                            }
+                        }
+                    }
+                }
+            };
+        }
+        
+        // Register with the timing bus
+        TimingBus.getInstance().register(timingListener);
+        logger.debug("Registered for timing events");
+    }
+
+    /**
+     * Process a timing update and calculate LFO value
+     */
+    private void processTimingUpdate(TimingUpdate update) {
+        if (!syncMode) return;
+        
+        // Calculate phase based on timing update
+        // This converts raw tick into a cycle phase based on division
+        Long tickValue = update.tick();
+        if (tickValue == null) return;
+        
+        lastTickValue = tickValue;
+        
+        // Convert tick to a phase position based on division
+        // e.g., for 1/16th notes with 24 PPQN, each cycle is 6 ticks
+        double ticksPerDivision = 24.0 / (timingDivision / 4.0); // Assuming 24 PPQN
+        double phase = (tickValue % ticksPerDivision) / ticksPerDivision;
+        
+        // Update LFO value based on this phase
+        updateLFOValueFromPhase(phase);
+    }
+
+    /**
+     * Update the LFO value based on a phase (0-1 range)
+     */
+    private void updateLFOValueFromPhase(double phase) {
+        // Calculate the oscillator value using existing formulas but with phase
+        double value = 0;
+        
+        switch (currentWaveform) {
+            case SINE:
+                value = offset + amplitude * Math.sin(2 * Math.PI * phase + this.phase * 2 * Math.PI);
+                break;
+            case TRIANGLE:
+                double triPhase = (phase + this.phase) % 1.0;
+                value = offset + amplitude * (triPhase < 0.5 ? 4 * triPhase - 1 : 3 - 4 * triPhase);
+                break;
+            case SAWTOOTH:
+                double sawPhase = (phase + this.phase) % 1.0;
+                value = offset + amplitude * (2 * sawPhase - 1);
+                break;
+            case SQUARE:
+                double sqrPhase = (phase + this.phase) % 1.0;
+                value = offset + amplitude * (sqrPhase < 0.5 ? 1 : -1);
+                break;
+            case PULSE:
+                double pulsePhase = (phase + this.phase) % 1.0;
+                value = offset + amplitude * (pulsePhase < pulseWidth ? 1 : -1);
+                break;
+            case RANDOM:
+                // For random, we want a stable value that changes only at divisions
+                int step = (int)(lastTickValue / (24.0 / (timingDivision / 4.0)));
+                value = offset + amplitude * (2 * ((Math.sin(step * 12345.67) + 1) % 1.0) - 1);
+                break;
+        }
+        
+        // Clamp the value between -1 and 1
+        value = Math.max(-1.0, Math.min(1.0, value));
+        
+        // Update UI elements
+        currentValue = value;
+        valueLabel.setText(String.format("%.2f", value));
+        
+        // Update the live waveform panel
+        liveWaveformPanel.addValue(value);
+        
+        // Notify listeners if attached
+        if (valueChangeListener != null) {
+            valueChangeListener.accept(value);
+        }
+    }
+
+    /**
+     * Unregister from timing events
+     */
+    private void unregisterFromTimingEvents() {
+        if (timingListener != null) {
+            TimingBus.getInstance().unregister(timingListener);
+            logger.debug("Unregistered from timing events");
+        }
     }
 
     /**
