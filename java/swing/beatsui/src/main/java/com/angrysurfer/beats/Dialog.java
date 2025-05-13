@@ -1,23 +1,13 @@
 package com.angrysurfer.beats;
 
-import java.awt.BorderLayout;
-import java.awt.Dimension;
-import java.awt.FlowLayout;
-import java.awt.Font;
-import java.awt.Frame;
-import java.awt.event.ActionEvent;
-import java.awt.event.KeyEvent;
-
-import javax.swing.BorderFactory;
-import javax.swing.JButton;
-import javax.swing.JComponent;
-import javax.swing.JDialog;
-import javax.swing.JLabel;
-import javax.swing.JPanel;
-import javax.swing.KeyStroke;
-
 import lombok.Getter;
 import lombok.Setter;
+
+import javax.swing.*;
+import java.awt.Frame;
+import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.KeyEvent;
 
 @Getter
 @Setter
@@ -196,27 +186,4 @@ public class Dialog<T> extends JDialog {
         return accepted;
     }
 
-    // Test method
-    // public static void main(String[] args) {
-    // Frame frame = new Frame();
-    // frame.setVisible(true);
-
-    // // Create sample player
-    // ProxyStrike samplePlayer = new ProxyStrike();
-
-    // // Create test panel with sample player
-    // JPanel testPanel = new PlayerEditorPanel(samplePlayer);
-
-    // // Create and show dialog with frame as owner
-    // Dialog<ProxyStrike> dialog = new Dialog<>(frame, samplePlayer, testPanel);
-    // dialog.setTitle("Edit Player: " + samplePlayer.getName());
-    // boolean result = dialog.showDialog();
-
-    // // System.out.println("Dialog result: " + result);
-    // if (result) {
-    // ProxyStrike updatedPlayer = ((PlayerEditorPanel)
-    // testPanel).getUpdatedPlayer();
-    // // System.out.println("Updated player name: " + updatedPlayer.getName());
-    // }
-    // }
 }

@@ -1,20 +1,5 @@
 package com.angrysurfer.beats.panel.sequencer.mono;
 
-import java.awt.Dimension;
-import java.awt.FlowLayout;
-import java.awt.Insets;
-import java.util.Random;
-
-import javax.swing.BorderFactory;
-import javax.swing.JButton;
-import javax.swing.JComboBox;
-import javax.swing.JPanel;
-import javax.swing.JToggleButton;
-import javax.swing.SwingUtilities;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import com.angrysurfer.beats.util.UIHelper;
 import com.angrysurfer.core.api.CommandBus;
 import com.angrysurfer.core.api.Commands;
@@ -22,6 +7,12 @@ import com.angrysurfer.core.event.MelodicSequencerEvent;
 import com.angrysurfer.core.sequencer.MelodicSequenceData;
 import com.angrysurfer.core.sequencer.MelodicSequencer;
 import com.angrysurfer.core.service.MelodicSequencerManager;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import javax.swing.*;
+import java.awt.*;
+import java.util.Random;
 
 /**
  * Panel for pattern generation controls for a melodic sequencer
@@ -89,9 +80,8 @@ public class MelodicSequencerGeneratorPanel extends JPanel {
     
     /**
      * Generate a pattern based on current settings
-     * @return true if generation was successful
      */
-    public boolean generatePattern() {
+    public void generatePattern() {
         try {
             // Get selected octave range from the combo
             int octaveRange = rangeCombo.getSelectedIndex() + 1;
@@ -102,14 +92,14 @@ public class MelodicSequencerGeneratorPanel extends JPanel {
             // Check if sequencer is valid
             if (sequencer == null) {
                 logger.error("Cannot generate pattern - sequencer is null");
-                return false;
+                return;
             }
             
             // Get the current sequence data
             MelodicSequenceData data = sequencer.getSequenceData();
             if (data == null) {
                 logger.error("Cannot generate pattern - sequence data is null");
-                return false;
+                return;
             }
             
             // Generate the pattern
@@ -132,14 +122,11 @@ public class MelodicSequencerGeneratorPanel extends JPanel {
                 ));
                 
                 logger.info("Pattern successfully generated and applied");
-                return true;
             } else {
                 logger.warn("Pattern generation failed");
-                return false;
             }
         } catch (Exception ex) {
             logger.error("Error generating pattern: {}", ex.getMessage(), ex);
-            return false;
         }
     }
     
@@ -222,12 +209,12 @@ public class MelodicSequencerGeneratorPanel extends JPanel {
             }
             
             // Create varying tilt values for more musical interest
-            int[] tiltValues = new int[maxSteps];
-            for (int i = 0; i < maxSteps; i++) {
-                // Create small tilt values (-3 to +3)
-                tiltValues[i] = random.nextInt(7) - 3;
-            }
-            data.setHarmonicTiltValues(tiltValues);
+//            int[] tiltValues = new int[maxSteps];
+//            for (int i = 0; i < maxSteps; i++) {
+//                // Create small tilt values (-3 to +3)
+//                tiltValues[i] = random.nextInt(7) - 3;
+//            }
+//            data.setHarmonicTiltValues(tiltValues);
             
             logger.info("Successfully generated new pattern with {} active steps", stepsToActivate);
             return true;

@@ -2,24 +2,23 @@ package com.angrysurfer.beats.panel.player;
 
 import com.angrysurfer.beats.Symbols;
 import com.angrysurfer.beats.panel.PlayerAwarePanel;
+import com.angrysurfer.beats.util.UIHelper;
+import com.angrysurfer.core.Constants;
+import com.angrysurfer.core.api.CommandBus;
+import com.angrysurfer.core.api.Commands;
+import com.angrysurfer.core.model.Player;
+import com.angrysurfer.core.model.preset.BankItem;
+import com.angrysurfer.core.model.preset.PresetItem;
+import com.angrysurfer.core.model.preset.SoundbankItem;
+import com.angrysurfer.core.service.InternalSynthManager;
+import com.angrysurfer.core.service.SoundbankManager;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import javax.swing.*;
 import java.awt.*;
 import java.util.List;
 import java.util.Objects;
-
-import com.angrysurfer.core.Constants;
-import com.angrysurfer.core.model.preset.PresetItem;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import com.angrysurfer.beats.util.UIHelper;
-import com.angrysurfer.core.api.CommandBus;
-import com.angrysurfer.core.api.Commands;
-import com.angrysurfer.core.model.Player;
-import com.angrysurfer.core.service.SoundbankManager;
-import com.angrysurfer.core.model.preset.BankItem;
-import com.angrysurfer.core.model.preset.SoundbankItem;
-import com.angrysurfer.core.service.InternalSynthManager;
 
 /**
  * Panel for editing player sound parameters
@@ -58,7 +57,7 @@ public class SoundParametersPanel extends PlayerAwarePanel {
         horizontalPanel.setLayout(new BoxLayout(horizontalPanel, BoxLayout.X_AXIS));
         horizontalPanel.setBorder(BorderFactory.createEmptyBorder(2, 2, 2, 2));
         
-        Player player = getPlayer();
+        Player player = getTargetPlayer();
         if (player != null)
             requestPlayerUpdate();
 
@@ -77,7 +76,7 @@ public class SoundParametersPanel extends PlayerAwarePanel {
         // 2. Restore soundbank action listener
         soundbankCombo.addActionListener(e -> {
             if (!isInitializing && soundbankCombo.getSelectedItem() != null) {
-                Player currentPlayer = getPlayer();
+                Player currentPlayer = getTargetPlayer();
                 if (currentPlayer != null && currentPlayer.getInstrument() != null) {
                     SoundbankItem item = (SoundbankItem) soundbankCombo.getSelectedItem();
                     currentPlayer.getInstrument().setSoundbankName(item.getName());
@@ -103,7 +102,7 @@ public class SoundParametersPanel extends PlayerAwarePanel {
         // 2. Restore bank action listener
         bankCombo.addActionListener(e -> {
             if (!isInitializing && bankCombo.getSelectedItem() != null) {
-                Player currentPlayer = getPlayer();
+                Player currentPlayer = getTargetPlayer();
                 if (currentPlayer != null && currentPlayer.getInstrument() != null) {
                     BankItem item = (BankItem) bankCombo.getSelectedItem();
                     currentPlayer.getInstrument().setBankIndex(item.getIndex());
@@ -134,7 +133,7 @@ public class SoundParametersPanel extends PlayerAwarePanel {
                 }
                 
                 currentPreset = item;
-                Player currentPlayer = getPlayer();
+                Player currentPlayer = getTargetPlayer();
                 
                 if (currentPlayer != null && currentPlayer.getInstrument() != null) {
                     // Use SoundbankManager to update player sound
@@ -162,7 +161,7 @@ public class SoundParametersPanel extends PlayerAwarePanel {
         editButton.setMaximumSize(new Dimension(UIHelper.SMALL_CONTROL_WIDTH, UIHelper.CONTROL_HEIGHT));
         editButton.setToolTipText("Edit player properties");
         editButton.addActionListener(e -> {
-            Player currentPlayer = getPlayer();
+            Player currentPlayer = getTargetPlayer();
             if (currentPlayer != null) {
                 // Request player edit dialog
                 CommandBus.getInstance().publish(
@@ -197,6 +196,17 @@ public class SoundParametersPanel extends PlayerAwarePanel {
                     getTargetPlayer().getOwner());
         });
 
+        JButton playNoteButton = new JButton(Symbols.get(Symbols.AUDIO));
+        playNoteButton.setMaximumSize(new Dimension(UIHelper.SMALL_CONTROL_WIDTH, UIHelper.CONTROL_HEIGHT));
+        playNoteButton.addActionListener(e -> {
+            getTargetPlayer().noteOn(60,100);
+            // getTargetPlayer().noteOn(60,100);
+
+//            CommandBus.getInstance().publish(
+//                    Commands.DRUM_PRESET_SELECTION_REQUEST,
+//                    this,
+//                    getTargetPlayer().getOwner());
+        });
 
         
         
@@ -242,7 +252,7 @@ public class SoundParametersPanel extends PlayerAwarePanel {
      */
     @Override
     public void handlePlayerActivated() {
-        Player player = getPlayer();
+        Player player = getTargetPlayer();
         if (player == null)
             return;
         //UIHelper.setWidgetPanelBorder(this, getTargetPlayer().getName());
@@ -279,7 +289,7 @@ public class SoundParametersPanel extends PlayerAwarePanel {
     public void updateUI() {
         super.updateUI();
 
-        Player player = getPlayer();
+        Player player = getTargetPlayer();
         if (player == null || soundbankCombo == null)
             return;
 
@@ -327,7 +337,7 @@ public class SoundParametersPanel extends PlayerAwarePanel {
         // Simply add generic presets 0-127
         presetCombo.removeAllItems();
 
-        Player player = getPlayer();
+        Player player = getTargetPlayer();
         if (player == null)
             return;
 
@@ -354,7 +364,7 @@ public class SoundParametersPanel extends PlayerAwarePanel {
     private void updateSoundbankCombo() {
         isInitializing = true;
         try {
-            Player player = getPlayer();
+            Player player = getTargetPlayer();
             if (player == null)
                 return;
 
@@ -389,7 +399,7 @@ public class SoundParametersPanel extends PlayerAwarePanel {
         try {
             bankCombo.removeAllItems();
 
-            Player player = getPlayer();
+            Player player = getTargetPlayer();
             if (player == null)
                 return;
 
@@ -428,7 +438,7 @@ public class SoundParametersPanel extends PlayerAwarePanel {
         try {
             presetCombo.removeAllItems();
 
-            Player player = getPlayer();
+            Player player = getTargetPlayer();
             if (player == null)
                 return;
 
@@ -480,7 +490,7 @@ public class SoundParametersPanel extends PlayerAwarePanel {
         try {
             presetCombo.removeAllItems();
 
-            Player player = getPlayer();
+            Player player = getTargetPlayer();
             if (player == null)
                 return;
 

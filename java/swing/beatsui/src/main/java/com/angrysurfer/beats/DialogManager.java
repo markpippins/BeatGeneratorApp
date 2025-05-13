@@ -1,37 +1,13 @@
 package com.angrysurfer.beats;
 
-import java.awt.BorderLayout;
-import java.awt.FlowLayout;
-import java.awt.GridLayout;
-import java.io.File;
-import java.util.List;
-
-import javax.swing.BorderFactory;
-import javax.swing.ButtonGroup;
-import javax.swing.JButton;
-import javax.swing.JDialog;
-import javax.swing.JFileChooser;
-import javax.swing.JLabel;
-import javax.swing.JOptionPane;
-import javax.swing.JPanel;
-import javax.swing.JRadioButton;
-import javax.swing.JSpinner;
-import javax.swing.SpinnerNumberModel;
-import javax.swing.SwingUtilities;
-import javax.swing.filechooser.FileNameExtensionFilter;
-
-import com.angrysurfer.beats.panel.sequencer.poly.DrumPresetPanel;
-import com.angrysurfer.core.Constants;
-import com.angrysurfer.core.api.*;
-import com.angrysurfer.core.service.InstrumentManager;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import com.angrysurfer.beats.panel.EuclideanPatternPanel;
 import com.angrysurfer.beats.panel.instrument.CustomControlsPanel;
 import com.angrysurfer.beats.panel.player.PlayerEditPanel;
 import com.angrysurfer.beats.panel.player.PlayerInstrumentPanel;
 import com.angrysurfer.beats.panel.player.RuleEditPanel;
+import com.angrysurfer.beats.panel.sequencer.poly.DrumPresetPanel;
+import com.angrysurfer.core.Constants;
+import com.angrysurfer.core.api.*;
 import com.angrysurfer.core.config.UserConfig;
 import com.angrysurfer.core.model.InstrumentWrapper;
 import com.angrysurfer.core.model.Player;
@@ -39,10 +15,19 @@ import com.angrysurfer.core.model.Rule;
 import com.angrysurfer.core.model.Session;
 import com.angrysurfer.core.redis.RedisService;
 import com.angrysurfer.core.sequencer.DrumSequencer;
-import com.angrysurfer.core.sequencer.MelodicSequencer;
+import com.angrysurfer.core.service.InstrumentManager;
 import com.angrysurfer.core.service.PlayerManager;
 import com.angrysurfer.core.service.SessionManager;
 import com.angrysurfer.core.util.UserConfigConverter;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import javax.swing.*;
+import javax.swing.filechooser.FileNameExtensionFilter;
+import java.awt.*;
+import java.io.File;
+import java.util.List;
+import java.util.Objects;
 
 public class DialogManager implements IBusListener {
 
@@ -67,7 +52,7 @@ public class DialogManager implements IBusListener {
 
     @Override
     public void onAction(Command action) {
-        logger.info("DialogManager received command: " + action.getCommand());
+        logger.info("DialogManager received command: {}", action.getCommand());
         switch (action.getCommand()) {
             case Commands.PLAYER_ADD_REQUEST -> handleAddPlayer();
             case Commands.PLAYER_EDIT_REQUEST -> handleEditPlayer((Player) action.getData());
@@ -76,8 +61,8 @@ public class DialogManager implements IBusListener {
             case Commands.EDIT_PLAYER_PARAMETERS -> handlePlayerParameters((Player) action.getData());
             case Commands.CREATE_INSTRUMENT_FOR_PLAYER_REQUEST ->
                 handleCreateInstrumentForPlayer((Player) action.getData());
-            case Commands.LOAD_CONFIG -> SwingUtilities.invokeLater(() -> showConfigFileChooserDialog());
-            case Commands.SAVE_CONFIG -> SwingUtilities.invokeLater(() -> showConfigFileSaverDialog());
+            case Commands.LOAD_CONFIG -> SwingUtilities.invokeLater(this::showConfigFileChooserDialog);
+            case Commands.SAVE_CONFIG -> SwingUtilities.invokeLater(this::showConfigFileSaverDialog);
             case Commands.SHOW_MAX_LENGTH_DIALOG -> handleMaxLengthDialog((DrumSequencer) action.getData());
             case Commands.SHOW_EUCLIDEAN_DIALOG -> {
                 if (action.getData() instanceof Object[] params) {
@@ -86,7 +71,7 @@ public class DialogManager implements IBusListener {
             }
             case Commands.SHOW_FILL_DIALOG -> {
                 if (action.getData() instanceof Object[] params) {
-                    handleFillDialog((DrumSequencer) params[0], (Integer) params[1], (Integer) params[2]);
+                    handleFillDialog((Integer) params[1], (Integer) params[2]);
                 }
             }
             case Commands.DRUM_PRESET_SELECTION_REQUEST -> {
@@ -103,15 +88,14 @@ public class DialogManager implements IBusListener {
             try {
                 Session currentSession = SessionManager.getInstance().getActiveSession();
 
-                logger.info(
-                        String.format("Current session: %s", currentSession != null ? currentSession.getId() : "null"));
+                logger.info("Current session: {}", currentSession != null ? currentSession.getId() : "null");
 
                 if (currentSession != null) {
                     // Initialize player
                     Player newPlayer = RedisService.getInstance().newStrike(); // initializeNewPlayer();
                     newPlayer.setName(
                             newPlayer.getClass().getSimpleName() + " " + (currentSession.getPlayers().size() + 1));
-                    logger.info(String.format("Created new player with ID: %d", newPlayer.getId()));
+                    logger.info("Created new player with ID: {}", newPlayer.getId());
 
                     setNewPlayerInstrument(newPlayer);
 
@@ -122,17 +106,17 @@ public class DialogManager implements IBusListener {
                     dialog.setTitle("Add Player");
 
                     boolean result = dialog.showDialog();
-                    logger.info(String.format("Dialog closed with result: %s", result));
+                    logger.info("Dialog closed with result: {}", result);
 
                     if (result) {
                         Player updatedPlayer = panel.getUpdatedPlayer();
                         SessionManager.getInstance().addPlayerToSession(currentSession, updatedPlayer);
-                        logger.info(String.format("Player %d added successfully", updatedPlayer.getId()));
+                        logger.info("Player {} added successfully", updatedPlayer.getId());
                         CommandBus.getInstance().publish(Commands.PLAYER_ADDED, this, updatedPlayer);
                     }
                 }
             } catch (Exception e) {
-                logger.error("Error in handleAddPlayer: " + e.getMessage());
+                logger.error("Error in handleAddPlayer: {}", e.getMessage());
                 e.printStackTrace();
             }
         });
@@ -148,7 +132,7 @@ public class DialogManager implements IBusListener {
             List<String> availableDeviceNames = com.angrysurfer.core.service.DeviceManager.getInstance()
                     .getAvailableOutputDeviceNames();
 
-            logger.info("Setting instrument for new player. Available devices: " + availableDeviceNames);
+            logger.info("Setting instrument for new player. Available devices: {}", availableDeviceNames);
 
             // Find the first instrument that has an available device
             InstrumentWrapper selectedInstrument = null;
@@ -160,8 +144,7 @@ public class DialogManager implements IBusListener {
                         availableDeviceNames.contains(instrument.getDeviceName())) {
 
                     selectedInstrument = instrument;
-                    logger.info("Found valid instrument: " + instrument.getName() + " with device: "
-                            + instrument.getDeviceName());
+                    logger.info("Found valid instrument: {} with device: {}", instrument.getName(), instrument.getDeviceName());
                     break;
                 }
             }
@@ -169,9 +152,8 @@ public class DialogManager implements IBusListener {
             // If no instrument with matching device was found, try to use the first
             // instrument
             if (selectedInstrument == null && !instruments.isEmpty()) {
-                selectedInstrument = instruments.get(0);
-                logger.error("No instrument with available device found. Using first instrument: " +
-                        selectedInstrument.getName());
+                selectedInstrument = instruments.getFirst();
+                logger.error("No instrument with available device found. Using first instrument: {}", selectedInstrument.getName());
             }
 
             // Set the selected instrument
@@ -179,12 +161,12 @@ public class DialogManager implements IBusListener {
                 newPlayer.setInstrument(selectedInstrument);
                 // Set default channel (usually channel 1, which is represented as 0 in MIDI)
                 // newPlayer.setChannel(0);
-                logger.info("Set instrument for new player: " + selectedInstrument.getName());
+                logger.info("Set instrument for new player: {}", selectedInstrument.getName());
             } else {
                 logger.error("No instruments available. New player will have no instrument.");
             }
         } catch (Exception e) {
-            logger.error("Error setting new player instrument: " + e.getMessage());
+            logger.error("Error setting new player instrument: {}", e.getMessage());
             e.printStackTrace();
         }
     }
@@ -234,8 +216,7 @@ public class DialogManager implements IBusListener {
 
                         // If this was a drum player in a sequencer whose instrument changed,
                         // other drum players may have been updated too
-                        if (updatedPlayer.getChannel() == Constants.MIDI_DRUM_CHANNEL && updatedPlayer.getOwner() instanceof DrumSequencer) {
-                            DrumSequencer sequencer = (DrumSequencer) updatedPlayer.getOwner();
+                        if (Objects.equals(updatedPlayer.getChannel(), Constants.MIDI_DRUM_CHANNEL) && updatedPlayer.getOwner() instanceof DrumSequencer sequencer) {
                             for (Player drumPlayer : sequencer.getPlayers()) {
                                 if (drumPlayer != null && !drumPlayer.equals(updatedPlayer)) {
                                     PlayerManager.getInstance().savePlayerProperties(drumPlayer);
@@ -252,7 +233,7 @@ public class DialogManager implements IBusListener {
                         commandBus.publish(Commands.SHOW_PLAYER_EDITOR_OK, this, updatedPlayer);
                     }
                 } catch (Exception e) {
-                    logger.error("Error editing player: " + e.getMessage(), e);
+                    logger.error("Error editing player: {}", e.getMessage(), e);
                 }
             });
         }
@@ -300,11 +281,7 @@ public class DialogManager implements IBusListener {
 
                 if (dialog.showDialog()) {
                     Rule updatedRule = panel.getUpdatedRule();
-                    Player player = null;
-                    if (rule != null) {
-                        // Get player from the rule if possible
-                        player = rule.getPlayer();
-                    }
+                    Player player = rule.getPlayer();
                     String message;
                     // If that doesn't work (rule has no player reference), try to get from context:
                     if (player == null) {
@@ -347,15 +324,12 @@ public class DialogManager implements IBusListener {
                     dialog.setResizable(true);
 
                     // Delay the refresh until after dialog is visible
-                    SwingUtilities.invokeLater(() -> {
-                        controlsPanel.refreshControlsPanel();
-                    });
+                    SwingUtilities.invokeLater(controlsPanel::refreshControlsPanel);
                     dialog.showDialog();
 
-                    logger.info("Showing controls dialog for player: " + player.getName() +
-                            " with instrument: " + player.getInstrument().getName());
+                    logger.info("Showing controls dialog for player: {} with instrument: {}", player.getName(), player.getInstrument().getName());
                 } catch (Exception e) {
-                    logger.error("Error showing controls dialog: " + e.getMessage());
+                    logger.error("Error showing controls dialog: {}", e.getMessage());
                     JOptionPane.showMessageDialog(frame,
                             "Could not show controls: " + e.getMessage(),
                             "Error",
@@ -386,7 +360,7 @@ public class DialogManager implements IBusListener {
                     // which publishes the appropriate events
 
                 } catch (Exception e) {
-                    logger.error("Error creating instrument for player: " + e.getMessage(), e);
+                    logger.error("Error creating instrument for player: {}", e.getMessage(), e);
                     commandBus.publish(
                             Commands.STATUS_UPDATE,
                             this,
@@ -405,7 +379,7 @@ public class DialogManager implements IBusListener {
 
         if (fileChooser.showOpenDialog(null) == JFileChooser.APPROVE_OPTION) {
             String filePath = fileChooser.getSelectedFile().getAbsolutePath();
-            logger.info("Selected file: " + filePath);
+            logger.info("Selected file: {}", filePath);
             try {
                 RedisService redisService = RedisService.getInstance();
 
@@ -417,11 +391,11 @@ public class DialogManager implements IBusListener {
                 }
 
                 // Log what we're about to save
-                logger.info("Loaded " + config.getInstruments().size() + " instruments from file");
+                logger.info("Loaded {} instruments from file", config.getInstruments().size());
 
                 // Save instruments to Redis
                 for (InstrumentWrapper instrument : config.getInstruments()) {
-                    logger.info("Saving instrument: " + instrument.getName());
+                    logger.info("Saving instrument: {}", instrument.getName());
                     redisService.saveInstrument(instrument);
                 }
 
@@ -430,13 +404,13 @@ public class DialogManager implements IBusListener {
 
                 // Verify the save
                 List<InstrumentWrapper> savedInstruments = redisService.findAllInstruments();
-                logger.info("Found " + savedInstruments.size() + " instruments in Redis after save");
+                logger.info("Found {} instruments in Redis after save", savedInstruments.size());
 
                 // Refresh the UI
                 // refreshInstrumentsTable();
                 // setStatus("Database updated successfully from " + filePath);
             } catch (Exception e) {
-                logger.error("Error loading and saving database: " + e.getMessage());
+                logger.error("Error loading and saving database: {}", e.getMessage());
                 // setStatus("Error updating database: " + e.getMessage());
             }
         }
@@ -470,7 +444,7 @@ public class DialogManager implements IBusListener {
                 // Get instruments from Redis
                 List<InstrumentWrapper> instruments = redisService.findAllInstruments();
                 config.setInstruments(instruments);
-                logger.info("Found " + instruments.size() + " instruments to save");
+                logger.info("Found {} instruments to save", instruments.size());
 
                 // Save based on selected format
                 if (selectedFilter == jsonFilter) {
@@ -488,14 +462,14 @@ public class DialogManager implements IBusListener {
                     tempFile.delete();
                 }
 
-                logger.info("Configuration saved to: " + filePath);
+                logger.info("Configuration saved to: {}", filePath);
                 JOptionPane.showMessageDialog(frame,
                         "Configuration saved successfully",
                         "Save Complete",
                         JOptionPane.INFORMATION_MESSAGE);
 
             } catch (Exception e) {
-                logger.error("Error saving configuration: " + e.getMessage());
+                logger.error("Error saving configuration: {}", e.getMessage());
                 JOptionPane.showMessageDialog(frame,
                         "Error saving configuration: " + e.getMessage(),
                         "Save Error",
@@ -594,7 +568,7 @@ public class DialogManager implements IBusListener {
         });
     }
 
-    private void handleFillDialog(DrumSequencer sequencer, int drumIndex, int startStep) {
+    private void handleFillDialog(int drumIndex, int startStep) {
         SwingUtilities.invokeLater(() -> {
             JDialog dialog = new JDialog(frame,
                     "Fill Pattern",

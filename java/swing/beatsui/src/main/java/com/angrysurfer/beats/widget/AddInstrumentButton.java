@@ -1,21 +1,14 @@
 package com.angrysurfer.beats.widget;
 
-import java.awt.Dimension;
-import java.awt.Insets;
-import javax.swing.JButton;
-
+import com.angrysurfer.core.api.*;
+import com.angrysurfer.core.model.Player;
+import lombok.Getter;
+import lombok.Setter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.angrysurfer.core.api.Command;
-import com.angrysurfer.core.api.CommandBus;
-import com.angrysurfer.core.api.Commands;
-import com.angrysurfer.core.api.IBusListener;
-import com.angrysurfer.core.api.StatusUpdate;
-import com.angrysurfer.core.model.Player;
-
-import lombok.Getter;
-import lombok.Setter;
+import javax.swing.*;
+import java.awt.*;
 
 /**
  * A button for adding new instruments and directly assigning them to the active player
@@ -78,14 +71,12 @@ public class AddInstrumentButton extends JButton implements IBusListener {
         if (action == null || action.getCommand() == null) {
             return;
         }
-        
-        switch (action.getCommand()) {
-            case Commands.PLAYER_ACTIVATED:
-                if (action.getData() instanceof Player player) {
-                    currentPlayer = player;
-                    setEnabled(player != null);
-                }
-                break;
+
+        if (action.getCommand().equals(Commands.PLAYER_ACTIVATED)) {
+            if (action.getData() instanceof Player player) {
+                currentPlayer = player;
+                setEnabled(true);
+            }
         }
     }
 }

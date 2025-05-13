@@ -1,4 +1,4 @@
-package com.angrysurfer.beats.demo;
+package com.angrysurfer.beats.panel.modulation.demo;
 
 public class XYPadState {
     public float x, y; // Values between 0.0 and 1.0

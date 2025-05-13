@@ -1,15 +1,5 @@
 package com.angrysurfer.beats;
 
-import java.util.List;
-
-import javax.swing.JOptionPane;
-import javax.swing.SwingUtilities;
-import javax.swing.UIManager;
-
-import com.angrysurfer.core.service.*;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import com.angrysurfer.beats.util.UIErrorHandler;
 import com.angrysurfer.core.Constants;
 import com.angrysurfer.core.api.Command;
@@ -20,7 +10,13 @@ import com.angrysurfer.core.config.FrameState;
 import com.angrysurfer.core.model.InstrumentWrapper;
 import com.angrysurfer.core.redis.InstrumentHelper;
 import com.angrysurfer.core.redis.RedisService;
+import com.angrysurfer.core.service.*;
 import com.formdev.flatlaf.FlatLightLaf;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import javax.swing.*;
+import java.util.List;
 
 public class App implements IBusListener {
 
@@ -141,7 +137,7 @@ public class App implements IBusListener {
                     CommandBus.getInstance().publish(Commands.THEME_CHANGED, App.class, null);
 
                 } catch (Exception e) {
-                    logger.error("Error handling theme change: " + e.getMessage());
+                    logger.error("Error handling theme change: {}", e.getMessage());
                 }
             });
         }
@@ -152,11 +148,11 @@ public class App implements IBusListener {
             // Add logging
             logger.info("Loading frame state for Look and Feel");
             FrameState state = RedisService.getInstance().loadFrameState(Constants.APPLICATION_FRAME);
-            logger.info("Frame state loaded: " + (state != null ? state.getLookAndFeelClassName() : "null"));
+            logger.info("Frame state loaded: {}", state != null ? state.getLookAndFeelClassName() : "null");
 
             if (state != null && state.getLookAndFeelClassName() != null) {
                 UIManager.setLookAndFeel(state.getLookAndFeelClassName());
-                logger.info("Set Look and Feel to: " + state.getLookAndFeelClassName());
+                logger.info("Set Look and Feel to: {}", state.getLookAndFeelClassName());
             } else {
                 UIManager.setLookAndFeel(new FlatLightLaf());
                 logger.info("Set default Look and Feel: FlatLightLaf");
@@ -164,7 +160,7 @@ public class App implements IBusListener {
 
             splash.completeTask("Applied visual theme");
         } catch (Exception e) {
-            logger.error("Error setting look and feel: " + e.getMessage());
+            logger.error("Error setting look and feel: {}", e.getMessage());
 
         }
     }
@@ -195,7 +191,7 @@ public class App implements IBusListener {
             // Initialize instrument management
             InstrumentHelper instrumentHelper = redisService.getInstrumentHelper();
             List<InstrumentWrapper> instruments = instrumentHelper.findAllInstruments();
-            logger.info("Found " + instruments.size() + " instruments in Redis");
+            logger.info("Found {} instruments in Redis", instruments.size());
 
             // Initialize InstrumentManager (if not already)
             InstrumentManager.getInstance().refreshInstruments();
@@ -225,8 +221,8 @@ public class App implements IBusListener {
     }
 
     private static void handleInitializationFailure(String errorMessage, Exception e) {
-        logger.error("Critical initialization error: " + errorMessage);
-        logger.error("Exception: " + e.getMessage());
+        logger.error("Critical initialization error: {}", errorMessage);
+        logger.error("Exception: {}", e.getMessage());
         e.printStackTrace();
 
         SwingUtilities.invokeLater(() -> {

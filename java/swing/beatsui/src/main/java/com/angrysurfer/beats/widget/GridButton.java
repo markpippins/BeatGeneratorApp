@@ -1,10 +1,8 @@
 package com.angrysurfer.beats.widget;
 
-import java.awt.Color;
-import java.awt.Dimension;
+import javax.swing.*;
+import java.awt.*;
 import java.util.Random;
-
-import javax.swing.JButton;
 
 public class GridButton extends JButton {
 
@@ -52,10 +50,6 @@ public class GridButton extends JButton {
         setText("");
         setToolTipText("");
         setBackground(colors[rand.nextInt(colors.length)]);
-    }
-
-    public int getRow() {
-        return row;
     }
 
     public int getCol() {

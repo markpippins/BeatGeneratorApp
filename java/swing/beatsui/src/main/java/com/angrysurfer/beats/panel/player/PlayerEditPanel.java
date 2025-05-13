@@ -1,17 +1,16 @@
 package com.angrysurfer.beats.panel.player;
 
-import java.awt.*;
-import javax.swing.*;
-
 import com.angrysurfer.beats.panel.PlayerAwarePanel;
 import com.angrysurfer.core.Constants;
+import com.angrysurfer.core.model.InstrumentWrapper;
+import com.angrysurfer.core.model.Player;
+import com.angrysurfer.core.sequencer.DrumSequencer;
 import com.angrysurfer.core.service.PlayerManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.angrysurfer.core.model.InstrumentWrapper;
-import com.angrysurfer.core.model.Player;
-import com.angrysurfer.core.sequencer.DrumSequencer;
+import javax.swing.*;
+import java.awt.*;
 
 /**
  * Panel for editing player properties using the PlayerAwarePanel pattern
@@ -46,10 +45,10 @@ public class PlayerEditPanel extends PlayerAwarePanel {
      */
     @Override
     public void handlePlayerActivated() {
-        logger.info("Player activated in edit panel: {}", getPlayer() != null ? getPlayer().getName() : "null");
+        logger.info("Player activated in edit panel: {}", getTargetPlayer() != null ? getTargetPlayer().getName() : "null");
         
         // Cache initial state for comparison when saving
-        Player player = getPlayer();
+        Player player = getTargetPlayer();
         if (player != null) {
             initialIsDrumPlayer = player.getChannel() == Constants.MIDI_DRUM_CHANNEL;
             initialInstrument = player.getInstrument();
@@ -71,7 +70,7 @@ public class PlayerEditPanel extends PlayerAwarePanel {
      */
     @Override
     public void handlePlayerUpdated() {
-        logger.info("Player updated in edit panel: {}", getPlayer() != null ? getPlayer().getName() : "null");
+        logger.info("Player updated in edit panel: {}", getTargetPlayer() != null ? getTargetPlayer().getName() : "null");
         updatePanels();
     }
 
@@ -105,7 +104,7 @@ public class PlayerEditPanel extends PlayerAwarePanel {
      * Update all panels with latest player data
      */
     private void updatePanels() {
-        Player player = getPlayer();
+        Player player = getTargetPlayer();
         if (player == null) {
             return;
         }
@@ -123,14 +122,14 @@ public class PlayerEditPanel extends PlayerAwarePanel {
         applyAllChanges();
         
         // Return the current player from PlayerAwarePanel
-        return getPlayer();
+        return getTargetPlayer();
     }
 
     /**
      * Apply all changes from UI components to player model
      */
     public void applyAllChanges() {
-        Player player = getPlayer();
+        Player player = getTargetPlayer();
         if (player == null) {
             return;
         }
@@ -159,7 +158,7 @@ public class PlayerEditPanel extends PlayerAwarePanel {
      * Handle changes for drum players
      */
     private void handleDrumPlayerChanges() {
-        Player player = getPlayer();
+        Player player = getTargetPlayer();
         if (player == null) {
             return;
         }

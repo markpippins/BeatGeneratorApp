@@ -1,25 +1,7 @@
-package com.angrysurfer.beats.panel;
+package com.angrysurfer.beats.panel.modulation.oscillator;
 
-import java.awt.BasicStroke;
-import java.awt.BorderLayout;
-import java.awt.Color;
-import java.awt.Component;
-import java.awt.Dimension;
-import java.awt.FlowLayout;
-import java.awt.Font;
-import java.awt.Graphics;
-import java.awt.Graphics2D;
-import java.awt.GridBagLayout;
-import java.awt.GridLayout;
-import java.awt.RenderingHints;
-import java.awt.geom.Path2D;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
-import java.util.function.Consumer;
-
-import javax.swing.*;
-
+import com.angrysurfer.beats.widget.Dial;
+import com.angrysurfer.beats.widget.DoubleDial;
 import com.angrysurfer.core.api.Command;
 import com.angrysurfer.core.api.Commands;
 import com.angrysurfer.core.api.IBusListener;
@@ -30,8 +12,13 @@ import lombok.Setter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.angrysurfer.beats.widget.Dial;
-import com.angrysurfer.beats.widget.DoubleDial;
+import javax.swing.*;
+import java.awt.*;
+import java.awt.geom.Path2D;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
+import java.util.function.Consumer;
 
 /**
  * A panel that implements a Low Frequency Oscillator with various waveform
@@ -85,30 +72,9 @@ public class LFOPanel extends JPanel implements AutoCloseable {
     // New fields for timing division and tempo
     private JSlider divisionSlider;
     private JLabel divisionLabel;
-    private int timingDivision = 16; // Default 1/16th note
+    private double timingDivision = 1.0; // Default 1 cycle per bar
     private double lastTickValue = 0;
     private double tempo = 120.0; // Default tempo, will be updated from TimingUpdate
-
-    // Waveform types
-    public enum WaveformType {
-        SINE("Sine"),
-        TRIANGLE("Triangle"),
-        SAWTOOTH("Sawtooth"),
-        SQUARE("Square"),
-        PULSE("Pulse"),
-        RANDOM("Random");
-
-        private final String displayName;
-
-        WaveformType(String displayName) {
-            this.displayName = displayName;
-        }
-
-        @Override
-        public String toString() {
-            return displayName;
-        }
-    }
 
     /**
      * Creates a new LFO Panel
@@ -286,7 +252,7 @@ public class LFOPanel extends JPanel implements AutoCloseable {
                 running = false;
                 runButton.setText("Run");
                 runButton.setEnabled(false);
-                
+
                 // Register for timing events
                 registerForTimingEvents();
             } else {
@@ -301,14 +267,15 @@ public class LFOPanel extends JPanel implements AutoCloseable {
         // Add the division slider
         JPanel divisionPanel = new JPanel(new BorderLayout(5, 0));
         divisionPanel.setBorder(BorderFactory.createEmptyBorder(0, 10, 0, 0));
-        divisionLabel = new JLabel("1/16");
+        divisionLabel = new JLabel("1/1");
         divisionLabel.setPreferredSize(new Dimension(36, 16));
         divisionLabel.setHorizontalAlignment(SwingConstants.CENTER);
         divisionLabel.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 5));
 
-        // Create slider for timing division
-        String[] divisions = {"1/32", "1/16", "1/8", "1/4", "1/2", "1/1"};
-        divisionSlider = new JSlider(JSlider.HORIZONTAL, 0, divisions.length - 1, 1); // Default 1/16
+        // Create slider for timing division - CORRECTLY REVERSED for fractions of cycle
+        // per bar
+        String[] divisions = { "1/1", "1/2", "1/4", "1/8", "1/16", "1/32" };
+        divisionSlider = new JSlider(JSlider.HORIZONTAL, 0, divisions.length - 1, 0); // Default 1/1
         divisionSlider.setPreferredSize(new Dimension(120, 20));
         divisionSlider.setSnapToTicks(true);
         divisionSlider.setPaintTicks(true);
@@ -316,9 +283,15 @@ public class LFOPanel extends JPanel implements AutoCloseable {
         divisionSlider.addChangeListener(e -> {
             int index = divisionSlider.getValue();
             divisionLabel.setText(divisions[index]);
-            // Convert from display value to actual division (32, 16, 8, 4, 2, 1)
-            timingDivision = 32 / (int)Math.pow(2, index);
-            logger.debug("Timing division set to 1/" + timingDivision);
+
+            // Calculate FRACTION of cycle per bar, not cycles per bar
+            // 0 = 1 cycle per bar, 1 = 1/2 cycle per bar, etc.
+            double cyclesPerBar = 1.0 / Math.pow(2, index);
+
+            // Store the timing division as this fractional value
+            timingDivision = cyclesPerBar;
+
+            logger.debug("LFO set to " + divisions[index] + " (" + cyclesPerBar + " cycles per bar)");
         });
 
         divisionPanel.add(new JLabel("Division:"), BorderLayout.WEST);
@@ -361,7 +334,7 @@ public class LFOPanel extends JPanel implements AutoCloseable {
      * Creates a Dial with label and value display
      */
     private DoubleDial createDial(String name, double min, double max, double initial, double step,
-                                  Consumer<Double> changeListener) {
+            Consumer<Double> changeListener) {
         JPanel panel = new JPanel(new BorderLayout(2, 2));
         panel.setBorder(BorderFactory.createTitledBorder(name));
 
@@ -391,7 +364,7 @@ public class LFOPanel extends JPanel implements AutoCloseable {
      * Updated to add increment/decrement buttons for step size control
      */
     private JPanel createDialPanel(String name, String tooltip, double min, double max, double initial, double step,
-                                   Consumer<Double> changeListener) {
+            Consumer<Double> changeListener) {
         // Create panel with border layout
         JPanel panel = new JPanel(new BorderLayout(2, 2));
         panel.setBorder(BorderFactory.createCompoundBorder(
@@ -437,19 +410,19 @@ public class LFOPanel extends JPanel implements AutoCloseable {
 
         // Create increment/decrement buttons panel
         JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 4, 0));
-        
+
         // Determine appropriate step multipliers based on parameter type
         double smallerStep, largerStep;
-        
+
         if (name.equals("Frequency")) {
-            smallerStep = step / 10;  // Even finer control for frequency
-            largerStep = step * 10;   // Coarser adjustment
+            smallerStep = step / 10; // Even finer control for frequency
+            largerStep = step * 10; // Coarser adjustment
         } else if (name.equals("Pulse Width")) {
-            smallerStep = 0.0005;     // Very fine for pulse width
-            largerStep = 0.01;        // Larger step
+            smallerStep = 0.0005; // Very fine for pulse width
+            largerStep = 0.01; // Larger step
         } else {
-            smallerStep = step / 5;   // Finer control
-            largerStep = step * 5;    // Coarser adjustment
+            smallerStep = step / 5; // Finer control
+            largerStep = step * 5; // Coarser adjustment
         }
 
         // Create decrement button (makes steps smaller)
@@ -460,13 +433,13 @@ public class LFOPanel extends JPanel implements AutoCloseable {
         decrementButton.addActionListener(e -> {
             double currentStep = dial.getStepSize();
             dial.setStepSize(smallerStep);
-            decrementButton.setEnabled(smallerStep > min/1000); // Disable if too small
+            decrementButton.setEnabled(smallerStep > min / 1000); // Disable if too small
             valueLabel.setText(String.format(formatPattern, dial.getValue()));
             // Update tooltip with new value
             decrementButton.setToolTipText("Step size decreased to " + String.format("%.5f", smallerStep));
             incrementButton.setToolTipText("Increase step size to " + String.format("%.5f", currentStep));
         });
-        
+
         // Create increment button (makes steps larger)
         JButton incrementButton = new JButton("×");
         incrementButton.setFont(new Font("Dialog", Font.BOLD, 10));
@@ -475,7 +448,7 @@ public class LFOPanel extends JPanel implements AutoCloseable {
         incrementButton.addActionListener(e -> {
             double currentStep = dial.getStepSize();
             dial.setStepSize(largerStep);
-            incrementButton.setEnabled(largerStep < (max-min)/2); // Disable if too large
+            incrementButton.setEnabled(largerStep < (max - min) / 2); // Disable if too large
             valueLabel.setText(String.format(formatPattern, dial.getValue()));
             // Update tooltip with new value
             incrementButton.setToolTipText("Step size increased to " + String.format("%.5f", largerStep));
@@ -488,14 +461,14 @@ public class LFOPanel extends JPanel implements AutoCloseable {
 
         // Create a combined panel for value display and buttons
         JPanel southPanel = new JPanel(new BorderLayout(2, 2));
-        
+
         // Layout for labels (value + units)
         JPanel labelPanel = new JPanel(new BorderLayout(2, 0));
         labelPanel.add(valueLabel, BorderLayout.CENTER);
         if (unitsLabel != null) {
             labelPanel.add(unitsLabel, BorderLayout.EAST);
         }
-        
+
         southPanel.add(labelPanel, BorderLayout.NORTH);
         southPanel.add(buttonPanel, BorderLayout.SOUTH);
 
@@ -579,13 +552,6 @@ public class LFOPanel extends JPanel implements AutoCloseable {
     }
 
     /**
-     * Interface for LFO calculations
-     */
-    private interface LFO {
-        double getValue(double timeInSeconds);
-    }
-
-    /**
      * Register this LFO as a listener for timing events
      */
     private void registerForTimingEvents() {
@@ -603,17 +569,17 @@ public class LFOPanel extends JPanel implements AutoCloseable {
                                     processTimingUpdate(update);
                                 });
                             }
-                            
+
                             // Also capture tempo if available
-//                            if (update.tempo() != null) {
-//                                tempo = update.tempo();
-//                            }
+                            // if (update.tempo() != null) {
+                            // tempo = update.tempo();
+                            // }
                         }
                     }
                 }
             };
         }
-        
+
         // Register with the timing bus
         TimingBus.getInstance().register(timingListener);
         logger.debug("Registered for timing events");
@@ -623,20 +589,29 @@ public class LFOPanel extends JPanel implements AutoCloseable {
      * Process a timing update and calculate LFO value
      */
     private void processTimingUpdate(TimingUpdate update) {
-        if (!syncMode) return;
-        
+        if (!syncMode)
+            return;
+
         // Calculate phase based on timing update
-        // This converts raw tick into a cycle phase based on division
         Long tickValue = update.tick();
-        if (tickValue == null) return;
-        
+        if (tickValue == null)
+            return;
+
         lastTickValue = tickValue;
-        
-        // Convert tick to a phase position based on division
-        // e.g., for 1/16th notes with 24 PPQN, each cycle is 6 ticks
-        double ticksPerDivision = 24.0 / (timingDivision / 4.0); // Assuming 24 PPQN
-        double phase = (tickValue % ticksPerDivision) / ticksPerDivision;
-        
+
+        // Assuming 96 ticks per bar (24 PPQN, 4/4 time)
+        double ticksPerBar = 96.0;
+
+        // Calculate phase based on position within bar and cycles per bar
+        // DON'T use modulo here - we need continuous time to avoid rectification
+        double normalizedPosition = tickValue / ticksPerBar;
+
+        // Apply the timing division as a fraction
+        double phase = normalizedPosition * timingDivision;
+
+        // Keep just the fractional part for phase (0-1)
+        phase = phase - Math.floor(phase);
+
         // Update LFO value based on this phase
         updateLFOValueFromPhase(phase);
     }
@@ -647,8 +622,9 @@ public class LFOPanel extends JPanel implements AutoCloseable {
     private void updateLFOValueFromPhase(double phase) {
         // Calculate the oscillator value using existing formulas but with phase
         double value = 0;
-        
+
         switch (currentWaveform) {
+            // Make sure this sine wave formula is calculating correctly
             case SINE:
                 value = offset + amplitude * Math.sin(2 * Math.PI * phase + this.phase * 2 * Math.PI);
                 break;
@@ -670,21 +646,21 @@ public class LFOPanel extends JPanel implements AutoCloseable {
                 break;
             case RANDOM:
                 // For random, we want a stable value that changes only at divisions
-                int step = (int)(lastTickValue / (24.0 / (timingDivision / 4.0)));
+                int step = (int) (lastTickValue / (24.0 / (timingDivision / 4.0)));
                 value = offset + amplitude * (2 * ((Math.sin(step * 12345.67) + 1) % 1.0) - 1);
                 break;
         }
-        
+
         // Clamp the value between -1 and 1
         value = Math.max(-1.0, Math.min(1.0, value));
-        
+
         // Update UI elements
         currentValue = value;
         valueLabel.setText(String.format("%.2f", value));
-        
+
         // Update the live waveform panel
         liveWaveformPanel.addValue(value);
-        
+
         // Notify listeners if attached
         if (valueChangeListener != null) {
             valueChangeListener.accept(value);
@@ -704,7 +680,7 @@ public class LFOPanel extends JPanel implements AutoCloseable {
     /**
      * Panel for visualizing the waveform
      */
-    private class WaveformPanel extends JPanel {
+    public class WaveformPanel extends JPanel {
         private static final int SAMPLES = 500;
 
         public WaveformPanel() {
@@ -814,81 +790,6 @@ public class LFOPanel extends JPanel implements AutoCloseable {
                 g2d.drawLine(markerX, 0, markerX, height);
             }
 
-            g2d.dispose();
-        }
-    }
-
-    /**
-     * Panel for visualizing the live waveform
-     */
-    private class LiveWaveformPanel extends JPanel {
-        private static final int HISTORY_SIZE = 500; // Number of points to keep in history
-        private final java.util.Deque<Double> valueHistory = new java.util.ArrayDeque<>(HISTORY_SIZE);
-
-        public LiveWaveformPanel() {
-            setBackground(Color.BLACK);
-            // Initialize with zeros
-            for (int i = 0; i < HISTORY_SIZE; i++) {
-                valueHistory.addLast(0.0);
-            }
-        }
-
-        public void addValue(double value) {
-            // Add new value and remove oldest if full
-            valueHistory.addLast(value);
-            if (valueHistory.size() > HISTORY_SIZE) {
-                valueHistory.removeFirst();
-            }
-            repaint(); // Trigger redraw with new data
-        }
-
-        @Override
-        protected void paintComponent(Graphics g) {
-            super.paintComponent(g);
-            Graphics2D g2d = (Graphics2D) g.create();
-
-            int width = getWidth();
-            int height = getHeight();
-            int midY = height / 2;
-
-            // Anti-aliasing for smoother lines
-            g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-
-            // Draw center line
-            g2d.setColor(new Color(40, 40, 40));
-            g2d.drawLine(0, midY, width, midY);
-
-            // Draw horizontal grid lines at 25%, 50%, 75%
-            g2d.setColor(new Color(30, 30, 30));
-            g2d.drawLine(0, midY - height / 4, width, midY - height / 4);
-            g2d.drawLine(0, midY + height / 4, width, midY + height / 4);
-
-            // Draw waveform from history
-            g2d.setColor(new Color(255, 100, 100)); // Different color for live waveform
-            g2d.setStroke(new BasicStroke(2f));
-
-            Path2D.Double path = new Path2D.Double();
-            boolean first = true;
-
-            // Convert history to array for easier indexing
-            Double[] values = valueHistory.toArray(new Double[0]);
-
-            for (int i = 0; i < values.length; i++) {
-                // Calculate x position (newest values on the right)
-                double x = ((double) i / values.length) * width;
-
-                // Calculate y position (invert since Y grows downward)
-                double y = midY - (values[i] * height / 2);
-
-                if (first) {
-                    path.moveTo(x, y);
-                    first = false;
-                } else {
-                    path.lineTo(x, y);
-                }
-            }
-
-            g2d.draw(path);
             g2d.dispose();
         }
     }

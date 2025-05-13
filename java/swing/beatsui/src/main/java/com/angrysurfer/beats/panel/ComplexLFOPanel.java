@@ -1,8 +1,13 @@
 package com.angrysurfer.beats.panel;
 
+import com.angrysurfer.beats.panel.modulation.oscillator.LFOPanel;
+import com.angrysurfer.beats.panel.modulation.oscillator.WaveformType;
+import com.angrysurfer.beats.widget.DoubleDial;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.awt.geom.Path2D;
 import java.util.HashMap;
 import java.util.Map;
@@ -10,18 +15,6 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
-
-import javax.swing.*;
-import javax.swing.border.TitledBorder;
-import javax.swing.event.ChangeEvent;
-import javax.swing.event.ChangeListener;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import com.angrysurfer.beats.widget.DoubleDial;
-import com.angrysurfer.core.api.CommandBus;
-import com.angrysurfer.core.api.Commands;
 
 /**
  * A panel that implements complex LFO modulation where one LFO can modulate
@@ -336,7 +329,7 @@ public class ComplexLFOPanel extends JPanel implements AutoCloseable {
         modulatorLFO.setAmplitude(1.0);
         // Set to random waveform
         try {
-            modulatorLFO.setCurrentWaveform(LFOPanel.WaveformType.RANDOM);
+            modulatorLFO.setCurrentWaveform(WaveformType.RANDOM);
         } catch (Exception e) {
             logger.error("Could not set waveform: {}", e.getMessage());
         }
@@ -356,7 +349,7 @@ public class ComplexLFOPanel extends JPanel implements AutoCloseable {
         modulatorLFO.setFrequency(0.1);
         modulatorLFO.setAmplitude(1.0);
         try {
-            modulatorLFO.setCurrentWaveform(LFOPanel.WaveformType.SAWTOOTH);
+            modulatorLFO.setCurrentWaveform(WaveformType.SAWTOOTH);
         } catch (Exception e) {
             logger.error("Could not set waveform: {}", e.getMessage());
         }
@@ -371,7 +364,7 @@ public class ComplexLFOPanel extends JPanel implements AutoCloseable {
         
         // Set carrier to pulse
         try {
-            carrierLFO.setCurrentWaveform(LFOPanel.WaveformType.PULSE);
+            carrierLFO.setCurrentWaveform(WaveformType.PULSE);
         } catch (Exception e) {
             logger.error("Could not set waveform: {}", e.getMessage());
         }
@@ -380,7 +373,7 @@ public class ComplexLFOPanel extends JPanel implements AutoCloseable {
         modulatorLFO.setFrequency(0.3);
         modulatorLFO.setAmplitude(1.0);
         try {
-            modulatorLFO.setCurrentWaveform(LFOPanel.WaveformType.TRIANGLE);
+            modulatorLFO.setCurrentWaveform(WaveformType.TRIANGLE);
         } catch (Exception e) {
             logger.error("Could not set waveform: {}", e.getMessage());
         }
@@ -402,7 +395,7 @@ public class ComplexLFOPanel extends JPanel implements AutoCloseable {
         modulatorLFO.setFrequency(7.0);
         modulatorLFO.setAmplitude(1.0);
         try {
-            modulatorLFO.setCurrentWaveform(LFOPanel.WaveformType.RANDOM);
+            modulatorLFO.setCurrentWaveform(WaveformType.RANDOM);
         } catch (Exception e) {
             logger.error("Could not set waveform: {}", e.getMessage());
         }

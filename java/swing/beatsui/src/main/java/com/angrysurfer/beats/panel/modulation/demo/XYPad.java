@@ -1,4 +1,4 @@
-package com.angrysurfer.beats.demo;
+package com.angrysurfer.beats.panel.modulation.demo;
 
 import javax.swing.*;
 import java.awt.*;

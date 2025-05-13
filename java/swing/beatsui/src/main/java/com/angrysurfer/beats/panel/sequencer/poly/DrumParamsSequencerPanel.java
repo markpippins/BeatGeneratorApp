@@ -776,6 +776,12 @@ public class DrumParamsSequencerPanel extends JPanel implements IBusListener {
                     PlayerManager.getInstance().applyPlayerPreset(player);
 
                     player.drumNoteOn(player.getRootNote());
+                    
+                    CommandBus.getInstance().publish(
+                            Commands.STATUS_UPDATE,
+                            this,
+                            new StatusUpdate(
+                                    "Selected pad: " + player.getName()));
                     CommandBus.getInstance().publish(
                             Commands.PLAYER_ACTIVATION_REQUEST,
                             this,

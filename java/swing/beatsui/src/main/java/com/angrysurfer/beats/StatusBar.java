@@ -1,29 +1,18 @@
 package com.angrysurfer.beats;
 
-import java.awt.*;
-import java.text.SimpleDateFormat;
-import java.util.*;
-
-import javax.swing.*;
-import javax.swing.Timer;
-
 import com.angrysurfer.beats.panel.TransportPanel;
-import com.angrysurfer.beats.panel.player.SoundParametersPanel;
 import com.angrysurfer.beats.util.UIHelper;
 import com.angrysurfer.beats.widget.VuMeter;
-import com.angrysurfer.beats.widget.LEDIndicator;
-import com.angrysurfer.core.api.Command;
-import com.angrysurfer.core.api.CommandBus;
-import com.angrysurfer.core.api.Commands;
-import com.angrysurfer.core.api.IBusListener;
-import com.angrysurfer.core.api.StatusUpdate;
-import com.angrysurfer.core.api.TimingBus;
+import com.angrysurfer.core.api.*;
 import com.angrysurfer.core.model.Player;
-import com.angrysurfer.core.model.Session;
-import com.angrysurfer.core.sequencer.TimingUpdate;
-
 import lombok.Getter;
 import lombok.Setter;
+
+import javax.swing.*;
+import java.awt.*;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.Random;
 
 @Getter
 @Setter
@@ -187,7 +176,7 @@ public class StatusBar extends JPanel implements IBusListener {
         panel.add(messageField, BorderLayout.CENTER);
         
         // Add current time display
-        JTextField timeField = createStatusField((int) (1.2 * SMALL_FIELD_WIDTH));
+        JTextField timeField = createStatusField((int) (1.3 * SMALL_FIELD_WIDTH));
         timeField.setText(TIME_FORMAT.format(new Date()));
         timeField.setBackground(Color.BLACK);
         timeField.setForeground(Color.WHITE);

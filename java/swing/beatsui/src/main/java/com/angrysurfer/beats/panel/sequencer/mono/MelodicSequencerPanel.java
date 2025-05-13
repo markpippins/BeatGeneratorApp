@@ -1,44 +1,30 @@
 package com.angrysurfer.beats.panel.sequencer.mono;
 
-import java.awt.BorderLayout;
-import java.awt.Dimension;
-import java.awt.FlowLayout;
-import java.awt.GridBagConstraints;
-import java.awt.GridBagLayout;
-import java.util.function.Consumer;
-
-import javax.swing.JButton;
-import javax.swing.JComboBox;
-import javax.swing.JLabel;
-import javax.swing.JPanel;
-import javax.swing.JScrollPane;
-import javax.swing.JToggleButton;
-import javax.swing.SwingUtilities;
-
 import com.angrysurfer.beats.Symbols;
 import com.angrysurfer.beats.panel.player.SoundParametersPanel;
-import com.angrysurfer.core.api.*;
-import com.angrysurfer.core.event.MelodicScaleSelectionEvent;
-import com.angrysurfer.core.event.MelodicSequencerEvent;
-import com.angrysurfer.core.event.NoteEvent;
-
-import com.angrysurfer.core.event.PlayerRefreshEvent;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import com.angrysurfer.beats.panel.sequencer.MuteSequencerPanel;
 import com.angrysurfer.beats.panel.sequencer.TiltSequencerPanel;
 import com.angrysurfer.beats.panel.session.SessionControlPanel;
 import com.angrysurfer.beats.util.UIHelper;
+import com.angrysurfer.core.api.*;
+import com.angrysurfer.core.event.MelodicScaleSelectionEvent;
+import com.angrysurfer.core.event.MelodicSequencerEvent;
+import com.angrysurfer.core.event.NoteEvent;
+import com.angrysurfer.core.event.PlayerRefreshEvent;
 import com.angrysurfer.core.redis.RedisService;
 import com.angrysurfer.core.sequencer.MelodicSequenceData;
 import com.angrysurfer.core.sequencer.MelodicSequencer;
 import com.angrysurfer.core.sequencer.TimingDivision;
 import com.angrysurfer.core.service.MelodicSequencerManager;
 import com.angrysurfer.core.service.PlayerManager;
-
 import lombok.Getter;
 import lombok.Setter;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import javax.swing.*;
+import java.awt.*;
+import java.util.function.Consumer;
 
 @Getter
 @Setter
@@ -328,7 +314,7 @@ public class MelodicSequencerPanel extends JPanel implements IBusListener {
         buttonPanel.add(createInstrumentRefreshButton());
         buttonPanel.add(createRefreshButton());
         // Add the button to the bottom panel
-        westPanel.add(buttonPanel, BorderLayout.WEST);
+        //westPanel.add(buttonPanel, BorderLayout.WEST);
 
         // Register for command updates
         CommandBus.getInstance().register(this);

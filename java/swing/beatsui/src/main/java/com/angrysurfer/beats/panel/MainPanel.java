@@ -3,6 +3,8 @@ package com.angrysurfer.beats.panel;
 import com.angrysurfer.beats.Symbols;
 import com.angrysurfer.beats.panel.instrument.InstrumentsPanel;
 import com.angrysurfer.beats.panel.internalsynth.InternalSynthControlPanel;
+import com.angrysurfer.beats.panel.modulation.QuadXYPadPanel;
+import com.angrysurfer.beats.panel.modulation.oscillator.LFOPanel;
 import com.angrysurfer.beats.panel.sample.SampleBrowserPanel;
 import com.angrysurfer.beats.panel.sequencer.SongPanel;
 import com.angrysurfer.beats.panel.sequencer.mono.MelodicSequencerPanel;

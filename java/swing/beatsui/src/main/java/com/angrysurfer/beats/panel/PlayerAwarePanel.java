@@ -170,16 +170,7 @@ public abstract class PlayerAwarePanel extends JPanel implements IBusListener {
             handlePlayerUpdated();
         }
     }
-    
-    /**
-     * Get the target player for this panel
-     * 
-     * @return The target player
-     */
-    protected Player getPlayer() {
-        return targetPlayer;
-    }
-    
+  
     /**
      * Request player refresh (force instrument preset application)
      */
