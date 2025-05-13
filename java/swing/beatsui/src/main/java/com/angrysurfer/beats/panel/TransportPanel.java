@@ -1,29 +1,13 @@
 package com.angrysurfer.beats.panel;
 
-import java.awt.BorderLayout;
-import java.awt.Color;
-import java.awt.Component;
-import java.awt.Dimension;
-import java.awt.FlowLayout;
-import java.awt.Font;
-import java.awt.Insets;
-import java.util.Objects;
-
-import javax.swing.BorderFactory;
-import javax.swing.Box;
-import javax.swing.BoxLayout;
-import javax.swing.JButton;
-import javax.swing.JPanel;
-import javax.swing.SwingConstants;
-import javax.swing.SwingUtilities;
-import javax.swing.UIManager;
-
-import com.angrysurfer.core.api.Command;
 import com.angrysurfer.core.api.CommandBus;
 import com.angrysurfer.core.api.Commands;
-import com.angrysurfer.core.api.IBusListener;
 import com.angrysurfer.core.model.Session;
 import com.angrysurfer.core.service.SessionManager;
+
+import javax.swing.*;
+import java.awt.*;
+import java.util.Objects;
 
 /**
  * Panel containing transport controls (play, stop, record, etc.)
@@ -37,8 +21,8 @@ public class TransportPanel extends JPanel {
     private JButton rewindButton;
     private JButton forwardButton;
     private JButton pauseButton;
-    private boolean isRecording = false;
-    private boolean isPlaying = false;
+    private boolean isRecording;
+    private boolean isPlaying;
 
     // Add a flag to track initial application load state
     private boolean initialLoadCompleted = false;
@@ -256,96 +240,91 @@ public class TransportPanel extends JPanel {
     }
 
     private void setupCommandBusListener() {
-        CommandBus.getInstance().register(new IBusListener() {
-            @Override
-            public void onAction(Command action) {
-                // Skip if this panel is the sender
-                if (action.getSender() == TransportPanel.this) {
-                    return;
+        CommandBus.getInstance().register(action -> {
+            // Skip if this panel is the sender
+            if (action.getSender() == TransportPanel.this) {
+                return;
+            }
+
+            if (Objects.nonNull(action.getCommand())) {
+                String cmd = action.getCommand();
+
+                // Track session navigation
+                if (isSessionNavigationCommand(cmd)) {
+                    isRecording = false;
+                    updateRecordButtonAppearance();
+                    lastSessionNavTime = System.currentTimeMillis();
+                    lastCommand = cmd;
                 }
+                // Special handling for value changes - wait 1 second after startup/navigation
+                else if (isValueChangeCommand(cmd)) {
+                    // Only enable recording if:
+                    // 1. We're past the startup period (1 second from app startup)
+                    // 2. We're not immediately after session navigation
+                    // (500ms from last navigation command)
+                    long timeSinceStartup = System.currentTimeMillis() - getAppStartupTime();
+                    long timeSinceNavigation = System.currentTimeMillis() - lastSessionNavTime;
 
-                if (Objects.nonNull(action.getCommand())) {
-                    String cmd = action.getCommand();
-
-                    // Track session navigation
-                    if (isSessionNavigationCommand(cmd)) {
-                        isRecording = false;
-                        updateRecordButtonAppearance();
-                        lastSessionNavTime = System.currentTimeMillis();
-                        lastCommand = cmd;
-                    }
-                    // Special handling for value changes - wait 1 second after startup/navigation
-                    else if (isValueChangeCommand(cmd)) {
-                        // Only enable recording if:
-                        // 1. We're past the startup period (1 second from app startup)
-                        // 2. We're not immediately after session navigation
-                        // (500ms from last navigation command)
-                        long timeSinceStartup = System.currentTimeMillis() - getAppStartupTime();
-                        long timeSinceNavigation = System.currentTimeMillis() - lastSessionNavTime;
-
-                        if (timeSinceStartup > 1000 && timeSinceNavigation > 500) {
-                            if (!isRecording) {
-                                isRecording = true;
-                                updateRecordButtonAppearance();
-                                CommandBus.getInstance().publish(Commands.TRANSPORT_RECORD_START, TransportPanel.this);
-                            }
-                        }
-                    }
-
-                    // Switch for specific state handling commands
-                    switch (cmd) {
-                        case Commands.TRANSPORT_STATE_CHANGED:
-                            if (action.getData() instanceof Boolean) {
-                                Boolean isPlaying = (Boolean) action.getData();
-                                SwingUtilities.invokeLater(() -> {
-                                    playButton.setEnabled(!isPlaying);
-                                    stopButton.setEnabled(isPlaying);
-                                    pauseButton.setEnabled(isPlaying);
-                                });
-                            }
-                            break;
-                        case Commands.TRANSPORT_START:
-                            isPlaying = true;
-                            SwingUtilities.invokeLater(() -> pauseButton.setEnabled(true));
-                            break;
-                        case Commands.TRANSPORT_STOP:
-                            SwingUtilities.invokeLater(() -> pauseButton.setEnabled(false));
-                            isRecording = false;
-                            isPlaying = false;
-                            updateRecordButtonAppearance();
-                            break;
-                        case Commands.TRANSPORT_RECORD_START:
+                    if (timeSinceStartup > 1000 && timeSinceNavigation > 500) {
+                        if (!isRecording) {
                             isRecording = true;
                             updateRecordButtonAppearance();
-                            break;
-                        case Commands.TRANSPORT_RECORD_STOP:
+                            CommandBus.getInstance().publish(Commands.TRANSPORT_RECORD_START, TransportPanel.this);
+                        }
+                    }
+                }
+
+                // Switch for specific state handling commands
+                switch (cmd) {
+                    case Commands.TRANSPORT_STATE_CHANGED:
+                        if (action.getData() instanceof Boolean playing) {
+                            SwingUtilities.invokeLater(() -> {
+                                playButton.setEnabled(!playing);
+                                stopButton.setEnabled(playing);
+                                pauseButton.setEnabled(playing);
+                            });
+                        }
+                        break;
+                    case Commands.TRANSPORT_START:
+                        isPlaying = true;
+                        SwingUtilities.invokeLater(() -> pauseButton.setEnabled(true));
+                        break;
+                    case Commands.TRANSPORT_STOP:
+                        SwingUtilities.invokeLater(() -> pauseButton.setEnabled(false));
+                        isRecording = false;
+                        isPlaying = false;
+                        updateRecordButtonAppearance();
+                        break;
+                    case Commands.TRANSPORT_RECORD_START:
+                        isRecording = true;
+                        updateRecordButtonAppearance();
+                        break;
+                    case Commands.TRANSPORT_RECORD_STOP:
+                        isRecording = false;
+                        updateRecordButtonAppearance();
+                        break;
+                    case Commands.SESSION_CREATED:
+                    case Commands.SESSION_SELECTED:
+                    case Commands.SESSION_LOADED:
+                        if (action.getData() instanceof Session session) {
+                            updateTransportState(session);
+
+                            // Force disable recording
                             isRecording = false;
                             updateRecordButtonAppearance();
-                            break;
-                        case Commands.SESSION_CREATED:
-                        case Commands.SESSION_SELECTED:
-                        case Commands.SESSION_LOADED:
-                            if (action.getData() instanceof Session) {
-                                Session session = (Session) action.getData();
-                                updateTransportState(session);
 
-                                // Force disable recording
-                                isRecording = false;
-                                updateRecordButtonAppearance();
-
-                                // Only enable forward button for non-new sessions
-                                if (cmd.equals(Commands.SESSION_CREATED)) {
-                                    forwardButton.setEnabled(false);
-                                }
+                            // Only enable forward button for non-new sessions
+                            if (cmd.equals(Commands.SESSION_CREATED)) {
+                                forwardButton.setEnabled(false);
                             }
-                            break;
-                    }
-
-                    // Keep track of last command processed
-                    lastCommand = cmd;
-
-                    updatePlayButtonAppearance();
+                        }
+                        break;
                 }
+
+                // Keep track of last command processed
+                lastCommand = cmd;
+
+                updatePlayButtonAppearance();
             }
         });
     }
@@ -376,49 +355,30 @@ public class TransportPanel extends JPanel {
         // Return true for any command that should trigger recording
 
         // Player modification commands
-        if (cmd.equals(Commands.PLAYER_ADDED) ||
-                cmd.equals(Commands.PLAYER_UPDATED) ||
-                cmd.equals(Commands.PLAYER_DELETED)) {
-            return true;
-        }
+        return switch (cmd) {
+            case Commands.PLAYER_ADDED, Commands.PLAYER_UPDATED, Commands.PLAYER_DELETED -> true;
 
-        // Rule modification commands
-        if (cmd.equals(Commands.RULE_ADDED) ||
-                cmd.equals(Commands.RULE_UPDATED) ||
-                cmd.equals(Commands.RULE_DELETED) ||
-                cmd.equals(Commands.RULE_ADDED_TO_PLAYER) ||
-                cmd.equals(Commands.RULE_REMOVED_FROM_PLAYER)) {
-            return true;
-        }
 
-        // Value change commands
-        if (cmd.equals(Commands.NEW_VALUE_LEVEL) ||
-                cmd.equals(Commands.NEW_VALUE_NOTE) ||
-                cmd.equals(Commands.NEW_VALUE_SWING) ||
-                cmd.equals(Commands.NEW_VALUE_PROBABILITY) ||
-                cmd.equals(Commands.NEW_VALUE_VELOCITY_MIN) ||
-                cmd.equals(Commands.NEW_VALUE_VELOCITY_MAX) ||
-                cmd.equals(Commands.NEW_VALUE_RANDOM) ||
-                cmd.equals(Commands.NEW_VALUE_PAN) ||
-                cmd.equals(Commands.NEW_VALUE_SPARSE)) {
-            return true;
-        }
+            // Rule modification commands
+            case Commands.RULE_ADDED, Commands.RULE_UPDATED, Commands.RULE_DELETED, Commands.RULE_ADDED_TO_PLAYER,
+                 Commands.RULE_REMOVED_FROM_PLAYER -> true;
 
-        // Only enable recording for actual session updates, not initial loading
-        if (cmd.equals(Commands.SESSION_UPDATED)) {
-            return true;
-        }
 
-        // Other parameter changes
-        if (cmd.equals(Commands.PRESET_CHANGED) ||
-                cmd.equals(Commands.UPDATE_TEMPO) ||
-                cmd.equals(Commands.UPDATE_TIME_SIGNATURE) ||
-                cmd.equals(Commands.TIMING_PARAMETERS_CHANGED) ||
-                cmd.equals(Commands.TRANSPOSE_UP) ||
-                cmd.equals(Commands.TRANSPOSE_DOWN)) {
-            return true;
-        }
+            // Value change commands
+            case Commands.NEW_VALUE_LEVEL, Commands.NEW_VALUE_NOTE, Commands.NEW_VALUE_SWING,
+                 Commands.NEW_VALUE_PROBABILITY, Commands.NEW_VALUE_VELOCITY_MIN, Commands.NEW_VALUE_VELOCITY_MAX,
+                 Commands.NEW_VALUE_RANDOM, Commands.NEW_VALUE_PAN, Commands.NEW_VALUE_SPARSE -> true;
 
-        return false;
+
+            // Only enable recording for actual session updates, not initial loading
+            case Commands.SESSION_UPDATED -> true;
+
+
+            // Other parameter changes
+            case Commands.PRESET_CHANGED, Commands.UPDATE_TEMPO, Commands.UPDATE_TIME_SIGNATURE,
+                 Commands.TIMING_PARAMETERS_CHANGED, Commands.TRANSPOSE_UP, Commands.TRANSPOSE_DOWN -> true;
+            default -> false;
+        };
+
     }
 }

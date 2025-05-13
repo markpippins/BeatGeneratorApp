@@ -1,36 +1,29 @@
 package com.angrysurfer.core.sequencer;
 
-import java.util.Arrays;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
-import java.util.function.Consumer;
-
-import javax.sound.midi.MidiDevice;
-import javax.sound.midi.Receiver;
-
 import com.angrysurfer.core.Constants;
+import com.angrysurfer.core.api.*;
 import com.angrysurfer.core.api.midi.MIDIConstants;
-import com.angrysurfer.core.model.Session;
-import com.angrysurfer.core.service.*;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import com.angrysurfer.core.api.Command;
-import com.angrysurfer.core.api.CommandBus;
-import com.angrysurfer.core.api.Commands;
-import com.angrysurfer.core.api.IBusListener;
-import com.angrysurfer.core.api.TimingBus;
 import com.angrysurfer.core.event.DrumPadSelectionEvent;
 import com.angrysurfer.core.event.DrumStepUpdateEvent;
 import com.angrysurfer.core.event.NoteEvent;
 import com.angrysurfer.core.event.PatternSwitchEvent;
 import com.angrysurfer.core.model.InstrumentWrapper;
 import com.angrysurfer.core.model.Player;
+import com.angrysurfer.core.model.Session;
 import com.angrysurfer.core.redis.RedisService;
-
+import com.angrysurfer.core.service.*;
 import lombok.Getter;
 import lombok.Setter;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import javax.sound.midi.MidiDevice;
+import javax.sound.midi.Receiver;
+import java.util.Arrays;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
+import java.util.function.Consumer;
 
 /**
  * Core sequencer engine that handles drum pattern sequencing and playback with
@@ -104,7 +97,7 @@ public class DrumSequencer implements IBusListener {
         MidiDevice defaultDevice = DeviceManager.getInstance().getDefaultOutputDevice();
         if (defaultDevice == null) {
             logger.warn("No default MIDI output device available, attempting to get Gervill");
-            defaultDevice = DeviceManager.getInstance().getMidiDevice("Gervill");
+            defaultDevice = DeviceManager.getMidiDevice("Gervill");
             if (defaultDevice != null && !defaultDevice.isOpen()) {
                 try {
                     defaultDevice.open();
@@ -228,7 +221,7 @@ public class DrumSequencer implements IBusListener {
             // If still no device, try Gervill specifically
             if (device == null) {
                 try {
-                    device = DeviceManager.getInstance().getMidiDevice("Gervill");
+                    device = DeviceManager.getMidiDevice("Gervill");
                     if (device != null) {
                         if (!device.isOpen()) {
                             device.open();
@@ -1285,28 +1278,7 @@ public class DrumSequencer implements IBusListener {
         CommandBus.getInstance().publish(Commands.DRUM_SEQUENCE_UPDATED, this, null);
     }
 
-    /**
-     * Set a step update listener
-     */
-    public void setStepUpdateListener(Consumer<DrumStepUpdateEvent> listener) {
-        this.stepUpdateListener = listener;
-    }
-
-    /**
-     * Set a note event listener
-     */
-    public void setNoteEventListener(Consumer<NoteEvent> listener) {
-        this.noteEventListener = listener;
-    }
-
-    /**
-     * Set a note event publisher
-     */
-    public void setNoteEventPublisher(Consumer<NoteEvent> publisher) {
-        this.noteEventPublisher = publisher;
-    }
-
-    /**
+     /**
      * Required by IBusListener interface
      */
     @Override
@@ -1440,7 +1412,6 @@ public class DrumSequencer implements IBusListener {
 
             // Send effects only if needed
             if (effectCount > 0) {
-                int channel = player.getChannel();
                 int[] controllers = Arrays.copyOf(data.getEffectControllers(), effectCount);
                 int[] values = Arrays.copyOf(data.getEffectValues(), effectCount);
 

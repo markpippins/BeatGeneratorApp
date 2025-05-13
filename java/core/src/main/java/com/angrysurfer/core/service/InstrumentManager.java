@@ -1,27 +1,24 @@
 package com.angrysurfer.core.service;
 
-import java.util.*;
-import java.util.stream.Collectors;
-
-import javax.sound.midi.MidiDevice;
-
 import com.angrysurfer.core.Constants;
+import com.angrysurfer.core.api.Command;
+import com.angrysurfer.core.api.CommandBus;
+import com.angrysurfer.core.api.Commands;
+import com.angrysurfer.core.api.IBusListener;
+import com.angrysurfer.core.model.InstrumentWrapper;
 import com.angrysurfer.core.model.Player;
+import com.angrysurfer.core.redis.InstrumentHelper;
+import com.angrysurfer.core.redis.RedisService;
 import com.angrysurfer.core.sequencer.DrumSequencer;
 import com.angrysurfer.core.sequencer.MelodicSequencer;
+import lombok.Getter;
+import lombok.Setter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.angrysurfer.core.api.Command;
-import com.angrysurfer.core.api.CommandBus;
-import com.angrysurfer.core.api.IBusListener;
-import com.angrysurfer.core.model.InstrumentWrapper;
-import com.angrysurfer.core.api.Commands;
-import com.angrysurfer.core.redis.InstrumentHelper;
-import com.angrysurfer.core.redis.RedisService;
-
-import lombok.Getter;
-import lombok.Setter;
+import javax.sound.midi.MidiDevice;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Getter
 @Setter
@@ -148,12 +145,6 @@ public class InstrumentManager implements IBusListener {
     }
 
     /**
-     * Get instrument by ID
-     * 
-     * @param id The instrument ID
-     * @return The instrument, or null if not found
-     */
-    /**
      * Get an instrument by ID
      * 
      * @param id The instrument ID to look up
@@ -209,7 +200,7 @@ public class InstrumentManager implements IBusListener {
             refreshInstruments();
         }
         return instrumentCache.values().stream()
-                .filter(i -> i.getName().toLowerCase().equals(name.toLowerCase()))
+                .filter(i -> i.getName().equalsIgnoreCase(name))
                 .findFirst()
                 .orElse(null);
     }
@@ -234,17 +225,6 @@ public class InstrumentManager implements IBusListener {
             initializeCache();
         }
         return new ArrayList<>(instrumentCache.values());
-    }
-
-    public void setMidiDevices(List<MidiDevice> devices) {
-        logger.info("Setting MIDI devices: {}", devices.size());
-        List<String> deviceNames = devices.stream()
-                .map(device -> device.getDeviceInfo().getName())
-                .collect(Collectors.toList());
-
-        this.midiDevices = devices;
-        this.devices = deviceNames;
-        needsRefresh = true;
     }
 
     /**
@@ -309,6 +289,15 @@ public class InstrumentManager implements IBusListener {
         }
 
         // Create a new internal instrument
+        InstrumentWrapper internalInstrument = getInternalInstrument(channel);
+
+        // Add to cache and persist
+        updateInstrument(internalInstrument);
+
+        return internalInstrument;
+    }
+
+    private static InstrumentWrapper getInternalInstrument(int channel) {
         InstrumentWrapper internalInstrument = new InstrumentWrapper(
                 "Internal Synth",
                 null, // Internal synth uses null device
@@ -321,37 +310,6 @@ public class InstrumentManager implements IBusListener {
         internalInstrument.setBankIndex(0);
         internalInstrument.setPreset(0); // Piano
         internalInstrument.setId(9985L + channel);
-
-        // Add to cache and persist
-        updateInstrument(internalInstrument);
-
-        return internalInstrument;
-    }
-
-    /**
-     * Get the default internal instrument for the sequencer's channel
-     * 
-     * @return An InstrumentWrapper for the internal synth
-     */
-    private InstrumentWrapper getDefaultInstrument(int channel) {
-        // Create with null device (indicates internal synth)
-        InstrumentWrapper internalInstrument = new InstrumentWrapper(
-                "Internal Synth",
-                null,
-                channel // Use the sequencer's channel
-        );
-
-        // Configure as internal instrument
-        internalInstrument.setInternal(true);
-        internalInstrument.setDeviceName("Gervill");
-        internalInstrument.setSoundbankName("Default");
-        internalInstrument.setBankIndex(0);
-        internalInstrument.setPreset(0); // Default to piano
-        internalInstrument.setId(9985L + channel); // Use channel for unique ID
-
-        // Register with manager
-        InstrumentManager.getInstance().updateInstrument(internalInstrument);
-
         return internalInstrument;
     }
 
@@ -478,7 +436,7 @@ public void refreshCache(List<InstrumentWrapper> instruments) {
                 return String.join(", ", owners);
             } else {
                 // If there are many owners, show a count
-                return owners.get(0) + " and " + (owners.size() - 1) + " more";
+                return owners.getFirst() + " and " + (owners.size() - 1) + " more";
             }
         } catch (Exception e) {
             logger.error("Error determining instrument owner: {}", e.getMessage(), e);
@@ -590,7 +548,7 @@ public void refreshCache(List<InstrumentWrapper> instruments) {
                 }
                 
                 // If not found, try partial matches
-                if (!found && defaultKit.size() < Constants.DRUM_PAD_COUNT) {
+                if (!found) {
                     String lowerDrumName = drumName.toLowerCase();
                     for (InstrumentWrapper instr : allDrums) {
                         String lowerInstrName = instr.getName().toLowerCase();
@@ -603,12 +561,12 @@ public void refreshCache(List<InstrumentWrapper> instruments) {
                 }
                 
                 // Still not found, add any drum
-                if (!found && defaultKit.size() < Constants.DRUM_PAD_COUNT && !allDrums.isEmpty()) {
+                if (!found && !allDrums.isEmpty()) {
                     // Take the first available
-                    defaultKit.add(allDrums.get(0));
+                    defaultKit.add(allDrums.getFirst());
                     // Remove to avoid duplicates
                     if (!allDrums.isEmpty()) {
-                        allDrums.remove(0);
+                        allDrums.removeFirst();
                     }
                 }
                 
@@ -620,8 +578,8 @@ public void refreshCache(List<InstrumentWrapper> instruments) {
             
             // Fill remaining slots if needed
             while (defaultKit.size() < Constants.DRUM_PAD_COUNT && !allDrums.isEmpty()) {
-                defaultKit.add(allDrums.get(0));
-                allDrums.remove(0);
+                defaultKit.add(allDrums.getFirst());
+                allDrums.removeFirst();
             }
             
             logger.info("Created default drum kit with {} instruments", defaultKit.size());
@@ -632,52 +590,4 @@ public void refreshCache(List<InstrumentWrapper> instruments) {
         }
     }
 
-    /**
-     * Get instrument for a drum pad
-     * 
-     * @param id
-     * @param name
-     * @return The instrument, creating it if necessary
-     */
-    public InstrumentWrapper getDrumInstrument(Long id, String name) {
-        // Try to find an existing instrument
-        InstrumentWrapper instrument = null;
-        
-        // If id is provided, try to find by id first
-        if (id != null) {
-            instrument = instrumentCache.get(id);
-        }
-        
-        // If not found, try by name or use default
-        if (instrument == null) {
-            // Try to find by name if provided
-            if (name != null && !name.isEmpty()) {
-                instrument = findByName(name);
-            }
-            
-            // If still not found, create a new one
-            if (instrument == null) {
-                // Create with null device (indicates internal synth)
-                instrument = new InstrumentWrapper();
-                instrument.setId(System.currentTimeMillis()); // Unique ID
-                instrument.setName(name != null ? name : "Drum " + System.currentTimeMillis());
-                instrument.setDeviceName("Gervill"); // Default to internal synth
-                instrument.setSoundbankName("Default");
-                instrument.setBankIndex(0);
-                instrument.setPreset(0);
-                
-                // CRITICAL - Set channel for drums
-                instrument.setChannel(Constants.MIDI_DRUM_CHANNEL); // Channel 10 in MIDI (indexed from 0)
-                
-                // Register with manager
-                updateInstrument(instrument);
-            } else if (instrument.getChannel() == null) {
-                // Ensure channel is set for existing instrument
-                instrument.setChannel(Constants.MIDI_DRUM_CHANNEL);
-                updateInstrument(instrument);
-            }
-        }
-        
-        return instrument;
-    }
 }

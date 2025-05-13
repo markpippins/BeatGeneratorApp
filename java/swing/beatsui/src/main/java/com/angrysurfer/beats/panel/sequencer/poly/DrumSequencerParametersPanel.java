@@ -278,19 +278,5 @@ public class DrumSequencerParametersPanel extends JPanel {
             updatingControls = false;
         }
     }
-    
-    /**
-     * Update the Last Step spinner's maximum value
-     */
-    public void updateMaxPatternLength(int newMaxLength) {
-        // Update last step spinner's maximum value
-        SpinnerNumberModel model = (SpinnerNumberModel) lastStepSpinner.getModel();
-        model.setMaximum(newMaxLength);
-        
-        // If current value exceeds new maximum, adjust it
-        int currentValue = (Integer) lastStepSpinner.getValue();
-        if (currentValue > newMaxLength) {
-            lastStepSpinner.setValue(newMaxLength);
-        }
-    }
+
 }

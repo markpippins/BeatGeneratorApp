@@ -1,17 +1,15 @@
 package com.angrysurfer.core.sequencer;
 
+import com.angrysurfer.core.api.midi.MIDIConstants;
+import lombok.Getter;
+import lombok.Setter;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import com.angrysurfer.core.api.midi.MIDIConstants;
-
-import lombok.Getter;
-import lombok.Setter;
 
 @Getter
 @Setter
@@ -82,10 +80,10 @@ public class MelodicSequenceData {
         Arrays.fill(muteValues, 0); // Initialize mute values to 0 (unmuted)
     
         // Activate some initial steps for a basic pattern
-        activeSteps[0] = true;
-        activeSteps[4] = true;
-        activeSteps[8] = true;
-        activeSteps[12] = true;
+        // activeSteps[0] = true;
+        // activeSteps[4] = true;
+        // activeSteps[8] = true;
+        // activeSteps[12] = true;
     }
 
     /**
@@ -403,23 +401,6 @@ public class MelodicSequenceData {
         quantizeEnabled = enabled;
     }
 
-    /**
-     * Set sequencer ID
-     * 
-     * @param id The sequencer ID
-     */
-    public void setSequencerId(Integer id) {
-        this.sequencerId = id;
-    }
-
-    /**
-     * Get sequencer ID
-     * 
-     * @return The sequencer ID
-     */
-    public Integer getSequencerId() {
-        return sequencerId;
-    }
 
     /**
      * Set the root note from a string value
@@ -481,52 +462,25 @@ public class MelodicSequenceData {
         int rootNoteInt = (rootNote != null) ? rootNote : 0;
 
         // Define scale patterns (semitone intervals)
-        int[] intervals;
-        switch (scaleName) {
-            case "Major":
-                intervals = new int[] { 0, 2, 4, 5, 7, 9, 11 };
-                break;
-            case "Minor":
-                intervals = new int[] { 0, 2, 3, 5, 7, 8, 10 };
-                break;
-            case "Harmonic Minor":
-                intervals = new int[] { 0, 2, 3, 5, 7, 8, 11 };
-                break;
-            case "Melodic Minor":
-                intervals = new int[] { 0, 2, 3, 5, 7, 9, 11 };
-                break;
-            case "Dorian":
-                intervals = new int[] { 0, 2, 3, 5, 7, 9, 10 };
-                break;
-            case "Phrygian":
-                intervals = new int[] { 0, 1, 3, 5, 7, 8, 10 };
-                break;
-            case "Lydian":
-                intervals = new int[] { 0, 2, 4, 6, 7, 9, 11 };
-                break;
-            case "Mixolydian":
-                intervals = new int[] { 0, 2, 4, 5, 7, 9, 10 };
-                break;
-            case "Locrian":
-                intervals = new int[] { 0, 1, 3, 5, 6, 8, 10 };
-                break;
-            case "Pentatonic Major":
-                intervals = new int[] { 0, 2, 4, 7, 9 };
-                break;
-            case "Pentatonic Minor":
-                intervals = new int[] { 0, 3, 5, 7, 10 };
-                break;
-            case "Blues":
-                intervals = new int[] { 0, 3, 5, 6, 7, 10 };
-                break;
-            case "Chromatic":
-                intervals = new int[] { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11 };
-                break;
-            default:
+        int[] intervals = switch (scaleName) {
+            case "Major" -> new int[]{0, 2, 4, 5, 7, 9, 11};
+            case "Minor" -> new int[]{0, 2, 3, 5, 7, 8, 10};
+            case "Harmonic Minor" -> new int[]{0, 2, 3, 5, 7, 8, 11};
+            case "Melodic Minor" -> new int[]{0, 2, 3, 5, 7, 9, 11};
+            case "Dorian" -> new int[]{0, 2, 3, 5, 7, 9, 10};
+            case "Phrygian" -> new int[]{0, 1, 3, 5, 7, 8, 10};
+            case "Lydian" -> new int[]{0, 2, 4, 6, 7, 9, 11};
+            case "Mixolydian" -> new int[]{0, 2, 4, 5, 7, 9, 10};
+            case "Locrian" -> new int[]{0, 1, 3, 5, 6, 8, 10};
+            case "Pentatonic Major" -> new int[]{0, 2, 4, 7, 9};
+            case "Pentatonic Minor" -> new int[]{0, 3, 5, 7, 10};
+            case "Blues" -> new int[]{0, 3, 5, 6, 7, 10};
+            case "Chromatic" -> new int[]{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11};
+            default -> {
                 logger.warn("Unknown scale: {}, defaulting to Major", scaleName);
-                intervals = new int[] { 0, 2, 4, 5, 7, 9, 11 };
-                break;
-        }
+                yield new int[]{0, 2, 4, 5, 7, 9, 11};
+            }
+        };
 
         // Mark scale notes as true
         for (int interval : intervals) {

@@ -10,6 +10,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.util.Arrays;
 
 public class MelodicSequenceDataDeserializer extends StdDeserializer<MelodicSequenceData> {
     private static final Logger logger = LoggerFactory.getLogger(MelodicSequenceDataDeserializer.class);
@@ -119,6 +120,28 @@ public class MelodicSequenceDataDeserializer extends StdDeserializer<MelodicSequ
                     defaultTiltValues[i] = 0;
                 }
                 data.setTiltValues(defaultTiltValues);
+            }
+        }
+
+        // Handle mute values
+        if (node.has("muteValues")) {
+            JsonNode muteNode = node.get("muteValues");
+            int[] muteValues = new int[muteNode.size()];
+            for (int i = 0; i < muteNode.size(); i++) {
+                muteValues[i] = muteNode.get(i).asInt();
+            }
+            data.setMuteValues(muteValues);
+            logger.debug("Loaded {} mute values from JSON", muteValues.length);
+        } else {
+            // If mute values don't exist in the JSON, initialize with defaults
+            logger.debug("No mute values found in JSON, initializing defaults");
+            
+            // Create default mute values based on pattern length
+            if (data.getPatternLength() > 0) {
+                int[] defaultMuteValues = new int[data.getPatternLength()];
+                // Default is 0 (unmuted)
+                Arrays.fill(defaultMuteValues, 0);
+                data.setMuteValues(defaultMuteValues);
             }
         }
         

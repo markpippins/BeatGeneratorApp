@@ -1,21 +1,12 @@
 package com.angrysurfer.beats.panel.sequencer.poly;
 
-import java.awt.Color;
-import java.awt.Dimension;
-import java.awt.FlowLayout;
-import java.awt.Insets;
-import javax.swing.BorderFactory;
-import javax.swing.JLabel;
-import javax.swing.JPanel;
-import javax.swing.JSlider;
-import javax.swing.JToggleButton;
-import javax.swing.border.TitledBorder;
-
+import com.angrysurfer.beats.util.UIHelper;
+import com.angrysurfer.core.sequencer.DrumSequencer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.angrysurfer.beats.util.UIHelper;
-import com.angrysurfer.core.sequencer.DrumSequencer;
+import javax.swing.*;
+import java.awt.*;
 
 /**
  * Panel containing swing controls for drum sequencer
@@ -47,9 +38,7 @@ public class DrumSequencerSwingPanel extends JPanel {
         // ALREADY OPTIMIZED: using 45,22
         swingToggle.setPreferredSize(new Dimension(45, 22));
         swingToggle.setMargin(new Insets(2, 2, 2, 2));
-        swingToggle.addActionListener(e -> {
-            sequencer.setSwingEnabled(swingToggle.isSelected());
-        });
+        swingToggle.addActionListener(e -> sequencer.setSwingEnabled(swingToggle.isSelected()));
         add(swingToggle);
 
         // Swing amount slider

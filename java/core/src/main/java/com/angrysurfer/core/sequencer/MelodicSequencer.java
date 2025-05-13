@@ -123,20 +123,7 @@ public class MelodicSequencer implements IBusListener {
         sequenceData.setStepData(stepIndex, active, note, velocity, gate);
     }
 
-    public void start() {
-        if (isPlaying) {
-            return;
-        }
-
-        if (getHarmonicTiltValues() == null || getHarmonicTiltValues().isEmpty()) {
-            logger.warn("No harmonic tilt values set, using default 0");
-            setHarmonicTiltValues(Collections.singletonList(0));
-        }
-        currentTilt = getHarmonicTiltValues().get(0);
-        if (currentStep >= getSequenceData().getPatternLength()) {
-            reset();
-        }
-
+    private void initializePlayer(Player player) {
         PlayerManager.getInstance().applyInstrumentPreset(player);
         
         // Add this explicit program change to ensure the preset is applied:
@@ -159,6 +146,24 @@ public class MelodicSequencer implements IBusListener {
                 logger.error("Error applying program change: {}", e.getMessage(), e);
             }
         }
+    }
+
+    public void start() {
+        if (isPlaying) {
+            return;
+        }
+
+        if (getHarmonicTiltValues() == null || getHarmonicTiltValues().isEmpty()) {
+            logger.warn("No harmonic tilt values set, using default 0");
+            setHarmonicTiltValues(Collections.singletonList(0));
+        }
+        currentTilt = getHarmonicTiltValues().get(0);
+        if (currentStep >= getSequenceData().getPatternLength()) {
+            reset();
+        }
+
+        initializePlayer(player);
+
 
         isPlaying = true;
         logger.info("Melodic sequencer {} started playback", id);
@@ -507,6 +512,9 @@ public class MelodicSequencer implements IBusListener {
                 applySequenceDataToInstrument();
             }
 
+            initializePlayer(player);
+            player.noteOn(player.getRootNote(), 100);
+            
             session.getPlayers().add(player);
             PlayerManager.getInstance().savePlayerProperties(player);
             SessionManager.getInstance().saveSession(session);
@@ -559,7 +567,7 @@ public class MelodicSequencer implements IBusListener {
                     ((MelodicSequencer) p.getOwner()).getId() != null &&
                     ((MelodicSequencer) p.getOwner()).getId().equals(id) &&
                     p.getChannel() == MIDIConstants.SEQUENCER_CHANNELS[id]) {
-                    p.noteOn(p.getRootNote(), 100);
+                    // p.noteOn(p.getRootNote(), 100);
                 return p;
             }
         }
@@ -821,6 +829,9 @@ public class MelodicSequencer implements IBusListener {
         return sequenceData.getMuteValues();
     }
 
+    /**
+     * Set mute values from a list
+     */
     public void setMuteValues(List<Integer> muteValues) {
         if (sequenceData == null || muteValues == null) {
             logger.error("Cannot set mute values: sequenceData or muteValues is null");

@@ -1,12 +1,10 @@
 package com.angrysurfer.core.service;
 
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.Date;
-import java.util.List;
+import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+import javax.sound.midi.MidiUnavailableException;
 import javax.sound.midi.ShortMessage;
 import javax.sound.midi.Synthesizer;
 
@@ -21,7 +19,6 @@ import com.angrysurfer.core.config.UserConfig;
 import com.angrysurfer.core.model.InstrumentWrapper;
 import com.angrysurfer.core.model.Note;
 import com.angrysurfer.core.model.Player;
-import com.angrysurfer.core.model.Session;
 import com.angrysurfer.core.model.Strike;
 import com.angrysurfer.core.redis.RedisService;
 import com.angrysurfer.core.redis.UserConfigHelper;
@@ -40,7 +37,7 @@ public class UserConfigManager {
     private final UserConfigHelper configHelper;
     private final CommandBus commandBus = CommandBus.getInstance();
     private boolean initialized = false;
-    private boolean isInitializing = false;
+    private boolean isInitializing;
     private UserConfig currentConfig = new UserConfig();
 
     // Make constructor private for singleton pattern
@@ -116,7 +113,7 @@ public class UserConfigManager {
     }
 
     public void loadConfigurationFromFile(String configPath) {
-        logger.info("Loading configuration from file: " + configPath);
+        logger.info("Loading configuration from file: {}", configPath);
         try {
             UserConfig loadedConfig = configHelper.loadConfigFromJSON(configPath);
             if (loadedConfig != null) {
@@ -157,7 +154,7 @@ public class UserConfigManager {
                 if (instruments != null && !instruments.isEmpty()) {
                     getCurrentConfig().setInstruments(instruments);
                     saveConfiguration(getCurrentConfig());
-                    logger.info("Loaded " + instruments.size() + " instruments from Redis");
+                    logger.info("Loaded {} instruments from Redis", instruments.size());
                 }
             } catch (Exception e) {
                 logger.error("Error loading instruments: {}", e.getMessage());
@@ -229,7 +226,7 @@ public class UserConfigManager {
 
                 // Save the updated config
                 saveConfiguration(currentConfig);
-                logger.info("Instrument updated: " + instrument.getName());
+                logger.info("Instrument updated: {}", instrument.getName());
             }
 
             // Notify InstrumentManager via event
@@ -252,7 +249,7 @@ public class UserConfigManager {
                 if (removed) {
                     // Save the updated config
                     saveConfiguration(currentConfig);
-                    logger.info("Instrument removed: ID " + instrumentId);
+                    logger.info("Instrument removed: ID {}", instrumentId);
                 }
             }
         } catch (Exception e) {
@@ -455,33 +452,7 @@ public class UserConfigManager {
 
             // Add default drum instruments (channel 9 - MIDI channel 10)
             for (int i = 1; i <= 16; i++) {
-                InstrumentWrapper drumInst = new InstrumentWrapper();
-
-                // Basic properties
-                String name = "DefaultDrum " + i;
-                drumInst.setName(name);
-                drumInst.setId(10000L + i);
-                drumInst.setChannel(9);  // MIDI channel 10 (indexed from 0)
-                drumInst.setInternal(true);
-                drumInst.setInternalSynth(true);
-                drumInst.setIsDefault(true);
-
-                // Set up with InternalSynthManager - get device info and receiver
-                drumInst.setDeviceInfo(synthManager.getSynthesizer().getDeviceInfo());
-                drumInst.setDeviceName("Gervill");
-                drumInst.setReceiver(synthManager.getSynthesizer().getReceiver());
-
-                // Set drum-specific properties
-                // drumInst.setBankIndex(128); // Standard drum bank
-                // drumInst.setPreset(i % 5); // Cycle through drum kits (0-4)
-
-                // Set appropriate note range for drums
-                drumInst.setLowestNote(35);
-                drumInst.setHighestNote(50);
-
-                // Additional properties
-                drumInst.setDescription("Default drum instrument " + i);
-                drumInst.setAvailable(true);
+                InstrumentWrapper drumInst = getDrumInstrumentWrapper(i, synthManager);
 
                 defaultInstruments.add(drumInst);
             }
@@ -489,33 +460,7 @@ public class UserConfigManager {
             // Add default melodic instruments on non-drum channels
             int[] melodicChannels = {0, 1, 2, 3, 4, 5, 6, 7, 10, 11, 12, 13, 14, 15};
             for (int i = 0; i < 12; i++) {
-                InstrumentWrapper meloInst = new InstrumentWrapper();
-
-                // Basic properties
-                String name = "DefaultMelo " + (i + 1);
-                meloInst.setName(name);
-                meloInst.setId(20000L + i);
-                meloInst.setChannel(melodicChannels[i % melodicChannels.length]);
-                meloInst.setInternal(true);
-                meloInst.setInternalSynth(true);
-                meloInst.setIsDefault(true);
-
-                // Set up with InternalSynthManager - get device info and receiver
-                meloInst.setDeviceInfo(synthManager.getSynthesizer().getDeviceInfo());
-                meloInst.setDeviceName("Gervill");
-                meloInst.setReceiver(synthManager.getSynthesizer().getReceiver());
-
-                // Set melodic-specific properties
-                meloInst.setBankIndex(0); // Standard melodic bank
-                meloInst.setPreset((i * 10) % 127); // Distribute across GM sounds with 10-instrument gaps
-
-                // Set appropriate note range for melodic
-                meloInst.setLowestNote(0);
-                meloInst.setHighestNote(127);
-
-                // Additional properties
-                meloInst.setDescription("Default melodic instrument " + (i + 1));
-                meloInst.setAvailable(true);
+                InstrumentWrapper meloInst = getMelodicInstrumentWrapper(i, melodicChannels, synthManager);
 
                 defaultInstruments.add(meloInst);
             }
@@ -567,6 +512,68 @@ public class UserConfigManager {
             logger.error("Error populating default instruments: {}", e.getMessage(), e);
             return false;
         }
+    }
+
+    private static InstrumentWrapper getMelodicInstrumentWrapper(int i, int[] melodicChannels, InternalSynthManager synthManager) throws MidiUnavailableException {
+        InstrumentWrapper meloInst = new InstrumentWrapper();
+
+        // Basic properties
+        String name = "DefaultMelo " + (i + 1);
+        meloInst.setName(name);
+        meloInst.setId(20000L + i);
+        meloInst.setChannel(melodicChannels[i % melodicChannels.length]);
+        meloInst.setInternal(true);
+        meloInst.setInternalSynth(true);
+        meloInst.setIsDefault(true);
+
+        // Set up with InternalSynthManager - get device info and receiver
+        meloInst.setDeviceInfo(synthManager.getSynthesizer().getDeviceInfo());
+        meloInst.setDeviceName("Gervill");
+        meloInst.setReceiver(synthManager.getSynthesizer().getReceiver());
+
+        // Set melodic-specific properties
+        meloInst.setBankIndex(0); // Standard melodic bank
+        meloInst.setPreset((i * 10) % 127); // Distribute across GM sounds with 10-instrument gaps
+
+        // Set appropriate note range for melodic
+        meloInst.setLowestNote(0);
+        meloInst.setHighestNote(127);
+
+        // Additional properties
+        meloInst.setDescription("Default melodic instrument " + (i + 1));
+        meloInst.setAvailable(true);
+        return meloInst;
+    }
+
+    private static InstrumentWrapper getDrumInstrumentWrapper(int i, InternalSynthManager synthManager) throws MidiUnavailableException {
+        InstrumentWrapper drumInst = new InstrumentWrapper();
+
+        // Basic properties
+        String name = "DefaultDrum " + i;
+        drumInst.setName(name);
+        drumInst.setId(10000L + i);
+        drumInst.setChannel(9);  // MIDI channel 10 (indexed from 0)
+        drumInst.setInternal(true);
+        drumInst.setInternalSynth(true);
+        drumInst.setIsDefault(true);
+
+        // Set up with InternalSynthManager - get device info and receiver
+        drumInst.setDeviceInfo(synthManager.getSynthesizer().getDeviceInfo());
+        drumInst.setDeviceName("Gervill");
+        drumInst.setReceiver(synthManager.getSynthesizer().getReceiver());
+
+        // Set drum-specific properties
+        // drumInst.setBankIndex(128); // Standard drum bank
+        // drumInst.setPreset(i % 5); // Cycle through drum kits (0-4)
+
+        // Set appropriate note range for drums
+        drumInst.setLowestNote(35);
+        drumInst.setHighestNote(50);
+
+        // Additional properties
+        drumInst.setDescription("Default drum instrument " + i);
+        drumInst.setAvailable(true);
+        return drumInst;
     }
 
     /**
@@ -636,7 +643,7 @@ public class UserConfigManager {
         // Get drum instruments from config
         List<InstrumentWrapper> drumInstruments = currentConfig.getInstruments().stream()
                 .filter(inst -> inst.getName().startsWith("DefaultDrum"))
-                .collect(Collectors.toList());
+                .toList();
 
         if (drumInstruments.isEmpty()) {
             logger.warn("No drum instruments found for default players");
@@ -661,35 +668,40 @@ public class UserConfigManager {
             }
 
             // Create the drum player
-            Strike player = new Strike();
-            player.setId(RedisService.getInstance().getNextPlayerId());
-            player.setName("Default " + drumName);
-            player.setIsDefault(true);
-            player.setDrumPlayer(true);
-            player.setRootNote(rootNote);
-
-            // Set channel to 9 (MIDI channel 10 for drums)
-            player.setDefaultChannel(9);
-
-            // Associate with instrument
-            player.setInstrument(instrument);
-
-            // Configure velocities for natural sound
-            player.setMinVelocity(70);
-            player.setMaxVelocity(100);
-
-            // Configure sequence properties
-            player.setProbability(100);
-            player.setLevel(90);
-            player.setRatchetCount(0);
-            player.setRatchetInterval(40);
-            player.setSparse(0);
-            player.setRandomDegree(0);
+            Strike player = createStrike(drumName, rootNote, instrument);
 
             // Add to player list
             playerList.add(player);
             logger.debug("Created default drum player: {} (note: {})", player.getName(), rootNote);
         }
+    }
+
+    private static Strike createStrike(String drumName, int rootNote, InstrumentWrapper instrument) {
+        Strike player = new Strike();
+        player.setId(RedisService.getInstance().getNextPlayerId());
+        player.setName("Default " + drumName);
+        player.setIsDefault(true);
+        player.setDrumPlayer(true);
+        player.setRootNote(rootNote);
+
+        // Set channel to 9 (MIDI channel 10 for drums)
+        player.setDefaultChannel(9);
+
+        // Associate with instrument
+        player.setInstrument(instrument);
+
+        // Configure velocities for natural sound
+        player.setMinVelocity(70);
+        player.setMaxVelocity(100);
+
+        // Configure sequence properties
+        player.setProbability(100);
+        player.setLevel(90);
+        player.setRatchetCount(0);
+        player.setRatchetInterval(40);
+        player.setSparse(0);
+        player.setRandomDegree(0);
+        return player;
     }
 
     /**
@@ -703,7 +715,7 @@ public class UserConfigManager {
         // Get melodic instruments from config
         List<InstrumentWrapper> melodicInstruments = currentConfig.getInstruments().stream()
                 .filter(inst -> inst.getName().startsWith("DefaultMelo"))
-                .collect(Collectors.toList());
+                .toList();
 
         if (melodicInstruments.isEmpty()) {
             logger.warn("No melodic instruments found for default players");
@@ -1040,15 +1052,15 @@ public class UserConfigManager {
             // Check for default instruments
             List<InstrumentWrapper> defaultInstruments = config.getInstruments().stream()
                     .filter(i -> Boolean.TRUE.equals(i.getIsDefault()))
-                    .collect(Collectors.toList());
+                    .toList();
 
             // Test for specific instrument types
             long drumInstrumentCount = defaultInstruments.stream()
-                    .filter(i -> i.getIsDefault() && i.getName() != null && i.getChannel() == Constants.MIDI_DRUM_CHANNEL)
+                    .filter(i -> i.getIsDefault() && i.getName() != null && Objects.equals(i.getChannel(), Constants.MIDI_DRUM_CHANNEL))
                     .count();
 
             long melodicInstrumentCount = defaultInstruments.stream()
-                    .filter(i -> i.getIsDefault() && i.getName() != null && i.getChannel() != Constants.MIDI_DRUM_CHANNEL)
+                    .filter(i -> i.getIsDefault() && i.getName() != null && !Objects.equals(i.getChannel(), Constants.MIDI_DRUM_CHANNEL))
                     .count();
 
             result = drumInstrumentCount == 16 && melodicInstrumentCount == MIDIConstants.DEFAULT_MONO_SEQUENCERS;

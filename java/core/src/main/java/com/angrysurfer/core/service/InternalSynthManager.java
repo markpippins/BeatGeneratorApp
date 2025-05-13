@@ -1,31 +1,18 @@
 package com.angrysurfer.core.service;
 
-import java.io.File;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
-
-import javax.sound.midi.Instrument;
-import javax.sound.midi.MidiChannel;
-import javax.sound.midi.MidiDevice;
-import javax.sound.midi.MidiSystem;
-import javax.sound.midi.MidiUnavailableException;
-import javax.sound.midi.Receiver;
-import javax.sound.midi.Soundbank;
-import javax.sound.midi.Synthesizer;
-
 import com.angrysurfer.core.Constants;
+import com.angrysurfer.core.model.InstrumentWrapper;
+import com.angrysurfer.core.model.preset.DrumItem;
+import com.angrysurfer.core.model.preset.SynthData;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.angrysurfer.core.model.preset.DrumItem;
-import com.angrysurfer.core.model.InstrumentWrapper;
-import com.angrysurfer.core.model.preset.SynthData;
+import javax.sound.midi.*;
+import java.io.File;
+import java.util.*;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Manager for internal synthesizer instruments and presets. This singleton
@@ -38,7 +25,7 @@ public class InternalSynthManager {
 
     // Add synthesizer as a central instance
     private Synthesizer synthesizer;
-    private int defaultMidiChannel = 15; // Default channel for melodic sounds
+    // Default channel for melodic sounds
 
     // Map of synth IDs to preset information
     private final Map<Long, SynthData> synthDataMap = new HashMap<>();

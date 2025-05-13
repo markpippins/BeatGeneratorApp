@@ -214,6 +214,16 @@ class DrumSequenceDataHelper {
                 }
             }
 
+            // Apply mute values if available
+            for (int i = 0; i < Constants.DRUM_PAD_COUNT; i++) {
+                int drumIndex = i;
+                List<Integer> muteValues = data.getMuteValues(drumIndex);
+                if (muteValues != null && !muteValues.isEmpty()) {
+                    sequencer.getData().setMuteValues(drumIndex, muteValues);
+                    logger.debug("Applied {} mute values to drum {}", muteValues.size(), drumIndex);
+                }
+            }
+
             // Notify that pattern has updated
             commandBus.publish(Commands.DRUM_SEQUENCE_UPDATED, this, sequencer.getData().getId());
 
@@ -267,6 +277,12 @@ class DrumSequenceDataHelper {
                 }
             }
             data.setPatterns(patterns);
+
+            // Save mute values for each drum
+            for (int i = 0; i < Constants.DRUM_PAD_COUNT; i++) {
+                List<Integer> muteValues = sequencer.getData().getMuteValues(i);
+                data.setMuteValues(i, muteValues);
+            }
 
             // Save to Redis
             String json = objectMapper.writeValueAsString(data);

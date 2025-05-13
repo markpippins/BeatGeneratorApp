@@ -5,6 +5,7 @@ import com.angrysurfer.beats.panel.PlayerAwarePanel;
 import javax.swing.*;
 import java.awt.*;
 import java.util.List;
+import java.util.Objects;
 
 import com.angrysurfer.core.Constants;
 import com.angrysurfer.core.model.preset.PresetItem;
@@ -13,6 +14,7 @@ import org.slf4j.LoggerFactory;
 
 import com.angrysurfer.beats.util.UIHelper;
 import com.angrysurfer.core.api.CommandBus;
+import com.angrysurfer.core.api.Commands;
 import com.angrysurfer.core.model.Player;
 import com.angrysurfer.core.service.SoundbankManager;
 import com.angrysurfer.core.model.preset.BankItem;
@@ -25,11 +27,9 @@ import com.angrysurfer.core.service.InternalSynthManager;
 public class SoundParametersPanel extends PlayerAwarePanel {
     private static final Logger logger = LoggerFactory.getLogger(SoundParametersPanel.class);
 
-    // private JTextField nameTextField;
     private JComboBox<SoundbankItem> soundbankCombo;
     private JComboBox<BankItem> bankCombo;
     private JComboBox<PresetItem> presetCombo;
-    //private JLabel titleLabel;
 
     private BankItem currentBank;
     private PresetItem currentPreset;
@@ -38,6 +38,8 @@ public class SoundParametersPanel extends PlayerAwarePanel {
     private JPanel soundbankPanel;
     private JPanel bankPanel;
     private JPanel presetPanel;
+
+    private JButton drumPresetsButton;
 
     /**
      * Constructor
@@ -51,19 +53,15 @@ public class SoundParametersPanel extends PlayerAwarePanel {
      */
     private void initializeUI() {
         setLayout(new BorderLayout());
-        //UIHelper.setWidgetPanelBorder(this, "Sound Parameters");
-
-        JButton refreshButton = UIHelper.createPlayerRefreshButton(null, null);
 
         JPanel horizontalPanel = new JPanel();
         horizontalPanel.setLayout(new BoxLayout(horizontalPanel, BoxLayout.X_AXIS));
         horizontalPanel.setBorder(BorderFactory.createEmptyBorder(2, 2, 2, 2));
         
         Player player = getPlayer();
-        if (player != null) {
-            // UIHelper.setWidgetPanelBorder(this, player.getName());
+        if (player != null)
             requestPlayerUpdate();
-        }
+
         // Create channel combo - display 1-16 but store 0-15
         ChannelComboPanel channelComboPanel = new ChannelComboPanel();
         channelComboPanel.setMaximumSize(new Dimension(channelComboPanel.getPreferredSize().width,
@@ -123,10 +121,8 @@ public class SoundParametersPanel extends PlayerAwarePanel {
         bankPanel.setMaximumSize(new Dimension(Integer.MAX_VALUE, bankPanel.getPreferredSize().height));
         
         // Preset panel
-        presetPanel = new JPanel(new BorderLayout(5, 0));
-        presetPanel.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createTitledBorder("Preset"),
-                BorderFactory.createEmptyBorder(2, 2, 2, 2)));
+        presetPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 4, 0));
+        UIHelper.setWidgetPanelBorder(presetPanel, "Preset");
         presetCombo = new JComboBox<>();
         
         // 2. Restore preset action listener
@@ -149,7 +145,7 @@ public class SoundParametersPanel extends PlayerAwarePanel {
                     Integer bankIndex = bankItem != null ? bankItem.getIndex() : null;
 
                     // For drum channel, update root note
-                    if (currentPlayer.getChannel() == Constants.MIDI_DRUM_CHANNEL) {
+                    if (Objects.equals(currentPlayer.getChannel(), Constants.MIDI_DRUM_CHANNEL)) {
                         currentPlayer.setRootNote(item.getNumber());
                     }
 
@@ -162,19 +158,8 @@ public class SoundParametersPanel extends PlayerAwarePanel {
             }
         });
         
-        presetPanel.add(presetCombo, BorderLayout.CENTER);
-        presetPanel.add(refreshButton, BorderLayout.EAST);
-        presetPanel.setMaximumSize(new Dimension(Integer.MAX_VALUE, presetPanel.getPreferredSize().height));
-
-        // 3. Create edit button panel
-        JPanel editButtonPanel = new JPanel(new BorderLayout(5, 0));
-        editButtonPanel.setBorder(
-                BorderFactory.createCompoundBorder(
-                BorderFactory.createTitledBorder("Actions"),
-                BorderFactory.createEmptyBorder(2, 2, 2, 2)));
-
         JButton editButton = new JButton(Symbols.get(Symbols.MIDI));
-        editButton.setMaximumSize(new Dimension(UIHelper.CONTROL_HEIGHT, UIHelper.CONTROL_HEIGHT));
+        editButton.setMaximumSize(new Dimension(UIHelper.SMALL_CONTROL_WIDTH, UIHelper.CONTROL_HEIGHT));
         editButton.setToolTipText("Edit player properties");
         editButton.addActionListener(e -> {
             Player currentPlayer = getPlayer();
@@ -186,28 +171,60 @@ public class SoundParametersPanel extends PlayerAwarePanel {
                     currentPlayer);
             }
         });
-        
-        editButtonPanel.add(editButton, BorderLayout.CENTER);
-        editButtonPanel.setMaximumSize(new Dimension(80, editButtonPanel.getPreferredSize().height));
 
-        // Add components to horizontal panel with spacing
-        //horizontalPanel.add(instrumentPanel);
-        horizontalPanel.add(channelComboPanel);
+        JButton refreshButton = UIHelper.createPlayerRefreshButton(null, null);
+        refreshButton.setMaximumSize(new Dimension(UIHelper.SMALL_CONTROL_WIDTH, UIHelper.CONTROL_HEIGHT));
+        refreshButton.setToolTipText("Refresh player"); 
+        
+        
+        drumPresetsButton = new JButton(Symbols.get(Symbols.SETTINGS));
+        drumPresetsButton.setToolTipText("Select preset instruments for each drum");
+        drumPresetsButton.setPreferredSize(new Dimension(24, 24));
+        drumPresetsButton.setMaximumSize(new Dimension(UIHelper.SMALL_CONTROL_WIDTH, UIHelper.CONTROL_HEIGHT));
+        drumPresetsButton.addActionListener(e -> {
+            CommandBus.getInstance().publish(
+                    Commands.DRUM_PRESET_SELECTION_REQUEST,
+                    this,
+                    getTargetPlayer().getOwner());
+        });
+        
+        drumPresetsButton.setPreferredSize(new Dimension(24, 24));
+        drumPresetsButton.setMaximumSize(new Dimension(UIHelper.SMALL_CONTROL_WIDTH, UIHelper.CONTROL_HEIGHT));
+        drumPresetsButton.addActionListener(e -> {
+            CommandBus.getInstance().publish(
+                    Commands.DRUM_PRESET_SELECTION_REQUEST,
+                    this,
+                    getTargetPlayer().getOwner());
+        });
+
+
+        
+        
+        presetPanel.add(presetCombo);
+        presetPanel.add(refreshButton);
+        presetPanel.add(editButton);
+        presetPanel.add(drumPresetsButton);
+
+        presetPanel.setMaximumSize(new Dimension(Integer.MAX_VALUE, presetPanel.getPreferredSize().height));
+
+        // 3. Create edit button panel
+        // JPanel editButtonPanel = new JPanel(new BorderLayout(5, 0));
+        // UIHelper.setWidgetPanelBorder(editButtonPanel, "Action");
+
+
+         horizontalPanel.add(channelComboPanel);
 
         InstrumentComboPanel instrumentComboPanel = new InstrumentComboPanel();
         instrumentComboPanel.setMaximumSize(new Dimension(instrumentComboPanel.getPreferredSize().width, instrumentComboPanel.getPreferredSize().height));
 
         horizontalPanel.add(instrumentComboPanel);
-        //horizontalPanel.add(Box.createRigidArea(new Dimension(4, 0)));
-        horizontalPanel.add(soundbankPanel);
-        //horizontalPanel.add(Box.createRigidArea(new Dimension(4, 0)));
-        horizontalPanel.add(bankPanel);
-        //horizontalPanel.add(Box.createRigidArea(new Dimension(4, 0)));
-        horizontalPanel.add(presetPanel);
-        //horizontalPanel.add(Box.createRigidArea(new Dimension(4, 0)));
-        horizontalPanel.add(editButtonPanel);
 
-        // Add the horizontal panel to the CENTER of the main panel
+        horizontalPanel.add(presetPanel);
+
+        horizontalPanel.add(soundbankPanel);
+
+        horizontalPanel.add(bankPanel);
+
         add(horizontalPanel, BorderLayout.CENTER);
     }
 
@@ -217,7 +234,7 @@ public class SoundParametersPanel extends PlayerAwarePanel {
     private void updateControlVisibility(boolean isInternalSynth, boolean isDrumChannel) {
         soundbankPanel.setVisible(isInternalSynth && !isDrumChannel);
         bankPanel.setVisible(isInternalSynth && !isDrumChannel);
-        presetPanel.setVisible(true);
+        drumPresetsButton.setEnabled(isDrumChannel); 
     }
 
     /**
@@ -480,11 +497,7 @@ public class SoundParametersPanel extends PlayerAwarePanel {
 
             // Select current preset if possible
             if (player.getInstrument() != null) {
-                Integer presetNumber = player.getRootNote(); // player.getInstrument().getPreset();
-                if (presetNumber == null && player.getRootNote() != null) {
-                    presetNumber = player.getRootNote();
-                }
-
+                Integer presetNumber = player.getRootNote();
                 if (presetNumber != null) {
                     for (int i = 0; i < presetCombo.getItemCount(); i++) {
                         PresetItem item = presetCombo.getItemAt(i);

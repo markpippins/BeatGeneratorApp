@@ -1,26 +1,24 @@
 package com.angrysurfer.core.sequencer;
 
-import java.util.Map;
-import java.util.Objects;
-import java.util.Random;
-import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import com.angrysurfer.core.api.Command;
 import com.angrysurfer.core.api.CommandBus;
-import com.angrysurfer.core.api.IBusListener;
 import com.angrysurfer.core.api.Commands;
+import com.angrysurfer.core.api.IBusListener;
 import com.angrysurfer.core.model.Pattern;
 import com.angrysurfer.core.model.Song;
 import com.angrysurfer.core.model.Step;
 import com.angrysurfer.core.util.update.PatternUpdateType;
 import com.angrysurfer.core.util.update.StepUpdateType;
-
 import lombok.Getter;
 import lombok.Setter;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.util.Map;
+import java.util.Objects;
+import java.util.Random;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
 @Getter
 @Setter
@@ -35,12 +33,6 @@ public class SongEngine {
         setupCommandBusListener();
     }
 
-    // public static SongEngine getInstance() {
-    // if (instance == null) {
-    // instance = new SongEngine();
-    // }
-    // return instance;
-    // }
 
     public Pattern updatePattern(Pattern pattern, int updateType, int updateValue) {
         logger.info("updatePattern() - patternId: {}, updateType: {}, updateValue: {}",

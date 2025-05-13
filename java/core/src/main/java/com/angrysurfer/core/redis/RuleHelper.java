@@ -148,7 +148,7 @@ public class RuleHelper {
             if (player.getRules() == null) {
                 player.setRules(new HashSet<>());
             }
-            player.getRules().add(rule);
+            player.addRule(rule);
         }
     }
 
@@ -159,7 +159,7 @@ public class RuleHelper {
 
             // Update player's rules set
             if (player.getRules() != null) {
-                player.getRules().remove(rule);
+                player.removeRule(rule);
             }
 
             // Delete the actual rule from Redis

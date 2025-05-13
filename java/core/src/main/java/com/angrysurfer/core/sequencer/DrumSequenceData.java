@@ -6,6 +6,11 @@ import com.angrysurfer.core.api.midi.MIDIConstants;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.stream.Collectors;
+
 /**
  * Data storage class for DrumSequencer constants and state.
  * This class is responsible for storing all the pattern data and constants
@@ -103,6 +108,9 @@ public class DrumSequenceData {
     // Root notes for each drum pad
     private int[] rootNotes; // Store root note for each drum pad
 
+    // Mute state for each step of each drum
+    private int[][] stepMuteValues; // Mute state for each step of each drum [drumIndex][barIndex]
+
     /**
      * Initialize drum sequencer data with default values
      */
@@ -163,6 +171,9 @@ public class DrumSequenceData {
         lastChorusValues = new int[Constants.DRUM_PAD_COUNT][maxPatternLength];
         lastDecayValues = new int[Constants.DRUM_PAD_COUNT][maxPatternLength];
 
+        // Initialize mute arrays
+        stepMuteValues = new int[Constants.DRUM_PAD_COUNT][maxPatternLength];
+
         // Initialize arrays with default values
         for (int i = 0; i < Constants.DRUM_PAD_COUNT; i++) {
             for (int j = 0; j < maxPatternLength; j++) {
@@ -188,6 +199,9 @@ public class DrumSequenceData {
                 lastSentChorus[i][j] = -1;
                 lastSentReverb[i][j] = -1;
                 lastSentDecays[i][j] = -1;
+
+                // Initialize mute values to not muted
+                stepMuteValues[i][j] = 0; // 0 = not muted, 1 = muted
             }
         }
 
@@ -544,5 +558,63 @@ public class DrumSequenceData {
             stepReverb[drumIndex][i] = stepReverb[drumIndex][i + 1];
         }
         stepReverb[drumIndex][length - 1] = firstReverb;
+    }
+
+    /**
+     * Get mute value for a drum at a specific bar
+     * 
+     * @param drumIndex The drum index
+     * @param barIndex  The bar index
+     * @return 1 if muted, 0 if not muted
+     */
+    public int getMuteValue(int drumIndex, int barIndex) {
+        if (drumIndex >= 0 && drumIndex < Constants.DRUM_PAD_COUNT && 
+            barIndex >= 0 && barIndex < maxPatternLength) {
+            return stepMuteValues[drumIndex][barIndex];
+        }
+        return 0;
+    }
+
+    /**
+     * Set mute value for a drum at a specific bar
+     * 
+     * @param drumIndex The drum index
+     * @param barIndex  The bar index
+     * @param value     1 to mute, 0 to unmute
+     */
+    public void setMuteValue(int drumIndex, int barIndex, int value) {
+        if (drumIndex >= 0 && drumIndex < Constants.DRUM_PAD_COUNT && 
+            barIndex >= 0 && barIndex < maxPatternLength) {
+            stepMuteValues[drumIndex][barIndex] = value;
+        }
+    }
+
+    /**
+     * Get all mute values for a drum
+     * 
+     * @param drumIndex The drum index
+     * @return List of mute values for the drum
+     */
+    public List<Integer> getMuteValues(int drumIndex) {
+        if (drumIndex >= 0 && drumIndex < Constants.DRUM_PAD_COUNT) {
+            return Arrays.stream(stepMuteValues[drumIndex])
+                .boxed()
+                .collect(Collectors.toList());
+        }
+        return new ArrayList<>();
+    }
+
+    /**
+     * Set all mute values for a drum
+     * 
+     * @param drumIndex  The drum index
+     * @param muteValues List of mute values (1=muted, 0=unmuted)
+     */
+    public void setMuteValues(int drumIndex, List<Integer> muteValues) {
+        if (drumIndex >= 0 && drumIndex < Constants.DRUM_PAD_COUNT && muteValues != null) {
+            for (int i = 0; i < Math.min(muteValues.size(), maxPatternLength); i++) {
+                stepMuteValues[drumIndex][i] = muteValues.get(i);
+            }
+        }
     }
 }

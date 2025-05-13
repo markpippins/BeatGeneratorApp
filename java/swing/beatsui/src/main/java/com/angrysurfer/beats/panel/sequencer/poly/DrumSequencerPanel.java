@@ -10,6 +10,7 @@ import java.awt.event.FocusEvent;
 import java.util.List;
 import java.util.function.Consumer;
 
+import javax.swing.BorderFactory;
 import javax.swing.JButton;
 import javax.swing.JComboBox;
 import javax.swing.JOptionPane;
@@ -168,19 +169,19 @@ public class DrumSequencerPanel extends JPanel implements IBusListener {
         setLayout(new BorderLayout(2, 2));
         UIHelper.setPanelBorder(this);
 
-        JPanel westPanel = new JPanel(new BorderLayout(2, 2));
-        JPanel eastPanel = new JPanel(new BorderLayout(2, 2));
+        JPanel topEastPanel = new JPanel(new BorderLayout(2, 2));
+        JPanel topWestPanel = new JPanel(new BorderLayout(2, 2));
 
         JPanel topPanel = new JPanel(new BorderLayout(2, 2));
 
         DrumSequenceNavigationPanel navigationPanel = new DrumSequenceNavigationPanel(sequencer);
 
-        westPanel.add(navigationPanel, BorderLayout.WEST);
+        topEastPanel.add(navigationPanel, BorderLayout.WEST);
 
-        eastPanel.add(new SoundParametersPanel(), BorderLayout.NORTH);
+        topWestPanel.add(new SoundParametersPanel(), BorderLayout.WEST);
 
-        topPanel.add(westPanel, BorderLayout.WEST);
-        topPanel.add(eastPanel, BorderLayout.EAST);
+        topPanel.add(topEastPanel, BorderLayout.EAST);
+        topPanel.add(topWestPanel, BorderLayout.WEST);
 
         add(topPanel, BorderLayout.NORTH);
 
@@ -213,24 +214,25 @@ public class DrumSequencerPanel extends JPanel implements IBusListener {
 
         bottomPanel.add(rightPanel, BorderLayout.EAST);
 
-        JPanel buttonPanel = UIHelper.createSectionPanel("Presets");
-
+        // JPanel buttonPanel = new JPanel();
+        //UIHelper.createSectionPanel("Presets");
+        // UIHelper.setWidgetPanelBorder(buttonPanel, "Debug");
         // Create preset selection button
-        JButton presetButton = new JButton(Symbols.get(Symbols.LOAD));
-        presetButton.setToolTipText("Select preset instruments for each drum");
-        presetButton.setPreferredSize(new Dimension(24, 24));
-        presetButton.setMaximumSize(new Dimension(UIHelper.SMALL_CONTROL_WIDTH, UIHelper.CONTROL_HEIGHT));
-        presetButton.addActionListener(e -> {
-            CommandBus.getInstance().publish(
-                    Commands.DRUM_PRESET_SELECTION_REQUEST,
-                    this,
-                    sequencer);
-        });
+        // JButton presetButton = new JButton(Symbols.get(Symbols.LOAD));
+        // presetButton.setToolTipText("Select preset instruments for each drum");
+        // presetButton.setPreferredSize(new Dimension(24, 24));
+        // presetButton.setMaximumSize(new Dimension(UIHelper.SMALL_CONTROL_WIDTH, UIHelper.CONTROL_HEIGHT));
+        // presetButton.addActionListener(e -> {
+        //     CommandBus.getInstance().publish(
+        //             Commands.DRUM_PRESET_SELECTION_REQUEST,
+        //             this,
+        //             sequencer);
+        // });
 
-        buttonPanel.add(presetButton);
-        buttonPanel.add(createRefreshButton());
+        // buttonPanel.add(presetButton);
+        // buttonPanel.add(createRefreshButton());
         // Add the button to the bottom panel
-        westPanel.add(buttonPanel, BorderLayout.EAST);
+        // eastPanel.add(buttonPanel, BorderLayout.EAST);
 
         add(bottomPanel, BorderLayout.SOUTH);
     }
@@ -238,7 +240,7 @@ public class DrumSequencerPanel extends JPanel implements IBusListener {
     // Add this as a new method:
     private JButton createRefreshButton() {
         JButton refreshButton = new JButton(
-                Symbols.get(Symbols.CYCLE));
+                Symbols.get(Symbols.RESTART));
         refreshButton.setToolTipText("Refresh drum instruments (fixes sound issues)");
         refreshButton.setPreferredSize(new Dimension(com.angrysurfer.beats.util.UIHelper.SMALL_CONTROL_WIDTH,
                 com.angrysurfer.beats.util.UIHelper.CONTROL_HEIGHT));

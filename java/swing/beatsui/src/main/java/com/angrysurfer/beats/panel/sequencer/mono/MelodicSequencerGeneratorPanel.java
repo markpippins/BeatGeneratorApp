@@ -123,15 +123,13 @@ public class MelodicSequencerGeneratorPanel extends JPanel {
                 MelodicSequencerManager.getInstance().saveSequence(sequencer);
                 
                 // Notify that pattern was updated
-                SwingUtilities.invokeLater(() -> {
-                    CommandBus.getInstance().publish(
-                        Commands.PATTERN_UPDATED,
-                        sequencer,
-                        new MelodicSequencerEvent(
-                            sequencer.getId(),
-                            data.getId())
-                    );
-                });
+                SwingUtilities.invokeLater(() -> CommandBus.getInstance().publish(
+                    Commands.PATTERN_UPDATED,
+                    sequencer,
+                    new MelodicSequencerEvent(
+                        sequencer.getId(),
+                        data.getId())
+                ));
                 
                 logger.info("Pattern successfully generated and applied");
                 return true;

@@ -44,7 +44,6 @@ import lombok.Getter;
 @Getter
 public class RulesPanel extends PlayerAwarePanel {
     private static final Logger logger = LoggerFactory.getLogger(RulesPanel.class);
-    private static final long serialVersionUID = 1L;
 
     private final JTable table;
     private final RuleTableModel tableModel;

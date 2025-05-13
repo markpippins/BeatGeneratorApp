@@ -382,4 +382,7 @@ public class Commands {
 
     // Add to Commands.java:
     public static final String PLAYER_RULE_UPDATE_EVENT = "PLAYER_RULE_UPDATE_EVENT";
+
+    // In Commands.java
+    public static final String PAD_HIT = "PAD_HIT";
 }

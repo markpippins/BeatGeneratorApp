@@ -52,6 +52,7 @@ public class DrumButton extends JButton implements IBusListener {
         // Add action listener to handle selection behavior
         addActionListener(e -> {
             if (exclusive) {
+                // Always set to selected when exclusive and prevent toggling off
                 setSelected(true);
                 // Notify other buttons in group
                 CommandBus.getInstance().publish(Commands.DRUM_BUTTON_SELECTED, this);
@@ -68,7 +69,7 @@ public class DrumButton extends JButton implements IBusListener {
     public void onAction(Command action) {
         if (Commands.DRUM_BUTTON_SELECTED.equals(action.getCommand())) {
             // If we're in exclusive mode and not the sender, deselect
-            if (exclusive && action.getData() != this && isSelected()) {
+            if (exclusive && action.getData() != this) {
                 setSelected(false);
                 repaint();
             }

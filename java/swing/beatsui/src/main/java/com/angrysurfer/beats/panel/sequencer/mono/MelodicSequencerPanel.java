@@ -235,7 +235,7 @@ public class MelodicSequencerPanel extends JPanel implements IBusListener {
         sequenceParamsPanel = new MelodicSequenceParametersPanel(sequencer);
 
         // Navigation panel goes NORTH-WEST
-        westPanel.add(navigationPanel, BorderLayout.WEST);
+        westPanel.add(navigationPanel, BorderLayout.EAST);
 
         // Sound parameters go NORTH-EAST
         eastPanel.add(new SoundParametersPanel(), BorderLayout.NORTH);
@@ -262,8 +262,8 @@ public class MelodicSequencerPanel extends JPanel implements IBusListener {
         UIHelper.addSafely(topPanel, centerPanel, BorderLayout.CENTER);
 
         // Add panels to the top panel
-        topPanel.add(westPanel, BorderLayout.WEST);
-        topPanel.add(eastPanel, BorderLayout.EAST);
+        topPanel.add(westPanel, BorderLayout.EAST);
+        topPanel.add(eastPanel, BorderLayout.WEST);
 
         // Add top panel to main layout
         add(topPanel, BorderLayout.NORTH);
@@ -311,13 +311,13 @@ public class MelodicSequencerPanel extends JPanel implements IBusListener {
         // Add the bottom panel to the SOUTH region of the main panel
         add(bottomPanel, BorderLayout.SOUTH);
 
-        JPanel buttonPanel = UIHelper.createSectionPanel("System");
+        JPanel buttonPanel = new JPanel();
+        UIHelper.setWidgetPanelBorder(buttonPanel,"Debug");
 
         // Create refresh button
-        JButton refreshButton = new JButton(Symbols.get(Symbols.CYCLE));
+        JButton refreshButton = new JButton(Symbols.get(Symbols.REFRESH));
         refreshButton.setToolTipText("Refresh all instrument presets");
-        refreshButton.setPreferredSize(new Dimension(24, 24));
-        refreshButton.setMaximumSize(new Dimension(UIHelper.SMALL_CONTROL_WIDTH, UIHelper.CONTROL_HEIGHT));
+        refreshButton.setPreferredSize(new Dimension(UIHelper.SMALL_CONTROL_WIDTH, UIHelper.CONTROL_HEIGHT));
         refreshButton.addActionListener(e -> {
             CommandBus.getInstance().publish(
                     Commands.REFRESH_ALL_INSTRUMENTS,
@@ -328,7 +328,7 @@ public class MelodicSequencerPanel extends JPanel implements IBusListener {
         buttonPanel.add(createInstrumentRefreshButton());
         buttonPanel.add(createRefreshButton());
         // Add the button to the bottom panel
-        westPanel.add(buttonPanel, BorderLayout.EAST);
+        westPanel.add(buttonPanel, BorderLayout.WEST);
 
         // Register for command updates
         CommandBus.getInstance().register(this);
@@ -336,7 +336,7 @@ public class MelodicSequencerPanel extends JPanel implements IBusListener {
 
     // Add this as a new method:
     private JButton createInstrumentRefreshButton() {
-        JButton refreshButton = new JButton(Symbols.get(Symbols.CYCLE));
+        JButton refreshButton = new JButton(Symbols.get(Symbols.MIDI));
         refreshButton.setToolTipText("Refresh all instrument sounds (fixes sound issues)");
 
         refreshButton.addActionListener(e -> {
@@ -371,7 +371,7 @@ public class MelodicSequencerPanel extends JPanel implements IBusListener {
     }
 
     private JButton createRefreshButton() {
-        JButton refreshButton = new JButton(Symbols.get(Symbols.CYCLE));
+        JButton refreshButton = new JButton(Symbols.get(Symbols.AUDIO));
         refreshButton.setToolTipText("Refresh instrument preset (fixes sound issues)");
         refreshButton.setPreferredSize(new Dimension(UIHelper.SMALL_CONTROL_WIDTH,
                                                     UIHelper.CONTROL_HEIGHT));
@@ -415,12 +415,6 @@ public class MelodicSequencerPanel extends JPanel implements IBusListener {
         // Delegate to grid panel
         if (gridPanel != null) {
             gridPanel.updateStepHighlighting(oldStep, newStep);
-        }
-    }
-
-    private void updateOctaveLabel() {
-        if (octaveLabel != null) {
-            octaveLabel.setText(Integer.toString(sequencer.getSequenceData().getOctaveShift()));
         }
     }
 

@@ -8,10 +8,7 @@ import java.awt.FontMetrics;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.RenderingHints;
-import java.awt.event.KeyAdapter;
-import java.awt.event.KeyEvent;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
+import java.awt.event.*;
 
 import javax.swing.BorderFactory;
 import javax.swing.JButton;
@@ -71,7 +68,7 @@ public class DrumSequencerButton extends JButton implements IBusListener {
         CommandBus.getInstance().register(this);
 
         // Replace existing action listeners to prevent toggle behavior
-        for (java.awt.event.ActionListener al : getActionListeners()) {
+        for (ActionListener al : getActionListeners()) {
             removeActionListener(al);
         }
 

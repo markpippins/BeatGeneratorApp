@@ -1,37 +1,23 @@
 package com.angrysurfer.core.service;
 
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Set;
-
-import javax.sound.midi.MidiDevice;
-import javax.sound.midi.MidiUnavailableException;
-
 import com.angrysurfer.core.Constants;
-import com.angrysurfer.core.model.Rule;
-import com.angrysurfer.core.model.Session;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import com.angrysurfer.core.api.Command;
 import com.angrysurfer.core.api.CommandBus;
 import com.angrysurfer.core.api.Commands;
 import com.angrysurfer.core.api.IBusListener;
-import com.angrysurfer.core.event.PlayerInstrumentChangeEvent;
-import com.angrysurfer.core.event.PlayerPresetChangeEvent;
-import com.angrysurfer.core.event.PlayerRefreshEvent;
-import com.angrysurfer.core.event.PlayerSelectionEvent;
-import com.angrysurfer.core.event.PlayerUpdateEvent;
-import com.angrysurfer.core.event.PlayerRuleUpdateEvent;
+import com.angrysurfer.core.event.*;
 import com.angrysurfer.core.model.InstrumentWrapper;
 import com.angrysurfer.core.model.Player;
+import com.angrysurfer.core.model.Rule;
+import com.angrysurfer.core.model.Session;
 import com.angrysurfer.core.redis.RedisService;
 import com.angrysurfer.core.sequencer.DrumSequencer;
-import com.angrysurfer.core.sequencer.MelodicSequencer;
-
 import lombok.Getter;
 import lombok.Setter;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.util.*;
 
 /**
  * The central source of truth for all player-related operations.
@@ -142,7 +128,7 @@ public class PlayerManager implements IBusListener {
 
             Long previousInstrumentId = player.getInstrumentId();
 
-            boolean isDrumPlayer = player.getChannel() == Constants.MIDI_DRUM_CHANNEL;
+            boolean isDrumPlayer = Objects.equals(player.getChannel(), Constants.MIDI_DRUM_CHANNEL);
             boolean isPartOfSequencer = false;
             DrumSequencer owningSequencer = null;
             int playerIndexInSequencer = -1;
@@ -176,7 +162,7 @@ public class PlayerManager implements IBusListener {
             savePlayerProperties(player);
             applyInstrumentPreset(player);
 
-            if (isPartOfSequencer && owningSequencer != null) {
+            if (isPartOfSequencer) {
                 commandBus.publish(Commands.DRUM_PLAYER_INSTRUMENT_CHANGED, this,
                         new Object[]{owningSequencer, playerIndexInSequencer, instrument});
             }
@@ -704,46 +690,6 @@ public class PlayerManager implements IBusListener {
             }
         } catch (Exception e) {
             logger.error("Failed to initialize internal instrument: {}", e.getMessage(), e);
-        }
-    }
-
-    /**
-     * Initialize the instrument for this sequencer
-     * Called by PlayerManager during setup
-     */
-    public void initializeInstrument(Player player, boolean exclusive, int tag) {
-        // If we don't have a player yet, exit
-        if (player == null) {
-            logger.warn("Cannot initialize instrument - no player assigned to sequencer");
-            return;
-        }
-
-        try {
-            // Get the instrument from the player
-            if (player.getInstrument() == null) {
-                // No instrument assigned, try to create a default one
-                // First try to find an existing instrument for this channel
-                int channel = player.getChannel();
-                player.setInstrument(InstrumentManager.getInstance()
-                        .getOrCreateInternalSynthInstrument(channel, exclusive, tag));
-
-                logger.info("Created default instrument for sequencer on channel {}", channel);
-            }
-
-            // Ensure proper channel alignment
-            if (player.getInstrument() != null) {
-                player.getInstrument().setChannel(player.getChannel());
-
-                // Apply the instrument preset
-                applyInstrumentPreset(player);
-
-                logger.info("Initialized instrument {} for player {} on channel {}",
-                        player.getInstrument().getName(),
-                        player.getName(),
-                        player.getChannel());
-            }
-        } catch (Exception e) {
-            logger.error("Error initializing instrument: {}", e.getMessage(), e);
         }
     }
 

@@ -1,35 +1,7 @@
 package com.angrysurfer.beats.panel;
 
-import java.awt.*;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
-import java.awt.event.WindowAdapter;
-import java.awt.event.WindowEvent;
-import java.io.File;
-import java.util.ArrayList;
-import java.util.List;
-
-import javax.swing.BorderFactory;
-import javax.swing.Box;
-import javax.swing.BoxLayout;
-import javax.swing.JButton;
-import javax.swing.JComponent;
-import javax.swing.JDialog;
-import javax.swing.JOptionPane;
-import javax.swing.JPanel;
-import javax.swing.JSplitPane;
-import javax.swing.JTabbedPane;
-import javax.swing.JToggleButton;
-import javax.swing.SwingConstants;
-import javax.swing.SwingUtilities;
-
-import com.angrysurfer.beats.panel.instrument.InstrumentsPanel;
-
-import com.angrysurfer.core.api.midi.MIDIConstants;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import com.angrysurfer.beats.Symbols;
+import com.angrysurfer.beats.panel.instrument.InstrumentsPanel;
 import com.angrysurfer.beats.panel.internalsynth.InternalSynthControlPanel;
 import com.angrysurfer.beats.panel.sample.SampleBrowserPanel;
 import com.angrysurfer.beats.panel.sequencer.SongPanel;
@@ -38,18 +10,30 @@ import com.angrysurfer.beats.panel.sequencer.poly.DrumEffectsSequencerPanel;
 import com.angrysurfer.beats.panel.sequencer.poly.DrumParamsSequencerPanel;
 import com.angrysurfer.beats.panel.sequencer.poly.DrumSequencerPanel;
 import com.angrysurfer.beats.panel.session.SessionPanel;
-import com.angrysurfer.beats.widget.Dial;
 import com.angrysurfer.core.api.Command;
 import com.angrysurfer.core.api.CommandBus;
 import com.angrysurfer.core.api.Commands;
 import com.angrysurfer.core.api.IBusListener;
+import com.angrysurfer.core.api.midi.MIDIConstants;
 import com.angrysurfer.core.event.StepUpdateEvent;
+import com.angrysurfer.core.model.Player;
 import com.angrysurfer.core.sequencer.DrumSequencer;
 import com.angrysurfer.core.sequencer.MelodicSequencer;
 import com.angrysurfer.core.service.ChannelManager;
 import com.angrysurfer.core.service.InternalSynthManager;
 import com.angrysurfer.core.service.SessionManager;
-import com.angrysurfer.core.model.Player;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import javax.swing.*;
+import java.awt.*;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
+import java.io.File;
+import java.util.ArrayList;
+import java.util.List;
 
 public class MainPanel extends PlayerAwarePanel implements AutoCloseable, IBusListener {
     private static final Logger logger = LoggerFactory.getLogger(MainPanel.class.getName());
@@ -62,27 +46,16 @@ public class MainPanel extends PlayerAwarePanel implements AutoCloseable, IBusLi
     private static final int DEFAULT_MONO_SEQUENCERS = 8;
 
     private JTabbedPane tabbedPane;
-    private final List<Dial> velocityDials = new ArrayList<>();
-    private final List<Dial> gateDials = new ArrayList<>();
-    private LoggingPanel loggingPanel;
-        
-    private int latencyCompensation = 20;
-    private int lookAheadMs = 40;
-    private boolean useAheadScheduling = true;
-    private int activeMidiChannel = 15;
 
     private DrumSequencerPanel drumSequencerPanel;
     private DrumParamsSequencerPanel drumParamsSequencerPanel;
     private DrumEffectsSequencerPanel drumEffectsSequencerPanel;
 
-    private InternalSynthControlPanel internalSynthControlPanel;
     private MelodicSequencerPanel[] melodicPanels = new MelodicSequencerPanel[MIDIConstants.SEQUENCER_CHANNELS.length];
 
     private GlobalMuteButtonsPanel muteButtonsPanel;
 
     private JTabbedPane drumsTabbedPane;
-
-    private JTabbedPane modulationTabbedPane;
 
     private JTabbedPane melodicTabbedPane;
 
@@ -99,7 +72,7 @@ public class MainPanel extends PlayerAwarePanel implements AutoCloseable, IBusLi
     private void setupTabbedPane() {
         tabbedPane = new JTabbedPane();
 
-        internalSynthControlPanel = new InternalSynthControlPanel();
+        InternalSynthControlPanel internalSynthControlPanel = new InternalSynthControlPanel();
         tabbedPane.addTab("Multi", createDrumSequencersPanel());
 
         tabbedPane.addTab("Melo", createMelodicSequencersPanel());
@@ -115,7 +88,7 @@ public class MainPanel extends PlayerAwarePanel implements AutoCloseable, IBusLi
         tabbedPane.addTab("Samples", createSampleBrowserPanel());
         tabbedPane.addTab("Instruments", createCombinedInstrumentsSystemPanel());
 
-        loggingPanel = new LoggingPanel();
+        LoggingPanel loggingPanel = new LoggingPanel();
         tabbedPane.addTab("Logs", loggingPanel);
         // tabbedPane.addTab("Visualizer", new GridPanel());
         
@@ -199,26 +172,24 @@ public class MainPanel extends PlayerAwarePanel implements AutoCloseable, IBusLi
      */
     private void addListenersRecursive(Component component) {
         // Process JTabbedPane components
-        if (component instanceof JTabbedPane) {
-            JTabbedPane tabbedPane = (JTabbedPane) component;
+        if (component instanceof JTabbedPane pane) {
 
             // Add change listener to this tabbed pane
-            tabbedPane.addChangeListener(e -> {
+            pane.addChangeListener(e -> {
                 // Get the selected component
                 Component selectedComponent = tabbedPane.getSelectedComponent();
                 handleComponentSelection(selectedComponent, tabbedPane);
             });
 
             // Process each child component in the tabbedPane
-            for (int i = 0; i < tabbedPane.getTabCount(); i++) {
-                Component tabComponent = tabbedPane.getComponentAt(i);
+            for (int i = 0; i < pane.getTabCount(); i++) {
+                Component tabComponent = pane.getComponentAt(i);
                 // Recursively process this component
                 addListenersRecursive(tabComponent);
             }
         }
         // Process any container that might contain other components
-        else if (component instanceof Container) {
-            Container container = (Container) component;
+        else if (component instanceof Container container) {
 
             // Process all child components
             for (Component child : container.getComponents()) {
@@ -352,14 +323,8 @@ public class MainPanel extends PlayerAwarePanel implements AutoCloseable, IBusLi
 
         // Initialize all melodic sequencer panels with proper channel distribution
         for (int i = 0; i < DEFAULT_MONO_SEQUENCERS; i++) {
-            // Get channel from ChannelManager based on sequencer index
-            int channel = ChannelManager.getInstance().getChannelForSequencerIndex(i);
-
-            // Create panel with proper channel assignment
             melodicPanels[i] = createMelodicSequencerPanel(i);
-
-            // Use channel number (1-based for display) in tab title
-            melodicTabbedPane.addTab("Mono " + (i + 1), melodicPanels[i]);
+            melodicTabbedPane.addTab("Melo " + (i + 1), melodicPanels[i]);
         }
 
         return melodicTabbedPane;
@@ -388,7 +353,7 @@ public class MainPanel extends PlayerAwarePanel implements AutoCloseable, IBusLi
         detachedWindow.addWindowListener(new WindowAdapter() {
             @Override
             public void windowClosing(WindowEvent e) {
-                logger.info("Reattaching tab: " + title);
+                logger.info("Reattaching tab: {}", title);
 
                 // Remove component from dialog before adding back to tabbedPane
                 detachedWindow.setContentPane(new JPanel());
@@ -431,6 +396,15 @@ public class MainPanel extends PlayerAwarePanel implements AutoCloseable, IBusLi
                 javax.swing.border.TitledBorder.TOP));
 
         // Create a vertical JSplitPane (top-bottom arrangement)
+        JSplitPane splitPane = createSplitPane(instrumentsPanel, systemsPanel);
+
+        // Add the split pane to the combined panel
+        combinedPanel.add(splitPane, BorderLayout.CENTER);
+
+        return combinedPanel;
+    }
+
+    private static JSplitPane createSplitPane(InstrumentsPanel instrumentsPanel, SystemsPanel systemsPanel) {
         JSplitPane splitPane = new JSplitPane(JSplitPane.VERTICAL_SPLIT);
         splitPane.setTopComponent(instrumentsPanel);
         splitPane.setBottomComponent(systemsPanel);
@@ -444,11 +418,7 @@ public class MainPanel extends PlayerAwarePanel implements AutoCloseable, IBusLi
 
         // Remove any borders from the split pane itself
         splitPane.setBorder(null);
-
-        // Add the split pane to the combined panel
-        combinedPanel.add(splitPane, BorderLayout.CENTER);
-
-        return combinedPanel;
+        return splitPane;
     }
 
     private Component createDrumPanel() {
@@ -496,7 +466,7 @@ public class MainPanel extends PlayerAwarePanel implements AutoCloseable, IBusLi
     }
 
     private Component createModulationMatrixPanel() {
-        modulationTabbedPane = new JTabbedPane();
+        JTabbedPane modulationTabbedPane = new JTabbedPane();
 
         // Create a main panel with a border
         JPanel lfoPanel = new JPanel(new BorderLayout(10, 10));
@@ -596,6 +566,7 @@ public class MainPanel extends PlayerAwarePanel implements AutoCloseable, IBusLi
     }
 
     public void playNote(int note, int velocity, int durationMs) {
+        int activeMidiChannel = 15;
         InternalSynthManager.getInstance().playNote(note, velocity, durationMs, activeMidiChannel);
     }
 
@@ -694,35 +665,32 @@ public class MainPanel extends PlayerAwarePanel implements AutoCloseable, IBusLi
 
         metronomeButton.addActionListener(e -> {
             boolean isSelected = metronomeButton.isSelected();
-            logger.info("Metronome toggled: " + (isSelected ? "ON" : "OFF"));
+            logger.info("Metronome toggled: {}", isSelected ? "ON" : "OFF");
             CommandBus.getInstance().publish(isSelected ? Commands.METRONOME_START : Commands.METRONOME_STOP, this);
         });
 
-        CommandBus.getInstance().register(new IBusListener() {
-            @Override
-            public void onAction(Command action) {
-                if (action.getCommand() == null)
-                    return;
+        CommandBus.getInstance().register(action -> {
+            if (action.getCommand() == null)
+                return;
 
-                switch (action.getCommand()) {
-                    case Commands.METRONOME_STARTED:
-                        SwingUtilities.invokeLater(() -> {
-                            metronomeButton.setSelected(true);
-                            metronomeButton.setBackground(Color.GREEN);
-                            metronomeButton.invalidate();
-                            metronomeButton.repaint();
-                        });
-                        break;
+            switch (action.getCommand()) {
+                case Commands.METRONOME_STARTED:
+                    SwingUtilities.invokeLater(() -> {
+                        metronomeButton.setSelected(true);
+                        metronomeButton.setBackground(Color.GREEN);
+                        metronomeButton.invalidate();
+                        metronomeButton.repaint();
+                    });
+                    break;
 
-                    case Commands.METRONOME_STOPPED:
-                        SwingUtilities.invokeLater(() -> {
-                            metronomeButton.setSelected(false);
-                            metronomeButton.setBackground(Color.RED);
-                            metronomeButton.invalidate();
-                            metronomeButton.repaint();
-                        });
-                        break;
-                }
+                case Commands.METRONOME_STOPPED:
+                    SwingUtilities.invokeLater(() -> {
+                        metronomeButton.setSelected(false);
+                        metronomeButton.setBackground(Color.RED);
+                        metronomeButton.invalidate();
+                        metronomeButton.repaint();
+                    });
+                    break;
             }
         });
 
@@ -946,7 +914,7 @@ public class MainPanel extends PlayerAwarePanel implements AutoCloseable, IBusLi
                     try {
                         ((AutoCloseable) comp).close();
                     } catch (Exception e) {
-                        logger.error("Error closing component: " + e.getMessage());
+                        logger.error("Error closing component: {}", e.getMessage());
                     }
                 }
             }
@@ -968,9 +936,8 @@ public class MainPanel extends PlayerAwarePanel implements AutoCloseable, IBusLi
     private MelodicSequencerPanel findMelodicSequencerPanel(Component component) {
         if (component instanceof MelodicSequencerPanel) {
             return (MelodicSequencerPanel) component;
-        } else if (component instanceof Container) {
+        } else if (component instanceof Container container) {
             // Search through container's children recursively
-            Container container = (Container) component;
             for (Component child : container.getComponents()) {
                 MelodicSequencerPanel panel = findMelodicSequencerPanel(child);
                 if (panel != null) {
