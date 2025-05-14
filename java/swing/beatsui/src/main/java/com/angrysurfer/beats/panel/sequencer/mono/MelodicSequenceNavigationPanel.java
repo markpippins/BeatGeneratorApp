@@ -21,21 +21,17 @@ import java.awt.*;
 public class MelodicSequenceNavigationPanel extends JPanel {
 
     private static final Logger logger = LoggerFactory.getLogger(MelodicSequenceNavigationPanel.class);
-
+    private final MelodicSequencer sequencer;
+    private final RedisService redisService;
+    private final MelodicSequencerManager manager;
     private JLabel sequenceIdLabel;
     private JButton firstButton;
     private JButton prevButton;
     private JButton nextButton;
     private JButton lastButton;
-    private JButton saveButton;
-    private JButton newButton; // Add new button like in DrumSequenceNavigationPanel
-
-    private final MelodicSequencer sequencer;
-    private final RedisService redisService;
-    private final MelodicSequencerManager manager;
 
     // Update the constructor to accept the parent panel reference
-    public MelodicSequenceNavigationPanel(MelodicSequencer sequencer, MelodicSequencerPanel parentPanel) {
+    public MelodicSequenceNavigationPanel(MelodicSequencer sequencer) {
         this.sequencer = sequencer;
 
         // Rest of constructor remains the same
@@ -48,11 +44,8 @@ public class MelodicSequenceNavigationPanel extends JPanel {
     private void initializeUI() {
         // Change to use BoxLayout instead of FlowLayout to match SoundParametersPanel
         setLayout(new BoxLayout(this, BoxLayout.X_AXIS));
-        
+
         // Match the border style to SoundParametersPanel - use compound border
-        // setBorder(BorderFactory.createCompoundBorder(
-        //         BorderFactory.createTitledBorder("Sequence"),
-        //         BorderFactory.createEmptyBorder(2, 2, 2, 2)));
         UIHelper.setWidgetPanelBorder(this, "Sequence");
         // Create ID label with adjusted sizing
         sequenceIdLabel = new JLabel(getFormattedIdText(), SwingConstants.CENTER);
@@ -61,19 +54,20 @@ public class MelodicSequenceNavigationPanel extends JPanel {
         sequenceIdLabel.setBackground(UIHelper.darkGray);
         sequenceIdLabel.setForeground(UIHelper.coolBlue);
         sequenceIdLabel.setFont(sequenceIdLabel.getFont().deriveFont(12f));
-        
+
         // Add horizontal strut to match spacing in SoundParametersPanel
         add(Box.createHorizontalStrut(2));
         add(sequenceIdLabel);
         add(Box.createHorizontalStrut(4));
 
         // Create navigation buttons with consistent styling
-        newButton = createButton("➕", "Create new sequence", e -> createNewSequence());
+        // Add new button like in DrumSequenceNavigationPanel
+        JButton newButton = createButton("➕", "Create new sequence", e -> createNewSequence());
         firstButton = createButton("⏮", "First sequence", e -> loadFirstSequence());
         prevButton = createButton("◀", "Previous sequence", e -> loadPreviousSequence());
         nextButton = createButton("▶", "Next sequence", e -> loadNextSequence());
         lastButton = createButton("⏭", "Last sequence", e -> loadLastSequence());
-        saveButton = createButton("💾", "Save current sequence", e -> saveCurrentSequence());
+        JButton saveButton = createButton("💾", "Save current sequence", e -> saveCurrentSequence());
 
         // Add components with consistent spacing
         add(newButton);
@@ -87,10 +81,10 @@ public class MelodicSequenceNavigationPanel extends JPanel {
         add(lastButton);
         add(Box.createHorizontalStrut(4));
         add(saveButton);
-        
+
         // Add flexible space at the end
         add(Box.createHorizontalGlue());
-        
+
         // Set initial button state
         updateButtonStates();
     }

@@ -228,24 +228,33 @@ public class InstrumentManager implements IBusListener {
     }
 
     /**
-     * Update instrument in cache and persist it
+     * Update an instrument with special handling for default instruments
      */
     public void updateInstrument(InstrumentWrapper instrument) {
-        if (instrument == null || instrument.getId() == null) {
-            logger.warn("Cannot update instrument: null or missing ID");
+        if (instrument == null) {
+            logger.warn("Cannot update null instrument");
             return;
         }
-
-        // Store in cache
-        instrumentCache.put(instrument.getId(), instrument);
-
-        // Persist to storage using RedisService instead of persistenceService
+        
         try {
-            RedisService.getInstance().saveInstrument(instrument);
-            logger.debug("Saved instrument: {} (ID: {})",
-                    instrument.getName(), instrument.getId());
+            // Check if this is a default instrument
+            if (Boolean.TRUE.equals(instrument.getIsDefault())) {
+                logger.info("Updating default instrument in UserConfig: {}", instrument.getName());
+                // Save to UserConfig
+                UserConfigManager.getInstance().updateDefaultInstrument(instrument);
+            } else {
+                // Regular instrument - save to instrument storage
+                RedisService.getInstance().saveInstrument(instrument);
+            }
+            
+            // Update the in-memory cache
+            instrumentCache.put(instrument.getId(), instrument);
+            
+            // Notify listeners
+            commandBus.publish(Commands.INSTRUMENT_UPDATED, this, instrument);
+            
         } catch (Exception e) {
-            logger.error("Failed to persist instrument: {}", e.getMessage());
+            logger.error("Error updating instrument: {}", e.getMessage(), e);
         }
     }
 

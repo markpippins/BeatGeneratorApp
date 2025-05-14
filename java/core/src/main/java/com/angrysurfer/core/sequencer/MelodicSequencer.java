@@ -1,27 +1,8 @@
 package com.angrysurfer.core.sequencer;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.function.Consumer;
-import java.util.stream.Collectors;
-
-import javax.sound.midi.MidiDevice;
-import javax.sound.midi.Receiver;
-
 import com.angrysurfer.core.Constants;
+import com.angrysurfer.core.api.*;
 import com.angrysurfer.core.api.midi.MIDIConstants;
-import com.angrysurfer.core.service.*;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import com.angrysurfer.core.api.Command;
-import com.angrysurfer.core.api.CommandBus;
-import com.angrysurfer.core.api.Commands;
-import com.angrysurfer.core.api.IBusListener;
-import com.angrysurfer.core.api.TimingBus;
 import com.angrysurfer.core.event.NoteEvent;
 import com.angrysurfer.core.event.PatternSwitchEvent;
 import com.angrysurfer.core.event.StepUpdateEvent;
@@ -30,58 +11,42 @@ import com.angrysurfer.core.model.Note;
 import com.angrysurfer.core.model.Player;
 import com.angrysurfer.core.model.Session;
 import com.angrysurfer.core.redis.RedisService;
-
+import com.angrysurfer.core.service.*;
 import lombok.Getter;
 import lombok.Setter;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import javax.sound.midi.MidiDevice;
+import javax.sound.midi.Receiver;
+import java.util.*;
+import java.util.function.Consumer;
+import java.util.stream.Collectors;
 
 @Getter
 @Setter
 public class MelodicSequencer implements IBusListener {
     private static final Logger logger = LoggerFactory.getLogger(MelodicSequencer.class);
-
+    private final javax.sound.midi.ShortMessage reuseableMessage = new javax.sound.midi.ShortMessage();
     private int currentStep = 0; // Current step in the pattern
     private long tickCounter = 0; // Tick counter
     private boolean isPlaying = false; // Flag indicating playback state
     private int bounceDirection = 1; // Direction for bounce mode
     private boolean isLooping = false;
-
     private Integer currentBar = null;
-
     private MelodicSequenceData sequenceData = new MelodicSequenceData();
-
-    public MelodicSequenceData getSequenceData() {
-        return sequenceData;
-    }
-
-    public void setSequenceData(MelodicSequenceData data) {
-        this.sequenceData = data;
-        updateQuantizer();
-    }
-
     private Boolean[] scaleNotes; // Computed from root note and scale
     private Quantizer quantizer; // Computed from scale notes
-
     private Consumer<StepUpdateEvent> stepUpdateListener;
     private Consumer<NoteEvent> noteEventListener;
-
     private int masterTempo;
-
     private Integer id;
-
     private boolean latchEnabled = false;
-
     private Consumer<NoteEvent> noteEventPublisher;
-
     private Long nextPatternId = null;
-
-    private final javax.sound.midi.ShortMessage reuseableMessage = new javax.sound.midi.ShortMessage();
-
     private long lastNoteTriggeredTime = 0;
-
     private Player player;
-
     private int currentTilt = 0;
-
     private boolean currentlyMuted = false;
 
     public MelodicSequencer(Integer id) {
@@ -95,6 +60,15 @@ public class MelodicSequencer implements IBusListener {
         updateQuantizer();
 
         logger.info("MelodicSequencer initialized and registered with CommandBus");
+    }
+
+    public MelodicSequenceData getSequenceData() {
+        return sequenceData;
+    }
+
+    public void setSequenceData(MelodicSequenceData data) {
+        this.sequenceData = data;
+        updateQuantizer();
     }
 
     public void updateQuantizer() {
@@ -125,7 +99,7 @@ public class MelodicSequencer implements IBusListener {
 
     private void initializePlayer(Player player) {
         PlayerManager.getInstance().applyInstrumentPreset(player);
-        
+
         // Add this explicit program change to ensure the preset is applied:
         if (player != null && player.getInstrument() != null) {
             try {
@@ -134,14 +108,14 @@ public class MelodicSequencer implements IBusListener {
                 int channel = player.getChannel();
                 int bankIndex = instrument.getBankIndex() != null ? instrument.getBankIndex() : 0;
                 int preset = instrument.getPreset() != null ? instrument.getPreset() : 0;
-                
+
                 // Send explicit bank select and program change
                 instrument.controlChange(0, (bankIndex >> 7) & 0x7F);  // Bank MSB
                 instrument.controlChange(32, bankIndex & 0x7F);        // Bank LSB
                 instrument.programChange(preset, 0);
-                
+
                 logger.info("Explicitly set instrument {} to bank {} program {} on channel {}",
-                    instrument.getName(), bankIndex, preset, channel);
+                        instrument.getName(), bankIndex, preset, channel);
             } catch (Exception e) {
                 logger.error("Error applying program change: {}", e.getMessage(), e);
             }
@@ -465,61 +439,67 @@ public class MelodicSequencer implements IBusListener {
             return;
         }
 
+        List<Note> ordered = UserConfigManager.getInstance().getNotesOrderedById();
+        List<Note> notes = UserConfigManager.getInstance().getCurrentConfig().getDefaultNotes();
 
-        // Player existingPlayer = UserConfigManager.getInstance().getCurrentConfig().getDefaultNotes().get(getId());
-        Player existingPlayer = findExistingPlayerForSequencer(session);
+        Optional<Note> opt = notes.stream().filter(p -> p.getChannel().equals(playerChannel)).findFirst();
 
-        if (existingPlayer != null) {
-            logger.info("Using existing player {} for sequencer {}", existingPlayer.getId(), id);
-            player = existingPlayer;
-            if (player.getChannel() != playerChannel) {
-                player.setDefaultChannel(playerChannel);
-                player.setOwner(this);
-                player.setMelodicPlayer(true);
-                PlayerManager.getInstance().savePlayerProperties(player);
-            }
+        if (opt.isPresent()) {
+
+            player = opt.get();
+            logger.info("Using existing player {} for sequencer {}", player.getId(), id);
+            // if (player.getChannel() != playerChannel) {
+            player.setDefaultChannel(playerChannel);
+            player.setOwner(this);
+            player.setMelodicPlayer(true);
+            //  PlayerManager.getInstance().savePlayerProperties(player);
+            //}
         } else {
             logger.info("Creating new player for melodic sequencer {}", id);
-            player = RedisService.getInstance().newNote();
-            Integer tag = getId() + 1;
-
-            player.setOwner(this);
-            player.setName("Melo " + tag.toString());
+            // player = RedisService.getInstance().newNote();
+            player = new Note();
+            player.setId(RedisService.getInstance().getPlayerHelper().getNextPlayerId());
+            player.setRules(new HashSet<>()); // Ensure rules are initialized
+            player.setMinVelocity(60);
+            player.setMaxVelocity(127);
+            player.setLevel(100);
+            player.setIsDefault(true);
+            player.setName("Melo " + getId() + 1);
             player.setDefaultChannel(playerChannel);
-
-            InstrumentWrapper instrument = UserConfigManager.getInstance().getCurrentConfig().getInstruments()
-                        .stream().filter(i -> i.getIsDefault()).collect(Collectors.toList()).get(getId());
-            InternalSynthManager.getInstance().initializeInstrumentState(instrument);
-            //InstrumentWrapper instrument = InstrumentManager.getInstance()
-            //        .getOrCreateInternalSynthInstrument(playerChannel, true, player.getId().intValue());
-
-            if (instrument != null) {
-                player.setInstrument(instrument);
-            } else {
-                logger.warn("Could not create instrument for melodic sequencer {}", id);
-                PlayerManager.getInstance().initializeInternalInstrument(player, true, player.getId().intValue());
-            }
-
-            if (player.getInstrument() != null) {
-                MidiDevice device = DeviceManager.getInstance().getMidiDevice(player.getInstrument().getDeviceName());
-                if (device != null) {
-                    player.getInstrument().setDevice(device);
-                }
-                player.getInstrument().setAssignedToPlayer(true);
-            }
-
-            if (sequenceData != null) {
-                applySequenceDataToInstrument();
-            }
-
-            initializePlayer(player);
-            player.noteOn(player.getRootNote(), 100);
-            
-            session.getPlayers().add(player);
-            PlayerManager.getInstance().savePlayerProperties(player);
-            SessionManager.getInstance().saveSession(session);
-            logger.info("Added new player to session {}: {}", session.getId(), player.getId());
         }
+
+        //InstrumentWrapper instrument = UserConfigManager.getInstance().getCurrentConfig().getInstruments()
+        //        .stream().filter(InstrumentWrapper::getIsDefault).toList().get(getId());
+
+
+//        if (player.getInstrument() != null) {
+//            InternalSynthManager.getInstance().initializeInstrumentState(player.getInstrument());
+//        } else {
+//            logger.warn("Could not create instrument for melodic sequencer {}", id);
+//        }
+
+        if (player.getInstrument() != null) {
+            DeviceManager.getInstance();
+            MidiDevice device = DeviceManager.getMidiDevice(player.getInstrument().getDeviceName());
+            if (device != null) {
+                player.getInstrument().setDevice(device);
+            }
+            player.getInstrument().setAssignedToPlayer(true);
+
+            PlayerManager.getInstance().initializeInternalInstrument(player, true, player.getId().intValue());
+        }
+
+        if (sequenceData != null) {
+            applySequenceDataToInstrument();
+        }
+
+        initializePlayer(player);
+        player.noteOn(player.getRootNote(), 100);
+
+        session.getPlayers().add(player);
+        PlayerManager.getInstance().savePlayerProperties(player);
+        SessionManager.getInstance().saveSession(session);
+        logger.info("Added new player to session {}: {}", session.getId(), player.getId());
     }
 
     private void applySequenceDataToInstrument() {
@@ -551,7 +531,7 @@ public class MelodicSequencer implements IBusListener {
 
     /**
      * Find an existing player for the sequencer in the session.
-     * 
+     *
      * @param session The session to search in.
      * @return The existing player, or null if not found.
      */
@@ -567,7 +547,7 @@ public class MelodicSequencer implements IBusListener {
                     ((MelodicSequencer) p.getOwner()).getId() != null &&
                     ((MelodicSequencer) p.getOwner()).getId().equals(id) &&
                     p.getChannel() == MIDIConstants.SEQUENCER_CHANNELS[id]) {
-                    // p.noteOn(p.getRootNote(), 100);
+                // p.noteOn(p.getRootNote(), 100);
                 return p;
             }
         }
@@ -576,28 +556,11 @@ public class MelodicSequencer implements IBusListener {
         return null;
     }
 
-    public void setHarmonicTiltValues(List<Integer> tiltValues) {
-        if (tiltValues == null || tiltValues.isEmpty()) {
-            logger.warn("Attempted to set null or empty tilt values");
-            return;
-        }
-
-        int[] tiltArray = new int[Math.max(sequenceData.getPatternLength(), tiltValues.size())];
-
-        for (int i = 0; i < tiltValues.size(); i++) {
-            tiltArray[i] = tiltValues.get(i);
-        }
-
-        sequenceData.setHarmonicTiltValues(tiltArray);
-
-        logger.info("Set {} harmonic tilt values in sequencer", tiltValues.size());
-    }
-
     /**
      * Generate a random pattern
-     * 
+     *
      * @param octaveRange The number of octaves to use (1-4)
-     * @param density The note density (0-100)
+     * @param density     The note density (0-100)
      * @return true if pattern was generated successfully
      */
     public boolean generatePattern(int octaveRange, int density) {
@@ -606,15 +569,15 @@ public class MelodicSequencer implements IBusListener {
                 logger.error("Cannot generate pattern - sequence data is null");
                 return false;
             }
-            
+
             // Validate parameters
             if (octaveRange < 1) octaveRange = 1;
             if (octaveRange > 4) octaveRange = 4;
             if (density < 0) density = 0;
             if (density > 100) density = 100;
-            
+
             logger.info("Generating pattern with octave range: {}, density: {}", octaveRange, density);
-            
+
             // Clear current pattern
             for (int step = 0; step < sequenceData.getMaxSteps(); step++) {
                 sequenceData.setStepActive(step, false);
@@ -623,21 +586,21 @@ public class MelodicSequencer implements IBusListener {
                 sequenceData.setGateValue(step, 75); // Medium gate
                 sequenceData.setProbabilityValue(step, 100); // Full probability
             }
-            
+
             // Calculate note range based on octave selection
             int baseNote = 60 - (12 * (octaveRange / 2)); // Center around middle C
             int noteRange = 12 * octaveRange;
-            
+
             // Determine active steps based on density
             int stepsToActivate = (int) Math.round(sequenceData.getMaxSteps() * (density / 100.0));
-            
+
             // Ensure we have at least one step if density > 0
             if (density > 0 && stepsToActivate == 0) {
                 stepsToActivate = 1;
             }
-            
+
             logger.debug("Will activate {} steps out of {}", stepsToActivate, sequenceData.getMaxSteps());
-            
+
             // Generate steps
             java.util.Random random = new java.util.Random();
             for (int i = 0; i < stepsToActivate; i++) {
@@ -650,37 +613,37 @@ public class MelodicSequencer implements IBusListener {
                     // Prevent infinite loops
                     if (attempts > 100) break;
                 } while (sequenceData.isStepActive(step) && attempts < 100);
-                
+
                 // Activate the step
                 sequenceData.setStepActive(step, true);
-                
+
                 // Generate a random note in the selected range
                 int noteOffset = random.nextInt(noteRange);
                 int note = baseNote + noteOffset;
-                
+
                 // Quantize to scale if enabled
                 if (sequenceData.isQuantizeEnabled() && quantizer != null) {
                     note = quantizeNote(note);
                 }
-                
+
                 // Set the note
                 sequenceData.setNoteValue(step, note);
-                
+
                 // Random velocity between 70-100
                 int velocity = 70 + random.nextInt(31);
                 sequenceData.setVelocityValue(step, velocity);
-                
+
                 // Random gate between 50-100
                 int gate = 50 + random.nextInt(51);
                 sequenceData.setGateValue(step, gate);
-                
+
                 // Sometimes add randomized probability
                 if (random.nextDouble() < 0.3) { // 30% chance of partial probability
                     int probability = 50 + random.nextInt(51); // 50-100
                     sequenceData.setProbabilityValue(step, probability);
                 }
             }
-            
+
             // Generate harmonic tilt values
 //            int[] tiltValues = new int[sequenceData.getMaxSteps()];
 //            for (int i = 0; i < sequenceData.getMaxSteps(); i++) {
@@ -696,7 +659,7 @@ public class MelodicSequencer implements IBusListener {
 //                    harmonicTiltValues.add(sequenceData.getTiltValue(i));
 //                }
 //            }
-            
+
             logger.info("Successfully generated new pattern with {} active steps", stepsToActivate);
             return true;
         } catch (Exception e) {
@@ -725,38 +688,38 @@ public class MelodicSequencer implements IBusListener {
 
                     if (update.bar() != null) {
                         int newBar = update.bar() - 1; // Adjust for 0-based index
-                        
+
                         // Only process if bar actually changed
                         if (currentBar == null || newBar != currentBar) {
                             currentBar = newBar;
                             logger.debug("Current bar updated to {}", currentBar);
-                            
+
                             // Process tilt values
                             if (getHarmonicTiltValues() != null && getHarmonicTiltValues().size() > currentBar) {
                                 currentTilt = getHarmonicTiltValues().get(currentBar);
                                 logger.debug("Current tilt value for bar {}: {}", currentBar, currentTilt);
                             }
-                            
+
                             // Process mute values
                             if (sequenceData.getMuteValues() != null && sequenceData.getMuteValues().size() > currentBar) {
                                 int muteValue = sequenceData.getMuteValue(currentBar);
                                 boolean shouldMute = muteValue > 0;
-                                
+
                                 // Only update if mute state changes
                                 if (shouldMute != currentlyMuted) {
                                     currentlyMuted = shouldMute;
-                                    
+
                                     // Apply mute state if player exists
                                     if (player != null) {
-                                        int originalLevel = player.getOriginalLevel() > 0 ? 
+                                        int originalLevel = player.getOriginalLevel() > 0 ?
                                                 player.getOriginalLevel() : 100;
-                                        
+
                                         player.setLevel(shouldMute ? 0 : originalLevel);
-                                        
+
                                         logger.debug("Bar {}: Player {} {}",
-                                                currentBar, player.getName(), 
+                                                currentBar, player.getName(),
                                                 shouldMute ? "muted" : "unmuted");
-                                        
+
                                         // Notify system of level change
                                         CommandBus.getInstance().publish(
                                                 Commands.PLAYER_UPDATED,
@@ -790,10 +753,10 @@ public class MelodicSequencer implements IBusListener {
             }
 
             case Commands.REFRESH_PLAYER_INSTRUMENT -> {
-                if (action.getData() instanceof Long playerId && 
-                    player != null && 
-                    player.getId().equals(playerId)) {
-                    
+                if (action.getData() instanceof Long playerId &&
+                        player != null &&
+                        player.getId().equals(playerId)) {
+
                     logger.info("Explicit refresh requested for player instrument: {}", playerId);
                     PlayerManager.getInstance().applyInstrumentPreset(player);
                 }
@@ -820,12 +783,29 @@ public class MelodicSequencer implements IBusListener {
         return result;
     }
 
+    public void setHarmonicTiltValues(List<Integer> tiltValues) {
+        if (tiltValues == null || tiltValues.isEmpty()) {
+            logger.warn("Attempted to set null or empty tilt values");
+            return;
+        }
+
+        int[] tiltArray = new int[Math.max(sequenceData.getPatternLength(), tiltValues.size())];
+
+        for (int i = 0; i < tiltValues.size(); i++) {
+            tiltArray[i] = tiltValues.get(i);
+        }
+
+        sequenceData.setHarmonicTiltValues(tiltArray);
+
+        logger.info("Set {} harmonic tilt values in sequencer", tiltValues.size());
+    }
+
     public List<Integer> getMuteValues() {
         if (sequenceData == null) {
             logger.error("sequenceData is null in getMuteValues()");
             return new ArrayList<>();
         }
-        
+
         return sequenceData.getMuteValues();
     }
 
@@ -837,12 +817,12 @@ public class MelodicSequencer implements IBusListener {
             logger.error("Cannot set mute values: sequenceData or muteValues is null");
             return;
         }
-        
+
         int[] muteArray = new int[Math.max(sequenceData.getPatternLength(), muteValues.size())];
         for (int i = 0; i < muteValues.size(); i++) {
             muteArray[i] = muteValues.get(i);
         }
-        
+
         sequenceData.setMuteValues(muteArray);
         logger.info("Set {} mute values in sequencer", muteValues.size());
     }

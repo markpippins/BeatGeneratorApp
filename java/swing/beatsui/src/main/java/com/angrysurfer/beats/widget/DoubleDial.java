@@ -1,33 +1,20 @@
 package com.angrysurfer.beats.widget;
 
-import java.awt.BasicStroke;
-import java.awt.Color;
-import java.awt.Dimension;
-import java.awt.GradientPaint;
-import java.awt.Graphics;
-import java.awt.Graphics2D;
-import java.awt.RenderingHints;
-import java.awt.Window;
-import java.util.ArrayList;
-import java.util.List;
-
-import javax.swing.JComponent;
-import javax.swing.SwingUtilities;
-import javax.swing.event.ChangeEvent;
-import javax.swing.event.ChangeListener;
-
 import com.angrysurfer.core.api.CommandBus;
-
 import lombok.Getter;
 import lombok.Setter;
+
+import javax.swing.*;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
+import java.awt.*;
+import java.util.ArrayList;
+import java.util.List;
 
 @Getter
 @Setter
 public class DoubleDial extends JComponent {
 
-    // private static final Color KNOB_COLOR = new Color(30, 100, 255);
-    // private static final Color KNOB_GRADIENT_START = new Color(60, 130, 255);
-    // private static final Color KNOB_GRADIENT_END = new Color(20, 80, 200);
     private static final Color HIGHLIGHT_COLOR = new Color(255, 255, 255, 60);
     private static final int BASE_WINDOW_WIDTH = 1200;
     private static final int BASE_WINDOW_HEIGHT = 800;
@@ -48,6 +35,7 @@ public class DoubleDial extends JComponent {
     private Color gradientStartColor = new Color(60, 130, 255);
     private Color gradientEndColor = new Color(20, 80, 200);
     private Color knobColor = new Color(30, 100, 255);
+    private boolean updateOnResize = false;
 
     public DoubleDial() {
         this.command = null;
@@ -88,22 +76,22 @@ public class DoubleDial extends JComponent {
             public void mouseDragged(java.awt.event.MouseEvent e) {
                 if (isDragging) {
                     int delta = lastY - e.getY();
-                    
+
                     // Calculate how many steps this drag represents
                     double range = maximum - minimum;
-                    double pixelsPerStep = 100.0 / range;  
+                    double pixelsPerStep = 100.0 / range;
                     double steps = delta / pixelsPerStep;
-                    
+
                     // Apply the stepSize
                     double valueChange = steps * stepSize;
-                    
+
                     // Round to nearest step to avoid floating point errors
                     double newValue = value + valueChange;
                     newValue = minimum + Math.round((newValue - minimum) / stepSize) * stepSize;
-                    
+
                     // Ensure within bounds
                     newValue = Math.min(maximum, Math.max(minimum, newValue));
-                    
+
                     setValue(newValue, true);
                     lastY = e.getY();
                 }
@@ -111,31 +99,28 @@ public class DoubleDial extends JComponent {
         });
 
         // Add mouse wheel support
-        addMouseWheelListener(new java.awt.event.MouseWheelListener() {
-            @Override
-            public void mouseWheelMoved(java.awt.event.MouseWheelEvent e) {
-                if (!isEnabled()) {
-                    return;
-                }
-
-                // Get the wheel rotation (negative for up, positive for down)
-                int wheelRotation = e.getWheelRotation();
-
-                // Use stepSize for wheel changes
-                double delta = -wheelRotation * stepSize;
-
-                // Calculate new value with bounds checking
-                double newValue = value + delta;
-                
-                // Round to nearest step to avoid floating point errors
-                newValue = minimum + Math.round((newValue - minimum) / stepSize) * stepSize;
-                
-                // Apply bounds
-                newValue = Math.min(maximum, Math.max(minimum, newValue));
-
-                // Update the value
-                setValue(newValue, true);
+        addMouseWheelListener(e -> {
+            if (!isEnabled()) {
+                return;
             }
+
+            // Get the wheel rotation (negative for up, positive for down)
+            int wheelRotation = e.getWheelRotation();
+
+            // Use stepSize for wheel changes
+            double delta = -wheelRotation * stepSize;
+
+            // Calculate new value with bounds checking
+            double newValue = value + delta;
+
+            // Round to nearest step to avoid floating point errors
+            newValue = minimum + Math.round((newValue - minimum) / stepSize) * stepSize;
+
+            // Apply bounds
+            newValue = Math.min(maximum, Math.max(minimum, newValue));
+
+            // Update the value
+            setValue(newValue, true);
         });
 
     }
@@ -150,8 +135,6 @@ public class DoubleDial extends JComponent {
         this.gradientStartColor = color.brighter();
         this.gradientEndColor = color.darker();
     }
-
-    private boolean updateOnResize = false;
 
     protected void updateSize() {
         Window window = SwingUtilities.getWindowAncestor(this);
@@ -199,7 +182,7 @@ public class DoubleDial extends JComponent {
         g2d.fillOval(2, 2, min - 4, min - 4);
 
         // Calculate normalized value between 0 and 1 based on min/max range
-        double normalizedValue = (value - minimum) / (double) (maximum - minimum);
+        double normalizedValue = (value - minimum) / (maximum - minimum);
 
         // Draw indicator line with thicker stroke
         g2d.setColor(Color.WHITE);
@@ -261,10 +244,6 @@ public class DoubleDial extends JComponent {
     public void setLabel(String label) {
         this.label = label;
         repaint();
-    }
-
-    public String getLabel() {
-        return this.label;
     }
 
     public void setStepSize(double size) {

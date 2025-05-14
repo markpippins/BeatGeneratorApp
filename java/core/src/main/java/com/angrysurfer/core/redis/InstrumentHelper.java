@@ -1,21 +1,17 @@
 package com.angrysurfer.core.redis;
 
-import java.util.List;
-import java.util.stream.Collectors;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import com.angrysurfer.core.model.InstrumentWrapper;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
-
 import lombok.Getter;
 import lombok.Setter;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import redis.clients.jedis.Jedis;
 import redis.clients.jedis.JedisPool;
 
-import javax.swing.*;
+import java.util.List;
+import java.util.stream.Collectors;
 
 @Getter
 @Setter
@@ -69,13 +65,29 @@ public class InstrumentHelper {
         }
     }
 
+    public long getNextInstrumentId() {
+        try (Jedis jedis = jedisPool.getResource()) {
+            return jedis.incr("seq:instrument");
+        } catch (Exception e) {
+            logger.error("Error getting instrument id: " + e.getMessage());
+            throw new RuntimeException("Failed to save instrument", e);
+        }
+    }
+
     public void saveInstrument(InstrumentWrapper instrument) {
         try (Jedis jedis = jedisPool.getResource()) {
+            // Skip saving default instruments
+            if (Boolean.TRUE.equals(instrument.getIsDefault())) {
+                logger.debug("Skipping Redis save for default instrument: {}", instrument.getName());
+                return;
+            }
+
             if (instrument.getId() == null) {
                 instrument.setId(jedis.incr("seq:instrument"));
             }
             String json = objectMapper.writeValueAsString(instrument);
             jedis.set("instrument:" + instrument.getId(), json);
+            logger.debug("Saved instrument to Redis: {}", instrument.getName());
         } catch (Exception e) {
             logger.error("Error saving instrument: " + e.getMessage());
             throw new RuntimeException("Failed to save instrument", e);

@@ -215,7 +215,7 @@ public class MelodicSequencerPanel extends JPanel implements IBusListener {
         JPanel topPanel = new JPanel(new BorderLayout(2, 2));
 
         // Create sequence navigation panel
-        navigationPanel = new MelodicSequenceNavigationPanel(sequencer, this);
+        navigationPanel = new MelodicSequenceNavigationPanel(sequencer);
 
         // Create sequence parameters panel
         sequenceParamsPanel = new MelodicSequenceParametersPanel(sequencer);
@@ -298,7 +298,7 @@ public class MelodicSequencerPanel extends JPanel implements IBusListener {
         add(bottomPanel, BorderLayout.SOUTH);
 
         JPanel buttonPanel = new JPanel();
-        UIHelper.setWidgetPanelBorder(buttonPanel,"Debug");
+        UIHelper.setWidgetPanelBorder(buttonPanel, "Debug");
 
         // Create refresh button
         JButton refreshButton = new JButton(Symbols.get(Symbols.REFRESH));
@@ -360,37 +360,37 @@ public class MelodicSequencerPanel extends JPanel implements IBusListener {
         JButton refreshButton = new JButton(Symbols.get(Symbols.AUDIO));
         refreshButton.setToolTipText("Refresh instrument preset (fixes sound issues)");
         refreshButton.setPreferredSize(new Dimension(UIHelper.SMALL_CONTROL_WIDTH,
-                                                    UIHelper.CONTROL_HEIGHT));
+                UIHelper.CONTROL_HEIGHT));
         refreshButton.setMaximumSize(new Dimension(UIHelper.SMALL_CONTROL_WIDTH,
-                                                  UIHelper.CONTROL_HEIGHT));
-        
+                UIHelper.CONTROL_HEIGHT));
+
         refreshButton.addActionListener(e -> {
-            if (sequencer != null && sequencer.getPlayer() != null && 
-                sequencer.getPlayer().getInstrument() != null) {
-                
+            if (sequencer != null && sequencer.getPlayer() != null &&
+                    sequencer.getPlayer().getInstrument() != null) {
+
                 // Log current instrument state
                 com.angrysurfer.core.model.InstrumentWrapper instr = sequencer.getPlayer().getInstrument();
-                logger.info("Refreshing instrument: {} (bank={}, program={})", 
-                          instr.getName(), instr.getBankIndex(), instr.getPreset());
-                
+                logger.info("Refreshing instrument: {} (bank={}, program={})",
+                        instr.getName(), instr.getBankIndex(), instr.getPreset());
+
                 // Send the player-specific refresh event
                 PlayerRefreshEvent event = new PlayerRefreshEvent(sequencer.getPlayer());
                 com.angrysurfer.core.api.CommandBus.getInstance().publish(
-                    com.angrysurfer.core.api.Commands.PLAYER_REFRESH_EVENT,
-                    this,
-                    event
+                        com.angrysurfer.core.api.Commands.PLAYER_REFRESH_EVENT,
+                        this,
+                        event
                 );
-                
+
                 // Update UI
                 com.angrysurfer.core.api.CommandBus.getInstance().publish(
-                    com.angrysurfer.core.api.Commands.STATUS_UPDATE, 
-                    this, 
-                    new com.angrysurfer.core.api.StatusUpdate(
-                        "Preset Refresh", "Info", "Refreshed instrument for " + sequencer.getPlayer().getName())
+                        com.angrysurfer.core.api.Commands.STATUS_UPDATE,
+                        this,
+                        new com.angrysurfer.core.api.StatusUpdate(
+                                "Preset Refresh", "Info", "Refreshed instrument for " + sequencer.getPlayer().getName())
                 );
             }
         });
-        
+
         return refreshButton;
     }
 
@@ -477,9 +477,9 @@ public class MelodicSequencerPanel extends JPanel implements IBusListener {
         switch (action.getCommand()) {
             // Arrow syntax for all cases
             case Commands.MELODIC_SEQUENCE_LOADED,
-                    Commands.MELODIC_SEQUENCE_CREATED,
-                    Commands.MELODIC_SEQUENCE_SELECTED,
-                    Commands.MELODIC_SEQUENCE_UPDATED -> {
+                 Commands.MELODIC_SEQUENCE_CREATED,
+                 Commands.MELODIC_SEQUENCE_SELECTED,
+                 Commands.MELODIC_SEQUENCE_UPDATED -> {
                 // Check if this event applies to our sequencer
                 if (action.getData() instanceof MelodicSequencerEvent event) {
                     if (event.getSequencerId().equals(sequencer.getId())) {

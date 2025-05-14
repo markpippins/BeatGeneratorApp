@@ -313,10 +313,11 @@ public class InternalSynthManager {
      * @param instrument The instrument to update
      * @param bankIndex  The bank index
      * @param preset     The program/preset number
+     * @return true if preset was applied successfully, false otherwise
      */
-    public void updateInstrumentPreset(InstrumentWrapper instrument, Integer bankIndex, Integer preset) {
+    public boolean updateInstrumentPreset(InstrumentWrapper instrument, Integer bankIndex, Integer preset) {
         if (instrument == null)
-            return;
+            return false;
 
         try {
             // Update instrument properties
@@ -341,6 +342,8 @@ public class InternalSynthManager {
                 initializeSynthesizer();
             }
 
+            boolean success = false;
+            
             if (synthesizer != null && synthesizer.isOpen()) {
                 // First apply through the synth's MidiChannels directly
                 MidiChannel[] channels = synthesizer.getChannels();
@@ -356,6 +359,8 @@ public class InternalSynthManager {
                     
                     logger.info("Applied preset via direct synth channel: ch={}, bank={}, program={}",
                         channel, bankIndex, preset);
+                        
+                    success = true;
                 } else {
                     logger.warn("Could not access synthesizer channel {}", channel);
                 }
@@ -381,20 +386,26 @@ public class InternalSynthManager {
                         
                         logger.info("Applied preset via synth receiver: ch={}, bank={}, program={}",
                             channel, bankIndex, preset);
+                            
+                        success = true;
                     }
                 } catch (Exception e) {
                     logger.warn("Error sending direct MIDI messages: {}", e.getMessage());
                 }
             } else {
                 logger.warn("Synthesizer not available for preset change");
+                return false;
             }
 
             logger.debug("Updated preset for instrument {} to bank {}, program {}",
                     instrument.getName(),
                     instrument.getBankIndex(),
                     instrument.getPreset());
+                    
+            return success;
         } catch (Exception e) {
             logger.error("Failed to update instrument preset: {}", e.getMessage(), e);
+            return false;
         }
     }
 

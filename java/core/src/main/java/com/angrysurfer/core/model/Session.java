@@ -206,6 +206,12 @@ public class Session implements Serializable, IBusListener {
     }
 
     public void addPlayer(Player player) {
+        // Skip default players
+        if (Boolean.TRUE.equals(player.getIsDefault())) {
+            logger.info("Skipping default player: {}", player);
+            return;
+        }
+        
         logger.info("addPlayer() - adding player: {}", player);
         if (isRunning())
             synchronized (getAddList()) {
@@ -855,12 +861,18 @@ public class Session implements Serializable, IBusListener {
             logger.warn("Cannot add null player or player without ID");
             return;
         }
+        
+        // Skip default players - they should not be stored in sessions
+        if (Boolean.TRUE.equals(player.getIsDefault())) {
+            logger.debug("Skipping default player {} - not storing in session", player.getId());
+            return;
+        }
 
         // Store in players collection
         players.add(player);
 
-        // Also store the player's instrument if it exists
-        if (player.getInstrument() != null) {
+        // Also store the player's instrument if it exists and is not default
+        if (player.getInstrument() != null && !Boolean.TRUE.equals(player.getInstrument().getIsDefault())) {
             InstrumentManager.getInstance().updateInstrument(player.getInstrument());
         }
 

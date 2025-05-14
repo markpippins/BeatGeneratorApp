@@ -16,8 +16,7 @@ import org.slf4j.LoggerFactory;
 import javax.sound.midi.InvalidMidiDataException;
 import javax.sound.midi.MidiDevice;
 import javax.sound.midi.ShortMessage;
-import java.io.IOException;
-import java.io.Serializable;
+import java.io.*;
 import java.util.*;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
@@ -1028,5 +1027,56 @@ public abstract class Player implements Callable<Boolean>, Serializable, IBusLis
 
     public Integer getPreset() {
         return Objects.nonNull(instrument) ? instrument.getPreset() : 0;
+    }
+
+    /**
+     * Create a deep copy of this player to avoid reference issues
+     * when updating in UserConfig
+     */
+    public Player deepCopy() {
+        try {
+            // Use serialization to create a true deep copy
+            ByteArrayOutputStream bos = new ByteArrayOutputStream();
+            ObjectOutputStream oos = new ObjectOutputStream(bos);
+            oos.writeObject(this);
+            oos.flush();
+            ByteArrayInputStream bis = new ByteArrayInputStream(bos.toByteArray());
+            ObjectInputStream ois = new ObjectInputStream(bis);
+            Player copy = (Player) ois.readObject();
+            
+            // Fix any transient fields that weren't serialized
+            if (this.getInstrument() != null) {
+                copy.setInstrument(this.getInstrument());
+            }
+            
+            return copy;
+        } catch (Exception e) {
+            logger.error("Error creating deep copy of player: {}", e.getMessage());
+            // Fallback to shallow copy if serialization fails
+            Player copy;
+            if (this instanceof Note) {
+                copy = new Note();
+            } else if (this instanceof Strike) {
+                copy = new Strike();
+            } else {
+                return this; // Can't create a proper copy
+            }
+            
+            // Copy all basic properties
+            copy.setId(this.getId());
+            copy.setName(this.getName());
+            copy.setInstrumentId(this.getInstrumentId());
+            copy.setIsDefault(this.getIsDefault());
+            copy.setRootNote(this.getRootNote());
+            copy.setDefaultChannel(this.getDefaultChannel());
+            copy.setLevel(this.getLevel());
+            
+            // Copy instrument reference
+            if (this.getInstrument() != null) {
+                copy.setInstrument(this.getInstrument());
+            }
+            
+            return copy;
+        }
     }
 }

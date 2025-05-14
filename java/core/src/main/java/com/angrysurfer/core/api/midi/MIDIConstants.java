@@ -29,7 +29,7 @@ public class MIDIConstants {
     public static final int MIN_SWING = 25; // Minimum swing percentage
     // Pattern generation parameters
     public static final int MAX_DENSITY = 10; // Maximum density for pattern generation
-    public static final int[] SEQUENCER_CHANNELS = { 2, 3, 4, 5, 6, 7, 8, 11, 12, 13, 14, 15 };
+    public static final int[] SEQUENCER_CHANNELS = {3, 4, 5, 6, 7, 8, 11, 12, 13, 14, 15};
     public static final long MIN_NOTE_INTERVAL_MS = 1; // 1ms minimum between notes
 
     public static final int DEFAULT_NOTE = 60; // Middle C

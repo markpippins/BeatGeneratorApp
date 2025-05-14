@@ -316,6 +316,12 @@ public class SessionHelper {
             logger.warn("Cannot add player to session: null reference");
             return;
         }
+        
+        // Skip default players
+        if (Boolean.TRUE.equals(player.getIsDefault())) {
+            logger.info("Skipping default player: not adding to session");
+            return;
+        }
 
         try {
             // Set up relationships
