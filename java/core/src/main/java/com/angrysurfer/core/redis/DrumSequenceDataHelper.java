@@ -1,49 +1,36 @@
 package com.angrysurfer.core.redis;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-
-import com.angrysurfer.core.Constants;
-import com.angrysurfer.core.api.midi.MIDIConstants;
-import com.angrysurfer.core.model.Strike;
-import com.angrysurfer.core.service.DeviceManager;
-import com.angrysurfer.core.service.InternalSynthManager;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import com.angrysurfer.core.api.CommandBus;
 import com.angrysurfer.core.api.Commands;
-import com.angrysurfer.core.sequencer.Direction;
 import com.angrysurfer.core.model.InstrumentWrapper;
 import com.angrysurfer.core.model.Player;
-import com.angrysurfer.core.sequencer.DrumSequenceData;
-import com.angrysurfer.core.sequencer.DrumSequencer;
-import com.angrysurfer.core.sequencer.TimingDivision;
+import com.angrysurfer.core.model.Strike;
+import com.angrysurfer.core.sequencer.*;
+import com.angrysurfer.core.service.DeviceManager;
 import com.angrysurfer.core.service.InstrumentManager;
+import com.angrysurfer.core.service.InternalSynthManager;
 import com.angrysurfer.core.service.PlayerManager;
 import com.fasterxml.jackson.databind.ObjectMapper;
-
 import lombok.Getter;
 import lombok.Setter;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import redis.clients.jedis.Jedis;
 import redis.clients.jedis.JedisPool;
 
 import javax.sound.midi.MidiDevice;
+import java.util.*;
 
 @Getter
 @Setter
 class DrumSequenceDataHelper {
     private static final Logger logger = LoggerFactory.getLogger(DrumSequenceDataHelper.class.getName());
-    private final JedisPool jedisPool;
-    private final ObjectMapper objectMapper;
-    private final CommandBus commandBus = CommandBus.getInstance();
-
     // Constants
     private static final int DRUM_PAD_COUNT = 16;
     private static final int MAX_STEPS = 64;
+    private final JedisPool jedisPool;
+    private final ObjectMapper objectMapper;
+    private final CommandBus commandBus = CommandBus.getInstance();
 
     public DrumSequenceDataHelper(JedisPool jedisPool, ObjectMapper objectMapper) {
         this.jedisPool = jedisPool;
@@ -82,7 +69,7 @@ class DrumSequenceDataHelper {
             sequencer.getData().setId(data.getId());
 
             // Apply instrument data
-            for (int i = 0; i < Constants.DRUM_PAD_COUNT; i++) {
+            for (int i = 0; i < SequencerConstants.DRUM_PAD_COUNT; i++) {
                 if (data.getInstrumentIds() != null && data.getInstrumentIds()[i] != null) {
                     Player player = sequencer.getPlayer(i);
                     if (player != null) {
@@ -114,7 +101,7 @@ class DrumSequenceDataHelper {
                             InstrumentWrapper newInstrument = new InstrumentWrapper(
                                     data.getInstrumentNames() != null ? data.getInstrumentNames()[i] : "Drum " + i,
                                     device,
-                                    MIDIConstants.MIDI_DRUM_CHANNEL);
+                                    SequencerConstants.MIDI_DRUM_CHANNEL);
 
                             if (data.getSoundbankNames() != null && data.getSoundbankNames()[i] != null) {
                                 newInstrument.setSoundbankName(data.getSoundbankNames()[i]);
@@ -198,7 +185,7 @@ class DrumSequenceDataHelper {
 
             // Apply root notes to players if available
             if (data.getRootNotes() != null) {
-                for (int i = 0; i < Math.min(data.getRootNotes().length, Constants.DRUM_PAD_COUNT); i++) {
+                for (int i = 0; i < Math.min(data.getRootNotes().length, SequencerConstants.DRUM_PAD_COUNT); i++) {
                     Player player = sequencer.getPlayer(i);
                     if (player != null) {
                         int rootNote = data.getRootNotes()[i];
@@ -215,7 +202,7 @@ class DrumSequenceDataHelper {
             }
 
             // Apply mute values if available
-            for (int i = 0; i < Constants.DRUM_PAD_COUNT; i++) {
+            for (int i = 0; i < SequencerConstants.DRUM_PAD_COUNT; i++) {
                 int drumIndex = i;
                 List<Integer> muteValues = data.getMuteValues(drumIndex);
                 if (muteValues != null && !muteValues.isEmpty()) {
@@ -246,7 +233,7 @@ class DrumSequenceDataHelper {
             }
 
             // Copy instrument data for each drum
-            for (int i = 0; i < Constants.DRUM_PAD_COUNT; i++) {
+            for (int i = 0; i < SequencerConstants.DRUM_PAD_COUNT; i++) {
                 Player player = sequencer.getPlayer(i);
                 if (player != null && player.getInstrument() != null) {
                     InstrumentWrapper instrument = player.getInstrument();
@@ -279,7 +266,7 @@ class DrumSequenceDataHelper {
             data.setPatterns(patterns);
 
             // Save mute values for each drum
-            for (int i = 0; i < Constants.DRUM_PAD_COUNT; i++) {
+            for (int i = 0; i < SequencerConstants.DRUM_PAD_COUNT; i++) {
                 List<Integer> muteValues = sequencer.getData().getMuteValues(i);
                 data.setMuteValues(i, muteValues);
             }
@@ -361,7 +348,7 @@ class DrumSequenceDataHelper {
             // Initialize root notes array with standard GM drum mapping
             int[] rootNotes = new int[DRUM_PAD_COUNT];
             for (int i = 0; i < DRUM_PAD_COUNT; i++) {
-                rootNotes[i] = MIDIConstants.MIDI_DRUM_NOTE_OFFSET + i;
+                rootNotes[i] = SequencerConstants.MIDI_DRUM_NOTE_OFFSET + i;
             }
             data.setRootNotes(rootNotes);
 
@@ -403,7 +390,7 @@ class DrumSequenceDataHelper {
 
     /**
      * Get the minimum drum sequence ID
-     * 
+     *
      * @return The minimum ID, or null if no sequences exist
      */
     public Long getMinimumDrumSequenceId() {
@@ -420,7 +407,7 @@ class DrumSequenceDataHelper {
             // Filter out non-numeric keys and find minimum ID
             return sequences.keySet().stream()
                     .filter(key -> key != null && !key.equals("null") && key.matches("\\d+")) // Ensure the key is a
-                                                                                              // valid number
+                    // valid number
                     .map(key -> {
                         try {
                             return Long.parseLong(key);
@@ -441,7 +428,7 @@ class DrumSequenceDataHelper {
 
     /**
      * Get the maximum drum sequence ID
-     * 
+     *
      * @return The maximum ID, or null if no sequences exist
      */
     public Long getMaximumDrumSequenceId() {
@@ -457,7 +444,7 @@ class DrumSequenceDataHelper {
             // Filter out non-numeric keys and find maximum ID
             return sequences.keySet().stream()
                     .filter(key -> key != null && !key.equals("null") && key.matches("\\d+")) // Ensure the key is a
-                                                                                              // valid number
+                    // valid number
                     .map(key -> {
                         try {
                             return Long.parseLong(key);
@@ -478,7 +465,7 @@ class DrumSequenceDataHelper {
 
     /**
      * Delete a drum sequence by ID
-     * 
+     *
      * @param id The ID of the drum sequence to delete
      * @return true if successfully deleted, false otherwise
      */

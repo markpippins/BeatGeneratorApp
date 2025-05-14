@@ -1,8 +1,8 @@
 package com.angrysurfer.core.model;
 
-import com.angrysurfer.core.Constants;
 import com.angrysurfer.core.api.*;
 import com.angrysurfer.core.model.feature.Pad;
+import com.angrysurfer.core.sequencer.SequencerConstants;
 import com.angrysurfer.core.sequencer.TimingUpdate;
 import com.angrysurfer.core.service.InternalSynthManager;
 import com.angrysurfer.core.util.Cycler;
@@ -29,161 +29,132 @@ import java.util.stream.Collectors;
 public abstract class Player implements Callable<Boolean>, Serializable, IBusListener {
 
     static final Random rand = new Random();
-
-    static Logger logger = LoggerFactory.getLogger(Player.class.getCanonicalName());
-
-    private Set<Pad> pads = new HashSet<>();
-
-    private Long id;
-
-    private Long instrumentId;
-
-    private Boolean isDefault = false;
-
-    @JsonIgnore
-    private int originalLevel = 100;
-
-    @JsonIgnore
-    public transient boolean isSelected = false;
-
-    private boolean melodicPlayer = false;
-
-    private boolean drumPlayer = false;
-
-    private String name = "Player";
-
-    private Integer defaultChannel = 0;
-
-    private Integer swing = 0;
-
-    private Integer level = 100;
-
-    private Integer rootNote = 60;
-
-    private Integer minVelocity = 100;
-
-    private Integer maxVelocity = 110;
-
-    private Boolean stickyPreset = false;
-
-    private Integer probability = 100;
-
-    private Integer randomDegree = 0;
-
-    private Integer ratchetCount = 0;
-
-    private Integer ratchetInterval = 1;
-
-    private Integer internalBars = Constants.DEFAULT_BAR_COUNT;
-
-    private Integer internalBeats = Constants.DEFAULT_BEATS_PER_BAR;
-
-    private Boolean useInternalBeats = false;
-
-    private Boolean useInternalBars = false;
-
-    private Integer panPosition = 63;
-
-    private Boolean preserveOnPurge = false;
-
-    private double sparse = 0.0;
-
-    private boolean solo = false;
-
-    private boolean muted = false;
-
-    private Integer position;
-
-    private Long lastTick = 0L;
-
-    private Long lastPlayedTick = 0L;
-
-    private Long lastPlayedBar;
-
-    private Integer skips = 0;
-
-    private double lastPlayedBeat;
-
-    private Integer subDivisions = 4;
-
-    private Integer beatFraction = 1;
-
-    private Integer fadeOut = 0;
-
-    private Integer fadeIn = 0;
-
-    private Boolean accent = false;
-
-    private String scale = "Chromatic";
-
-    private Integer duration = 100;
-
-    @JsonIgnore
-    private Boolean enabled = false;
-
-    @JsonIgnore
-    private Cycler skipCycler = new Cycler(0);
-
-    @JsonIgnore
-    private Cycler subCycler = new Cycler(16);
-
-    @JsonIgnore
-    private Cycler beatCycler = new Cycler(16);
-
-    @JsonIgnore
-    private Cycler barCycler = new Cycler(16);
-
-    @JsonIgnore
-    private boolean unsaved = false;
-
-    @JsonIgnore
-    private Boolean armForNextTick = false;
-
-    private Set<Rule> rules = new HashSet<>();
-
-    private List<Integer> allowedControlMessages = new ArrayList<>();
-
-    @JsonIgnore
-    private InstrumentWrapper instrument;
-
-    @JsonIgnore
-    private Session session;
-
-    @JsonIgnore
-    private transient Object owner;
-
-    @JsonIgnore
-    @Transient
-    private final TimingBus timingBus = TimingBus.getInstance();
-
-    @JsonIgnore
-    @Transient
-    private final CommandBus commandBus = CommandBus.getInstance();
-
     // Add these fields to Player class
     @JsonIgnore
     private static final ExecutorService NOTE_EXECUTOR = Executors.newFixedThreadPool(4);
     @JsonIgnore
     private static final ScheduledExecutorService NOTE_OFF_SCHEDULER = Executors.newScheduledThreadPool(4);
-
-    // Add UI update throttling
-    @JsonIgnore
-    private long lastUiUpdateTime = 0;
     private static final long MIN_UI_UPDATE_INTERVAL = 100; // Only update UI every 100ms max
-
-    // Add a new optimized method
-    private boolean usingInternalSynth = true;
-    private InternalSynthManager internalSynthManager = null;
-
+    private static final long NOTE_THROTTLE_THRESHOLD = 1; // 1ms minimum between notes
+    static Logger logger = LoggerFactory.getLogger(Player.class.getCanonicalName());
+    @JsonIgnore
+    @Transient
+    private final TimingBus timingBus = TimingBus.getInstance();
+    @JsonIgnore
+    @Transient
+    private final CommandBus commandBus = CommandBus.getInstance();
     // Update these fields
     @JsonIgnore
     private transient final ShortMessage reuseableMessage = new ShortMessage();
-
     @JsonIgnore
     private transient final Object messageLock = new Object();
-
+    @JsonIgnore
+    private final Set<Rule> tickRuleCache = new HashSet<>();
+    @JsonIgnore
+    private final Set<Rule> beatRuleCache = new HashSet<>();
+    @JsonIgnore
+    private final Set<Rule> barRuleCache = new HashSet<>();
+    @JsonIgnore
+    private final Map<Long, Set<Rule>> partRuleCache = new HashMap<>();
+    @JsonIgnore
+    private final Set<Rule> tickCountRuleCache = new HashSet<>();
+    @JsonIgnore
+    private final Set<Rule> beatCountRuleCache = new HashSet<>();
+    @JsonIgnore
+    private final Set<Rule> barCountRuleCache = new HashSet<>();
+    @JsonIgnore
+    private final Set<Rule> partCountRuleCache = new HashSet<>();
+    @JsonIgnore
+    public transient boolean isSelected = false;
+    private Set<Pad> pads = new HashSet<>();
+    private Long id;
+    private Long instrumentId;
+    private Boolean isDefault = false;
+    @JsonIgnore
+    private int originalLevel = 100;
+    private boolean melodicPlayer = false;
+    private boolean drumPlayer = false;
+    private String name = "Player";
+    private Integer defaultChannel = 0;
+    private Integer swing = 0;
+    private Integer level = 100;
+    private Integer rootNote = 60;
+    private Integer minVelocity = 100;
+    private Integer maxVelocity = 110;
+    private Boolean stickyPreset = false;
+    private Integer probability = 100;
+    private Integer randomDegree = 0;
+    private Integer ratchetCount = 0;
+    private Integer ratchetInterval = 1;
+    private Integer internalBars = SequencerConstants.DEFAULT_BAR_COUNT;
+    private Integer internalBeats = SequencerConstants.DEFAULT_BEATS_PER_BAR;
+    private Boolean useInternalBeats = false;
+    private Boolean useInternalBars = false;
+    private Integer panPosition = 63;
+    private Boolean preserveOnPurge = false;
+    private double sparse = 0.0;
+    private boolean solo = false;
+    private boolean muted = false;
+    private Integer position;
+    private Long lastTick = 0L;
+    private Long lastPlayedTick = 0L;
+    private Long lastPlayedBar;
+    private Integer skips = 0;
+    private double lastPlayedBeat;
+    private Integer subDivisions = 4;
+    private Integer beatFraction = 1;
+    private Integer fadeOut = 0;
+    private Integer fadeIn = 0;
+    private Boolean accent = false;
+    private String scale = "Chromatic";
+    private Integer duration = 100;
+    @JsonIgnore
+    private Boolean enabled = false;
+    @JsonIgnore
+    private Cycler skipCycler = new Cycler(0);
+    @JsonIgnore
+    private Cycler subCycler = new Cycler(16);
+    @JsonIgnore
+    private Cycler beatCycler = new Cycler(16);
+    @JsonIgnore
+    private Cycler barCycler = new Cycler(16);
+    @JsonIgnore
+    private boolean unsaved = false;
+    @JsonIgnore
+    private Boolean armForNextTick = false;
+    private Set<Rule> rules = new HashSet<>();
+    private List<Integer> allowedControlMessages = new ArrayList<>();
+    @JsonIgnore
+    private InstrumentWrapper instrument;
+    @JsonIgnore
+    private Session session;
+    @JsonIgnore
+    private transient Object owner;
+    // Add UI update throttling
+    @JsonIgnore
+    private long lastUiUpdateTime = 0;
+    // Add a new optimized method
+    private boolean usingInternalSynth = true;
+    private InternalSynthManager internalSynthManager = null;
     private long lastNoteTime = 0;
-    private static final long NOTE_THROTTLE_THRESHOLD = 1; // 1ms minimum between notes
+
+    // public Long getSubPosition() {
+    // return getSub();
+    // }
+    // Add this property to the Player class
+    @JsonIgnore
+    private boolean isPlaying = false;
+    @JsonIgnore
+    private boolean hasCachedRules = false;
+    // Add this property to the Player class
+    @JsonIgnore
+    private long lastTriggeredTick = -1;
+
+    // Add cleanup method to shutdown pools on application exit
+    public static void shutdownExecutors() {
+        NOTE_EXECUTOR.shutdown();
+        NOTE_OFF_SCHEDULER.shutdown();
+    }
 
     // Add initialization method
     @JsonIgnore
@@ -200,7 +171,7 @@ public abstract class Player implements Callable<Boolean>, Serializable, IBusLis
      * Simple initialization for minimal player setup
      */
     protected void initialize(String name, Session session, InstrumentWrapper instrument,
-            List<Integer> allowedControlMessages) {
+                              List<Integer> allowedControlMessages) {
         // Register with command and timing buses
         setName(name);
         setSession(session);
@@ -221,7 +192,7 @@ public abstract class Player implements Callable<Boolean>, Serializable, IBusLis
         this.instrument = instrument;
         this.instrument.setChannel(getDefaultChannel());
         this.instrumentId = instrument.getId();
-        if (this.getInstrument().getDeviceName().contains("Gervill"))
+        if (this.getInstrument().getDeviceName().contains(SequencerConstants.GERVILL))
             getInstrument().setInternal(true);
     }
 
@@ -232,7 +203,7 @@ public abstract class Player implements Callable<Boolean>, Serializable, IBusLis
     @JsonIgnore
     @Transient
     public MidiDevice getDevice() {
-        return Objects.nonNull(getInstrument()) ? getInstrument().getDevice() : null; 
+        return Objects.nonNull(getInstrument()) ? getInstrument().getDevice() : null;
     }
 
     @JsonIgnore
@@ -249,10 +220,6 @@ public abstract class Player implements Callable<Boolean>, Serializable, IBusLis
         if (getInstrument() != null)
             getInstrument().setChannel(channel);
     }
-
-    // public Long getSubPosition() {
-    // return getSub();
-    // }
 
     public abstract void onTick(TimingUpdate timingUpdate);
 
@@ -288,7 +255,7 @@ public abstract class Player implements Callable<Boolean>, Serializable, IBusLis
 
     /**
      * Trigger a note with throttling to prevent MIDI buffer overflows
-     * 
+     *
      * @param note     MIDI note number to play
      * @param velocity Note velocity (0-127)
      */
@@ -347,7 +314,7 @@ public abstract class Player implements Callable<Boolean>, Serializable, IBusLis
 
     /**
      * Facade method to play a note with standard duration
-     * 
+     *
      * @param note     MIDI note number
      * @param velocity Note velocity (0-127)
      */
@@ -371,7 +338,7 @@ public abstract class Player implements Callable<Boolean>, Serializable, IBusLis
 
     /**
      * Facade method to play a note with specified decay time
-     * 
+     *
      * @param note     MIDI note number
      * @param velocity Note velocity (0-127)
      * @param decay    Note duration in ms
@@ -393,7 +360,7 @@ public abstract class Player implements Callable<Boolean>, Serializable, IBusLis
 
     /**
      * Facade method to stop a note
-     * 
+     *
      * @param note     MIDI note number
      * @param velocity Release velocity (usually 0)
      */
@@ -908,10 +875,6 @@ public abstract class Player implements Callable<Boolean>, Serializable, IBusLis
         commandBus.unregister(this);
     }
 
-    // Add this property to the Player class
-    @JsonIgnore
-    private boolean isPlaying = false;
-
     // Add getter/setter
     public boolean isPlaying() {
         return isPlaying;
@@ -920,33 +883,6 @@ public abstract class Player implements Callable<Boolean>, Serializable, IBusLis
     public void setPlaying(boolean playing) {
         this.isPlaying = playing;
     }
-
-    @JsonIgnore
-    private boolean hasCachedRules = false;
-
-    @JsonIgnore
-    private final Set<Rule> tickRuleCache = new HashSet<>();
-
-    @JsonIgnore
-    private final Set<Rule> beatRuleCache = new HashSet<>();
-
-    @JsonIgnore
-    private final Set<Rule> barRuleCache = new HashSet<>();
-
-    @JsonIgnore
-    private final Map<Long, Set<Rule>> partRuleCache = new HashMap<>();
-
-    @JsonIgnore
-    private final Set<Rule> tickCountRuleCache = new HashSet<>();
-
-    @JsonIgnore
-    private final Set<Rule> beatCountRuleCache = new HashSet<>();
-
-    @JsonIgnore
-    private final Set<Rule> barCountRuleCache = new HashSet<>();
-
-    @JsonIgnore
-    private final Set<Rule> partCountRuleCache = new HashSet<>();
 
     // Add this method to Player class
     public void invalidateRuleCache() {
@@ -976,13 +912,9 @@ public abstract class Player implements Callable<Boolean>, Serializable, IBusLis
         }
     }
 
-    // Add this property to the Player class
-    @JsonIgnore
-    private long lastTriggeredTick = -1;
-
     /**
      * Set the pan position for this player
-     * 
+     *
      * @param pan The pan position (0-127, 64 is center)
      */
     public void setPan(int pan) {
@@ -991,7 +923,7 @@ public abstract class Player implements Callable<Boolean>, Serializable, IBusLis
 
     /**
      * Set the chorus effect amount
-     * 
+     *
      * @param amount Chorus amount (0-100)
      */
     public void setChorus(int amount) {
@@ -1000,17 +932,11 @@ public abstract class Player implements Callable<Boolean>, Serializable, IBusLis
 
     /**
      * Set the reverb effect amount
-     * 
+     *
      * @param amount Reverb amount (0-100)
      */
     public void setReverb(int amount) {
         // this.reverb = amount;
-    }
-
-    // Add cleanup method to shutdown pools on application exit
-    public static void shutdownExecutors() {
-        NOTE_EXECUTOR.shutdown();
-        NOTE_OFF_SCHEDULER.shutdown();
     }
 
     // Add this method to handle proper deserialization
@@ -1043,12 +969,12 @@ public abstract class Player implements Callable<Boolean>, Serializable, IBusLis
             ByteArrayInputStream bis = new ByteArrayInputStream(bos.toByteArray());
             ObjectInputStream ois = new ObjectInputStream(bis);
             Player copy = (Player) ois.readObject();
-            
+
             // Fix any transient fields that weren't serialized
             if (this.getInstrument() != null) {
                 copy.setInstrument(this.getInstrument());
             }
-            
+
             return copy;
         } catch (Exception e) {
             logger.error("Error creating deep copy of player: {}", e.getMessage());
@@ -1061,7 +987,7 @@ public abstract class Player implements Callable<Boolean>, Serializable, IBusLis
             } else {
                 return this; // Can't create a proper copy
             }
-            
+
             // Copy all basic properties
             copy.setId(this.getId());
             copy.setName(this.getName());
@@ -1070,12 +996,12 @@ public abstract class Player implements Callable<Boolean>, Serializable, IBusLis
             copy.setRootNote(this.getRootNote());
             copy.setDefaultChannel(this.getDefaultChannel());
             copy.setLevel(this.getLevel());
-            
+
             // Copy instrument reference
             if (this.getInstrument() != null) {
                 copy.setInstrument(this.getInstrument());
             }
-            
+
             return copy;
         }
     }

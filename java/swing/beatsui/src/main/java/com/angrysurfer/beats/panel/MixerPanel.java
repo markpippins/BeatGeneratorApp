@@ -2,11 +2,11 @@ package com.angrysurfer.beats.panel;
 
 import com.angrysurfer.beats.util.UIHelper;
 import com.angrysurfer.beats.widget.Dial;
-import com.angrysurfer.core.Constants;
 import com.angrysurfer.core.api.Command;
 import com.angrysurfer.core.api.CommandBus;
 import com.angrysurfer.core.api.Commands;
 import com.angrysurfer.core.api.IBusListener;
+import com.angrysurfer.core.sequencer.SequencerConstants;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -45,7 +45,7 @@ public class MixerPanel extends JPanel implements IBusListener {
     };
 
     private final int[] trackChannels = {
-            Constants.MIDI_DRUM_CHANNEL, Constants.MIDI_DRUM_CHANNEL,
+            SequencerConstants.MIDI_DRUM_CHANNEL, SequencerConstants.MIDI_DRUM_CHANNEL,
             CHANNEL_OFFSET, CHANNEL_OFFSET + 1, CHANNEL_OFFSET + 2, CHANNEL_OFFSET + 3,
             CHANNEL_OFFSET + 4, CHANNEL_OFFSET + 5, CHANNEL_OFFSET + 6, CHANNEL_OFFSET + 8,
             CHANNEL_OFFSET + 9, CHANNEL_OFFSET + 10, CHANNEL_OFFSET + 11, CHANNEL_OFFSET + 12,

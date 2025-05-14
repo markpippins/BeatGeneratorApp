@@ -1,29 +1,5 @@
 package com.angrysurfer.beats.panel.player;
 
-import java.awt.BorderLayout;
-import java.awt.Dimension;
-import java.awt.FlowLayout;
-import java.awt.Font;
-import java.awt.GridBagConstraints;
-import java.awt.GridBagLayout;
-import java.awt.GridLayout;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-
-import javax.swing.BorderFactory;
-import javax.swing.Box;
-import javax.swing.BoxLayout;
-import javax.swing.JButton;
-import javax.swing.JLabel;
-import javax.swing.JPanel;
-import javax.swing.JSlider;
-import javax.swing.SwingConstants;
-
-import com.angrysurfer.core.Constants;
-import com.angrysurfer.core.service.InternalSynthManager;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import com.angrysurfer.beats.widget.Dial;
 import com.angrysurfer.beats.widget.NoteSelectionDial;
 import com.angrysurfer.beats.widget.NumberedTickDial;
@@ -33,6 +9,15 @@ import com.angrysurfer.core.api.Commands;
 import com.angrysurfer.core.api.IBusListener;
 import com.angrysurfer.core.event.PlayerUpdateEvent;
 import com.angrysurfer.core.model.Player;
+import com.angrysurfer.core.sequencer.SequencerConstants;
+import com.angrysurfer.core.service.InternalSynthManager;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import javax.swing.*;
+import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 
 /**
  * Panel containing detailed player controls for performance, modulation, and
@@ -44,10 +29,6 @@ public class PlayerEditDetailPanel extends JPanel {
     private static final Logger logger = LoggerFactory.getLogger(PlayerEditDetailPanel.class);
     private static final int SLIDER_HEIGHT = 80;
     private static final int PANEL_HEIGHT = 125;
-
-    // Reference to player being edited
-    private Player player;
-
     // Performance controls
     private final JSlider levelSlider;
     private final JSlider velocityMinSlider;
@@ -56,13 +37,13 @@ public class PlayerEditDetailPanel extends JPanel {
     private final JButton prevButton;
     private final JButton nextButton;
     private final NoteSelectionDial noteDial;
-
     // Modulation controls
     private final JSlider swingSlider;
     private final JSlider probabilitySlider;
     private final JSlider randomSlider;
     private final JSlider sparseSlider;
-
+    // Reference to player being edited
+    private Player player;
     // Ratchet controls
     // Replace the existing slider components with NumberedTickDials
     private NumberedTickDial countDial;
@@ -263,7 +244,7 @@ public class PlayerEditDetailPanel extends JPanel {
         countDial = new NumberedTickDial(1, 16);
         countDial.setValue(4, false);
         countDial.setPreferredSize(new Dimension(80, 80));
-        
+
         // Create panel with titled border for count dial
         JPanel countPanel = new JPanel(new BorderLayout(2, 5));
         countPanel.setBorder(BorderFactory.createTitledBorder("Ratchet Count"));
@@ -273,7 +254,7 @@ public class PlayerEditDetailPanel extends JPanel {
         intervalDial = new NumberedTickDial(1, 16);
         intervalDial.setValue(4, false);
         intervalDial.setPreferredSize(new Dimension(80, 80));
-        
+
         // Create panel with titled border for interval dial
         JPanel intervalPanel = new JPanel(new BorderLayout(2, 5));
         intervalPanel.setBorder(BorderFactory.createTitledBorder("Ratchet Interval"));
@@ -284,14 +265,14 @@ public class PlayerEditDetailPanel extends JPanel {
             int value = countDial.getValue();
             player.setRatchetCount(value);
             CommandBus.getInstance().publish(Commands.NEW_VALUE_RATCHET_COUNT, this,
-                    new Object[] { player.getId(), (long) value });
+                    new Object[]{player.getId(), (long) value});
         });
 
         intervalDial.addChangeListener(e -> {
             int value = intervalDial.getValue();
             player.setRatchetInterval(value);
             CommandBus.getInstance().publish(Commands.NEW_VALUE_RATCHET_INTERVAL, this,
-                    new Object[] { player.getId(), (long) value });
+                    new Object[]{player.getId(), (long) value});
         });
 
         // Add spacing between components
@@ -341,17 +322,17 @@ public class PlayerEditDetailPanel extends JPanel {
         // Note dial changes
         noteDial.addChangeListener(e -> {
             if (player == null) return;
-            
+
             int value = noteDial.getValue();
             player.setRootNote(value);
-            if (player.getChannel() == Constants.MIDI_DRUM_CHANNEL)
+            if (player.getChannel() == SequencerConstants.MIDI_DRUM_CHANNEL)
                 player.setName(InternalSynthManager.getInstance().getDrumName(player.getRootNote()));
 
             // Create a player update event
             commandBus.publish(
-                Commands.PLAYER_UPDATE_EVENT,
-                this,
-                new PlayerUpdateEvent(player)
+                    Commands.PLAYER_UPDATE_EVENT,
+                    this,
+                    new PlayerUpdateEvent(player)
             );
 
             // Show the note name in logs
@@ -362,17 +343,17 @@ public class PlayerEditDetailPanel extends JPanel {
         // Pan dial change listener
         panDial.addChangeListener(e -> {
             if (player == null) return;
-            
+
             int value = panDial.getValue();
             player.setPanPosition(value);
-            
+
             // Create a player update event
             commandBus.publish(
-                Commands.PLAYER_UPDATE_EVENT,
-                this,
-                new PlayerUpdateEvent(player)
+                    Commands.PLAYER_UPDATE_EVENT,
+                    this,
+                    new PlayerUpdateEvent(player)
             );
-            
+
             logger.debug("Pan changed: {}", value);
         });
 
@@ -400,7 +381,7 @@ public class PlayerEditDetailPanel extends JPanel {
 
                 // Publish the new min velocity with player ID
                 CommandBus.getInstance().publish(Commands.NEW_VALUE_VELOCITY_MIN, this,
-                        new Object[] { player.getId(), (long) minVelocity });
+                        new Object[]{player.getId(), (long) minVelocity});
 
                 logger.debug("Min velocity changed: {} (max: {})", minVelocity, maxVelocity);
             }
@@ -421,7 +402,7 @@ public class PlayerEditDetailPanel extends JPanel {
 
                 // Publish the new max velocity with player ID
                 CommandBus.getInstance().publish(Commands.NEW_VALUE_VELOCITY_MAX, this,
-                        new Object[] { player.getId(), (long) maxVelocity });
+                        new Object[]{player.getId(), (long) maxVelocity});
 
                 logger.debug("Max velocity changed: {} (min: {})", maxVelocity, minVelocity);
             }
@@ -457,68 +438,68 @@ public class PlayerEditDetailPanel extends JPanel {
         if (newPlayer == null) {
             return;
         }
-        
+
         // Store reference to the new player
         this.player = newPlayer;
-        
+
         // Temporarily disable listeners to prevent feedback loops
         boolean wasChanging = changing;
         changing = true;
-        
+
         try {
             // Update level slider
             if (levelSlider != null && player.getLevel() != null) {
                 levelSlider.setValue(player.getLevel());
             }
-            
+
             // Update note dial
             if (noteDial != null && player.getRootNote() != null) {
                 noteDial.setValue(player.getRootNote());
             }
-            
+
             // Update velocity sliders
             if (velocityMinSlider != null && player.getMinVelocity() != null) {
                 velocityMinSlider.setValue(player.getMinVelocity());
             }
-            
+
             if (velocityMaxSlider != null && player.getMaxVelocity() != null) {
                 velocityMaxSlider.setValue(player.getMaxVelocity());
             }
-            
+
             // Update pan dial
             if (panDial != null && player.getPanPosition() != null) {
                 panDial.setValue(player.getPanPosition());
             }
-            
+
             // Update swing slider
             if (swingSlider != null && player.getSwing() != null) {
                 swingSlider.setValue(player.getSwing());
             }
-            
+
             // Update probability slider
             if (probabilitySlider != null && player.getProbability() != null) {
                 probabilitySlider.setValue(player.getProbability());
             }
-            
+
             // Update random slider
             if (randomSlider != null && player.getRandomDegree() != null) {
                 randomSlider.setValue(player.getRandomDegree());
             }
-            
+
             // Update sparse slider
             if (sparseSlider != null && player.getSparse() > -1) {
-                sparseSlider.setValue((int)(player.getSparse() * 100.0));
+                sparseSlider.setValue((int) (player.getSparse() * 100.0));
             }
-            
+
             // Update ratchet dials
             if (countDial != null && player.getRatchetCount() != null) {
                 countDial.setValue(player.getRatchetCount());
             }
-            
+
             if (intervalDial != null && player.getRatchetInterval() != null) {
                 intervalDial.setValue(player.getRatchetInterval());
             }
-            
+
             logger.debug("Updated PlayerEditDetailPanel from player: {}", player.getName());
         } finally {
             // Re-enable listeners
@@ -537,7 +518,7 @@ public class PlayerEditDetailPanel extends JPanel {
             safeValue = min;
         } else {
             // Clamp to valid range
-            safeValue = (int) Math.max(min, Math.min(max, value));
+            safeValue = Math.max(min, Math.min(max, value));
 
             // Debug logging
             if (safeValue != value) {

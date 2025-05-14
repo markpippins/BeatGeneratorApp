@@ -1,6 +1,5 @@
 package com.angrysurfer.core.service;
 
-import com.angrysurfer.core.Constants;
 import com.angrysurfer.core.api.Command;
 import com.angrysurfer.core.api.CommandBus;
 import com.angrysurfer.core.api.Commands;
@@ -10,6 +9,7 @@ import com.angrysurfer.core.event.NoteEvent;
 import com.angrysurfer.core.redis.RedisService;
 import com.angrysurfer.core.sequencer.DrumSequenceData;
 import com.angrysurfer.core.sequencer.DrumSequencer;
+import com.angrysurfer.core.sequencer.SequencerConstants;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -105,7 +105,7 @@ public class DrumSequencerManager implements IBusListener {
     /**
      * Load a sequence into the given sequencer
      *
-     * @param id The sequence ID to load
+     * @param id        The sequence ID to load
      * @param sequencer The sequencer to load into
      * @return true if successful, false otherwise
      */
@@ -230,7 +230,7 @@ public class DrumSequencerManager implements IBusListener {
     /**
      * Create a new DrumSequencer with note event and step update listeners.
      *
-     * @param noteEventListener Callback for when a note should be played
+     * @param noteEventListener  Callback for when a note should be played
      * @param stepUpdateListener Callback for step updates during playback
      * @return The newly created DrumSequencer
      */
@@ -300,7 +300,7 @@ public class DrumSequencerManager implements IBusListener {
 
     /**
      * Get the currently selected drum pad index
-     * 
+     *
      * @return The selected pad index
      */
     public synchronized int getSelectedPadIndex() {
@@ -309,19 +309,19 @@ public class DrumSequencerManager implements IBusListener {
 
     /**
      * Set the currently selected drum pad index
-     * 
+     *
      * @param index The new selected pad index
      */
     public synchronized void setSelectedPadIndex(int index) {
         // Validate the index first
-        if (index >= 0 && index < Constants.DRUM_PAD_COUNT) {
+        if (index >= 0 && index < SequencerConstants.DRUM_PAD_COUNT) {
             selectedPadIndex = index;
-            
+
             // Also update the selected pad index in sequencers
             for (DrumSequencer seq : sequencers) {
                 seq.setSelectedPadIndex(index);
             }
-            
+
             logger.info("Selected pad index set to: {}", index);
         } else {
             logger.warn("Attempted to set invalid pad index: {}", index);
@@ -330,8 +330,8 @@ public class DrumSequencerManager implements IBusListener {
 
     /**
      * Updates tempo settings on all managed sequencers
-     * 
-     * @param tempoInBPM The new tempo in BPM
+     *
+     * @param tempoInBPM   The new tempo in BPM
      * @param ticksPerBeat The new ticks per beat value
      */
     public synchronized void updateTempoSettings(float tempoInBPM, int ticksPerBeat) {
@@ -340,13 +340,13 @@ public class DrumSequencerManager implements IBusListener {
             // sequencer.getData().setTicksPerBeat(ticksPerBeat);
             sequencer.getData().setMasterTempo(ticksPerBeat);
         }
-        logger.info("Updated tempo settings on {} drum sequencers: {} BPM, {} ticks per beat", 
+        logger.info("Updated tempo settings on {} drum sequencers: {} BPM, {} ticks per beat",
                 sequencers.size(), tempoInBPM, ticksPerBeat);
     }
 
     /**
      * Get the currently active sequencer
-     * 
+     *
      * @return The active DrumSequencer, or null if none available
      */
     public DrumSequencer getActiveSequencer() {

@@ -1,41 +1,32 @@
 package com.angrysurfer.beats.panel.sequencer.mono;
 
-import java.awt.Dimension;
-import java.awt.FlowLayout;
-import java.awt.Insets;
-
-import javax.swing.JLabel;
-import javax.swing.JPanel;
-import javax.swing.JSlider;
-import javax.swing.JToggleButton;
-
-import com.angrysurfer.core.api.midi.MIDIConstants;
+import com.angrysurfer.beats.util.UIHelper;
+import com.angrysurfer.core.sequencer.MelodicSequencer;
+import com.angrysurfer.core.sequencer.SequencerConstants;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.angrysurfer.beats.util.UIHelper;
-import com.angrysurfer.core.sequencer.MelodicSequencer;
+import javax.swing.*;
+import java.awt.*;
 
 /**
  * Panel containing swing controls for melodic sequencer
  */
 public class MelodicSequencerSwingPanel extends JPanel {
     private static final Logger logger = LoggerFactory.getLogger(MelodicSequencerSwingPanel.class);
-    
-    // UI components
-    private JSlider swingSlider;
-    private JLabel valueLabel;
-    private JToggleButton swingToggle;
-    
     // Reference to sequencer
     private final MelodicSequencer sequencer;
-    
+    // UI components
+    private final JSlider swingSlider;
+    private final JLabel valueLabel;
+    private final JToggleButton swingToggle;
+
     /**
      * Creates a new swing control panel for melodic sequencer
      */
     public MelodicSequencerSwingPanel(MelodicSequencer sequencer) {
         this.sequencer = sequencer;
-        
+
         // Reduce layout spacing
         setLayout(new FlowLayout(FlowLayout.LEFT, 1, 0));
 
@@ -51,8 +42,8 @@ public class MelodicSequencerSwingPanel extends JPanel {
         add(swingToggle);
 
         // Swing amount slider
-        swingSlider = new JSlider(JSlider.HORIZONTAL, 
-            MIDIConstants.MIN_SWING, MIDIConstants.MAX_SWING, sequencer.getSequenceData().getSwingPercentage());
+        swingSlider = new JSlider(JSlider.HORIZONTAL,
+                SequencerConstants.MIN_SWING, SequencerConstants.MAX_SWING, sequencer.getSequenceData().getSwingPercentage());
         swingSlider.setMajorTickSpacing(5);
         swingSlider.setPaintTicks(true);
         swingSlider.setPreferredSize(new Dimension(85, 22));
@@ -70,7 +61,7 @@ public class MelodicSequencerSwingPanel extends JPanel {
         add(swingSlider);
         add(valueLabel);
     }
-    
+
     /**
      * Updates controls to match current sequencer state
      */

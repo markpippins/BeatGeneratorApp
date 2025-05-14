@@ -1,10 +1,10 @@
 package com.angrysurfer.beats.panel.player;
 
 import com.angrysurfer.beats.panel.PlayerAwarePanel;
-import com.angrysurfer.core.Constants;
 import com.angrysurfer.core.model.InstrumentWrapper;
 import com.angrysurfer.core.model.Player;
 import com.angrysurfer.core.sequencer.DrumSequencer;
+import com.angrysurfer.core.sequencer.SequencerConstants;
 import com.angrysurfer.core.service.PlayerManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -17,19 +17,16 @@ import java.awt.*;
  */
 public class PlayerEditPanel extends PlayerAwarePanel {
     private static final Logger logger = LoggerFactory.getLogger(PlayerEditPanel.class);
-
+    // Services
+    private final PlayerManager playerManager = PlayerManager.getInstance();
     // UI Components
     private PlayerEditBasicPropertiesPanel basicPropertiesPanel;
     private PlayerEditDetailPanel detailPanel;
-
-    // Services
-    private final PlayerManager playerManager = PlayerManager.getInstance();
-
     // Tracking fields for state changes
     private boolean initialIsDrumPlayer = false;
     private InstrumentWrapper initialInstrument;
     private DrumSequencer owningSequencer = null;
-    
+
     /**
      * Constructor
      */
@@ -46,11 +43,11 @@ public class PlayerEditPanel extends PlayerAwarePanel {
     @Override
     public void handlePlayerActivated() {
         logger.info("Player activated in edit panel: {}", getTargetPlayer() != null ? getTargetPlayer().getName() : "null");
-        
+
         // Cache initial state for comparison when saving
         Player player = getTargetPlayer();
         if (player != null) {
-            initialIsDrumPlayer = player.getChannel() == Constants.MIDI_DRUM_CHANNEL;
+            initialIsDrumPlayer = player.getChannel() == SequencerConstants.MIDI_DRUM_CHANNEL;
             initialInstrument = player.getInstrument();
 
             // Check if this is part of a drum sequencer
@@ -60,7 +57,7 @@ public class PlayerEditPanel extends PlayerAwarePanel {
                 owningSequencer = null;
             }
         }
-        
+
         // Update all panels with the new player
         updatePanels();
     }
@@ -120,7 +117,7 @@ public class PlayerEditPanel extends PlayerAwarePanel {
     public Player getUpdatedPlayer() {
         // Make sure we apply any pending changes from all panels
         applyAllChanges();
-        
+
         // Return the current player from PlayerAwarePanel
         return getTargetPlayer();
     }
@@ -133,27 +130,27 @@ public class PlayerEditPanel extends PlayerAwarePanel {
         if (player == null) {
             return;
         }
-        
+
         // Save the owner reference which might be lost during editing
         Object ownerReference = player.getOwner();
-        
+
         // Apply changes from all sub-panels
         basicPropertiesPanel.applyChanges();
         detailPanel.applyChanges();
-    
+
         // Restore owner reference
         player.setOwner(ownerReference);
-        
+
         // Special handling for drum players
         handleDrumPlayerChanges();
-    
+
         // Save through PlayerManager for consistency
         playerManager.savePlayerProperties(player);
-        
+
         // Request player update to notify other components
         requestPlayerUpdate();
     }
-    
+
     /**
      * Handle changes for drum players
      */
@@ -164,7 +161,7 @@ public class PlayerEditPanel extends PlayerAwarePanel {
         }
 
         // Check if this is a drum player now
-        boolean isDrumPlayer = player.getChannel() == Constants.MIDI_DRUM_CHANNEL;
+        boolean isDrumPlayer = player.getChannel() == SequencerConstants.MIDI_DRUM_CHANNEL;
 
         // Check if instrument changed
         boolean instrumentChanged = false;
@@ -177,15 +174,15 @@ public class PlayerEditPanel extends PlayerAwarePanel {
         // If we're on drum channel, instrument changed, and part of a sequencer, prompt
         if (isDrumPlayer && instrumentChanged && owningSequencer != null) {
             int response = JOptionPane.showConfirmDialog(
-                this,
-                "Apply this instrument change to all drum pads in the sequencer?",
-                "Update All Drum Pads",
-                JOptionPane.YES_NO_OPTION,
-                JOptionPane.QUESTION_MESSAGE);
+                    this,
+                    "Apply this instrument change to all drum pads in the sequencer?",
+                    "Update All Drum Pads",
+                    JOptionPane.YES_NO_OPTION,
+                    JOptionPane.QUESTION_MESSAGE);
 
             if (response == JOptionPane.YES_OPTION) {
                 // Apply to all drum pads
-                for (int i = 0; i < Constants.DRUM_PAD_COUNT; i++) {
+                for (int i = 0; i < SequencerConstants.DRUM_PAD_COUNT; i++) {
                     Player drumPlayer = owningSequencer.getPlayers()[i];
                     if (drumPlayer != null && !drumPlayer.equals(player)) {
                         // Update instrument for this pad
@@ -197,8 +194,8 @@ public class PlayerEditPanel extends PlayerAwarePanel {
                     }
                 }
 
-                logger.info("Applied instrument {} to all drum pads in sequencer", 
-                    player.getInstrument().getName());
+                logger.info("Applied instrument {} to all drum pads in sequencer",
+                        player.getInstrument().getName());
             }
         }
     }

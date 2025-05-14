@@ -1,58 +1,50 @@
 package com.angrysurfer.beats.panel.sequencer.poly;
 
-import java.awt.Color;
-import java.awt.Dimension;
-import java.awt.GridLayout;
-import java.util.ArrayList;
-import java.util.List;
-
-import javax.swing.BorderFactory;
-import javax.swing.JPanel;
-import javax.swing.SwingUtilities;
-
-import com.angrysurfer.core.Constants;
-import com.angrysurfer.core.service.DrumSequencerManager;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import com.angrysurfer.beats.util.UIHelper;
 import com.angrysurfer.beats.widget.DrumSequencerGridButton;
 import com.angrysurfer.beats.widget.DrumSequencerGridPanelContextHandler;
 import com.angrysurfer.core.sequencer.DrumSequencer;
+import com.angrysurfer.core.sequencer.SequencerConstants;
+import com.angrysurfer.core.service.DrumSequencerManager;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import javax.swing.*;
+import java.awt.*;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Panel containing the drum sequencing grid buttons
  */
 public class DrumSequencerGridPanel extends JPanel {
     private static final Logger logger = LoggerFactory.getLogger(DrumSequencerGridPanel.class);
-    
+    // UI constants
+    private static final int DRUM_PAD_COUNT = SequencerConstants.DRUM_PAD_COUNT;
+    private static final int GRID_BUTTON_SIZE = 24;
     // Core components
     private final List<DrumSequencerGridButton> triggerButtons = new ArrayList<>();
     private final DrumSequencerGridButton[][] gridButtons;
     private final DrumSequencer sequencer;
     private final DrumSequencerPanel parentPanel;
     private final DrumSequencerGridPanelContextHandler contextMenuHandler;
-    
-    // UI constants
-    private static final int DRUM_PAD_COUNT = Constants.DRUM_PAD_COUNT;
-    private static final int GRID_BUTTON_SIZE = 24;
-    
     // UI state
     private boolean isPlaying = false;
     private boolean debugMode = false;
-    
+
     /**
      * Create a new DrumSequencerGridPanel
-     * @param sequencer The drum sequencer
+     *
+     * @param sequencer   The drum sequencer
      * @param parentPanel The parent panel for callbacks
      */
     public DrumSequencerGridPanel(DrumSequencer sequencer, DrumSequencerPanel parentPanel) {
         this.sequencer = sequencer;
         this.parentPanel = parentPanel;
-        
+
         // Create the context menu handler
         this.contextMenuHandler = new DrumSequencerGridPanelContextHandler(sequencer, parentPanel);
-        
+
         // Use GridLayout for perfect grid alignment
         // REDUCED: from 2,2 to 1,1 - tighter grid spacing for more compact appearance
         setLayout(new GridLayout(DRUM_PAD_COUNT, sequencer.getDefaultPatternLength(), 1, 1));
@@ -65,7 +57,7 @@ public class DrumSequencerGridPanel extends JPanel {
         createGridButtons();
         // Visualizer gridSaver = new Visualizer(this, gridButtons);
     }
-    
+
     /**
      * Create all grid buttons
      */
@@ -93,7 +85,7 @@ public class DrumSequencerGridPanel extends JPanel {
             }
         }
     }
-    
+
     /**
      * Create step button with proper behavior
      */
@@ -134,7 +126,7 @@ public class DrumSequencerGridPanel extends JPanel {
 
         return button;
     }
-    
+
     /**
      * Update appearance of an entire drum row
      */
@@ -170,7 +162,7 @@ public class DrumSequencerGridPanel extends JPanel {
             }
         }
     }
-    
+
     /**
      * Update all step buttons for a specific drum
      */
@@ -220,7 +212,7 @@ public class DrumSequencerGridPanel extends JPanel {
             }
         }
     }
-    
+
     /**
      * Update step highlighting during playback with position-based colors
      */
@@ -250,7 +242,7 @@ public class DrumSequencerGridPanel extends JPanel {
             if (newButton != null) {
                 // Choose color based on step position in the pattern
                 Color highlightColor;
-                
+
                 if (newStep < 16) {
                     // First 16 steps - orange
                     highlightColor = UIHelper.fadedOrange;
@@ -264,14 +256,14 @@ public class DrumSequencerGridPanel extends JPanel {
                     // Steps 49-64 - olive
                     highlightColor = UIHelper.mutedOlive;
                 }
-                
+
                 newButton.setHighlighted(true);
                 newButton.setHighlightColor(highlightColor);
                 newButton.repaint();
             }
         }
     }
-    
+
     /**
      * Clear all step highlighting across all drum rows
      */
@@ -281,18 +273,18 @@ public class DrumSequencerGridPanel extends JPanel {
             button.repaint();
         }
     }
-    
+
     /**
      * Set playing state to control step highlighting
      */
     public void setPlayingState(boolean isPlaying) {
         this.isPlaying = isPlaying;
-        
+
         if (!isPlaying) {
             clearAllStepHighlighting();
         }
     }
-    
+
     /**
      * Refresh the entire grid UI to match the current sequencer state
      */
@@ -304,39 +296,35 @@ public class DrumSequencerGridPanel extends JPanel {
 
         logger.info("Refreshing entire grid UI for sequence {}", sequencer.getData().getId());
 
-        try {
-            // Ensure we refresh ALL drums and ALL steps
-            for (int drumIndex = 0; drumIndex < DRUM_PAD_COUNT; drumIndex++) {
-                for (int step = 0; step < sequencer.getDefaultPatternLength(); step++) {
-                    int buttonIndex = drumIndex * sequencer.getDefaultPatternLength() + step;
+        // Ensure we refresh ALL drums and ALL steps
+        for (int drumIndex = 0; drumIndex < DRUM_PAD_COUNT; drumIndex++) {
+            for (int step = 0; step < sequencer.getDefaultPatternLength(); step++) {
+                int buttonIndex = drumIndex * sequencer.getDefaultPatternLength() + step;
 
-                    if (buttonIndex < triggerButtons.size()) {
-                        DrumSequencerGridButton button = triggerButtons.get(buttonIndex);
+                if (buttonIndex < triggerButtons.size()) {
+                    DrumSequencerGridButton button = triggerButtons.get(buttonIndex);
 
-                        if (button != null) {
-                            // Get the current state from the sequencer
-                            boolean active = sequencer.isStepActive(drumIndex, step);
+                    if (button != null) {
+                        // Get the current state from the sequencer
+                        boolean active = sequencer.isStepActive(drumIndex, step);
 
-                            // Force update button state without triggering events
-                            button.setToggled(active);
-                            button.setHighlighted(false); // Clear any highlighting
-                            button.repaint(); // Force immediate repaint
-                        }
+                        // Force update button state without triggering events
+                        button.setToggled(active);
+                        button.setHighlighted(false); // Clear any highlighting
+                        button.repaint(); // Force immediate repaint
                     }
                 }
-
-                // Update the drum row's appearance
-                updateRowAppearance(drumIndex, drumIndex == DrumSequencerManager.getInstance().getSelectedPadIndex());
             }
-        } finally {
-            // Any cleanup code if needed
+
+            // Update the drum row's appearance
+            updateRowAppearance(drumIndex, drumIndex == DrumSequencerManager.getInstance().getSelectedPadIndex());
         }
 
         // Ensure proper visual refresh
         revalidate();
         repaint();
     }
-    
+
     /**
      * Toggle debug mode to show grid indices
      */
@@ -359,14 +347,14 @@ public class DrumSequencerGridPanel extends JPanel {
             }
         }
     }
-    
+
     /**
      * Get the list of trigger buttons
      */
     public List<DrumSequencerGridButton> getTriggerButtons() {
         return triggerButtons;
     }
-    
+
     /**
      * Get the 2D array of grid buttons
      */

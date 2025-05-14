@@ -1,9 +1,9 @@
 package com.angrysurfer.core.service;
 
-import com.angrysurfer.core.Constants;
 import com.angrysurfer.core.model.InstrumentWrapper;
 import com.angrysurfer.core.model.preset.DrumItem;
 import com.angrysurfer.core.model.preset.SynthData;
+import com.angrysurfer.core.sequencer.SequencerConstants;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -22,33 +22,18 @@ public class InternalSynthManager {
 
     private static final Logger logger = LoggerFactory.getLogger(InternalSynthManager.class);
     private static InternalSynthManager instance;
-
-    // Add synthesizer as a central instance
-    private Synthesizer synthesizer;
-    // Default channel for melodic sounds
-
     // Map of synth IDs to preset information
     private final Map<Long, SynthData> synthDataMap = new HashMap<>();
-
+    // Default channel for melodic sounds
     // Use LinkedHashMap to preserve insertion order
     private final LinkedHashMap<String, Soundbank> soundbanks = new LinkedHashMap<>();
-
+    private final ScheduledExecutorService noteOffScheduler = Executors.newScheduledThreadPool(2);
     // Map to store available banks for each soundbank (by name)
-    private Map<String, List<Integer>> availableBanksMap = new HashMap<>();
-
+    private final Map<String, List<Integer>> availableBanksMap = new HashMap<>();
+    // Add synthesizer as a central instance
+    private Synthesizer synthesizer;
     // Add these fields for performance
     private MidiChannel[] cachedChannels;
-    private final ScheduledExecutorService noteOffScheduler = Executors.newScheduledThreadPool(2);
-
-    /**
-     * Get the singleton instance
-     */
-    public static synchronized InternalSynthManager getInstance() {
-        if (instance == null) {
-            instance = new InternalSynthManager();
-        }
-        return instance;
-    }
 
     /**
      * Initialize the manager and register command listeners
@@ -61,6 +46,16 @@ public class InternalSynthManager {
         } catch (Exception e) {
             logger.error("Error initializing InternalSynthManager", e);
         }
+    }
+
+    /**
+     * Get the singleton instance
+     */
+    public static synchronized InternalSynthManager getInstance() {
+        if (instance == null) {
+            instance = new InternalSynthManager();
+        }
+        return instance;
     }
 
     /**
@@ -122,7 +117,7 @@ public class InternalSynthManager {
             MidiDevice.Info gervillInfo = null;
 
             for (MidiDevice.Info info : infos) {
-                if (info.getName().contains("Gervill")) {
+                if (info.getName().contains(SequencerConstants.GERVILL)) {
                     gervillInfo = info;
                     break;
                 }
@@ -151,7 +146,7 @@ public class InternalSynthManager {
 
     /**
      * Get the synthesizer instance
-     * 
+     *
      * @return The MIDI synthesizer
      */
     public Synthesizer getSynthesizer() {
@@ -163,7 +158,7 @@ public class InternalSynthManager {
 
     /**
      * Get the internal synthesizer device
-     * 
+     *
      * @return The internal synthesizer device
      * @throws MidiUnavailableException if the synthesizer is unavailable
      */
@@ -225,7 +220,7 @@ public class InternalSynthManager {
      * Creates and initializes an instrument for the internal synth on a specific
      * channel
      * This is the single entry point for all internal synth instrument creation
-     * 
+     *
      * @param channel       The MIDI channel to use
      * @param isDrumChannel Whether this is a drum channel (9)
      * @param name          Optional custom name (will be generated if null)
@@ -252,12 +247,12 @@ public class InternalSynthManager {
 
             // Configure instrument properties
             instrument.setInternal(true);
-            instrument.setDeviceName("Gervill");
+            instrument.setDeviceName(SequencerConstants.GERVILL);
             instrument.setSoundbankName("Java Internal Soundbank");
             instrument.setBankIndex(0);
 
             // Default to appropriate preset based on channel
-            instrument.setPreset(isDrumChannel ? 0 : 0); // 0 is grand piano for melodic channels
+            instrument.setPreset(0); // 0 is grand piano for melodic channels
 
             // Generate ID consistently
             instrument.setId(9985L + channel);
@@ -276,7 +271,7 @@ public class InternalSynthManager {
     /**
      * Initialize the MIDI state for an internal instrument
      * Sends the necessary MIDI commands to set up the instrument
-     * 
+     *
      * @param instrument The instrument to initialize
      */
     public void initializeInstrumentState(InstrumentWrapper instrument) {
@@ -309,7 +304,7 @@ public class InternalSynthManager {
 
     /**
      * Update an instrument's preset with proper MIDI commands
-     * 
+     *
      * @param instrument The instrument to update
      * @param bankIndex  The bank index
      * @param preset     The program/preset number
@@ -328,14 +323,14 @@ public class InternalSynthManager {
             if (preset != null) {
                 instrument.setPreset(preset);
             }
-            
+
             // Make sure we have the correct channel
             int channel = instrument.getChannel() != null ? instrument.getChannel() : 0;
             bankIndex = instrument.getBankIndex() != null ? instrument.getBankIndex() : 0;
             preset = instrument.getPreset() != null ? instrument.getPreset() : 0;
-            
-            logger.info("InternalSynthManager updating: channel={}, bank={}, program={}", 
-                channel, bankIndex, preset);
+
+            logger.info("InternalSynthManager updating: channel={}, bank={}, program={}",
+                    channel, bankIndex, preset);
 
             // Make sure synth is initialized
             if (synthesizer == null || !synthesizer.isOpen()) {
@@ -343,7 +338,7 @@ public class InternalSynthManager {
             }
 
             boolean success = false;
-            
+
             if (synthesizer != null && synthesizer.isOpen()) {
                 // First apply through the synth's MidiChannels directly
                 MidiChannel[] channels = synthesizer.getChannels();
@@ -351,20 +346,20 @@ public class InternalSynthManager {
                     channels[channel].controlChange(0, (bankIndex >> 7) & 0x7F);
                     channels[channel].controlChange(32, bankIndex & 0x7F);
                     channels[channel].programChange(preset);
-                    
+
                     // For percussion channel, ensure drum mode is enabled
-                    if (channel == Constants.MIDI_DRUM_CHANNEL) {
+                    if (channel == SequencerConstants.MIDI_DRUM_CHANNEL) {
                         channels[channel].controlChange(0, 120);
                     }
-                    
+
                     logger.info("Applied preset via direct synth channel: ch={}, bank={}, program={}",
-                        channel, bankIndex, preset);
-                        
+                            channel, bankIndex, preset);
+
                     success = true;
                 } else {
                     logger.warn("Could not access synthesizer channel {}", channel);
                 }
-                
+
                 // Also try through Receiver for completeness
                 try {
                     Receiver receiver = synthesizer.getReceiver();
@@ -373,20 +368,20 @@ public class InternalSynthManager {
                         javax.sound.midi.ShortMessage bankMSB = new javax.sound.midi.ShortMessage();
                         bankMSB.setMessage(0xB0 | channel, 0, (bankIndex >> 7) & 0x7F);
                         receiver.send(bankMSB, -1);
-                        
+
                         // Bank select LSB
                         javax.sound.midi.ShortMessage bankLSB = new javax.sound.midi.ShortMessage();
                         bankLSB.setMessage(0xB0 | channel, 32, bankIndex & 0x7F);
                         receiver.send(bankLSB, -1);
-                        
+
                         // Program change
                         javax.sound.midi.ShortMessage pc = new javax.sound.midi.ShortMessage();
                         pc.setMessage(0xC0 | channel, preset, 0);
                         receiver.send(pc, -1);
-                        
+
                         logger.info("Applied preset via synth receiver: ch={}, bank={}, program={}",
-                            channel, bankIndex, preset);
-                            
+                                channel, bankIndex, preset);
+
                         success = true;
                     }
                 } catch (Exception e) {
@@ -401,7 +396,7 @@ public class InternalSynthManager {
                     instrument.getName(),
                     instrument.getBankIndex(),
                     instrument.getPreset());
-                    
+
             return success;
         } catch (Exception e) {
             logger.error("Failed to update instrument preset: {}", e.getMessage(), e);
@@ -411,7 +406,7 @@ public class InternalSynthManager {
 
     /**
      * Simple test to check if an instrument belongs to the internal synth
-     * 
+     *
      * @param instrument The instrument to check
      * @return true if this is an internal synth instrument
      */
@@ -419,14 +414,14 @@ public class InternalSynthManager {
         if (instrument == null)
             return false;
 
-        return "Gervill".equals(instrument.getDeviceName()) ||
+        return SequencerConstants.GERVILL.equals(instrument.getDeviceName()) ||
                 "Java Sound Synthesizer".equals(instrument.getDeviceName()) ||
                 (instrument.getDevice() == synthesizer);
     }
 
     /**
      * Create a drum kit instrument (always on channel 9)
-     * 
+     *
      * @return A fully configured drum kit instrument
      */
     public InstrumentWrapper createDrumKitInstrument() {
@@ -435,7 +430,7 @@ public class InternalSynthManager {
 
     /**
      * Play a note through the internal synth (optimized path)
-     * 
+     *
      * @param note       MIDI note number
      * @param velocity   Velocity (0-127)
      * @param durationMs Duration in milliseconds
@@ -483,7 +478,7 @@ public class InternalSynthManager {
 
     /**
      * All notes off for a specific channel
-     * 
+     *
      * @param channel The MIDI channel
      */
     public void allNotesOff(int channel) {
@@ -609,7 +604,7 @@ public class InternalSynthManager {
 
         // Simple name check - fastest approach
         if (instrument.getDeviceName() != null &&
-                (instrument.getDeviceName().equals("Gervill") ||
+                (instrument.getDeviceName().equals(SequencerConstants.GERVILL) ||
                         instrument.getDeviceName().contains("Java Sound Synthesizer"))) {
             return true;
         }
@@ -623,7 +618,7 @@ public class InternalSynthManager {
         if (instrument.getDevice() != null &&
                 instrument.getDevice().getDeviceInfo() != null) {
             String deviceName = instrument.getDevice().getDeviceInfo().getName();
-            return deviceName.equals("Gervill") ||
+            return deviceName.equals(SequencerConstants.GERVILL) ||
                     deviceName.contains("Java Sound Synthesizer");
         }
 

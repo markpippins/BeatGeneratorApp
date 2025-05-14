@@ -6,7 +6,6 @@ import com.angrysurfer.beats.panel.player.PlayerEditPanel;
 import com.angrysurfer.beats.panel.player.PlayerInstrumentPanel;
 import com.angrysurfer.beats.panel.player.RuleEditPanel;
 import com.angrysurfer.beats.panel.sequencer.poly.DrumPresetPanel;
-import com.angrysurfer.core.Constants;
 import com.angrysurfer.core.api.*;
 import com.angrysurfer.core.config.UserConfig;
 import com.angrysurfer.core.model.InstrumentWrapper;
@@ -15,6 +14,7 @@ import com.angrysurfer.core.model.Rule;
 import com.angrysurfer.core.model.Session;
 import com.angrysurfer.core.redis.RedisService;
 import com.angrysurfer.core.sequencer.DrumSequencer;
+import com.angrysurfer.core.sequencer.SequencerConstants;
 import com.angrysurfer.core.service.InstrumentManager;
 import com.angrysurfer.core.service.PlayerManager;
 import com.angrysurfer.core.service.SessionManager;
@@ -38,16 +38,16 @@ public class DialogManager implements IBusListener {
     private final RedisService redisService = RedisService.getInstance();
     private final Frame frame;
 
+    private DialogManager(Frame frame) {
+        this.frame = frame;
+        commandBus.register(this);
+    }
+
     public static DialogManager initialize(Frame frame) {
         if (instance == null) {
             instance = new DialogManager(frame);
         }
         return instance;
-    }
-
-    private DialogManager(Frame frame) {
-        this.frame = frame;
-        commandBus.register(this);
     }
 
     @Override
@@ -60,7 +60,7 @@ public class DialogManager implements IBusListener {
             case Commands.RULE_EDIT_REQUEST -> handleEditRule((Rule) action.getData());
             case Commands.EDIT_PLAYER_PARAMETERS -> handlePlayerParameters((Player) action.getData());
             case Commands.CREATE_INSTRUMENT_FOR_PLAYER_REQUEST ->
-                handleCreateInstrumentForPlayer((Player) action.getData());
+                    handleCreateInstrumentForPlayer((Player) action.getData());
             case Commands.LOAD_CONFIG -> SwingUtilities.invokeLater(this::showConfigFileChooserDialog);
             case Commands.SAVE_CONFIG -> SwingUtilities.invokeLater(this::showConfigFileSaverDialog);
             case Commands.SHOW_MAX_LENGTH_DIALOG -> handleMaxLengthDialog((DrumSequencer) action.getData());
@@ -216,7 +216,7 @@ public class DialogManager implements IBusListener {
 
                         // If this was a drum player in a sequencer whose instrument changed,
                         // other drum players may have been updated too
-                        if (Objects.equals(updatedPlayer.getChannel(), Constants.MIDI_DRUM_CHANNEL) && updatedPlayer.getOwner() instanceof DrumSequencer sequencer) {
+                        if (Objects.equals(updatedPlayer.getChannel(), SequencerConstants.MIDI_DRUM_CHANNEL) && updatedPlayer.getOwner() instanceof DrumSequencer sequencer) {
                             for (Player drumPlayer : sequencer.getPlayers()) {
                                 if (drumPlayer != null && !drumPlayer.equals(updatedPlayer)) {
                                     PlayerManager.getInstance().savePlayerProperties(drumPlayer);
@@ -552,7 +552,7 @@ public class DialogManager implements IBusListener {
             JButton applyButton = new JButton("Apply Pattern");
             applyButton.addActionListener(e -> {
                 boolean[] pattern = patternPanel.getPattern();
-                Object[] result = new Object[] { drumIndex, pattern };
+                Object[] result = new Object[]{drumIndex, pattern};
                 commandBus.publish(Commands.EUCLIDEAN_PATTERN_SELECTED, this, result);
                 dialog.dispose();
             });
@@ -611,7 +611,7 @@ public class DialogManager implements IBusListener {
                 else if (decayButton.isSelected())
                     fillType = "decay";
 
-                Object[] result = new Object[] { drumIndex, startStep, fillType };
+                Object[] result = new Object[]{drumIndex, startStep, fillType};
                 commandBus.publish(Commands.FILL_PATTERN_SELECTED, this, result);
                 dialog.dispose();
             });
@@ -629,7 +629,7 @@ public class DialogManager implements IBusListener {
 
     /**
      * Handle request to show drum preset selection dialog
-     * 
+     *
      * @param sequencer The drum sequencer to configure
      */
     private void handleDrumPresetSelection(DrumSequencer sequencer) {
@@ -663,7 +663,7 @@ public class DialogManager implements IBusListener {
 
                     // Ensure instrument has channel set
                     if (player.getInstrument() != null && player.getInstrument().getChannel() == null) {
-                        player.getInstrument().setChannel(Constants.MIDI_DRUM_CHANNEL); // Set drum channel
+                        player.getInstrument().setChannel(SequencerConstants.MIDI_DRUM_CHANNEL); // Set drum channel
                     }
                 }
             }

@@ -2,10 +2,10 @@ package com.angrysurfer.core.service;
 
 import com.angrysurfer.core.api.CommandBus;
 import com.angrysurfer.core.api.Commands;
-import com.angrysurfer.core.api.midi.MIDIConstants;
 import com.angrysurfer.core.redis.RedisService;
 import com.angrysurfer.core.sequencer.MelodicSequenceData;
 import com.angrysurfer.core.sequencer.MelodicSequencer;
+import com.angrysurfer.core.sequencer.SequencerConstants;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -41,8 +41,8 @@ public class MelodicSequencerManager {
 
     /**
      * Create a new sequencer with specified ID and channel
-     * 
-     * @param id      The sequencer ID
+     *
+     * @param id The sequencer ID
      * @return A new MelodicSequencer instance
      */
     public MelodicSequencer newSequencer(int id) {
@@ -55,7 +55,7 @@ public class MelodicSequencerManager {
         CommandBus.getInstance().publish(Commands.MELODIC_SEQUENCER_ADDED, this, sequencer);
 
         logger.info("Created new melodic sequencer with ID {} on channel {}", id,
-                MIDIConstants.SEQUENCER_CHANNELS[id % MIDIConstants.SEQUENCER_CHANNELS.length]);
+                SequencerConstants.SEQUENCER_CHANNELS[id % SequencerConstants.SEQUENCER_CHANNELS.length]);
         return sequencer;
     }
 
@@ -159,7 +159,7 @@ public class MelodicSequencerManager {
 
             // Update instrument settings in the sequence data
             sequencer.updateInstrumentSettingsInSequenceData();
-            
+
             // Now save
             RedisService.getInstance().saveMelodicSequence(sequencer);
             logger.info("Saved melodic sequence with ID: {} for sequencer {}",
@@ -177,7 +177,7 @@ public class MelodicSequencerManager {
 
     /**
      * Updates tempo settings on all managed sequencers
-     * 
+     *
      * @param tempoInBPM   The new tempo in BPM
      * @param ticksPerBeat The new ticks per beat value
      */

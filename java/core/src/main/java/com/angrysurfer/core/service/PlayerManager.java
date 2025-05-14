@@ -1,6 +1,5 @@
 package com.angrysurfer.core.service;
 
-import com.angrysurfer.core.Constants;
 import com.angrysurfer.core.api.Command;
 import com.angrysurfer.core.api.CommandBus;
 import com.angrysurfer.core.api.Commands;
@@ -11,6 +10,7 @@ import com.angrysurfer.core.model.Player;
 import com.angrysurfer.core.model.Rule;
 import com.angrysurfer.core.model.Session;
 import com.angrysurfer.core.redis.RedisService;
+import com.angrysurfer.core.sequencer.SequencerConstants;
 import lombok.Getter;
 import lombok.Setter;
 import org.slf4j.Logger;
@@ -168,43 +168,43 @@ public class PlayerManager implements IBusListener {
     private void handlePlayerInstrumentChangeEvent(PlayerInstrumentChangeEvent event) {
         Player player = event.getPlayer();
         InstrumentWrapper instrument = event.getInstrument();
-        
+
         if (player == null || instrument == null) {
             logger.warn("Invalid instrument change event - missing player or instrument");
             return;
         }
-        
+
         // Capture the original values for logging
         Long oldInstrumentId = player.getInstrumentId();
         String oldInstrumentName = player.getInstrument() != null ? player.getInstrument().getName() : "none";
-        
+
         // Update player with new instrument
         player.setInstrument(instrument);
         player.setInstrumentId(instrument.getId());
-        
+
         // Apply the instrument preset
         boolean presetApplied = applyInstrumentPreset(player);
-        
+
         // Check if this is a default player that needs special handling
         if (Boolean.TRUE.equals(player.getIsDefault())) {
             logger.info("Updating default player instrument: {} -> {} (success: {})",
-                       player.getName(), instrument.getName(), presetApplied);
-            
+                    player.getName(), instrument.getName(), presetApplied);
+
             // Get the UserConfigManager instance directly
             UserConfigManager configManager = UserConfigManager.getInstance();
-            
+
             // Create a clean copy to avoid reference issues
             Player playerCopy = player.deepCopy();
-            
+
             // Update in UserConfig and verify success
             boolean updated = configManager.updateDefaultPlayer(playerCopy);
-            
+
             if (!updated) {
                 logger.error("Failed to update default player in UserConfig: {}", player.getName());
             } else {
                 logger.info("Successfully updated default player in UserConfig: {}", player.getName());
             }
-            
+
             // Also update default instrument if it's a default instrument
             if (Boolean.TRUE.equals(instrument.getIsDefault())) {
                 boolean instrumentUpdated = configManager.updateDefaultInstrument(instrument);
@@ -216,15 +216,15 @@ public class PlayerManager implements IBusListener {
             // Regular player - save to player storage
             savePlayerProperties(player);
         }
-        
+
         // Log change details for debugging
-        logger.info("Player instrument changed: {} - {} ({}) -> {} ({})", 
-                    player.getId(), oldInstrumentName, oldInstrumentId,
-                    instrument.getName(), instrument.getId());
-        
+        logger.info("Player instrument changed: {} - {} ({}) -> {} ({})",
+                player.getId(), oldInstrumentName, oldInstrumentId,
+                instrument.getName(), instrument.getId());
+
         // Notify listeners about the change
-        commandBus.publish(Commands.PLAYER_INSTRUMENT_CHANGED, this, 
-                          new Object[]{player.getId(), instrument.getId()});
+        commandBus.publish(Commands.PLAYER_INSTRUMENT_CHANGED, this,
+                new Object[]{player.getId(), instrument.getId()});
         commandBus.publish(Commands.PLAYER_UPDATED, this, player);
     }
 
@@ -662,7 +662,7 @@ public class PlayerManager implements IBusListener {
                 Integer channel = player.getChannel();
 
                 // Skip drum channel 9 which can have multiple assignments
-                if (channel == Constants.MIDI_DRUM_CHANNEL)
+                if (channel == SequencerConstants.MIDI_DRUM_CHANNEL)
                     continue;
 
                 if (channelToPlayerId.containsKey(channel)) {
@@ -689,7 +689,7 @@ public class PlayerManager implements IBusListener {
                     Integer channel = player.getChannel();
 
                     // Skip drum channel
-                    if (channel == Constants.MIDI_DRUM_CHANNEL)
+                    if (channel == SequencerConstants.MIDI_DRUM_CHANNEL)
                         continue;
 
                     // If this player's channel has a conflict
@@ -720,7 +720,7 @@ public class PlayerManager implements IBusListener {
         // Final pass: ensure all players have valid channels
         for (Player player : playerCache.values()) {
             if (player != null && (player.getChannel() == null ||
-                    (!player.isDrumPlayer() && player.getChannel() == Constants.MIDI_DRUM_CHANNEL))) {
+                    (!player.isDrumPlayer() && player.getChannel() == SequencerConstants.MIDI_DRUM_CHANNEL))) {
                 // Assign an appropriate channel
                 int newChannel = player.isDrumPlayer() ? 9 : channelManager.getNextAvailableMelodicChannel();
 

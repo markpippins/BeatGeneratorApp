@@ -1,8 +1,5 @@
 package com.angrysurfer.core.sequencer;
 
-import com.angrysurfer.core.Constants;
-import com.angrysurfer.core.api.midi.MIDIConstants;
-
 import lombok.Getter;
 import lombok.Setter;
 
@@ -20,22 +17,22 @@ import java.util.stream.Collectors;
 @Setter
 public class DrumSequenceData {
 
+    // Reusable arrays for effects to avoid constant object creation
+    private final int[] effectControllers = new int[4];
+    private final int[] effectValues = new int[4];
     // Pattern length defaults
     private int defaultPatternLength = 32; // Default pattern length
     private int maxPatternLength = 64; // Maximum pattern length
-
     // Global sequencing state
     private long tickCounter = 0; // Count ticks
     private int beatCounter = 0; // Count beats
     private int ticksPerStep = 24; // Base ticks per step
     private boolean isPlaying = false; // Global play state
     private int absoluteStep = 0; // Global step counter independent of individual drum steps
-
     // Per-drum sequencing state
     private int[] currentStep; // Current step for each drum
     private boolean[] patternCompleted; // Pattern completion flag for each drum
     private long[] nextStepTick; // Next step trigger tick for each drum
-
     // Per-drum pattern parameters
     private int[] patternLengths; // Pattern length for each drum
     private Direction[] directions; // Direction for each drum
@@ -44,53 +41,38 @@ public class DrumSequenceData {
     private int[] bounceDirections; // 1 for forward, -1 for backward (for bounce mode)
     private int[] velocities; // Velocity for each drum
     private int[] originalVelocities; // Saved original velocities for resetting
-
     // Pattern data storage
     private boolean[][] patterns; // [drumIndex][stepIndex]
-
     // Per-step parameter values for each drum
     private int[][] stepVelocities; // Velocity for each step of each drum [drumIndex][stepIndex]
     private int[][] stepDecays; // Decay (gate time) for each step of each drum [drumIndex][stepIndex]
     private int[][] stepProbabilities; // Probability for each step [drumIndex][stepIndex]
     private int[][] stepNudges; // Timing nudge for each step [drumIndex][stepIndex]
-
     // Effect parameters
     private int[][] stepPans; // Pan position (0-127) for each step [drumIndex][stepIndex]
     private int[][] stepChorus; // Chorus amount (0-100) for each step [drumIndex][stepIndex]
     private int[][] stepReverb; // Reverb amount (0-100) for each step [drumIndex][stepIndex]
-
     // Track last sent effect values to avoid redundant MIDI messages
     private int[][] lastSentPans;
     private int[][] lastSentChorus;
     private int[][] lastSentReverb;
     private int[][] lastSentDecays; // For delay effect
-
     // These track the last sent values to avoid redundant messages
     private int[][] lastPanValues;
     private int[][] lastReverbValues;
     private int[][] lastChorusValues;
     private int[][] lastDecayValues;
-
     // Selection state
     private int selectedPadIndex = 0; // Currently selected drum pad
-
     // Swing parameters
     private int swingPercentage = 50; // Default swing percentage (50 = no swing)
     private boolean swingEnabled = false; // Swing enabled flag
-
     // Master tempo
     private int masterTempo;
-
     // Add field for next pattern ID
     private Long nextPatternId = null;
-
     // Track pattern completion for switching
     private boolean patternJustCompleted = false;
-
-    // Reusable arrays for effects to avoid constant object creation
-    private final int[] effectControllers = new int[4];
-    private final int[] effectValues = new int[4];
-
     // Sequence identifier
     private Long id = -1L; // Unique ID for the sequence
 
@@ -123,22 +105,22 @@ public class DrumSequenceData {
      */
     private void initializeArrays() {
         // Initialize per-drum state arrays
-        currentStep = new int[Constants.DRUM_PAD_COUNT];
-        patternCompleted = new boolean[Constants.DRUM_PAD_COUNT];
-        nextStepTick = new long[Constants.DRUM_PAD_COUNT];
+        currentStep = new int[SequencerConstants.DRUM_PAD_COUNT];
+        patternCompleted = new boolean[SequencerConstants.DRUM_PAD_COUNT];
+        nextStepTick = new long[SequencerConstants.DRUM_PAD_COUNT];
 
         // Initialize per-drum parameter arrays
-        patternLengths = new int[Constants.DRUM_PAD_COUNT];
-        directions = new Direction[Constants.DRUM_PAD_COUNT];
-        timingDivisions = new TimingDivision[Constants.DRUM_PAD_COUNT];
-        loopingFlags = new boolean[Constants.DRUM_PAD_COUNT];
-        bounceDirections = new int[Constants.DRUM_PAD_COUNT];
-        velocities = new int[Constants.DRUM_PAD_COUNT];
-        originalVelocities = new int[Constants.DRUM_PAD_COUNT];
+        patternLengths = new int[SequencerConstants.DRUM_PAD_COUNT];
+        directions = new Direction[SequencerConstants.DRUM_PAD_COUNT];
+        timingDivisions = new TimingDivision[SequencerConstants.DRUM_PAD_COUNT];
+        loopingFlags = new boolean[SequencerConstants.DRUM_PAD_COUNT];
+        bounceDirections = new int[SequencerConstants.DRUM_PAD_COUNT];
+        velocities = new int[SequencerConstants.DRUM_PAD_COUNT];
+        originalVelocities = new int[SequencerConstants.DRUM_PAD_COUNT];
 
         // Set default values
-        java.util.Arrays.fill(velocities, MIDIConstants.DEFAULT_VELOCITY);
-        java.util.Arrays.fill(originalVelocities, MIDIConstants.DEFAULT_VELOCITY);
+        java.util.Arrays.fill(velocities, SequencerConstants.DEFAULT_VELOCITY);
+        java.util.Arrays.fill(originalVelocities, SequencerConstants.DEFAULT_VELOCITY);
         java.util.Arrays.fill(patternLengths, defaultPatternLength);
         java.util.Arrays.fill(directions, Direction.FORWARD);
         java.util.Arrays.fill(timingDivisions, TimingDivision.NORMAL);
@@ -146,36 +128,36 @@ public class DrumSequenceData {
         java.util.Arrays.fill(bounceDirections, 1);
 
         // Set master tempo default
-        masterTempo = MIDIConstants.DEFAULT_MASTER_TEMPO;
+        masterTempo = SequencerConstants.DEFAULT_MASTER_TEMPO;
 
         // Initialize pattern and step parameter arrays
-        patterns = new boolean[Constants.DRUM_PAD_COUNT][maxPatternLength];
-        stepVelocities = new int[Constants.DRUM_PAD_COUNT][maxPatternLength];
-        stepDecays = new int[Constants.DRUM_PAD_COUNT][maxPatternLength];
-        stepProbabilities = new int[Constants.DRUM_PAD_COUNT][maxPatternLength];
-        stepNudges = new int[Constants.DRUM_PAD_COUNT][maxPatternLength];
+        patterns = new boolean[SequencerConstants.DRUM_PAD_COUNT][maxPatternLength];
+        stepVelocities = new int[SequencerConstants.DRUM_PAD_COUNT][maxPatternLength];
+        stepDecays = new int[SequencerConstants.DRUM_PAD_COUNT][maxPatternLength];
+        stepProbabilities = new int[SequencerConstants.DRUM_PAD_COUNT][maxPatternLength];
+        stepNudges = new int[SequencerConstants.DRUM_PAD_COUNT][maxPatternLength];
 
         // Initialize effect arrays
-        stepPans = new int[Constants.DRUM_PAD_COUNT][maxPatternLength];
-        stepChorus = new int[Constants.DRUM_PAD_COUNT][maxPatternLength];
-        stepReverb = new int[Constants.DRUM_PAD_COUNT][maxPatternLength];
+        stepPans = new int[SequencerConstants.DRUM_PAD_COUNT][maxPatternLength];
+        stepChorus = new int[SequencerConstants.DRUM_PAD_COUNT][maxPatternLength];
+        stepReverb = new int[SequencerConstants.DRUM_PAD_COUNT][maxPatternLength];
 
         // Initialize effect tracking arrays
-        lastSentPans = new int[Constants.DRUM_PAD_COUNT][maxPatternLength];
-        lastSentChorus = new int[Constants.DRUM_PAD_COUNT][maxPatternLength];
-        lastSentReverb = new int[Constants.DRUM_PAD_COUNT][maxPatternLength];
-        lastSentDecays = new int[Constants.DRUM_PAD_COUNT][maxPatternLength];
+        lastSentPans = new int[SequencerConstants.DRUM_PAD_COUNT][maxPatternLength];
+        lastSentChorus = new int[SequencerConstants.DRUM_PAD_COUNT][maxPatternLength];
+        lastSentReverb = new int[SequencerConstants.DRUM_PAD_COUNT][maxPatternLength];
+        lastSentDecays = new int[SequencerConstants.DRUM_PAD_COUNT][maxPatternLength];
 
-        lastPanValues = new int[Constants.DRUM_PAD_COUNT][maxPatternLength];
-        lastReverbValues = new int[Constants.DRUM_PAD_COUNT][maxPatternLength];
-        lastChorusValues = new int[Constants.DRUM_PAD_COUNT][maxPatternLength];
-        lastDecayValues = new int[Constants.DRUM_PAD_COUNT][maxPatternLength];
+        lastPanValues = new int[SequencerConstants.DRUM_PAD_COUNT][maxPatternLength];
+        lastReverbValues = new int[SequencerConstants.DRUM_PAD_COUNT][maxPatternLength];
+        lastChorusValues = new int[SequencerConstants.DRUM_PAD_COUNT][maxPatternLength];
+        lastDecayValues = new int[SequencerConstants.DRUM_PAD_COUNT][maxPatternLength];
 
         // Initialize mute arrays
-        stepMuteValues = new int[Constants.DRUM_PAD_COUNT][maxPatternLength];
+        stepMuteValues = new int[SequencerConstants.DRUM_PAD_COUNT][maxPatternLength];
 
         // Initialize arrays with default values
-        for (int i = 0; i < Constants.DRUM_PAD_COUNT; i++) {
+        for (int i = 0; i < SequencerConstants.DRUM_PAD_COUNT; i++) {
             for (int j = 0; j < maxPatternLength; j++) {
                 // Set initial values to -1 to ensure first message gets sent
                 lastPanValues[i][j] = -1;
@@ -184,15 +166,15 @@ public class DrumSequenceData {
                 lastDecayValues[i][j] = -1;
 
                 // Set default values for step parameters
-                stepVelocities[i][j] = MIDIConstants.DEFAULT_VELOCITY;
-                stepDecays[i][j] = MIDIConstants.DEFAULT_DECAY;
-                stepProbabilities[i][j] = MIDIConstants.DEFAULT_PROBABILITY;
+                stepVelocities[i][j] = SequencerConstants.DEFAULT_VELOCITY;
+                stepDecays[i][j] = SequencerConstants.DEFAULT_DECAY;
+                stepProbabilities[i][j] = SequencerConstants.DEFAULT_PROBABILITY;
                 stepNudges[i][j] = 0;
 
                 // Set defaults for effect parameters
-                stepPans[i][j] = MIDIConstants.DEFAULT_PAN;
-                stepChorus[i][j] = MIDIConstants.DEFAULT_CHORUS;
-                stepReverb[i][j] = MIDIConstants.DEFAULT_REVERB;
+                stepPans[i][j] = SequencerConstants.DEFAULT_PAN;
+                stepChorus[i][j] = SequencerConstants.DEFAULT_CHORUS;
+                stepReverb[i][j] = SequencerConstants.DEFAULT_REVERB;
 
                 // Initialize last sent values to invalid defaults
                 lastSentPans[i][j] = -1;
@@ -206,35 +188,35 @@ public class DrumSequenceData {
         }
 
         // Initialize instrument data arrays
-        instrumentIds = new Long[Constants.DRUM_PAD_COUNT];
-        soundbankNames = new String[Constants.DRUM_PAD_COUNT];
-        presets = new Integer[Constants.DRUM_PAD_COUNT];
-        bankIndices = new Integer[Constants.DRUM_PAD_COUNT];
-        deviceNames = new String[Constants.DRUM_PAD_COUNT];
-        instrumentNames = new String[Constants.DRUM_PAD_COUNT];
+        instrumentIds = new Long[SequencerConstants.DRUM_PAD_COUNT];
+        soundbankNames = new String[SequencerConstants.DRUM_PAD_COUNT];
+        presets = new Integer[SequencerConstants.DRUM_PAD_COUNT];
+        bankIndices = new Integer[SequencerConstants.DRUM_PAD_COUNT];
+        deviceNames = new String[SequencerConstants.DRUM_PAD_COUNT];
+        instrumentNames = new String[SequencerConstants.DRUM_PAD_COUNT];
 
         // Initialize with defaults
         java.util.Arrays.fill(presets, 0); // Default drum kit preset
         java.util.Arrays.fill(bankIndices, 0); // Default bank
 
         // Initialize root notes
-        rootNotes = new int[Constants.DRUM_PAD_COUNT];
+        rootNotes = new int[SequencerConstants.DRUM_PAD_COUNT];
 
         // Initialize with default values (standard GM drum kit starting at note 36)
-        for (int i = 0; i < Constants.DRUM_PAD_COUNT; i++) {
-            rootNotes[i] = MIDIConstants.MIDI_DRUM_NOTE_OFFSET + i; // Default to standard GM drum mapping
+        for (int i = 0; i < SequencerConstants.DRUM_PAD_COUNT; i++) {
+            rootNotes[i] = SequencerConstants.MIDI_DRUM_NOTE_OFFSET + i; // Default to standard GM drum mapping
         }
     }
 
     /**
      * Get whether a step is active for a specific drum
-     * 
+     *
      * @param drumIndex The drum pad index
      * @param stepIndex The step index
      * @return true if the step is active
      */
     public boolean isStepActive(int drumIndex, int stepIndex) {
-        if (drumIndex >= 0 && drumIndex < Constants.DRUM_PAD_COUNT &&
+        if (drumIndex >= 0 && drumIndex < SequencerConstants.DRUM_PAD_COUNT &&
                 stepIndex >= 0 && stepIndex < maxPatternLength) {
             return patterns[drumIndex][stepIndex];
         }
@@ -243,13 +225,13 @@ public class DrumSequenceData {
 
     /**
      * Toggle a step on/off for a specific drum
-     * 
+     *
      * @param drumIndex The drum pad index
      * @param stepIndex The step index
      * @return The new state of the step
      */
     public boolean toggleStep(int drumIndex, int stepIndex) {
-        if (drumIndex >= 0 && drumIndex < Constants.DRUM_PAD_COUNT &&
+        if (drumIndex >= 0 && drumIndex < SequencerConstants.DRUM_PAD_COUNT &&
                 stepIndex >= 0 && stepIndex < maxPatternLength) {
             patterns[drumIndex][stepIndex] = !patterns[drumIndex][stepIndex];
             return patterns[drumIndex][stepIndex];
@@ -259,7 +241,7 @@ public class DrumSequenceData {
 
     /**
      * Reset all pattern data to initial state
-     * 
+     *
      * @param preservePositions Whether to preserve current positions
      */
     public void reset(boolean preservePositions) {
@@ -283,12 +265,12 @@ public class DrumSequenceData {
 
     /**
      * Calculate the next step for a drum based on its direction
-     * 
+     *
      * @param drumIndex The drum to calculate for
      * @return The previous step index (for UI updates)
      */
     public int calculateNextStep(int drumIndex) {
-        if (drumIndex < 0 || drumIndex >= Constants.DRUM_PAD_COUNT) {
+        if (drumIndex < 0 || drumIndex >= SequencerConstants.DRUM_PAD_COUNT) {
             return 0;
         }
 
@@ -358,7 +340,7 @@ public class DrumSequenceData {
      * Clear all patterns (set all steps to inactive)
      */
     public void clearPatterns() {
-        for (int i = 0; i < Constants.DRUM_PAD_COUNT; i++) {
+        for (int i = 0; i < SequencerConstants.DRUM_PAD_COUNT; i++) {
             for (int j = 0; j < maxPatternLength; j++) {
                 patterns[i][j] = false;
             }
@@ -367,11 +349,11 @@ public class DrumSequenceData {
 
     /**
      * Check if all drum patterns are completed
-     * 
+     *
      * @return true if all patterns are completed
      */
     public boolean areAllPatternsCompleted() {
-        for (int i = 0; i < Constants.DRUM_PAD_COUNT; i++) {
+        for (int i = 0; i < SequencerConstants.DRUM_PAD_COUNT; i++) {
             if (!patternCompleted[i] && loopingFlags[i]) {
                 return false;
             }
@@ -381,12 +363,12 @@ public class DrumSequenceData {
 
     /**
      * Generate a random pattern for a drum with a specific density
-     * 
+     *
      * @param drumIndex The drum index
      * @param density   The pattern density (1-10)
      */
     public void generatePattern(int drumIndex, int density) {
-        if (drumIndex < 0 || drumIndex >= Constants.DRUM_PAD_COUNT) {
+        if (drumIndex < 0 || drumIndex >= SequencerConstants.DRUM_PAD_COUNT) {
             return;
         }
 
@@ -398,7 +380,7 @@ public class DrumSequenceData {
         }
 
         // Generate new pattern based on density (1-10)
-        int hitsToAdd = Math.max(1, Math.min(MIDIConstants.MAX_DENSITY, density)) * length / MIDIConstants.MAX_DENSITY;
+        int hitsToAdd = Math.max(1, Math.min(SequencerConstants.MAX_DENSITY, density)) * length / SequencerConstants.MAX_DENSITY;
 
         // Always add a hit on the first beat
         patterns[drumIndex][0] = true;
@@ -416,11 +398,11 @@ public class DrumSequenceData {
 
     /**
      * Push a pattern forward by one step (rotation)
-     * 
+     *
      * @param drumIndex The drum index
      */
     public void pushPatternForward(int drumIndex) {
-        if (drumIndex < 0 || drumIndex >= Constants.DRUM_PAD_COUNT) {
+        if (drumIndex < 0 || drumIndex >= SequencerConstants.DRUM_PAD_COUNT) {
             return;
         }
 
@@ -489,11 +471,11 @@ public class DrumSequenceData {
 
     /**
      * Pull a pattern backward by one step (rotation)
-     * 
+     *
      * @param drumIndex The drum index
      */
     public void pullPatternBackward(int drumIndex) {
-        if (drumIndex < 0 || drumIndex >= Constants.DRUM_PAD_COUNT) {
+        if (drumIndex < 0 || drumIndex >= SequencerConstants.DRUM_PAD_COUNT) {
             return;
         }
 
@@ -562,14 +544,14 @@ public class DrumSequenceData {
 
     /**
      * Get mute value for a drum at a specific bar
-     * 
+     *
      * @param drumIndex The drum index
      * @param barIndex  The bar index
      * @return 1 if muted, 0 if not muted
      */
     public int getMuteValue(int drumIndex, int barIndex) {
-        if (drumIndex >= 0 && drumIndex < Constants.DRUM_PAD_COUNT && 
-            barIndex >= 0 && barIndex < maxPatternLength) {
+        if (drumIndex >= 0 && drumIndex < SequencerConstants.DRUM_PAD_COUNT &&
+                barIndex >= 0 && barIndex < maxPatternLength) {
             return stepMuteValues[drumIndex][barIndex];
         }
         return 0;
@@ -577,41 +559,41 @@ public class DrumSequenceData {
 
     /**
      * Set mute value for a drum at a specific bar
-     * 
+     *
      * @param drumIndex The drum index
      * @param barIndex  The bar index
      * @param value     1 to mute, 0 to unmute
      */
     public void setMuteValue(int drumIndex, int barIndex, int value) {
-        if (drumIndex >= 0 && drumIndex < Constants.DRUM_PAD_COUNT && 
-            barIndex >= 0 && barIndex < maxPatternLength) {
+        if (drumIndex >= 0 && drumIndex < SequencerConstants.DRUM_PAD_COUNT &&
+                barIndex >= 0 && barIndex < maxPatternLength) {
             stepMuteValues[drumIndex][barIndex] = value;
         }
     }
 
     /**
      * Get all mute values for a drum
-     * 
+     *
      * @param drumIndex The drum index
      * @return List of mute values for the drum
      */
     public List<Integer> getMuteValues(int drumIndex) {
-        if (drumIndex >= 0 && drumIndex < Constants.DRUM_PAD_COUNT) {
+        if (drumIndex >= 0 && drumIndex < SequencerConstants.DRUM_PAD_COUNT) {
             return Arrays.stream(stepMuteValues[drumIndex])
-                .boxed()
-                .collect(Collectors.toList());
+                    .boxed()
+                    .collect(Collectors.toList());
         }
         return new ArrayList<>();
     }
 
     /**
      * Set all mute values for a drum
-     * 
+     *
      * @param drumIndex  The drum index
      * @param muteValues List of mute values (1=muted, 0=unmuted)
      */
     public void setMuteValues(int drumIndex, List<Integer> muteValues) {
-        if (drumIndex >= 0 && drumIndex < Constants.DRUM_PAD_COUNT && muteValues != null) {
+        if (drumIndex >= 0 && drumIndex < SequencerConstants.DRUM_PAD_COUNT && muteValues != null) {
             for (int i = 0; i < Math.min(muteValues.size(), maxPatternLength); i++) {
                 stepMuteValues[drumIndex][i] = muteValues.get(i);
             }
