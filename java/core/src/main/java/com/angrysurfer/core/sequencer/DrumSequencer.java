@@ -104,7 +104,8 @@ public class DrumSequencer implements IBusListener {
         logger.info("Creating drum players with active connections");
         for (int i = 0; i < SequencerConstants.DRUM_PAD_COUNT; i++) {
             // First check if player already exists in the session
-            Player existingPlayer = findExistingPlayerForDrum(activeSession, i);
+            Player existingPlayer = UserConfigManager.getInstance().getStrikesOrderedById().get(i);
+            //findExistingPlayerForDrum(activeSession, i);
 
             if (existingPlayer != null) {
                 logger.info("Using existing player for drum pad {}: {}", i, existingPlayer.getId());
@@ -113,8 +114,12 @@ public class DrumSequencer implements IBusListener {
                 // Make sure the player has this sequencer as its owner
                 if (players[i].getOwner() != this) {
                     players[i].setOwner(this);
-                    PlayerManager.getInstance().savePlayerProperties(players[i]);
+                    //PlayerManager.getInstance().savePlayerProperties(players[i]);
                 }
+
+                InstrumentWrapper instrument = UserConfigManager.getInstance().findInstrumentById(existingPlayer.getInstrumentId());
+                players[i].setInstrument(instrument);
+                activeSession.getPlayers().add(players[i]);
             } else {
                 // Create new player
                 players[i] = RedisService.getInstance().newStrike();

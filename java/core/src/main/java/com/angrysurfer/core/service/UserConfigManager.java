@@ -125,9 +125,6 @@ public class UserConfigManager {
         // Set channel to 9 (MIDI channel 10 for drums)
         player.setDefaultChannel(9);
 
-        // Associate with instrument
-        player.setInstrument(instrument);
-
         // Configure velocities for natural sound
         player.setMinVelocity(70);
         player.setMaxVelocity(100);
@@ -139,6 +136,9 @@ public class UserConfigManager {
         player.setRatchetInterval(40);
         player.setSparse(0);
         player.setRandomDegree(0);
+
+        // Associate with instrument
+        player.setInstrument(instrument);
         return player;
     }
 
@@ -834,7 +834,7 @@ public class UserConfigManager {
      * @return true if successful, false otherwise
      */
     public boolean populateDefaults() {
-        
+
         boolean playersCreated = populateDefaultPlayers();
         if (!playersCreated) {
             logger.error("Failed to create default players");

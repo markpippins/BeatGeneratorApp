@@ -442,10 +442,8 @@ public class MelodicSequencer implements IBusListener {
             return;
         }
 
-        List<Note> ordered = UserConfigManager.getInstance().getNotesOrderedById();
-        List<Note> notes = UserConfigManager.getInstance().getCurrentConfig().getDefaultNotes();
-
-        Optional<Note> opt = notes.stream().filter(p -> p.getChannel().equals(playerChannel)).findFirst();
+        Optional<Note> opt = UserConfigManager.getInstance().getCurrentConfig().getDefaultNotes()
+                .stream().filter(p -> p.getChannel().equals(playerChannel)).findFirst();
 
         if (opt.isPresent()) {
 
@@ -470,16 +468,6 @@ public class MelodicSequencer implements IBusListener {
             player.setName("Melo " + getId() + 1);
             player.setDefaultChannel(playerChannel);
         }
-
-        //InstrumentWrapper instrument = UserConfigManager.getInstance().getCurrentConfig().getInstruments()
-        //        .stream().filter(InstrumentWrapper::getIsDefault).toList().get(getId());
-
-
-//        if (player.getInstrument() != null) {
-//            InternalSynthManager.getInstance().initializeInstrumentState(player.getInstrument());
-//        } else {
-//            logger.warn("Could not create instrument for melodic sequencer {}", id);
-//        }
 
         if (player.getInstrument() != null) {
             DeviceManager.getInstance();
@@ -523,7 +511,8 @@ public class MelodicSequencer implements IBusListener {
                 instrument.setPreset(sequenceData.getPreset());
             }
 
-            PlayerManager.getInstance().applyInstrumentPreset(player);
+            // PlayerManager.getInstance().applyInstrumentPreset(player);
+            initializePlayer(player);
         }
 
         logger.debug("Applied sequence data settings to instrument: preset:{}, bank:{}, soundbank:{}",
@@ -746,138 +735,13 @@ public class MelodicSequencer implements IBusListener {
                 stop();
             }
 
-            case Commands.REFRESH_ALL_INSTRUMENTS -> {
-                logger.info("Refreshing instrument preset for melodic sequencer {}", id);
-                if (player != null && player.getInstrument() != null) {
-                    PlayerManager.getInstance().applyInstrumentPreset(player);
-                }
-            }
-
-
-            case Commands.PLAYER_PRESET_CHANGE_EVENT -> {
-//                if (action.getData() instanceof PlayerPresetChangeEvent event &&
-//                        player != null &&
-//                        event.getPlayer() != null &&
-//                        player.getId().equals(event.getPlayer().getId())) {
-//
-//                    // Log that we received preset change event for our player
-//                    logger.info("Received preset change event for player {}: bank={}, preset={}",
-//                            player.getName(),
-//                            event.getBankIndex(),
-//                            event.getPresetNumber());
-//
-//                    // Update the instrument with new preset values
-//                    InstrumentWrapper instrument = player.getInstrument();
-//                    if (instrument != null) {
-//                        // Update bank index if provided
-//                        if (event.getBankIndex() != null) {
-//                            instrument.setBankIndex(event.getBankIndex());
-//                        }
-//
-//                        // Update preset number
-//                        if (event.getPresetNumber() != null) {
-//                            instrument.setPreset(event.getPresetNumber());
-//                        }
-//
-//                        // Apply the new preset
-//                        PlayerManager.getInstance().applyInstrumentPreset(player);
-//
-//                        // Also update our sequence data to remember these settings
-//                        updateInstrumentSettingsInSequenceData();
-//
-//                        logger.debug("Applied new preset {}/{} to player {}",
-//                                instrument.getBankIndex(),
-//                                instrument.getPreset(),
-//                                player.getName());
-//                    } else {
-//                        logger.warn("Cannot apply preset change - player has no instrument");
-//                    }
-//                }
+            case Commands.REFRESH_ALL_INSTRUMENTS, Commands.PLAYER_PRESET_CHANGE_EVENT,
+                 Commands.PLAYER_PRESET_CHANGED, Commands.PLAYER_INSTRUMENT_CHANGE_EVENT,
+                 Commands.PLAYER_UPDATED, Commands.REFRESH_PLAYER_INSTRUMENT -> {
                 initializePlayer(player);
+                updateInstrumentSettingsInSequenceData();
             }
 
-            case Commands.PLAYER_PRESET_CHANGED -> {
-                initializePlayer(player);
-
-                // Handle notification that a player's preset has been changed
-//                if (action.getData() instanceof Player updatedPlayer &&
-//                        player != null &&
-//                        updatedPlayer.getId().equals(player.getId())) {
-//
-//                    // This is a notification that our player's preset has changed
-//                    // We should ensure our local state matches
-//                    logger.info("Player preset changed notification for {}", player.getName());
-//
-//                    // Update our sequence data to match the new instrument settings
-//                    updateInstrumentSettingsInSequenceData();
-//                }
-            }
-
-            case Commands.PLAYER_INSTRUMENT_CHANGE_EVENT -> {
-//                if (action.getData() instanceof PlayerInstrumentChangeEvent event &&
-//                        player != null &&
-//                        event.getPlayer() != null &&
-//                        player.getId().equals(event.getPlayer().getId())) {
-//
-//                    logger.info("Received instrument change event for player {}", player.getName());
-//
-//                    // Apply the new instrument
-//                    InstrumentWrapper instrument = event.getInstrument();
-//                    if (instrument != null) {
-//                        player.setInstrument(instrument);
-//                        player.setInstrumentId(instrument.getId());
-//
-//                        // Apply the instrument preset
-//                        PlayerManager.getInstance().applyInstrumentPreset(player);
-//
-//                        // Update our sequence data
-//                        updateInstrumentSettingsInSequenceData();
-//
-//                        logger.debug("Applied new instrument {} to player {}",
-//                                instrument.getName(),
-//                                player.getName());
-//                    }
-//                }
-                initializePlayer(player);
-            }
-
-            case Commands.PLAYER_UPDATED -> {
-                // If our player was updated elsewhere, refresh our local state
-                if (action.getData() instanceof Player updatedPlayer &&
-                        player != null &&
-                        updatedPlayer.getId().equals(player.getId())) {
-
-                    // Check if instrument or preset changed
-                    if (updatedPlayer.getInstrument() != null &&
-                            (player.getInstrument() == null ||
-                                    !player.getInstrument().getId().equals(updatedPlayer.getInstrument().getId()) ||
-                                    !Objects.equals(player.getInstrument().getPreset(), updatedPlayer.getInstrument().getPreset()) ||
-                                    !Objects.equals(player.getInstrument().getBankIndex(), updatedPlayer.getInstrument().getBankIndex()))) {
-
-                        logger.info("Player {} updated with instrument changes - applying preset", player.getName());
-
-                        // Ensure we have the latest instrument
-                        player.setInstrument(updatedPlayer.getInstrument());
-                        player.setInstrumentId(updatedPlayer.getInstrumentId());
-
-                        // Apply the preset
-                        PlayerManager.getInstance().applyInstrumentPreset(player);
-
-                        // Update our sequence data
-                        updateInstrumentSettingsInSequenceData();
-                    }
-                }
-            }
-
-            case Commands.REFRESH_PLAYER_INSTRUMENT -> {
-                if (action.getData() instanceof Long playerId &&
-                        player != null &&
-                        player.getId().equals(playerId)) {
-
-                    logger.info("Explicit refresh requested for player instrument: {}", playerId);
-                    PlayerManager.getInstance().applyInstrumentPreset(player);
-                }
-            }
         }
     }
 
@@ -990,7 +854,9 @@ public class MelodicSequencer implements IBusListener {
                 if (receiver != null) {
                     logger.info("Successfully reconnected sequencer {} to device {}", id, deviceName);
 
-                    PlayerManager.getInstance().applyInstrumentPreset(player);
+                    // PlayerManager.getInstance().applyInstrumentPreset(player);
+                    initializePlayer(player);
+
                 } else {
                     logger.warn("Failed to get receiver for sequencer {}", id);
                 }
