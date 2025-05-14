@@ -1458,8 +1458,7 @@ private void refreshInstrumentsTable() {
     }
 
     private void updateInstrumentInUserConfig(InstrumentWrapper instrument) {
-        UserConfigManager configManager = UserConfigManager.getInstance();
-        UserConfig config = configManager.getCurrentConfig();
+        UserConfig config =  UserConfigManager.getInstance().getCurrentConfig();
 
         // Update existing or add new
         boolean found = false;
@@ -1478,7 +1477,7 @@ private void refreshInstrumentsTable() {
         }
 
         // Save updated config
-        configManager.saveConfiguration(config);
+        UserConfigManager.getInstance().saveConfiguration(config);
     }
 
     private void enableSelectedInstrument() {

@@ -1,42 +1,28 @@
 package com.angrysurfer.core.model;
 
-import java.io.Serializable;
-import java.io.IOException;
-import java.lang.reflect.Field;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Random;
-import java.util.Set;
+import com.angrysurfer.core.Constants;
+import com.angrysurfer.core.api.*;
+import com.angrysurfer.core.model.feature.Pad;
+import com.angrysurfer.core.sequencer.TimingUpdate;
+import com.angrysurfer.core.service.InternalSynthManager;
+import com.angrysurfer.core.util.Cycler;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import jakarta.persistence.Transient;
+import lombok.Getter;
+import lombok.Setter;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import javax.sound.midi.InvalidMidiDataException;
+import javax.sound.midi.MidiDevice;
+import javax.sound.midi.ShortMessage;
+import java.io.*;
+import java.util.*;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.stream.Collectors;
-
-import com.angrysurfer.core.service.InternalSynthManager;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import com.angrysurfer.core.Constants;
-import com.angrysurfer.core.api.Command;
-import com.angrysurfer.core.api.CommandBus;
-import com.angrysurfer.core.api.Commands;
-import com.angrysurfer.core.api.IBusListener;
-import com.angrysurfer.core.api.TimingBus;
-import com.angrysurfer.core.model.feature.Pad;
-import com.angrysurfer.core.sequencer.TimingUpdate;
-import com.angrysurfer.core.util.Cycler;
-import com.fasterxml.jackson.annotation.JsonIgnore;
-
-import jakarta.persistence.Transient;
-import lombok.Getter;
-import lombok.Setter;
-
-import javax.sound.midi.*;
 
 @Getter
 @Setter
@@ -51,6 +37,11 @@ public abstract class Player implements Callable<Boolean>, Serializable, IBusLis
     private Long id;
 
     private Long instrumentId;
+
+    private Boolean isDefault = false;
+
+    @JsonIgnore
+    private int originalLevel = 100;
 
     @JsonIgnore
     public transient boolean isSelected = false;
@@ -126,8 +117,6 @@ public abstract class Player implements Callable<Boolean>, Serializable, IBusLis
     private String scale = "Chromatic";
 
     private Integer duration = 100;
-
-    private Boolean x0xPlayer = false;
 
     @JsonIgnore
     private Boolean enabled = false;
@@ -267,10 +256,6 @@ public abstract class Player implements Callable<Boolean>, Serializable, IBusLis
 
     public abstract void onTick(TimingUpdate timingUpdate);
 
-    public Rule getRule(Long ruleId) {
-        return getRules().stream().filter(r -> r.getId().equals(ruleId)).findAny().orElseThrow();
-    }
-
     public void drumNoteOn(int note) {
         logger.debug("drumNoteOn() - note: {}", note);
 
@@ -407,36 +392,6 @@ public abstract class Player implements Callable<Boolean>, Serializable, IBusLis
     }
 
     /**
-     * Facade method to play a note with specified gate time
-     * 
-     * @param note     MIDI note number
-     * @param velocity Note velocity (0-127)
-     * @param gate     Note gate time in ms
-     */
-    // public void noteOn(int note, int velocity, int gate) {
-    // // Update player state
-    // setPlaying(true);
-    // updateUIIfNeeded();
-    //
-    // // Skip note if player is muted
-    // if (level <= 0) {
-    // return;
-    // }
-    //
-    // try {
-    // // Delegate to instrument wrapper
-    // if (instrument != null) {
-    // synchronized (messageLock) {
-    // reuseableMessage.setMessage(ShortMessage.NOTE_ON, note, velocity);
-    // instrument.sendToDevice(reuseableMessage);
-    // }
-    // }
-    // } catch (Exception e) {
-    // logger.error("Error in noteOn: {}", e.getMessage(), e);
-    // }
-    // }
-
-    /**
      * Facade method to stop a note
      * 
      * @param note     MIDI note number
@@ -525,8 +480,7 @@ public abstract class Player implements Callable<Boolean>, Serializable, IBusLis
         int test = rand.nextInt(101);
         int probable = getProbability();
 
-        boolean result = test < probable;
-        return result;
+        return test < probable;
     }
 
     private boolean hasNoMuteGroupConflict() {
@@ -592,7 +546,7 @@ public abstract class Player implements Callable<Boolean>, Serializable, IBusLis
                 // Use positional tick value directly
                 boolean match = Operator.evaluate(rule.getComparison(),
                         timingUpdate.tick(),
-                        rule.getValue().doubleValue());
+                        rule.getValue());
                 if (debug) {
                     logger.info("Tick rule: comp={}, tickPosition={}, ruleVal={}, result={}",
                             rule.getComparison(), timingUpdate.tick(), rule.getValue(), match);
@@ -611,7 +565,7 @@ public abstract class Player implements Callable<Boolean>, Serializable, IBusLis
             for (Rule rule : beatRuleCache) {
                 boolean match = Operator.evaluate(rule.getComparison(),
                         timingUpdate.beat(),
-                        rule.getValue().doubleValue());
+                        rule.getValue());
                 if (debug) {
                     logger.info("Beat rule: comp={}, timingUpdate.beat()={}, ruleVal={}, result={}",
                             rule.getComparison(), timingUpdate.beat(), rule.getValue(), match);
@@ -638,7 +592,7 @@ public abstract class Player implements Callable<Boolean>, Serializable, IBusLis
             for (Rule rule : barRuleCache) {
                 boolean match = Operator.evaluate(rule.getComparison(),
                         (double) timingUpdate.bar(),
-                        rule.getValue().doubleValue());
+                        rule.getValue());
                 if (debug) {
                     logger.info("Bar rule: comp={}, timingUpdate.bar()={}, ruleVal={}, result={}",
                             rule.getComparison(), timingUpdate.bar(), rule.getValue(), match);
@@ -663,7 +617,7 @@ public abstract class Player implements Callable<Boolean>, Serializable, IBusLis
             for (Rule rule : tickCountRuleCache) {
                 boolean match = Operator.evaluate(rule.getComparison(),
                         timingUpdate.tickCount(),
-                        rule.getValue().doubleValue());
+                        rule.getValue());
                 if (debug) {
                     logger.info("Tick Count rule: comp={}, tickCount={}, ruleVal={}, result={}",
                             rule.getComparison(), timingUpdate.tickCount(), rule.getValue(), match);
@@ -681,7 +635,7 @@ public abstract class Player implements Callable<Boolean>, Serializable, IBusLis
             for (Rule rule : beatCountRuleCache) {
                 boolean match = Operator.evaluate(rule.getComparison(),
                         timingUpdate.beatCount(),
-                        rule.getValue().doubleValue());
+                        rule.getValue());
                 if (debug) {
                     logger.info("Beat Count rule: comp={}, beatCount={}, ruleVal={}, result={}",
                             rule.getComparison(), timingUpdate.beatCount(), rule.getValue(), match);
@@ -698,7 +652,7 @@ public abstract class Player implements Callable<Boolean>, Serializable, IBusLis
         if (!barCountMatched) {
             for (Rule rule : barCountRuleCache) {
                 boolean match = Operator.evaluate(rule.getComparison(),
-                        timingUpdate.barCount(), rule.getValue().doubleValue());
+                        timingUpdate.barCount(), rule.getValue());
                 if (debug) {
                     logger.info("Bar Count rule: comp={}, barCount={}, ruleVal={}, result={}",
                             rule.getComparison(), timingUpdate.barCount(), rule.getValue(), match);
@@ -716,7 +670,7 @@ public abstract class Player implements Callable<Boolean>, Serializable, IBusLis
             for (Rule rule : partCountRuleCache) {
                 boolean match = Operator.evaluate(rule.getComparison(),
                         timingUpdate.partCount(),
-                        rule.getValue().doubleValue());
+                        rule.getValue());
                 if (debug) {
                     logger.info("Part Count rule: comp={}, partCount={}, ruleVal={}, result={}",
                             rule.getComparison(), timingUpdate.partCount(), rule.getValue(), match);
@@ -908,11 +862,10 @@ public abstract class Player implements Callable<Boolean>, Serializable, IBusLis
             switch (cmd) {
                 case Commands.TIMING_UPDATE -> {
 
-                    if (getRules().isEmpty() || !(action.getData() instanceof TimingUpdate)) {
+                    if (getRules().isEmpty() || !(action.getData() instanceof TimingUpdate timingUpdate)) {
                         return;
                     }
 
-                    TimingUpdate timingUpdate = (TimingUpdate) action.getData();
                     if (timingUpdate.tickCount() == lastTriggeredTick) {
                         return;
                     }
@@ -1074,5 +1027,56 @@ public abstract class Player implements Callable<Boolean>, Serializable, IBusLis
 
     public Integer getPreset() {
         return Objects.nonNull(instrument) ? instrument.getPreset() : 0;
+    }
+
+    /**
+     * Create a deep copy of this player to avoid reference issues
+     * when updating in UserConfig
+     */
+    public Player deepCopy() {
+        try {
+            // Use serialization to create a true deep copy
+            ByteArrayOutputStream bos = new ByteArrayOutputStream();
+            ObjectOutputStream oos = new ObjectOutputStream(bos);
+            oos.writeObject(this);
+            oos.flush();
+            ByteArrayInputStream bis = new ByteArrayInputStream(bos.toByteArray());
+            ObjectInputStream ois = new ObjectInputStream(bis);
+            Player copy = (Player) ois.readObject();
+            
+            // Fix any transient fields that weren't serialized
+            if (this.getInstrument() != null) {
+                copy.setInstrument(this.getInstrument());
+            }
+            
+            return copy;
+        } catch (Exception e) {
+            logger.error("Error creating deep copy of player: {}", e.getMessage());
+            // Fallback to shallow copy if serialization fails
+            Player copy;
+            if (this instanceof Note) {
+                copy = new Note();
+            } else if (this instanceof Strike) {
+                copy = new Strike();
+            } else {
+                return this; // Can't create a proper copy
+            }
+            
+            // Copy all basic properties
+            copy.setId(this.getId());
+            copy.setName(this.getName());
+            copy.setInstrumentId(this.getInstrumentId());
+            copy.setIsDefault(this.getIsDefault());
+            copy.setRootNote(this.getRootNote());
+            copy.setDefaultChannel(this.getDefaultChannel());
+            copy.setLevel(this.getLevel());
+            
+            // Copy instrument reference
+            if (this.getInstrument() != null) {
+                copy.setInstrument(this.getInstrument());
+            }
+            
+            return copy;
+        }
     }
 }

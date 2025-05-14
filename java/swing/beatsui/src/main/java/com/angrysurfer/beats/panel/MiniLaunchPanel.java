@@ -1,36 +1,20 @@
 package com.angrysurfer.beats.panel;
 
-import java.awt.BorderLayout;
-import java.awt.Color;
-import java.awt.Dimension;
-import java.awt.Font;
-import java.awt.FontMetrics;
-import java.awt.Graphics;
-import java.awt.Graphics2D;
-import java.awt.GridLayout;
-import java.awt.RenderingHints;
-import java.util.HashMap;
-import java.util.Map;
-
-import javax.swing.JButton;
-import javax.swing.JComponent;
-import javax.swing.JPanel;
-import javax.swing.SwingUtilities;
-import javax.swing.Timer;
-import javax.swing.border.EmptyBorder;
-import javax.swing.plaf.basic.BasicButtonUI;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import com.angrysurfer.beats.util.UIHelper;
 import com.angrysurfer.core.api.CommandBus;
 import com.angrysurfer.core.api.Commands;
 import com.angrysurfer.core.api.IBusListener;
 import com.angrysurfer.core.model.InstrumentWrapper;
-import com.angrysurfer.core.model.Player;
-import com.angrysurfer.core.service.PlayerManager;
 import com.angrysurfer.core.service.SessionManager;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import javax.swing.*;
+import javax.swing.border.EmptyBorder;
+import javax.swing.plaf.basic.BasicButtonUI;
+import java.awt.*;
+import java.util.HashMap;
+import java.util.Map;
 
 public class MiniLaunchPanel extends PlayerAwarePanel implements IBusListener {
 
@@ -40,7 +24,6 @@ public class MiniLaunchPanel extends PlayerAwarePanel implements IBusListener {
     private static final int GRID_ROWS = 2;
     private static final int GRID_COLS = 4;
     private static final int GRID_GAP = 5;
-    private final CommandBus commandBus = CommandBus.getInstance();
 
     // Add label mapping array
     private static final int[] PAD_LABELS = {
@@ -51,29 +34,10 @@ public class MiniLaunchPanel extends PlayerAwarePanel implements IBusListener {
     // Keep track of last preset sent to each channel
     private final Map<Integer, Integer> lastSentPresets = new HashMap<>();
 
-    private static final class PadButton extends JButton {
-        private final int midiNote;
-        private boolean isFlashing;
-
-        PadButton(int midiNote) {
-            super(String.valueOf(midiNote));
-            this.midiNote = midiNote;
-            this.isFlashing = false;
-        }
-
-        public void setFlashing(boolean flashing) {
-            isFlashing = flashing;
-            repaint();
-        }
-
-        public boolean isFlashing() {
-            return isFlashing;
-        }
-    }
-
     public MiniLaunchPanel() {
         super();
         setLayout(new BorderLayout());
+        CommandBus commandBus = CommandBus.getInstance();
         commandBus.register(this);
         setup();
     }
@@ -81,10 +45,10 @@ public class MiniLaunchPanel extends PlayerAwarePanel implements IBusListener {
     @Override
     public void onAction(com.angrysurfer.core.api.Command action) {
         if (action.getCommand() == null) return;
-        
-        switch(action.getCommand()) {
+
+        switch (action.getCommand()) {
             case Commands.CHANGE_THEME -> SwingUtilities.invokeLater(this::repaint);
-            
+
             case Commands.MINI_NOTE_SELECTED -> {
                 if (action.getData() instanceof Integer midiNote) {
                     sendNoteToActivePlayer(midiNote);
@@ -177,7 +141,7 @@ public class MiniLaunchPanel extends PlayerAwarePanel implements IBusListener {
         button.addActionListener(e -> {
             // Send note directly
             sendNoteToActivePlayer(midiNote);
-            
+
             // Also publish event for other components that might need it
             CommandBus.getInstance().publish(Commands.MINI_NOTE_SELECTED, this, midiNote);
 
@@ -202,7 +166,7 @@ public class MiniLaunchPanel extends PlayerAwarePanel implements IBusListener {
 
     /**
      * Sends a MIDI note to the active player without triggering heavy updates
-     * 
+     *
      * @param midiNote The MIDI note to send
      * @return true if note was successfully sent, false otherwise
      */
@@ -216,7 +180,7 @@ public class MiniLaunchPanel extends PlayerAwarePanel implements IBusListener {
         if (SessionManager.getInstance().isRecording()) {
             CommandBus.getInstance().publish(Commands.NEW_VALUE_NOTE, this, midiNote);
             CommandBus.getInstance().publish(Commands.PLAYER_ROW_REFRESH, this, getTargetPlayer());
-        }   
+        }
 
 
         try {
@@ -279,6 +243,24 @@ public class MiniLaunchPanel extends PlayerAwarePanel implements IBusListener {
         } catch (Exception e) {
             logger.warn("Error sending MIDI note: {}", e.getMessage());
             return false;
+        }
+    }
+
+    private static final class PadButton extends JButton {
+        private boolean isFlashing;
+
+        PadButton(int midiNote) {
+            super(String.valueOf(midiNote));
+            this.isFlashing = false;
+        }
+
+        public boolean isFlashing() {
+            return isFlashing;
+        }
+
+        public void setFlashing(boolean flashing) {
+            isFlashing = flashing;
+            repaint();
         }
     }
 }

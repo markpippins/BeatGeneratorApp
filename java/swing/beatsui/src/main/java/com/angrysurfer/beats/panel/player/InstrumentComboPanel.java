@@ -1,18 +1,15 @@
 package com.angrysurfer.beats.panel.player;
 
-import java.awt.FlowLayout;
-
-import javax.swing.JButton;
-import javax.swing.SwingUtilities;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import com.angrysurfer.beats.panel.PlayerAwarePanel;
 import com.angrysurfer.beats.util.UIHelper;
 import com.angrysurfer.beats.widget.AddInstrumentButton;
 import com.angrysurfer.beats.widget.InstrumentCombo;
 import com.angrysurfer.core.model.Player;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import javax.swing.*;
+import java.awt.*;
 
 /**
  * Panel containing an InstrumentCombo with proper PlayerAwarePanel integration
@@ -22,7 +19,6 @@ public class InstrumentComboPanel extends PlayerAwarePanel {
 
     // UI components
     private InstrumentCombo combo;
-    private JButton addButton;
 
     public InstrumentComboPanel() {
         super();
@@ -34,7 +30,7 @@ public class InstrumentComboPanel extends PlayerAwarePanel {
 
     @Override
     public void handlePlayerActivated() {
-        Player player = getPlayer();
+        Player player = getTargetPlayer();
         if (player != null) {
             logger.debug("Activating player in InstrumentComboPanel: {}", player.getName());
             
@@ -51,16 +47,20 @@ public class InstrumentComboPanel extends PlayerAwarePanel {
 
     @Override
     public void handlePlayerUpdated() {
-        Player player = getPlayer();
+        Player player = getTargetPlayer();
         if (player != null) {
-            logger.debug("Updating player in InstrumentComboPanel: {}", player.getName());
+            logger.debug("Player updated: {}", player.getName());
             
             // Update title if needed
             UIHelper.setWidgetPanelBorder(this, "Instrument - " + player.getName());
             
-            // Update the selected instrument in the combo
-            // This won't trigger a refresh if not needed
-            updateComboFromPlayer(player);
+            // Only update combo if the player's instrument has changed
+            if (combo.getCurrentPlayer() == null || 
+                combo.getCurrentPlayer().getInstrumentId() == null ||
+                player.getInstrumentId() == null ||
+                !player.getInstrumentId().equals(combo.getCurrentPlayer().getInstrumentId())) {
+                updateComboFromPlayer(player);
+            }
         }
     }
 
@@ -77,9 +77,17 @@ public class InstrumentComboPanel extends PlayerAwarePanel {
                 !player.getId().equals(combo.getCurrentPlayer().getId())) {
                 // Different player, set it as current
                 combo.setCurrentPlayer(player);
-            } else {
-                // Same player, just update selected instrument
-                combo.updateSelectedInstrument(player);
+            } else if (player.getInstrumentId() != null) {
+                // Same player but instrument might have changed
+                // Only update if the player's instrument ID has changed
+                if (combo.getCurrentPlayer().getInstrumentId() == null ||
+                    !player.getInstrumentId().equals(combo.getCurrentPlayer().getInstrumentId())) {
+                    logger.debug("Instrument changed for player {}: {} -> {}",
+                        player.getName(),
+                        combo.getCurrentPlayer().getInstrumentId(),
+                        player.getInstrumentId());
+                    combo.updateSelectedInstrument(player);
+                }
             }
         });
     }
@@ -90,17 +98,16 @@ public class InstrumentComboPanel extends PlayerAwarePanel {
     private void initializeComponents() {
         // Create instrument combo
         combo = new InstrumentCombo();
-        addButton = new AddInstrumentButton();
 
         // Initialize with current player if available
-        Player player = getPlayer();
+        Player player = getTargetPlayer();
         if (player != null) {
             combo.setCurrentPlayer(player);
             UIHelper.setWidgetPanelBorder(this, "Instrument - " + player.getName());
         }
 
         add(combo);
-        add(addButton);
+        add(new AddInstrumentButton());
     }
 
     /**
@@ -108,7 +115,7 @@ public class InstrumentComboPanel extends PlayerAwarePanel {
      */
     public void refreshInstruments() {
         if (combo != null) {
-            Player player = getPlayer();
+            Player player = getTargetPlayer();
             if (player != null) {
                 combo.setCurrentPlayer(player);
             }

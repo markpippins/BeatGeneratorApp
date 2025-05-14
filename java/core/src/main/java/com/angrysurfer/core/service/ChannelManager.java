@@ -1,5 +1,6 @@
 package com.angrysurfer.core.service;
 
+import com.angrysurfer.core.Constants;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -34,7 +35,7 @@ public class ChannelManager {
     public synchronized int getNextAvailableMelodicChannel() {
         for (int i = 0; i < channelsInUse.length; i++) {
             // Skip drum channel (9)
-            if (i == 9) continue;
+            if (i == Constants.MIDI_DRUM_CHANNEL) continue;
             
             if (!channelsInUse[i]) {
                 channelsInUse[i] = true;
@@ -56,7 +57,7 @@ public class ChannelManager {
     public synchronized int getChannelForSequencerIndex(Integer sequencerIndex) {
         // Map sequencer indices 0-7 to channels 0-8,10-15
         int channel = sequencerIndex;
-        if (channel >= 9) {
+        if (channel >= Constants.MIDI_DRUM_CHANNEL) {
             // Skip drum channel 9
             channel++;
         }
@@ -65,7 +66,7 @@ public class ChannelManager {
         if (channel >= 16) {
             logger.warn("Sequencer index {} is too high, wrapping to available channels", sequencerIndex);
             channel = channel % 16;
-            if (channel == 9) channel = 0; // Avoid drum channel 9
+            if (channel == Constants.MIDI_DRUM_CHANNEL) channel = 0; // Avoid drum channel 9
         }
         
         // Mark channel as in use
@@ -80,7 +81,7 @@ public class ChannelManager {
      * @param channel The channel to release
      */
     public synchronized void releaseChannel(int channel) {
-        if (channel >= 0 && channel < channelsInUse.length && channel != 9) {
+        if (channel >= 0 && channel < channelsInUse.length && channel != Constants.MIDI_DRUM_CHANNEL) {
             channelsInUse[channel] = false;
             logger.info("Released melodic channel {}", channel);
         }
@@ -101,7 +102,7 @@ public class ChannelManager {
      * @return true if successful, false if channel already in use
      */
     public synchronized boolean reserveChannel(int channel) {
-        if (channel >= 0 && channel < channelsInUse.length && channel != 9 && !channelsInUse[channel]) {
+        if (channel >= 0 && channel < channelsInUse.length && channel != Constants.MIDI_DRUM_CHANNEL && !channelsInUse[channel]) {
             channelsInUse[channel] = true;
             logger.info("Reserved melodic channel {}", channel);
             return true;

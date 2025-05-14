@@ -1,21 +1,17 @@
 package com.angrysurfer.core.service;
 
-import java.util.*;
-import java.util.logging.Logger;
-
-import com.angrysurfer.core.api.Command;
-import com.angrysurfer.core.api.CommandBus;
-import com.angrysurfer.core.api.Commands;
-import com.angrysurfer.core.api.IBusListener;
-import com.angrysurfer.core.api.TimingBus;
+import com.angrysurfer.core.api.*;
 import com.angrysurfer.core.model.InstrumentWrapper;
 import com.angrysurfer.core.model.Player;
 import com.angrysurfer.core.model.Rule;
 import com.angrysurfer.core.model.Session;
 import com.angrysurfer.core.redis.RedisService;
-
+import com.angrysurfer.core.sequencer.SongEngine;
 import lombok.Getter;
 import lombok.Setter;
+
+import java.util.*;
+import java.util.logging.Logger;
 
 @Getter
 @Setter
@@ -33,7 +29,7 @@ public class SessionManager {
 
     private SongEngine songEngine;
 
-    private Player[] activePlayers[];
+    private Player[] activePlayers;
     private Rule[] selectedRules;
 
     private boolean isRecording = false;
@@ -49,21 +45,16 @@ public class SessionManager {
         return instance;
     }
 
-    public void addPlayerToSession(Session currentSession, Player updatedPlayer) {
-        redisService.addPlayerToSession(currentSession, updatedPlayer);
+    public void addPlayerToSession(Session currentSession, Player player) {
+        if (!player.getIsDefault())
+            redisService.addPlayerToSession(currentSession, player);
     }
 
     void handleSessionRequest() {
         if (Objects.nonNull(getActiveSession()))
             CommandBus.getInstance().publish(Commands.SESSION_SELECTED, this, getActiveSession());
     }
-
-    // Direct getter instead of delegating
-    public Session getActiveSession() {
-        return activeSession;
-    }
-
-    /**
+/**
      * Updates tempo settings in all sequencers to match the active session
      */
     private void updateSequencerTempoSettings() {
@@ -102,28 +93,19 @@ public class SessionManager {
         // System.out.println("SessionManager: Initializing...");
         logger.info("Initializing session manager");
 
-        List<InstrumentWrapper> instruments = UserConfigManager.getInstance().getCurrentConfig().getInstruments();
-        // System.out.println("SessionManager: Got " + instruments.size() + "
-        // instruments from config");
 
         // Instead of creating SessionManager, directly load session
         loadActiveSession();
-        // System.out.println("SessionManager: Active session loaded: " + (activeSession
-        // != null ? activeSession.getId() : "null"));
 
         if (activeSession != null) {
             System.out.println("SessionManager: Session details:");
-            // System.out.println(" - ID: " + activeSession.getId());
             System.out.println(" - Players: " + (activeSession.getPlayers() != null ?
             activeSession.getPlayers().size() : 0));
-            // System.out.println(" - BPM: " + activeSession.getTempoInBPM());
-            // System.out.println(" - PPQ: " + activeSession.getTicksPerBeat());
         }
 
         logSessionState(getActiveSession());
 
         songEngine = new SongEngine();
-        // System.out.println("SessionManager: SongEngine created");
 
         CommandBus.getInstance().register(new IBusListener() {
             @Override
@@ -284,7 +266,7 @@ public class SessionManager {
     public void moveForward() {
         Long maxId = redisService.getMaximumSessionId();
 
-        if (activeSession != null && maxId != null && activeSession.getId().equals(maxId)) {
+        if (activeSession != null && activeSession.getId().equals(maxId)) {
             // Only create a new session if current one is valid and has active rules
             if (activeSession.isValid() && !activeSession.getPlayers().isEmpty() && activeSession.getPlayers().stream()
                     .map(p -> p).anyMatch(p -> p.getRules() != null && !p.getRules().isEmpty())) {
@@ -406,7 +388,7 @@ public class SessionManager {
         // Use PlayerManager for consistent player saving
         PlayerManager playerManager = PlayerManager.getInstance();
 
-        if (player.getId() == null) {
+        if (player.getId() == null && !player.getIsDefault()) {
             // New player - save through PlayerManager
             playerManager.savePlayerProperties(player);
 

@@ -9,7 +9,6 @@ import java.awt.GridBagLayout;
 import java.awt.Insets;
 import java.io.File;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
 
@@ -29,6 +28,7 @@ import javax.swing.SpinnerNumberModel;
 import javax.swing.SwingUtilities;
 import javax.swing.filechooser.FileNameExtensionFilter;
 
+import com.angrysurfer.core.Constants;
 import com.angrysurfer.core.service.SoundbankManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -37,10 +37,10 @@ import com.angrysurfer.core.api.Command;
 import com.angrysurfer.core.api.CommandBus;
 import com.angrysurfer.core.api.Commands;
 import com.angrysurfer.core.api.IBusListener;
-import com.angrysurfer.core.model.DrumItem;
+import com.angrysurfer.core.model.preset.DrumItem;
 import com.angrysurfer.core.model.InstrumentWrapper;
 import com.angrysurfer.core.model.Player;
-import com.angrysurfer.core.model.PresetItem;
+import com.angrysurfer.core.model.preset.PresetItem;
 import com.angrysurfer.core.service.InternalSynthManager;
 import com.angrysurfer.core.service.UserConfigManager;
 
@@ -140,7 +140,7 @@ public class InternalSynthPresetPanel extends JPanel {
         // Add listeners
         channelSpinner.addChangeListener(e -> {
             int channelValue = ((Number) channelSpinner.getValue()).intValue();
-            boolean newIsDrumChannel = (channelValue == 9);
+            boolean newIsDrumChannel = (channelValue == Constants.MIDI_DRUM_CHANNEL);
             
             // If drum channel status changed, update the UI
             if (newIsDrumChannel != isDrumChannel) {

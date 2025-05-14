@@ -10,6 +10,7 @@ import java.awt.event.FocusEvent;
 import java.util.List;
 import java.util.function.Consumer;
 
+import javax.swing.BorderFactory;
 import javax.swing.JButton;
 import javax.swing.JComboBox;
 import javax.swing.JOptionPane;
@@ -21,8 +22,9 @@ import javax.swing.SwingUtilities;
 
 import com.angrysurfer.beats.Symbols;
 import com.angrysurfer.beats.panel.player.SoundParametersPanel;
+import com.angrysurfer.core.Constants;
 import com.angrysurfer.core.api.*;
-import com.angrysurfer.core.sequencer.DrumSequenceData;
+import com.angrysurfer.core.api.midi.MIDIConstants;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -70,15 +72,15 @@ public class DrumSequencerPanel extends JPanel implements IBusListener {
     private JSpinner densitySpinner;
 
     // Replace the local DRUM_PAD_COUNT constant with DrumSequencer's version
-    private static final int DRUM_PAD_COUNT = DrumSequenceData.DRUM_PAD_COUNT;
+    private static final int DRUM_PAD_COUNT = Constants.DRUM_PAD_COUNT;
 
     // Add these constants referencing DrumSequencer constants
-    private static final int DEFAULT_VELOCITY = DrumSequenceData.DEFAULT_VELOCITY;
-    private static final int DEFAULT_DECAY = DrumSequenceData.DEFAULT_DECAY;
-    private static final int DEFAULT_PROBABILITY = DrumSequenceData.DEFAULT_PROBABILITY;
-    private static final int MIN_SWING = DrumSequenceData.MIN_SWING;
-    private static final int MAX_SWING = DrumSequenceData.MAX_SWING;
-    private static final int MIDI_DRUM_NOTE_OFFSET = DrumSequenceData.MIDI_DRUM_NOTE_OFFSET;
+    private static final int DEFAULT_VELOCITY = MIDIConstants.DEFAULT_VELOCITY;
+    private static final int DEFAULT_DECAY = MIDIConstants.DEFAULT_DECAY;
+    private static final int DEFAULT_PROBABILITY = MIDIConstants.DEFAULT_PROBABILITY;
+    private static final int MIN_SWING = MIDIConstants.MIN_SWING;
+    private static final int MAX_SWING = MIDIConstants.MAX_SWING;
+    private static final int MIDI_DRUM_NOTE_OFFSET = MIDIConstants.MIDI_DRUM_NOTE_OFFSET;
 
     // UI constants
     private static final int DRUM_BUTTON_SIZE = 28;
@@ -167,19 +169,19 @@ public class DrumSequencerPanel extends JPanel implements IBusListener {
         setLayout(new BorderLayout(2, 2));
         UIHelper.setPanelBorder(this);
 
-        JPanel westPanel = new JPanel(new BorderLayout(2, 2));
-        JPanel eastPanel = new JPanel(new BorderLayout(2, 2));
+        JPanel topEastPanel = new JPanel(new BorderLayout(2, 2));
+        JPanel topWestPanel = new JPanel(new BorderLayout(2, 2));
 
         JPanel topPanel = new JPanel(new BorderLayout(2, 2));
 
         DrumSequenceNavigationPanel navigationPanel = new DrumSequenceNavigationPanel(sequencer);
 
-        westPanel.add(navigationPanel, BorderLayout.WEST);
+        topEastPanel.add(navigationPanel, BorderLayout.WEST);
 
-        eastPanel.add(new SoundParametersPanel(), BorderLayout.NORTH);
+        topWestPanel.add(new SoundParametersPanel(), BorderLayout.WEST);
 
-        topPanel.add(westPanel, BorderLayout.WEST);
-        topPanel.add(eastPanel, BorderLayout.EAST);
+        topPanel.add(topEastPanel, BorderLayout.EAST);
+        topPanel.add(topWestPanel, BorderLayout.WEST);
 
         add(topPanel, BorderLayout.NORTH);
 
@@ -212,24 +214,25 @@ public class DrumSequencerPanel extends JPanel implements IBusListener {
 
         bottomPanel.add(rightPanel, BorderLayout.EAST);
 
-        JPanel buttonPanel = UIHelper.createSectionPanel("Presets");
-
+        // JPanel buttonPanel = new JPanel();
+        //UIHelper.createSectionPanel("Presets");
+        // UIHelper.setWidgetPanelBorder(buttonPanel, "Debug");
         // Create preset selection button
-        JButton presetButton = new JButton(Symbols.get(Symbols.LOAD));
-        presetButton.setToolTipText("Select preset instruments for each drum");
-        presetButton.setPreferredSize(new Dimension(24, 24));
-        presetButton.setMaximumSize(new Dimension(UIHelper.SMALL_CONTROL_WIDTH, UIHelper.CONTROL_HEIGHT));
-        presetButton.addActionListener(e -> {
-            CommandBus.getInstance().publish(
-                    Commands.DRUM_PRESET_SELECTION_REQUEST,
-                    this,
-                    sequencer);
-        });
+        // JButton presetButton = new JButton(Symbols.get(Symbols.LOAD));
+        // presetButton.setToolTipText("Select preset instruments for each drum");
+        // presetButton.setPreferredSize(new Dimension(24, 24));
+        // presetButton.setMaximumSize(new Dimension(UIHelper.SMALL_CONTROL_WIDTH, UIHelper.CONTROL_HEIGHT));
+        // presetButton.addActionListener(e -> {
+        //     CommandBus.getInstance().publish(
+        //             Commands.DRUM_PRESET_SELECTION_REQUEST,
+        //             this,
+        //             sequencer);
+        // });
 
-        buttonPanel.add(presetButton);
-        buttonPanel.add(createRefreshButton());
+        // buttonPanel.add(presetButton);
+        // buttonPanel.add(createRefreshButton());
         // Add the button to the bottom panel
-        westPanel.add(buttonPanel, BorderLayout.EAST);
+        // eastPanel.add(buttonPanel, BorderLayout.EAST);
 
         add(bottomPanel, BorderLayout.SOUTH);
     }
@@ -237,7 +240,7 @@ public class DrumSequencerPanel extends JPanel implements IBusListener {
     // Add this as a new method:
     private JButton createRefreshButton() {
         JButton refreshButton = new JButton(
-                Symbols.get(Symbols.CYCLE));
+                Symbols.get(Symbols.RESTART));
         refreshButton.setToolTipText("Refresh drum instruments (fixes sound issues)");
         refreshButton.setPreferredSize(new Dimension(com.angrysurfer.beats.util.UIHelper.SMALL_CONTROL_WIDTH,
                 com.angrysurfer.beats.util.UIHelper.CONTROL_HEIGHT));

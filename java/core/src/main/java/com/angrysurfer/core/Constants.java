@@ -1,6 +1,13 @@
 package com.angrysurfer.core;
 
 public class Constants {
+    public static final Integer MIDI_DRUM_CHANNEL = 9;
+    // Constants
+    public static final int DRUM_PAD_COUNT = 16; // Number of drum pads
+    // Button dimensions
+    public static final int DRUM_PAD_SIZE = 28; // Standard drum pad button size
+
+
     public static boolean DEBUG = true;
 
     public static final double DEFAULT_BEAT_OFFSET = 1.0;

@@ -1,32 +1,18 @@
 package com.angrysurfer.core.service;
 
-import java.io.File;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
-
-import javax.sound.midi.Instrument;
-import javax.sound.midi.MidiChannel;
-import javax.sound.midi.MidiDevice;
-import javax.sound.midi.MidiSystem;
-import javax.sound.midi.MidiUnavailableException;
-import javax.sound.midi.Receiver;
-import javax.sound.midi.ShortMessage;
-import javax.sound.midi.Soundbank;
-import javax.sound.midi.Synthesizer;
-
+import com.angrysurfer.core.Constants;
+import com.angrysurfer.core.model.InstrumentWrapper;
+import com.angrysurfer.core.model.preset.DrumItem;
+import com.angrysurfer.core.model.preset.SynthData;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.angrysurfer.core.model.DrumItem;
-import com.angrysurfer.core.model.InstrumentWrapper;
-import com.angrysurfer.core.model.SynthData;
-import com.angrysurfer.core.redis.RedisService;
+import javax.sound.midi.*;
+import java.io.File;
+import java.util.*;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Manager for internal synthesizer instruments and presets. This singleton
@@ -39,7 +25,7 @@ public class InternalSynthManager {
 
     // Add synthesizer as a central instance
     private Synthesizer synthesizer;
-    private int defaultMidiChannel = 15; // Default channel for melodic sounds
+    // Default channel for melodic sounds
 
     // Map of synth IDs to preset information
     private final Map<Long, SynthData> synthDataMap = new HashMap<>();
@@ -327,10 +313,11 @@ public class InternalSynthManager {
      * @param instrument The instrument to update
      * @param bankIndex  The bank index
      * @param preset     The program/preset number
+     * @return true if preset was applied successfully, false otherwise
      */
-    public void updateInstrumentPreset(InstrumentWrapper instrument, Integer bankIndex, Integer preset) {
+    public boolean updateInstrumentPreset(InstrumentWrapper instrument, Integer bankIndex, Integer preset) {
         if (instrument == null)
-            return;
+            return false;
 
         try {
             // Update instrument properties
@@ -355,6 +342,8 @@ public class InternalSynthManager {
                 initializeSynthesizer();
             }
 
+            boolean success = false;
+            
             if (synthesizer != null && synthesizer.isOpen()) {
                 // First apply through the synth's MidiChannels directly
                 MidiChannel[] channels = synthesizer.getChannels();
@@ -364,12 +353,14 @@ public class InternalSynthManager {
                     channels[channel].programChange(preset);
                     
                     // For percussion channel, ensure drum mode is enabled
-                    if (channel == 9) {
+                    if (channel == Constants.MIDI_DRUM_CHANNEL) {
                         channels[channel].controlChange(0, 120);
                     }
                     
                     logger.info("Applied preset via direct synth channel: ch={}, bank={}, program={}",
                         channel, bankIndex, preset);
+                        
+                    success = true;
                 } else {
                     logger.warn("Could not access synthesizer channel {}", channel);
                 }
@@ -395,20 +386,26 @@ public class InternalSynthManager {
                         
                         logger.info("Applied preset via synth receiver: ch={}, bank={}, program={}",
                             channel, bankIndex, preset);
+                            
+                        success = true;
                     }
                 } catch (Exception e) {
                     logger.warn("Error sending direct MIDI messages: {}", e.getMessage());
                 }
             } else {
                 logger.warn("Synthesizer not available for preset change");
+                return false;
             }
 
             logger.debug("Updated preset for instrument {} to bank {}, program {}",
                     instrument.getName(),
                     instrument.getBankIndex(),
                     instrument.getPreset());
+                    
+            return success;
         } catch (Exception e) {
             logger.error("Failed to update instrument preset: {}", e.getMessage(), e);
+            return false;
         }
     }
 

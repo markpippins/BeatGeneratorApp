@@ -1,26 +1,16 @@
 package com.angrysurfer.beats.panel.sequencer.poly;
 
-import java.awt.GridBagLayout;
-import java.awt.GridLayout;
-import java.awt.Insets;
+import com.angrysurfer.beats.widget.DrumButton;
+import com.angrysurfer.core.sequencer.DrumSequencer;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import javax.swing.*;
+import javax.swing.border.EmptyBorder;
+import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
-
-import javax.swing.JPanel;
-import javax.swing.border.EmptyBorder;
-
-import com.angrysurfer.beats.panel.sequencer.mono.MelodicSequencerPanel;
-import com.angrysurfer.beats.widget.DrumButton;
-import com.angrysurfer.core.api.CommandBus;
-import com.angrysurfer.core.api.Commands;
-import com.angrysurfer.core.event.PlayerRefreshEvent;
-import com.angrysurfer.core.event.PlayerSelectionEvent;
-import com.angrysurfer.core.model.Player;
-import com.angrysurfer.core.sequencer.DrumSequencer;
-import com.angrysurfer.core.service.DeviceManager;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * Panel containing drum pad buttons for drum sequencer
@@ -67,7 +57,9 @@ public class DrumButtonsPanel extends JPanel {
             drumButton.setName("DrumButton-" + i);
             drumButton.setToolTipText("Pad " + (i + 1));
             drumButton.setText(Integer.toString(i + 1));
-            // drumButton.setExclusive(true);
+            
+            // UNCOMMENT THIS LINE - This prevents toggling behavior
+            drumButton.setExclusive(true);
             
             final int index = i;
             drumButton.addActionListener(e -> selectDrumPad(index));
@@ -100,13 +92,13 @@ public class DrumButtonsPanel extends JPanel {
 
             // Set new selection
             selectedPadIndex = padIndex;
-            
+
             // Update drum button visual state
             if (padIndex >= 0 && padIndex < drumButtons.size()) {
                 DrumButton button = drumButtons.get(padIndex);
                 button.setSelected(true);
                 button.repaint();
-                
+
                 // Notify callback of selection change
                 if (drumSelectedCallback != null) {
                     drumSelectedCallback.accept(padIndex);
@@ -166,20 +158,6 @@ public class DrumButtonsPanel extends JPanel {
             button.setToolTipText(drumName + " - Click to edit effects for this drum");
         }
     }
-    
-    /**
-     * Get the currently selected pad index
-     */
-    public int getSelectedPadIndex() {
-        return selectedPadIndex;
-    }
-    
-    /**
-     * Get the list of drum buttons
-     */
-    public List<DrumButton> getDrumButtons() {
-        return drumButtons;
-    }
 
     public int getButtonCount() {
         return drumButtons.size();
@@ -207,68 +185,4 @@ public class DrumButtonsPanel extends JPanel {
         }
     }
 
-    private void handleDrumPadSelected(int padIndex) {
-        // Don't process if already selected or we're in the middle of handling a selection
-        if (padIndex == selectedPadIndex || isHandlingSelection) {
-            return;
-        }
-
-        try {
-            // Set flag to prevent recursive calls
-            isHandlingSelection = true;
-
-            selectedPadIndex = padIndex;
-            sequencer.setSelectedPadIndex(padIndex);
-
-            // Get the player for this pad index
-            if (padIndex >= 0 && padIndex < sequencer.getPlayers().length) {
-                Player player = sequencer.getPlayers()[padIndex];
-
-                if (player != null) {
-                    // Make sure device connection is active
-                    if (player.getInstrument() != null) {
-                        // Ensure device is connected and open
-                        if (player.getInstrument().getDevice() == null || !player.getInstrument().getDevice().isOpen()) {
-                            player.getInstrument().setDevice(DeviceManager.getMidiDevice(player.getInstrument().getDeviceName()));
-                            
-                            // Ensure device is open
-                            if (player.getInstrument().getDevice() != null && !player.getInstrument().getDevice().isOpen()) {
-                                try {
-                                    player.getInstrument().getDevice().open();
-                                } catch (Exception e) {
-                                    logger.info("Error opening MIDI device: " + e.getMessage());
-                                }
-                            }
-                        }
-                    
-                        // Apply instrument preset BEFORE playing the note
-                        // Send a player-specific refresh event instead of using global active player
-                        PlayerRefreshEvent event = new PlayerRefreshEvent(player);
-                        CommandBus.getInstance().publish(
-                            Commands.PLAYER_REFRESH_EVENT,
-                            this,
-                            event
-                        );
-                        
-                        // Play a test note 
-                        player.drumNoteOn(player.getRootNote());
-                    } 
-                    
-                    // Create a selection event for UI purposes only
-                    PlayerSelectionEvent selectionEvent = new PlayerSelectionEvent(player);
-                    CommandBus.getInstance().publish(
-                        Commands.PLAYER_SELECTION_EVENT,
-                        this,
-                        selectionEvent
-                    );
-                }
-            }
-
-            // Update UI and notification
-            // ... rest of the method ...
-        }
-        finally {
-            isHandlingSelection = false;
-        }
-    }
 }

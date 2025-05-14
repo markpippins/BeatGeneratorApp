@@ -1,23 +1,20 @@
 package com.angrysurfer.beats.widget;
 
-import java.awt.Component;
-import javax.swing.DefaultListCellRenderer;
-import javax.swing.JComboBox;
-import javax.swing.JList;
-import javax.swing.SwingUtilities;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
+import com.angrysurfer.core.Constants;
 import com.angrysurfer.core.api.Command;
 import com.angrysurfer.core.api.CommandBus;
 import com.angrysurfer.core.api.Commands;
 import com.angrysurfer.core.api.IBusListener;
 import com.angrysurfer.core.model.Player;
 import com.angrysurfer.core.service.ChannelManager;
-
 import lombok.Getter;
 import lombok.Setter;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import javax.swing.*;
+import java.awt.*;
+import java.util.Objects;
 
 /**
  * Refactored ChannelCombo with better manager integration
@@ -26,8 +23,6 @@ import lombok.Setter;
 @Setter
 public class ChannelCombo extends JComboBox<Integer> implements IBusListener {
     private static final Logger logger = LoggerFactory.getLogger(ChannelCombo.class);
-    private final CommandBus commandBus = CommandBus.getInstance();
-    private final ChannelManager channelManager = ChannelManager.getInstance();
     
     private Player currentPlayer;
     private boolean isInitializing = false;
@@ -37,7 +32,7 @@ public class ChannelCombo extends JComboBox<Integer> implements IBusListener {
      */
     public ChannelCombo() {
         super();
-        commandBus.register(this);
+        CommandBus.getInstance().register(this);
         
         // Populate all 16 channels
         for (int i = 0; i < 16; i++) {
@@ -71,12 +66,12 @@ public class ChannelCombo extends JComboBox<Integer> implements IBusListener {
                     String tooltip;
                     
                     // Use ChannelManager to check channel state
-                    boolean inUse = channelManager.isChannelInUse(channel);
+                    boolean inUse = ChannelManager.getInstance().isChannelInUse(channel);
                     
                     // Convert 0-based channel to 1-based for display
                     int displayChannel = channel + 1;
                     
-                    if (channel == 9) {
+                    if (channel == Constants.MIDI_DRUM_CHANNEL) {
                         // Special case for drums (MIDI channel 10)
                         text = displayChannel + " (Drums)";  // Shows "10 (Drums)"
                         tooltip = "Channel " + displayChannel + " - Reserved for drum sounds";
@@ -182,24 +177,24 @@ public class ChannelCombo extends JComboBox<Integer> implements IBusListener {
         }
         
         // Delegate to ChannelManager to handle channel allocation
-        boolean canUseChannel = selectedChannel == 9 || // Always allow drum channel
-                                !channelManager.isChannelInUse(selectedChannel) || 
-                                channelManager.reserveChannel(selectedChannel);
+        boolean canUseChannel = selectedChannel.equals(Constants.MIDI_DRUM_CHANNEL) || // Always allow drum channel
+                                !ChannelManager.getInstance().isChannelInUse(selectedChannel) ||
+                                 ChannelManager.getInstance().reserveChannel(selectedChannel);
         
         if (canUseChannel) {
             // Release previous channel
-            if (currentPlayer.getChannel() != null && currentPlayer.getChannel() != 9) {
-                channelManager.releaseChannel(currentPlayer.getChannel());
+            if (currentPlayer.getChannel() != null && !Objects.equals(currentPlayer.getChannel(), Constants.MIDI_DRUM_CHANNEL)) {
+                ChannelManager.getInstance().releaseChannel(currentPlayer.getChannel());
             }
             
             // Update player's channel
             currentPlayer.setDefaultChannel(selectedChannel);
             
             // Publish change to command bus
-            commandBus.publish(Commands.PLAYER_CHANNEL_CHANGE_REQUEST, this, currentPlayer);
+            CommandBus.getInstance().publish(Commands.PLAYER_CHANNEL_CHANGE_REQUEST, this, currentPlayer);
             
             logger.info("Channel change requested for player {} to {} (isDrum: {})",
-                       currentPlayer.getName(), selectedChannel, selectedChannel == 9);
+                       currentPlayer.getName(), selectedChannel, selectedChannel.equals(Constants.MIDI_DRUM_CHANNEL));
         } else {
             // Revert to previous selection
             logger.warn("Cannot assign channel {} to player {} - already in use",

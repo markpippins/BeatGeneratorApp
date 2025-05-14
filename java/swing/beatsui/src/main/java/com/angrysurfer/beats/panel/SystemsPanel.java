@@ -1,49 +1,27 @@
 package com.angrysurfer.beats.panel;
 
-import java.awt.BorderLayout;
-import java.awt.Dimension;
-import java.awt.FlowLayout;
-import java.awt.Insets;
-import java.awt.Point;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
-import java.util.Timer;
-import java.util.TimerTask;
-
-import javax.sound.midi.MidiDevice;
-import javax.sound.midi.MidiSystem;
-import javax.sound.midi.MidiUnavailableException;
-import javax.sound.midi.Receiver;
-import javax.sound.midi.ShortMessage;
-import javax.swing.BorderFactory;
-import javax.swing.Box;
-import javax.swing.JButton;
-import javax.swing.JLabel;
-import javax.swing.JMenuItem;
-import javax.swing.JPanel;
-import javax.swing.JPopupMenu;
-import javax.swing.JScrollPane;
-import javax.swing.JSpinner;
-import javax.swing.JTable;
-import javax.swing.ListSelectionModel;
-import javax.swing.SpinnerNumberModel;
-import javax.swing.table.DefaultTableCellRenderer;
-import javax.swing.table.DefaultTableModel;
-
-import com.angrysurfer.beats.panel.instrument.InstrumentEditPanel;
-import com.angrysurfer.core.service.InstrumentManager;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import com.angrysurfer.beats.Dialog;
+import com.angrysurfer.beats.panel.instrument.InstrumentEditPanel;
 import com.angrysurfer.core.api.CommandBus;
 import com.angrysurfer.core.api.Commands;
 import com.angrysurfer.core.api.StatusUpdate;
 import com.angrysurfer.core.model.InstrumentWrapper;
 import com.angrysurfer.core.redis.RedisService;
-
+import com.angrysurfer.core.service.InstrumentManager;
 import lombok.Getter;
 import lombok.Setter;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import javax.sound.midi.*;
+import javax.swing.*;
+import javax.swing.table.DefaultTableCellRenderer;
+import javax.swing.table.DefaultTableModel;
+import java.awt.*;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
+import java.util.Timer;
+import java.util.TimerTask;
 
 @Getter
 @Setter
@@ -126,28 +104,7 @@ class SystemsPanel extends JPanel {
     }
 
     private JTable createDevicesTable() {
-        String[] columns = {
-            "Name", "Description", "Vendor", "Version", "Max Receivers",
-            "Max Transmitters", "Receivers", "Transmitters", "Receiver", "Transmitter"
-        };
-
-        DefaultTableModel model = new DefaultTableModel(columns, 0) {
-            @Override
-            public boolean isCellEditable(int row, int column) {
-                return false;
-            }
-
-            @Override
-            public Class<?> getColumnClass(int column) {
-                if (column == 8 || column == 9) {
-                    return Boolean.class;
-                }
-                if (column >= 4 && column <= 7) {
-                    return Integer.class;
-                }
-                return String.class;
-            }
-        };
+        DefaultTableModel model = createTableModel();
 
         JTable table = new JTable(model);
         table.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
@@ -176,7 +133,32 @@ class SystemsPanel extends JPanel {
         
         return table;
     }
-    
+
+    private static DefaultTableModel createTableModel() {
+        String[] columns = {
+            "Name", "Description", "Vendor", "Version", "Max Receivers",
+            "Max Transmitters", "Receivers", "Transmitters", "Receiver", "Transmitter"
+        };
+
+        return new DefaultTableModel(columns, 0) {
+            @Override
+            public boolean isCellEditable(int row, int column) {
+                return false;
+            }
+
+            @Override
+            public Class<?> getColumnClass(int column) {
+                if (column == 8 || column == 9) {
+                    return Boolean.class;
+                }
+                if (column >= 4 && column <= 7) {
+                    return Integer.class;
+                }
+                return String.class;
+            }
+        };
+    }
+
     private void loadMidiDevices(DefaultTableModel model) {
         model.setRowCount(0); // Clear existing rows
         
@@ -309,13 +291,11 @@ class SystemsPanel extends JPanel {
         // Send note button
         JButton sendNoteButton = new JButton("Send Note");
         sendNoteButton.setMargin(new Insets(2, 8, 2, 8));
-        sendNoteButton.addActionListener(e -> {
-            sendMidiNote(
-                (Integer)channelSpinner.getValue() - 1, // Convert 1-16 to 0-15 
-                (Integer)noteSpinner.getValue(),
-                (Integer)velocitySpinner.getValue()
-            );
-        });
+        sendNoteButton.addActionListener(e -> sendMidiNote(
+            (Integer)channelSpinner.getValue() - 1, // Convert 1-16 to 0-15
+            (Integer)noteSpinner.getValue(),
+            (Integer)velocitySpinner.getValue()
+        ));
         panel.add(sendNoteButton);
         
         // Add separator
@@ -344,13 +324,11 @@ class SystemsPanel extends JPanel {
         // Send CC button
         JButton sendCCButton = new JButton("Send CC");
         sendCCButton.setMargin(new Insets(2, 8, 2, 8));
-        sendCCButton.addActionListener(e -> {
-            sendMidiControlChange(
-                (Integer)channelSpinner.getValue() - 1, // Convert 1-16 to 0-15
-                (Integer)ccSpinner.getValue(),
-                (Integer)valueSpinner.getValue()
-            );
-        });
+        sendCCButton.addActionListener(e -> sendMidiControlChange(
+            (Integer)channelSpinner.getValue() - 1, // Convert 1-16 to 0-15
+            (Integer)ccSpinner.getValue(),
+            (Integer)valueSpinner.getValue()
+        ));
         panel.add(sendCCButton);
         
         // Add separator
@@ -370,12 +348,10 @@ class SystemsPanel extends JPanel {
         // Send Program Change button
         JButton sendPCButton = new JButton("Send PC");
         sendPCButton.setMargin(new Insets(2, 8, 2, 8));
-        sendPCButton.addActionListener(e -> {
-            sendMidiProgramChange(
-                (Integer)channelSpinner.getValue() - 1, // Convert 1-16 to 0-15
-                (Integer)programSpinner.getValue()
-            );
-        });
+        sendPCButton.addActionListener(e -> sendMidiProgramChange(
+            (Integer)channelSpinner.getValue() - 1, // Convert 1-16 to 0-15
+            (Integer)programSpinner.getValue()
+        ));
         panel.add(sendPCButton);
         
         return panel;

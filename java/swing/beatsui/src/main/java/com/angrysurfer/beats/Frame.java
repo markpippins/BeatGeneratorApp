@@ -384,7 +384,7 @@ public class Frame extends JFrame implements AutoCloseable {
     }
 
     private void setupMainContent() {
-        mainPanel = new MainPanel(statusBar);
+        mainPanel = new MainPanel();
         add(mainPanel, BorderLayout.CENTER);
 
         // Replace direct access with command

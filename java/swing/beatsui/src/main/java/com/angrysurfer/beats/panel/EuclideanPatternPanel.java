@@ -1,32 +1,19 @@
 package com.angrysurfer.beats.panel;
 
-import java.awt.BasicStroke;
-import java.awt.BorderLayout;
-import java.awt.Color;
-import java.awt.Component;
-import java.awt.Dimension;
-import java.awt.Font;
-import java.awt.FontMetrics;
-import java.awt.Graphics;
-import java.awt.Graphics2D;
-import java.awt.RenderingHints;
-
-import javax.swing.BorderFactory;
-import javax.swing.Box;
-import javax.swing.BoxLayout;
-import javax.swing.JLabel;
-import javax.swing.JPanel;
-import javax.swing.SwingConstants;
-
+import com.angrysurfer.beats.widget.NumberedTickDial;
+import lombok.Getter;
+import lombok.Setter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.angrysurfer.beats.widget.NumberedTickDial;
-import com.angrysurfer.core.sequencer.DrumSequencer;
+import javax.swing.*;
+import java.awt.*;
 
 /**
  * A panel for editing and visualizing Euclidean rhythm patterns
  */
+@Getter
+@Setter
 public class EuclideanPatternPanel extends JPanel {
     private static final Logger logger = LoggerFactory.getLogger(EuclideanPatternPanel.class);
     
@@ -48,8 +35,6 @@ public class EuclideanPatternPanel extends JPanel {
     
     // For compact mode
     private boolean isCompact = false;
-    
-    private DrumSequencer sequencer;
 
     public EuclideanPatternPanel(int steps) {
         this(steps, false);
@@ -229,9 +214,9 @@ public class EuclideanPatternPanel extends JPanel {
         if (isCompact) {
             // Find and remove any existing title component
             Component[] components = getComponents();
-            for (int i = 0; i < components.length; i++) {
-                if (components[i] instanceof JLabel) {
-                    remove(components[i]);
+            for (Component component : components) {
+                if (component instanceof JLabel) {
+                    remove(component);
                     break;
                 }
             }
@@ -312,6 +297,7 @@ public class EuclideanPatternPanel extends JPanel {
     }
     
     // Circle display inner class
+    @Setter
     private class CircleDisplay extends JPanel {
         private boolean[] pattern;
         
@@ -320,11 +306,7 @@ public class EuclideanPatternPanel extends JPanel {
             setBorder(BorderFactory.createLineBorder(Color.DARK_GRAY, 2));
             pattern = new boolean[steps];
         }
-        
-        public void setPattern(boolean[] pattern) {
-            this.pattern = pattern;
-        }
-        
+
         @Override
         protected void paintComponent(Graphics g) {
             super.paintComponent(g);
@@ -438,21 +420,5 @@ public class EuclideanPatternPanel extends JPanel {
             g2d.dispose();
         }
     }
-    
-    // Getters for the dials
-    public NumberedTickDial getStepsDial() {
-        return stepsDial;
-    }
-    
-    public NumberedTickDial getHitsDial() {
-        return hitsDial;
-    }
-    
-    public NumberedTickDial getRotationDial() {
-        return rotationDial;
-    }
-    
-    public NumberedTickDial getWidthDial() {
-        return widthDial;
-    }
+
 }

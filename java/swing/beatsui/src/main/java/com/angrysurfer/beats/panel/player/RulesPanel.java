@@ -1,28 +1,5 @@
 package com.angrysurfer.beats.panel.player;
 
-import java.awt.BorderLayout;
-import java.awt.event.KeyAdapter;
-import java.awt.event.KeyEvent;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Objects;
-import java.util.Set;
-
-import javax.swing.BorderFactory;
-import javax.swing.JLabel;
-import javax.swing.JOptionPane;
-import javax.swing.JPanel;
-import javax.swing.JScrollPane;
-import javax.swing.JTable;
-import javax.swing.ListSelectionModel;
-import javax.swing.SwingUtilities;
-import javax.swing.table.DefaultTableCellRenderer;
-
-import com.angrysurfer.core.event.PlayerRuleUpdateEvent;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import com.angrysurfer.beats.panel.ButtonPanel;
 import com.angrysurfer.beats.panel.ContextMenuHelper;
 import com.angrysurfer.beats.panel.PlayerAwarePanel;
@@ -30,12 +7,22 @@ import com.angrysurfer.beats.widget.RuleTableModel;
 import com.angrysurfer.core.api.Command;
 import com.angrysurfer.core.api.CommandBus;
 import com.angrysurfer.core.api.Commands;
+import com.angrysurfer.core.event.PlayerRuleUpdateEvent;
 import com.angrysurfer.core.model.Player;
 import com.angrysurfer.core.model.Rule;
 import com.angrysurfer.core.model.Session;
 import com.angrysurfer.core.service.SessionManager;
-
 import lombok.Getter;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import javax.swing.*;
+import javax.swing.table.DefaultTableCellRenderer;
+import java.awt.*;
+import java.awt.event.KeyAdapter;
+import java.awt.event.KeyEvent;
+import java.util.List;
+import java.util.*;
 
 /**
  * Panel for viewing and editing player rules
@@ -44,7 +31,6 @@ import lombok.Getter;
 @Getter
 public class RulesPanel extends PlayerAwarePanel {
     private static final Logger logger = LoggerFactory.getLogger(RulesPanel.class);
-    private static final long serialVersionUID = 1L;
 
     private final JTable table;
     private final RuleTableModel tableModel;
@@ -85,8 +71,8 @@ public class RulesPanel extends PlayerAwarePanel {
      */
     @Override
     public void handlePlayerActivated() {
-        logger.info("Player activated: {}", getPlayer() != null ? getPlayer().getName() : "null");
-        loadRules(getPlayer());
+        logger.info("Player activated: {}", getTargetPlayer() != null ? getTargetPlayer().getName() : "null");
+        loadRules(getTargetPlayer());
         updateButtonStates();
     }
 
@@ -95,8 +81,8 @@ public class RulesPanel extends PlayerAwarePanel {
      */
     @Override
     public void handlePlayerUpdated() {
-        logger.info("Player updated: {}", getPlayer() != null ? getPlayer().getName() : "null");
-        loadRules(getPlayer());
+        logger.info("Player updated: {}", getTargetPlayer() != null ? getTargetPlayer().getName() : "null");
+        loadRules(getTargetPlayer());
         updateButtonStates();
     }
 
@@ -187,7 +173,7 @@ public class RulesPanel extends PlayerAwarePanel {
 
             switch (command) {
                 case Commands.RULE_ADD_REQUEST -> {
-                    Player player = getPlayer();
+                    Player player = getTargetPlayer();
                     if (player != null) {
                         logger.info("Publishing RULE_ADD_REQUEST for player: {}", player.getName());
                         CommandBus.getInstance().publish(Commands.RULE_ADD_REQUEST, this, player);
@@ -232,7 +218,7 @@ public class RulesPanel extends PlayerAwarePanel {
 
             switch (command) {
                 case Commands.RULE_ADD_REQUEST -> {
-                    Player player = getPlayer();
+                    Player player = getTargetPlayer();
                     if (player != null) {
                         logger.info("Publishing RULE_ADD_REQUEST from context menu");
                         CommandBus.getInstance().publish(Commands.RULE_ADD_REQUEST, this, player);
@@ -294,7 +280,7 @@ public class RulesPanel extends PlayerAwarePanel {
      */
     private void updateButtonStates() {
         // Enable add button if we have a current player
-        boolean hasPlayer = getPlayer() != null;
+        boolean hasPlayer = getTargetPlayer() != null;
         buttonPanel.setAddEnabled(hasPlayer);
         contextMenu.setAddEnabled(hasPlayer);
 
@@ -355,7 +341,7 @@ public class RulesPanel extends PlayerAwarePanel {
                 case Commands.PLAYER_RULE_UPDATE_EVENT -> {
                     if (action.getData() instanceof PlayerRuleUpdateEvent event) {
                         // Only process if this event affects our current player
-                        if (getPlayer() != null && getPlayer().getId().equals(event.getPlayer().getId())) {
+                        if (getTargetPlayer() != null && getTargetPlayer().getId().equals(event.getPlayer().getId())) {
                             logger.info("Rule update event received: {}", event.getUpdateType());
                             
                             // Store the updated rule ID before refreshing
@@ -410,8 +396,8 @@ public class RulesPanel extends PlayerAwarePanel {
                     // Wait for player to update, then refresh with player's updated rules
                     SwingUtilities.invokeLater(() -> {
                         // Check if our targetPlayer has been updated with the new rule
-                        if (getPlayer() != null) {
-                            Player playerWithUpdatedRules = getFreshPlayer(getPlayer().getId());
+                        if (getTargetPlayer() != null) {
+                            Player playerWithUpdatedRules = getFreshPlayer(getTargetPlayer().getId());
                             if (playerWithUpdatedRules != null) {
                                 // Update our current table with fresh rules
                                 clearRules();
@@ -441,8 +427,8 @@ public class RulesPanel extends PlayerAwarePanel {
                     // Wait for player to update, then refresh with player's updated rules
                     SwingUtilities.invokeLater(() -> {
                         // Get a fresh copy of the player to ensure we have updated rules
-                        if (getPlayer() != null) {
-                            Player playerWithUpdatedRules = getFreshPlayer(getPlayer().getId());
+                        if (getTargetPlayer() != null) {
+                            Player playerWithUpdatedRules = getFreshPlayer(getTargetPlayer().getId());
                             if (playerWithUpdatedRules != null) {
                                 refreshRules(playerWithUpdatedRules.getRules());
 
@@ -461,8 +447,8 @@ public class RulesPanel extends PlayerAwarePanel {
                     // Wait for player to update, then refresh with player's updated rules
                     SwingUtilities.invokeLater(() -> {
                         // Get the freshest possible player data
-                        if (getPlayer() != null) {
-                            Player playerWithUpdatedRules = getFreshPlayer(getPlayer().getId());
+                        if (getTargetPlayer() != null) {
+                            Player playerWithUpdatedRules = getFreshPlayer(getTargetPlayer().getId());
                             if (playerWithUpdatedRules != null) {
                                 // Update our table with fresh rules
                                 Set<Rule> rulesToDisplay = playerWithUpdatedRules.getRules();

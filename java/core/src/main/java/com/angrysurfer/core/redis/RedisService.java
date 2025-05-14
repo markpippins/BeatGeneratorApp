@@ -1,25 +1,5 @@
 package com.angrysurfer.core.redis;
 
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-
-import javax.sound.midi.MidiDevice;
-import javax.sound.midi.Receiver;
-
-import java.util.Arrays;
-
-import com.angrysurfer.core.sequencer.*;
-import com.angrysurfer.core.service.DeviceManager;
-import com.angrysurfer.core.service.InstrumentManager;
-import com.angrysurfer.core.service.PlayerManager;
-import com.angrysurfer.core.service.ReceiverManager;
-import com.angrysurfer.core.util.ErrorHandler;
-import com.angrysurfer.core.util.SessionDeserializer;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import com.angrysurfer.core.api.Command;
 import com.angrysurfer.core.api.CommandBus;
 import com.angrysurfer.core.api.Commands;
@@ -27,23 +7,33 @@ import com.angrysurfer.core.api.IBusListener;
 import com.angrysurfer.core.config.FrameState;
 import com.angrysurfer.core.config.TableState;
 import com.angrysurfer.core.config.UserConfig;
-import com.angrysurfer.core.event.PatternSwitchEvent;
-import com.angrysurfer.core.model.InstrumentWrapper;
-import com.angrysurfer.core.model.Pattern;
-import com.angrysurfer.core.model.Player;
-import com.angrysurfer.core.model.Rule;
-import com.angrysurfer.core.model.Session;
-import com.angrysurfer.core.model.Song;
-import com.angrysurfer.core.model.Step;
+import com.angrysurfer.core.model.*;
+import com.angrysurfer.core.sequencer.DrumSequenceData;
+import com.angrysurfer.core.sequencer.DrumSequencer;
+import com.angrysurfer.core.sequencer.MelodicSequenceData;
+import com.angrysurfer.core.sequencer.MelodicSequencer;
+import com.angrysurfer.core.service.DeviceManager;
+import com.angrysurfer.core.service.InstrumentManager;
+import com.angrysurfer.core.service.PlayerManager;
+import com.angrysurfer.core.service.ReceiverManager;
+import com.angrysurfer.core.util.ErrorHandler;
+import com.angrysurfer.core.util.SessionDeserializer;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.databind.module.SimpleModule;
-
 import lombok.Getter;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import redis.clients.jedis.Jedis;
 import redis.clients.jedis.JedisPool;
 import redis.clients.jedis.JedisPoolConfig;
+
+import javax.sound.midi.MidiDevice;
+import javax.sound.midi.Receiver;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 @Getter
 public class RedisService implements IBusListener {
@@ -80,10 +70,23 @@ public class RedisService implements IBusListener {
         this.instrumentHelper = new InstrumentHelper(jedisPool, objectMapper);
         this.userConfigHelper = new UserConfigHelper(jedisPool, objectMapper);
         this.drumSequenceHelper = new DrumSequenceDataHelper(jedisPool, objectMapper);
-        this.melodicSequencerHelper = new MelodicSequenceDataHelper(jedisPool, objectMapper);
+        this.melodicSequencerHelper = new MelodicSequenceDataHelper(jedisPool);
         // this.configHelper = new RedisConfigHelper(jedisPool, objectMapper);
 
         commandBus.register(this);
+    }
+
+    // Singleton access
+    public static RedisService getInstance() {
+        if (instance == null) {
+            synchronized (RedisService.class) {
+                if (instance == null) {
+                    instance = new RedisService();
+                    logger.info("RedisService singleton instance created");
+                }
+            }
+        }
+        return instance;
     }
 
     private JedisPool initJedisPool() {
@@ -107,19 +110,6 @@ public class RedisService implements IBusListener {
         mapper.registerModule(module);
 
         return mapper;
-    }
-
-    // Singleton access
-    public static RedisService getInstance() {
-        if (instance == null) {
-            synchronized (RedisService.class) {
-                if (instance == null) {
-                    instance = new RedisService();
-                    logger.info("RedisService singleton instance created");
-                }
-            }
-        }
-        return instance;
     }
 
     // Facade methods delegating to helpers
@@ -242,6 +232,7 @@ public class RedisService implements IBusListener {
     }
 
     // Player operations
+
     /**
      * Save player to Redis
      * This handles instrument references and session updates
@@ -253,10 +244,16 @@ public class RedisService implements IBusListener {
                 return;
             }
 
+            // Skip saving default players
+            if (Boolean.TRUE.equals(player.getIsDefault())) {
+                logger.debug("Skipping Redis save for default player: {}", player.getName());
+                return;
+            }
+
             logger.debug("Saving player ID: {} with name: {}", player.getId(), player.getName());
 
-            // Save the instrument first if it exists
-            if (player.getInstrument() != null) {
+            // Save the instrument first if it exists and is not default
+            if (player.getInstrument() != null && !Boolean.TRUE.equals(player.getInstrument().getIsDefault())) {
                 saveInstrument(player.getInstrument());
 
                 // Ensure the player's instrumentId is set correctly
@@ -390,6 +387,17 @@ public class RedisService implements IBusListener {
     }
 
     public void saveInstrument(InstrumentWrapper instrument) {
+        if (instrument == null) {
+            logger.warn("Cannot save null instrument");
+            return;
+        }
+
+        // Skip saving default instruments
+        if (Boolean.TRUE.equals(instrument.getIsDefault())) {
+            logger.debug("Skipping Redis save for default instrument: {}", instrument.getName());
+            return;
+        }
+
         instrumentHelper.saveInstrument(instrument);
     }
 
@@ -533,7 +541,8 @@ public class RedisService implements IBusListener {
     }
 
     public void applyDrumSequenceToSequencer(DrumSequenceData data, DrumSequencer sequencer) {
-        drumSequenceHelper.applyToSequencer(data, sequencer);
+        sequencer.setData(data);
+        //drumSequenceHelper.applyToSequencer(data, sequencer);
     }
 
     public void saveDrumSequence(DrumSequencer sequencer) {
@@ -621,7 +630,8 @@ public class RedisService implements IBusListener {
 
                     if (data.getDeviceName() != null) {
                         // Try to reconnect to saved device
-                        MidiDevice device = DeviceManager.getInstance().getMidiDevice(data.getDeviceName());
+                        DeviceManager.getInstance();
+                        MidiDevice device = DeviceManager.getMidiDevice(data.getDeviceName());
                         if (device != null) {
                             try {
                                 if (!device.isOpen()) {
@@ -705,7 +715,7 @@ public class RedisService implements IBusListener {
 
     /**
      * Get an instrument by ID
-     * 
+     *
      * @param id The instrument ID to look up
      * @return The instrument with the specified ID, or null if not found
      */

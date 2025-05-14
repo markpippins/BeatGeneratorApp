@@ -137,6 +137,11 @@ public class PlayersPanel extends JPanel {
         deleteUnusedButton.setToolTipText("Delete all players with no rules");
         deleteUnusedButton.addActionListener(e -> deletePlayersWithNoRules());
 
+        JButton deleteUnownedButton = new JButton("Delete Unowned");
+        deleteUnownedButton.setToolTipText("Delete all players with no owner");
+        deleteUnownedButton.addActionListener(e -> deletePlayersWithNoOwner());
+
+
         // Add control button to the right of the button panel
         JPanel leftButtonPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
         leftButtonPanel.add(refreshButton);
@@ -144,6 +149,7 @@ public class PlayersPanel extends JPanel {
         leftButtonPanel.add(copyButton);
 
         leftButtonPanel.add(deleteUnusedButton);
+        leftButtonPanel.add(deleteUnownedButton);
 
         buttonWrapper.add(leftButtonPanel, BorderLayout.WEST);
 
@@ -224,7 +230,8 @@ public class PlayersPanel extends JPanel {
         int totalNoRulePlayers = 0;
 
         for (Player player : currentSession.getPlayers()) {
-            if (player != null && player.getRules() != null && player.getRules().isEmpty()) {
+            if (player != null && player.getRules() != null && player.getRules().isEmpty() &&
+                    !player.isDrumPlayer() && !player.isMelodicPlayer()) {
                 playersToDelete.add(player.getId());
                 totalNoRulePlayers++;
             }
@@ -275,6 +282,73 @@ public class PlayersPanel extends JPanel {
             // Save the session automatically after deleting
             SwingUtilities.invokeLater(() -> {
                 logger.info("Auto-saving session after deleting unused players");
+                CommandBus.getInstance().publish(Commands.SAVE_SESSION, this);
+            });
+        }
+    }
+
+    private void deletePlayersWithNoOwner() {
+        Session currentSession = SessionManager.getInstance().getActiveSession();
+        if (currentSession == null || currentSession.getPlayers() == null || currentSession.getPlayers().isEmpty()) {
+            return;
+        }
+
+        // Find players with no rules
+        List<Long> playersToDelete = new ArrayList<>();
+        int totalNoRulePlayers = 0;
+
+        for (Player player : currentSession.getPlayers()) {
+            if (player != null && player.getOwner() == null) {
+                playersToDelete.add(player.getId());
+                totalNoRulePlayers++;
+            }
+        }
+
+        if (playersToDelete.isEmpty()) {
+            JOptionPane.showMessageDialog(
+                    this,
+                    "No unused players found (all players have owners).",
+                    "Delete Unowned Players",
+                    JOptionPane.INFORMATION_MESSAGE);
+            return;
+        }
+
+        // Confirm deletion
+        int confirm = JOptionPane.showConfirmDialog(
+                this,
+                "Delete " + totalNoRulePlayers + " unused player" + (totalNoRulePlayers > 1 ? "s" : "") +
+                        " (players with no owners)?\nThis action cannot be undone.",
+                "Confirm Delete Unowned Players",
+                JOptionPane.YES_NO_OPTION,
+                JOptionPane.WARNING_MESSAGE);
+
+        if (confirm == JOptionPane.YES_OPTION) {
+            logger.info("Deleting " + playersToDelete.size() + " players with no owners");
+
+            // Delete the players in batches to avoid overwhelming the system
+            int batchSize = 20;
+            for (int i = 0; i < playersToDelete.size(); i += batchSize) {
+                int endIndex = Math.min(i + batchSize, playersToDelete.size());
+                List<Long> batch = playersToDelete.subList(i, endIndex);
+
+                CommandBus.getInstance().publish(
+                        Commands.PLAYER_DELETE_REQUEST,
+                        this,
+                        batch.toArray(Long[]::new));
+
+                // Brief pause between batches if there are many players
+                if (playersToDelete.size() > 100 && i + batchSize < playersToDelete.size()) {
+                    try {
+                        Thread.sleep(50);
+                    } catch (InterruptedException ex) {
+                        // Ignore
+                    }
+                }
+            }
+
+            // Save the session automatically after deleting
+            SwingUtilities.invokeLater(() -> {
+                logger.info("Auto-saving session after deleting unowned players");
                 CommandBus.getInstance().publish(Commands.SAVE_SESSION, this);
             });
         }

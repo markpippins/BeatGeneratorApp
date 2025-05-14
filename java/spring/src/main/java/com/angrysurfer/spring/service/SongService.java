@@ -12,7 +12,7 @@ import com.angrysurfer.core.model.Song;
 import com.angrysurfer.core.model.Step;
 import com.angrysurfer.core.redis.RedisService;
 import com.angrysurfer.core.service.SessionManager;
-import com.angrysurfer.core.service.SongEngine;
+import com.angrysurfer.core.sequencer.SongEngine;
 import com.angrysurfer.core.util.TickCyclerListener;
 import com.angrysurfer.spring.dao.SongStatus;
 

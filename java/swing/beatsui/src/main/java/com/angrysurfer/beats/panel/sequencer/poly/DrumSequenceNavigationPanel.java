@@ -1,20 +1,5 @@
 package com.angrysurfer.beats.panel.sequencer.poly;
 
-import java.awt.Color;
-import java.awt.Dimension;
-import java.awt.FlowLayout;
-import java.awt.Insets;
-
-import javax.swing.BorderFactory;
-import javax.swing.JButton;
-import javax.swing.JLabel;
-import javax.swing.JPanel;
-import javax.swing.SwingConstants;
-import javax.swing.border.TitledBorder;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import com.angrysurfer.beats.util.UIHelper;
 import com.angrysurfer.core.api.CommandBus;
 import com.angrysurfer.core.api.Commands;
@@ -22,6 +7,11 @@ import com.angrysurfer.core.redis.RedisService;
 import com.angrysurfer.core.sequencer.DrumSequenceData;
 import com.angrysurfer.core.sequencer.DrumSequencer;
 import com.angrysurfer.core.service.DrumSequencerManager;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import javax.swing.*;
+import java.awt.*;
 
 /**
  * Panel providing navigation controls for drum sequences
@@ -57,7 +47,7 @@ public class DrumSequenceNavigationPanel extends JPanel {
         // Make ID label slightly smaller
         sequenceIdLabel = new JLabel(getFormattedIdText(), SwingConstants.CENTER);
         // REDUCED: from ID_LABEL_WIDTH to ID_LABEL_WIDTH - 10
-        sequenceIdLabel.setPreferredSize(new Dimension(UIHelper.ID_LABEL_WIDTH - 5, UIHelper.CONTROL_HEIGHT));
+        sequenceIdLabel.setPreferredSize(new Dimension(UIHelper.ID_LABEL_WIDTH - 5, UIHelper.CONTROL_HEIGHT - 2));
         sequenceIdLabel.setOpaque(true);
         sequenceIdLabel.setBackground(UIHelper.darkGray);
         sequenceIdLabel.setForeground(UIHelper.coolBlue);

@@ -1,21 +1,16 @@
 package com.angrysurfer.beats.panel.sequencer.mono;
 
-import com.angrysurfer.core.model.Direction;
-import com.angrysurfer.core.sequencer.MelodicSequencer;
-import com.angrysurfer.core.sequencer.Scale;
-import com.angrysurfer.core.sequencer.TimingDivision;
 import com.angrysurfer.beats.util.UIHelper;
 import com.angrysurfer.core.api.CommandBus;
 import com.angrysurfer.core.api.Commands;
-import com.angrysurfer.core.event.MelodicScaleSelectionEvent;
-
-import javax.swing.*;
-import javax.swing.border.TitledBorder;
-import java.awt.*;
-import java.awt.event.ItemEvent;
-
+import com.angrysurfer.core.sequencer.Direction;
+import com.angrysurfer.core.sequencer.MelodicSequencer;
+import com.angrysurfer.core.sequencer.TimingDivision;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import javax.swing.*;
+import java.awt.*;
 
 /**
  * Panel containing sequence parameters for melodic sequencers
@@ -37,7 +32,7 @@ public class MelodicSequenceParametersPanel extends JPanel {
 
     /**
      * Create a new sequence parameters panel
-     * 
+     *
      * @param sequencer The melodic sequencer to control
      */
     public MelodicSequenceParametersPanel(MelodicSequencer sequencer) {
@@ -50,7 +45,7 @@ public class MelodicSequenceParametersPanel extends JPanel {
      */
     private void initialize() {
         setLayout(new BorderLayout(0, 0)); // No gaps between components
-        UIHelper.setWidgetPanelBorder(this,"Sequence Parameters");
+        UIHelper.setWidgetPanelBorder(this, "Sequence Parameters");
 
         // Reduce spacing in the controls panel
         JPanel controlsPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 1, 0));
@@ -84,7 +79,7 @@ public class MelodicSequenceParametersPanel extends JPanel {
         SpinnerNumberModel lastStepModel = new SpinnerNumberModel(16, 1, 64, 1);
         lastStepSpinner = new JSpinner(lastStepModel);
         lastStepSpinner.setPreferredSize(new Dimension(UIHelper.MEDIUM_CONTROL_WIDTH - 5, UIHelper.CONTROL_HEIGHT)); // Reduced
-                                                                                                                   // width
+        // width
         lastStepSpinner.setToolTipText("Set the last step for the pattern (1-16)");
         lastStepSpinner.addChangeListener(e -> {
             if (!updatingUI) {
@@ -103,14 +98,13 @@ public class MelodicSequenceParametersPanel extends JPanel {
     private void createDirectionControls(JPanel parentPanel) {
         JPanel directionPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 2, 0)); // REDUCED: from 5,0 to 2,0
 
-        directionCombo = new JComboBox<>(new String[] { "Forward", "Backward", "Bounce", "Random" });
+        directionCombo = new JComboBox<>(new String[]{"Forward", "Backward", "Bounce", "Random"});
         directionCombo.setPreferredSize(new Dimension(UIHelper.LARGE_CONTROL_WIDTH, UIHelper.CONTROL_HEIGHT));
         directionCombo.setToolTipText("Set the playback direction of the pattern");
         directionCombo.addActionListener(e -> {
             if (!updatingUI) {
                 int selectedIndex = directionCombo.getSelectedIndex();
                 Direction direction = switch (selectedIndex) {
-                    case 0 -> Direction.FORWARD;
                     case 1 -> Direction.BACKWARD;
                     case 2 -> Direction.BOUNCE;
                     case 3 -> Direction.RANDOM;
@@ -173,7 +167,7 @@ public class MelodicSequenceParametersPanel extends JPanel {
         // Rotate Left button
         JButton rotateLeftButton = new JButton("⟵");
         rotateLeftButton.setToolTipText("Rotate pattern one step left");
-        rotateLeftButton.setPreferredSize(new Dimension(24, 24));
+        rotateLeftButton.setPreferredSize(new Dimension(UIHelper.SMALL_CONTROL_WIDTH, 24));
         rotateLeftButton.setMargin(new Insets(2, 2, 2, 2));
         rotateLeftButton.addActionListener(e -> {
             sequencer.getSequenceData().rotatePatternLeft();
@@ -188,7 +182,7 @@ public class MelodicSequenceParametersPanel extends JPanel {
         // Rotate Right button
         JButton rotateRightButton = new JButton("⟶");
         rotateRightButton.setToolTipText("Rotate pattern one step right");
-        rotateRightButton.setPreferredSize(new Dimension(24, 24));
+        rotateRightButton.setPreferredSize(new Dimension(UIHelper.SMALL_CONTROL_WIDTH, 24));
         rotateRightButton.setMargin(new Insets(2, 2, 2, 2));
         rotateRightButton.addActionListener(e -> {
             sequencer.getSequenceData().rotatePatternRight();
@@ -209,7 +203,7 @@ public class MelodicSequenceParametersPanel extends JPanel {
 
     /**
      * Create clear button
-     * 
+     *
      * @return The created button
      */
     private JButton createClearButton() {
@@ -232,7 +226,7 @@ public class MelodicSequenceParametersPanel extends JPanel {
 
     /**
      * Update the panel UI to reflect sequencer state
-     * 
+     *
      * @param sequencer The sequencer to sync with
      */
     public void updateUI(MelodicSequencer sequencer) {

@@ -1,35 +1,29 @@
 package com.angrysurfer.core.sequencer;
 
+import com.angrysurfer.core.Constants;
+import com.angrysurfer.core.api.*;
+import com.angrysurfer.core.api.midi.MIDIConstants;
+import com.angrysurfer.core.event.DrumPadSelectionEvent;
+import com.angrysurfer.core.event.DrumStepUpdateEvent;
+import com.angrysurfer.core.event.NoteEvent;
+import com.angrysurfer.core.event.PatternSwitchEvent;
+import com.angrysurfer.core.model.InstrumentWrapper;
+import com.angrysurfer.core.model.Player;
+import com.angrysurfer.core.model.Session;
+import com.angrysurfer.core.redis.RedisService;
+import com.angrysurfer.core.service.*;
+import lombok.Getter;
+import lombok.Setter;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import javax.sound.midi.MidiDevice;
+import javax.sound.midi.Receiver;
 import java.util.Arrays;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
-
-import javax.sound.midi.MidiDevice;
-import javax.sound.midi.Receiver;
-
-import com.angrysurfer.core.model.Session;
-import com.angrysurfer.core.service.*;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import com.angrysurfer.core.api.Command;
-import com.angrysurfer.core.api.CommandBus;
-import com.angrysurfer.core.api.Commands;
-import com.angrysurfer.core.api.IBusListener;
-import com.angrysurfer.core.api.TimingBus;
-import com.angrysurfer.core.event.DrumPadSelectionEvent;
-import com.angrysurfer.core.event.DrumStepUpdateEvent;
-import com.angrysurfer.core.event.NoteEvent;
-import com.angrysurfer.core.event.PatternSwitchEvent;
-import com.angrysurfer.core.model.Direction;
-import com.angrysurfer.core.model.InstrumentWrapper;
-import com.angrysurfer.core.model.Player;
-import com.angrysurfer.core.redis.RedisService;
-
-import lombok.Getter;
-import lombok.Setter;
 
 /**
  * Core sequencer engine that handles drum pattern sequencing and playback with
@@ -57,7 +51,6 @@ public class DrumSequencer implements IBusListener {
 
     // Add field to track if we're using internal synth
     private boolean usingInternalSynth = false;
-    private InternalSynthManager internalSynthManager = null;
 
     // 1. Create a reusable message object as a class field
     private final javax.sound.midi.ShortMessage reuseableMessage = new javax.sound.midi.ShortMessage();
@@ -67,17 +60,14 @@ public class DrumSequencer implements IBusListener {
      */
     public DrumSequencer() {
 
-        players = new Player[DrumSequenceData.DRUM_PAD_COUNT];
+        players = new Player[Constants.DRUM_PAD_COUNT];
         // Initialize the data container
         this.data = new DrumSequenceData();
 
-        // Save reference to synth manager for future use
-        internalSynthManager = InternalSynthManager.getInstance();
-
         // Make sure we have a working synthesizer
-        if (!internalSynthManager.checkInternalSynthAvailable()) {
+        if (!InternalSynthManager.getInstance().checkInternalSynthAvailable()) {
             logger.info("Initializing internal synthesizer for drum sequencer");
-            internalSynthManager.initializeSynthesizer();
+            InternalSynthManager.getInstance().initializeSynthesizer();
             usingInternalSynth = true;
         }
 
@@ -107,7 +97,7 @@ public class DrumSequencer implements IBusListener {
         MidiDevice defaultDevice = DeviceManager.getInstance().getDefaultOutputDevice();
         if (defaultDevice == null) {
             logger.warn("No default MIDI output device available, attempting to get Gervill");
-            defaultDevice = DeviceManager.getInstance().getMidiDevice("Gervill");
+            defaultDevice = DeviceManager.getMidiDevice("Gervill");
             if (defaultDevice != null && !defaultDevice.isOpen()) {
                 try {
                     defaultDevice.open();
@@ -119,7 +109,7 @@ public class DrumSequencer implements IBusListener {
         }
 
         logger.info("Creating drum players with active connections");
-        for (int i = 0; i < DrumSequenceData.DRUM_PAD_COUNT; i++) {
+        for (int i = 0; i < Constants.DRUM_PAD_COUNT; i++) {
             // First check if player already exists in the session
             Player existingPlayer = findExistingPlayerForDrum(activeSession, i);
 
@@ -136,21 +126,21 @@ public class DrumSequencer implements IBusListener {
                 // Create new player
                 players[i] = RedisService.getInstance().newStrike();
                 players[i].setOwner(this);
-                players[i].setDefaultChannel(DrumSequenceData.MIDI_DRUM_CHANNEL);
+                players[i].setDefaultChannel(MIDIConstants.MIDI_DRUM_CHANNEL);
                 players[i].setRootNote(data.getRootNotes()[i]);
                 players[i].setName(
-                        InternalSynthManager.getInstance().getDrumName(DrumSequenceData.MIDI_DRUM_NOTE_OFFSET + i));
+                        InternalSynthManager.getInstance().getDrumName(MIDIConstants.MIDI_DRUM_NOTE_OFFSET + i));
 
                 // Use PlayerManager to initialize the instrument
                 PlayerManager.getInstance().initializeInternalInstrument(players[i], true, i);
-                players[i].getInstrument().setChannel(9);
+                players[i].getInstrument().setChannel(Constants.MIDI_DRUM_CHANNEL);
                 // Initialize device connections
                 initializeDrumPadConnections(i, defaultDevice);
 
                 // Add player to session
                 activeSession.getPlayers().add(players[i]);
 
-                logger.debug("Initialized drum pad {} with note {}", i, DrumSequenceData.MIDI_DRUM_NOTE_OFFSET + i);
+                logger.debug("Initialized drum pad {} with note {}", i, MIDIConstants.MIDI_DRUM_NOTE_OFFSET + i);
             }
         }
 
@@ -172,7 +162,7 @@ public class DrumSequencer implements IBusListener {
             if (p.getOwner() != null &&
                     p.getOwner() instanceof DrumSequencer &&
                     p.getClass().getSimpleName().equals("Strike") &&
-                    p.getRootNote() == DrumSequenceData.MIDI_DRUM_NOTE_OFFSET + drumIndex) {
+                    p.getRootNote() == MIDIConstants.MIDI_DRUM_NOTE_OFFSET + drumIndex) {
 
                 return p;
             }
@@ -199,8 +189,8 @@ public class DrumSequencer implements IBusListener {
             InstrumentWrapper instrument = player.getInstrument();
 
             // Set the channel
-            instrument.setChannel(DrumSequenceData.MIDI_DRUM_CHANNEL);
-            instrument.setReceivedChannels(new Integer[] { DrumSequenceData.MIDI_DRUM_CHANNEL });
+            instrument.setChannel(MIDIConstants.MIDI_DRUM_CHANNEL);
+            instrument.setReceivedChannels(new Integer[] { MIDIConstants.MIDI_DRUM_CHANNEL });
 
             // Try to get a device - first check if instrument already has one specified
             MidiDevice device = null;
@@ -231,7 +221,7 @@ public class DrumSequencer implements IBusListener {
             // If still no device, try Gervill specifically
             if (device == null) {
                 try {
-                    device = DeviceManager.getInstance().getMidiDevice("Gervill");
+                    device = DeviceManager.getMidiDevice("Gervill");
                     if (device != null) {
                         if (!device.isOpen()) {
                             device.open();
@@ -270,7 +260,7 @@ public class DrumSequencer implements IBusListener {
                     PlayerManager.getInstance().applyInstrumentPreset(player);
                     logger.debug("Applied preset for drum {}", drumIndex);
                 } catch (Exception e) {
-                    logger.warn("Could not apply preset for drum {}", drumIndex, e.getMessage());
+                    logger.warn("Could not apply preset for drum {}, {}", drumIndex, e.getMessage());
                 }
             } else {
                 logger.warn("No valid device found for drum {}", drumIndex);
@@ -287,7 +277,7 @@ public class DrumSequencer implements IBusListener {
      */
     public void setSwingPercentage(int percentage) {
         // Limit to valid range
-        int value = Math.max(DrumSequenceData.MIN_SWING, Math.min(DrumSequenceData.MAX_SWING, percentage));
+        int value = Math.max(MIDIConstants.MIN_SWING, Math.min(MIDIConstants.MAX_SWING, percentage));
         data.setSwingPercentage(value);
         logger.info("Swing percentage set to: {}", value);
 
@@ -311,14 +301,6 @@ public class DrumSequencer implements IBusListener {
 
     public boolean isSwingEnabled() {
         return data.isSwingEnabled();
-    }
-
-    public int getAbsoluteStep() {
-        return data.getAbsoluteStep();
-    }
-
-    public void setAbsoluteStep(int step) {
-        data.setAbsoluteStep(step);
     }
 
     /**
@@ -350,7 +332,7 @@ public class DrumSequencer implements IBusListener {
             updateDrumRootNotesFromData();
             // Immediately update visual indicators without resetting
             if (stepUpdateListener != null) {
-                for (int drumIndex = 0; drumIndex < DrumSequenceData.DRUM_PAD_COUNT; drumIndex++) {
+                for (int drumIndex = 0; drumIndex < Constants.DRUM_PAD_COUNT; drumIndex++) {
                     // Force an update with the current positions
                     stepUpdateListener
                             .accept(new DrumStepUpdateEvent(drumIndex, -1, data.getCurrentStep()[drumIndex]));
@@ -403,7 +385,7 @@ public class DrumSequencer implements IBusListener {
 
         // Force the sequencer to generate an event to update visual indicators
         if (stepUpdateListener != null) {
-            for (int drumIndex = 0; drumIndex < DrumSequenceData.DRUM_PAD_COUNT; drumIndex++) {
+            for (int drumIndex = 0; drumIndex < Constants.DRUM_PAD_COUNT; drumIndex++) {
                 stepUpdateListener
                         .accept(new DrumStepUpdateEvent(drumIndex, -1, data.getCurrentStep()[drumIndex]));
             }
@@ -446,7 +428,7 @@ public class DrumSequencer implements IBusListener {
         data.setPatternJustCompleted(false);
 
         // Process each drum separately
-        for (int drumIndex = 0; drumIndex < DrumSequenceData.DRUM_PAD_COUNT; drumIndex++) {
+        for (int drumIndex = 0; drumIndex < Constants.DRUM_PAD_COUNT; drumIndex++) {
             // Skip if no Player configured
             if (players[drumIndex] == null) {
                 continue;
@@ -508,15 +490,6 @@ public class DrumSequencer implements IBusListener {
     public void setNextPatternId(Long patternId) {
         data.setNextPatternId(patternId);
         logger.info("Set next drum pattern ID: {}", patternId);
-    }
-
-    /**
-     * Get the next pattern ID
-     * 
-     * @return The next pattern ID or null if no pattern is queued
-     */
-    public Long getNextPatternId() {
-        return data.getNextPatternId();
     }
 
     /**
@@ -603,8 +576,8 @@ public class DrumSequencer implements IBusListener {
         if (player.getInstrument() == null && player.getInstrumentId() != null) {
             player.setInstrument(InstrumentManager.getInstance().getInstrumentById(player.getInstrumentId()));
             if (player.getInstrument() != null) {
-                player.getInstrument().setChannel(DrumSequenceData.MIDI_DRUM_CHANNEL);
-                player.getInstrument().setReceivedChannels(new Integer[] { DrumSequenceData.MIDI_DRUM_CHANNEL });
+                player.getInstrument().setChannel(MIDIConstants.MIDI_DRUM_CHANNEL);
+                player.getInstrument().setReceivedChannels(new Integer[] { MIDIConstants.MIDI_DRUM_CHANNEL });
             }
         }
 
@@ -641,7 +614,7 @@ public class DrumSequencer implements IBusListener {
     private void publishNoteEvent(int drumIndex, int velocity, int durationMs) {
         if (noteEventPublisher != null) {
             // Convert drum index back to MIDI note (36=kick, etc.)
-            int midiNote = drumIndex + DrumSequenceData.MIDI_DRUM_NOTE_OFFSET;
+            int midiNote = drumIndex + MIDIConstants.MIDI_DRUM_NOTE_OFFSET;
             NoteEvent event = new NoteEvent(midiNote, velocity, durationMs);
             noteEventPublisher.accept(event);
         }
@@ -665,7 +638,7 @@ public class DrumSequencer implements IBusListener {
         switch (division) {
             case NORMAL -> stepDurationMs *= 1; // No change for normal timing
             case DOUBLE -> stepDurationMs /= 2; // Double time (faster)
-            case HALF -> stepDurationMs *= 2; // Half time (slower)
+            case HALF -> stepDurationMs *= 2; // Half-time (slower)
             case QUARTER -> stepDurationMs *= 4; // Quarter time (very slow)
             case TRIPLET -> stepDurationMs *= 2.0f / 3.0f; // Triplet feel
             case QUARTER_TRIPLET -> stepDurationMs *= 4.0f / 3.0f; // Quarter note triplets
@@ -695,15 +668,15 @@ public class DrumSequencer implements IBusListener {
         int masterTempo = data.getMasterTempo();
         if (masterTempo <= 0) {
             logger.warn("Invalid masterTempo value ({}), using default of {}", masterTempo,
-                    DrumSequenceData.DEFAULT_MASTER_TEMPO);
-            masterTempo = DrumSequenceData.DEFAULT_MASTER_TEMPO; // Emergency fallback
+                    MIDIConstants.DEFAULT_MASTER_TEMPO);
+            masterTempo = MIDIConstants.DEFAULT_MASTER_TEMPO; // Emergency fallback
         }
 
         double ticksPerBeat = timing.getTicksPerBeat();
         if (ticksPerBeat <= 0) {
             logger.warn("Invalid ticksPerBeat value ({}), using default of {}", ticksPerBeat,
-                    DrumSequenceData.DEFAULT_TICKS_PER_BEAT);
-            ticksPerBeat = DrumSequenceData.DEFAULT_TICKS_PER_BEAT; // Emergency fallback
+                    MIDIConstants.DEFAULT_TICKS_PER_BEAT);
+            ticksPerBeat = MIDIConstants.DEFAULT_TICKS_PER_BEAT; // Emergency fallback
         }
 
         // Simplified calculation that works consistently
@@ -726,7 +699,7 @@ public class DrumSequencer implements IBusListener {
         logger.info("Updated master tempo to {}", sessionTicksPerBeat);
 
         // Recalculate all next step timings based on new tempo
-        for (int drumIndex = 0; drumIndex < DrumSequenceData.DRUM_PAD_COUNT; drumIndex++) {
+        for (int drumIndex = 0; drumIndex < Constants.DRUM_PAD_COUNT; drumIndex++) {
             if (data.getTimingDivisions()[drumIndex] != null) {
                 int calculatedTicksPerStep = calculateTicksPerStep(data.getTimingDivisions()[drumIndex]);
                 data.getNextStepTick()[drumIndex] = data.getTickCounter() + calculatedTicksPerStep;
@@ -741,7 +714,7 @@ public class DrumSequencer implements IBusListener {
         data.setPlaying(true);
 
         // Reset step positions to ensure consistent playback
-        for (int i = 0; i < DrumSequenceData.DRUM_PAD_COUNT; i++) {
+        for (int i = 0; i < Constants.DRUM_PAD_COUNT; i++) {
             // Set all next step ticks to the current tick to trigger immediately
             data.getNextStepTick()[i] = data.getTickCounter();
 
@@ -787,7 +760,7 @@ public class DrumSequencer implements IBusListener {
      * @return The new state of the step (true=active, false=inactive)
      */
     public boolean toggleStep(int drumIndex, int stepIndex) {
-        if (drumIndex >= 0 && drumIndex < DrumSequenceData.DRUM_PAD_COUNT &&
+        if (drumIndex >= 0 && drumIndex < Constants.DRUM_PAD_COUNT &&
                 stepIndex >= 0 && stepIndex < data.getMaxPatternLength()) {
 
             // Toggle the step
@@ -824,7 +797,7 @@ public class DrumSequencer implements IBusListener {
      * Get the pattern length for a drum
      */
     public int getPatternLength(int drumIndex) {
-        if (drumIndex < 0 || drumIndex >= DrumSequenceData.DRUM_PAD_COUNT) {
+        if (drumIndex < 0 || drumIndex >= Constants.DRUM_PAD_COUNT) {
             logger.warn("Invalid drum index {} for getPatternLength", drumIndex);
             return data.getDefaultPatternLength();
         }
@@ -835,7 +808,7 @@ public class DrumSequencer implements IBusListener {
      * Set the pattern length for a drum
      */
     public void setPatternLength(int drumIndex, int length) {
-        if (drumIndex >= 0 && drumIndex < DrumSequenceData.DRUM_PAD_COUNT && length > 0
+        if (drumIndex >= 0 && drumIndex < Constants.DRUM_PAD_COUNT && length > 0
                 && length <= data.getMaxPatternLength()) {
             logger.info("Setting pattern length for drum {} to {}", drumIndex, length);
             data.getPatternLengths()[drumIndex] = length;
@@ -894,7 +867,7 @@ public class DrumSequencer implements IBusListener {
      * Get the direction for a drum
      */
     public Direction getDirection(int drumIndex) {
-        if (drumIndex < 0 || drumIndex >= DrumSequenceData.DRUM_PAD_COUNT) {
+        if (drumIndex < 0 || drumIndex >= Constants.DRUM_PAD_COUNT) {
             logger.warn("Invalid drum index {} for getDirection", drumIndex);
             return Direction.FORWARD;
         }
@@ -905,7 +878,7 @@ public class DrumSequencer implements IBusListener {
      * Set the direction for a drum
      */
     public void setDirection(int drumIndex, Direction direction) {
-        if (drumIndex >= 0 && drumIndex < DrumSequenceData.DRUM_PAD_COUNT) {
+        if (drumIndex >= 0 && drumIndex < Constants.DRUM_PAD_COUNT) {
             data.getDirections()[drumIndex] = direction;
 
             // If playing in bounce mode, make sure bounce direction is set correctly
@@ -927,7 +900,7 @@ public class DrumSequencer implements IBusListener {
      * Get the timing division for a drum
      */
     public TimingDivision getTimingDivision(int drumIndex) {
-        if (drumIndex < 0 || drumIndex >= DrumSequenceData.DRUM_PAD_COUNT) {
+        if (drumIndex < 0 || drumIndex >= Constants.DRUM_PAD_COUNT) {
             logger.warn("Invalid drum index {} for getTimingDivision", drumIndex);
             return TimingDivision.NORMAL;
         }
@@ -938,7 +911,7 @@ public class DrumSequencer implements IBusListener {
      * Set the timing division for a drum
      */
     public void setTimingDivision(int drumIndex, TimingDivision division) {
-        if (drumIndex >= 0 && drumIndex < DrumSequenceData.DRUM_PAD_COUNT) {
+        if (drumIndex >= 0 && drumIndex < Constants.DRUM_PAD_COUNT) {
             data.getTimingDivisions()[drumIndex] = division;
 
             // Reset the drum's next step time to apply the new timing
@@ -957,7 +930,7 @@ public class DrumSequencer implements IBusListener {
      * Get whether a drum is looping
      */
     public boolean isLooping(int drumIndex) {
-        if (drumIndex < 0 || drumIndex >= DrumSequenceData.DRUM_PAD_COUNT) {
+        if (drumIndex < 0 || drumIndex >= Constants.DRUM_PAD_COUNT) {
             logger.warn("Invalid drum index {} for isLooping", drumIndex);
             return true;
         }
@@ -968,7 +941,7 @@ public class DrumSequencer implements IBusListener {
      * Set whether a drum should loop
      */
     public void setLooping(int drumIndex, boolean loop) {
-        if (drumIndex >= 0 && drumIndex < DrumSequenceData.DRUM_PAD_COUNT) {
+        if (drumIndex >= 0 && drumIndex < Constants.DRUM_PAD_COUNT) {
             data.getLoopingFlags()[drumIndex] = loop;
 
             // If we're re-enabling looping for a stopped pattern, reset it
@@ -988,19 +961,19 @@ public class DrumSequencer implements IBusListener {
      * Get the velocity for a drum
      */
     public int getVelocity(int drumIndex) {
-        if (drumIndex >= 0 && drumIndex < DrumSequenceData.DRUM_PAD_COUNT) {
+        if (drumIndex >= 0 && drumIndex < Constants.DRUM_PAD_COUNT) {
             return data.getVelocities()[drumIndex];
         }
-        return DrumSequenceData.DEFAULT_VELOCITY;
+        return MIDIConstants.DEFAULT_VELOCITY;
     }
 
     /**
      * Set the velocity for a drum
      */
     public void setVelocity(int drumIndex, int velocity) {
-        if (drumIndex >= 0 && drumIndex < DrumSequenceData.DRUM_PAD_COUNT) {
+        if (drumIndex >= 0 && drumIndex < Constants.DRUM_PAD_COUNT) {
             // Constrain to valid MIDI range
-            velocity = Math.max(0, Math.min(DrumSequenceData.MAX_MIDI_VELOCITY, velocity));
+            velocity = Math.max(0, Math.min(MIDIConstants.MAX_MIDI_VELOCITY, velocity));
             data.getVelocities()[drumIndex] = velocity;
 
             // If we have a Player object for this drum, update its level
@@ -1020,7 +993,7 @@ public class DrumSequencer implements IBusListener {
      * Get the velocity for a specific step
      */
     public int getStepVelocity(int drumIndex, int stepIndex) {
-        if (drumIndex >= 0 && drumIndex < DrumSequenceData.DRUM_PAD_COUNT && stepIndex >= 0
+        if (drumIndex >= 0 && drumIndex < Constants.DRUM_PAD_COUNT && stepIndex >= 0
                 && stepIndex < data.getMaxPatternLength()) {
             return data.getStepVelocities()[drumIndex][stepIndex];
         }
@@ -1031,7 +1004,7 @@ public class DrumSequencer implements IBusListener {
      * Set the velocity for a specific step
      */
     public void setStepVelocity(int drumIndex, int stepIndex, int velocity) {
-        if (drumIndex >= 0 && drumIndex < DrumSequenceData.DRUM_PAD_COUNT && stepIndex >= 0
+        if (drumIndex >= 0 && drumIndex < Constants.DRUM_PAD_COUNT && stepIndex >= 0
                 && stepIndex < data.getMaxPatternLength()) {
             data.getStepVelocities()[drumIndex][stepIndex] = velocity;
         }
@@ -1041,7 +1014,7 @@ public class DrumSequencer implements IBusListener {
      * Get the decay for a specific step
      */
     public int getStepDecay(int drumIndex, int stepIndex) {
-        if (drumIndex >= 0 && drumIndex < DrumSequenceData.DRUM_PAD_COUNT && stepIndex >= 0
+        if (drumIndex >= 0 && drumIndex < Constants.DRUM_PAD_COUNT && stepIndex >= 0
                 && stepIndex < data.getMaxPatternLength()) {
             return data.getStepDecays()[drumIndex][stepIndex];
         }
@@ -1052,7 +1025,7 @@ public class DrumSequencer implements IBusListener {
      * Set the decay for a specific step
      */
     public void setStepDecay(int drumIndex, int stepIndex, int decay) {
-        if (drumIndex >= 0 && drumIndex < DrumSequenceData.DRUM_PAD_COUNT && stepIndex >= 0
+        if (drumIndex >= 0 && drumIndex < Constants.DRUM_PAD_COUNT && stepIndex >= 0
                 && stepIndex < data.getMaxPatternLength()) {
             data.getStepDecays()[drumIndex][stepIndex] = decay;
         }
@@ -1062,18 +1035,18 @@ public class DrumSequencer implements IBusListener {
      * Get the probability for a specific step
      */
     public int getStepProbability(int drumIndex, int stepIndex) {
-        if (drumIndex >= 0 && drumIndex < DrumSequenceData.DRUM_PAD_COUNT && stepIndex >= 0
+        if (drumIndex >= 0 && drumIndex < Constants.DRUM_PAD_COUNT && stepIndex >= 0
                 && stepIndex < data.getMaxPatternLength()) {
             return data.getStepProbabilities()[drumIndex][stepIndex];
         }
-        return DrumSequenceData.DEFAULT_PROBABILITY;
+        return MIDIConstants.DEFAULT_PROBABILITY;
     }
 
     /**
      * Set the probability for a specific step
      */
     public void setStepProbability(int drumIndex, int stepIndex, int probability) {
-        if (drumIndex >= 0 && drumIndex < DrumSequenceData.DRUM_PAD_COUNT && stepIndex >= 0
+        if (drumIndex >= 0 && drumIndex < Constants.DRUM_PAD_COUNT && stepIndex >= 0
                 && stepIndex < data.getMaxPatternLength()) {
             // Clamp value between 0-100
             data.getStepProbabilities()[drumIndex][stepIndex] = Math.max(0, Math.min(100, probability));
@@ -1084,7 +1057,7 @@ public class DrumSequencer implements IBusListener {
      * Get the nudge for a specific step
      */
     public int getStepNudge(int drumIndex, int stepIndex) {
-        if (drumIndex >= 0 && drumIndex < DrumSequenceData.DRUM_PAD_COUNT && stepIndex >= 0
+        if (drumIndex >= 0 && drumIndex < Constants.DRUM_PAD_COUNT && stepIndex >= 0
                 && stepIndex < data.getMaxPatternLength()) {
             return data.getStepNudges()[drumIndex][stepIndex];
         }
@@ -1095,7 +1068,7 @@ public class DrumSequencer implements IBusListener {
      * Set the nudge for a specific step
      */
     public void setStepNudge(int drumIndex, int stepIndex, int nudge) {
-        if (drumIndex >= 0 && drumIndex < DrumSequenceData.DRUM_PAD_COUNT && stepIndex >= 0
+        if (drumIndex >= 0 && drumIndex < Constants.DRUM_PAD_COUNT && stepIndex >= 0
                 && stepIndex < data.getMaxPatternLength()) {
             data.getStepNudges()[drumIndex][stepIndex] = nudge;
         }
@@ -1105,18 +1078,18 @@ public class DrumSequencer implements IBusListener {
      * Get the pan position for a specific step
      */
     public int getStepPan(int drumIndex, int stepIndex) {
-        if (drumIndex >= 0 && drumIndex < DrumSequenceData.DRUM_PAD_COUNT && stepIndex >= 0
+        if (drumIndex >= 0 && drumIndex < Constants.DRUM_PAD_COUNT && stepIndex >= 0
                 && stepIndex < data.getMaxPatternLength()) {
             return data.getStepPans()[drumIndex][stepIndex];
         }
-        return DrumSequenceData.DEFAULT_PAN;
+        return MIDIConstants.DEFAULT_PAN;
     }
 
     /**
      * Set the pan position for a specific step
      */
     public void setStepPan(int drumIndex, int stepIndex, int pan) {
-        if (drumIndex >= 0 && drumIndex < DrumSequenceData.DRUM_PAD_COUNT && stepIndex >= 0
+        if (drumIndex >= 0 && drumIndex < Constants.DRUM_PAD_COUNT && stepIndex >= 0
                 && stepIndex < data.getMaxPatternLength()) {
             data.getStepPans()[drumIndex][stepIndex] = Math.max(0, Math.min(127, pan));
         }
@@ -1126,18 +1099,18 @@ public class DrumSequencer implements IBusListener {
      * Get the chorus amount for a specific step
      */
     public int getStepChorus(int drumIndex, int stepIndex) {
-        if (drumIndex >= 0 && drumIndex < DrumSequenceData.DRUM_PAD_COUNT && stepIndex >= 0
+        if (drumIndex >= 0 && drumIndex < Constants.DRUM_PAD_COUNT && stepIndex >= 0
                 && stepIndex < data.getMaxPatternLength()) {
             return data.getStepChorus()[drumIndex][stepIndex];
         }
-        return DrumSequenceData.DEFAULT_CHORUS;
+        return MIDIConstants.DEFAULT_CHORUS;
     }
 
     /**
      * Set the chorus amount for a specific step
      */
     public void setStepChorus(int drumIndex, int stepIndex, int chorus) {
-        if (drumIndex >= 0 && drumIndex < DrumSequenceData.DRUM_PAD_COUNT && stepIndex >= 0
+        if (drumIndex >= 0 && drumIndex < Constants.DRUM_PAD_COUNT && stepIndex >= 0
                 && stepIndex < data.getMaxPatternLength()) {
             data.getStepChorus()[drumIndex][stepIndex] = Math.max(0, Math.min(100, chorus));
         }
@@ -1147,18 +1120,18 @@ public class DrumSequencer implements IBusListener {
      * Get the reverb amount for a specific step
      */
     public int getStepReverb(int drumIndex, int stepIndex) {
-        if (drumIndex >= 0 && drumIndex < DrumSequenceData.DRUM_PAD_COUNT && stepIndex >= 0
+        if (drumIndex >= 0 && drumIndex < Constants.DRUM_PAD_COUNT && stepIndex >= 0
                 && stepIndex < data.getMaxPatternLength()) {
             return data.getStepReverb()[drumIndex][stepIndex];
         }
-        return DrumSequenceData.DEFAULT_REVERB;
+        return MIDIConstants.DEFAULT_REVERB;
     }
 
     /**
      * Set the reverb amount for a specific step
      */
     public void setStepReverb(int drumIndex, int stepIndex, int reverb) {
-        if (drumIndex >= 0 && drumIndex < DrumSequenceData.DRUM_PAD_COUNT && stepIndex >= 0
+        if (drumIndex >= 0 && drumIndex < Constants.DRUM_PAD_COUNT && stepIndex >= 0
                 && stepIndex < data.getMaxPatternLength()) {
             data.getStepReverb()[drumIndex][stepIndex] = Math.max(0, Math.min(100, reverb));
         }
@@ -1175,7 +1148,7 @@ public class DrumSequencer implements IBusListener {
      * Set the currently selected drum pad index
      */
     public void setSelectedPadIndex(int index) {
-        if (index >= 0 && index < DrumSequenceData.DRUM_PAD_COUNT) {
+        if (index >= 0 && index < Constants.DRUM_PAD_COUNT) {
             // Store old selection
             int oldSelection = data.getSelectedPadIndex();
 
@@ -1221,13 +1194,6 @@ public class DrumSequencer implements IBusListener {
     }
 
     /**
-     * Get pattern length for the currently selected drum pad
-     */
-    public int getSelectPatternLength() {
-        return getPatternLength(data.getSelectedPadIndex());
-    }
-
-    /**
      * Get the default pattern length
      */
     public int getDefaultPatternLength() {
@@ -1239,13 +1205,6 @@ public class DrumSequencer implements IBusListener {
      */
     public int getMaxPatternLength() {
         return data.getMaxPatternLength();
-    }
-
-    /**
-     * Set default pattern length
-     */
-    public void setDefaultPatternLength(int length) {
-        data.setDefaultPatternLength(length);
     }
 
     /**
@@ -1268,19 +1227,10 @@ public class DrumSequencer implements IBusListener {
      * Get the Player object for a specific drum pad
      */
     public Player getPlayer(int drumIndex) {
-        if (drumIndex >= 0 && drumIndex < DrumSequenceData.DRUM_PAD_COUNT) {
+        if (drumIndex >= 0 && drumIndex < Constants.DRUM_PAD_COUNT) {
             return players[drumIndex];
         }
         return null;
-    }
-
-    /**
-     * Set the Player object for a specific drum pad
-     */
-    public void setPlayer(int drumIndex, Player player) {
-        if (drumIndex >= 0 && drumIndex < DrumSequenceData.DRUM_PAD_COUNT) {
-            players[drumIndex] = player;
-        }
     }
 
     /**
@@ -1288,17 +1238,6 @@ public class DrumSequencer implements IBusListener {
      */
     public boolean isStepActive(int drumIndex, int stepIndex) {
         return data.isStepActive(drumIndex, stepIndex);
-    }
-
-    /**
-     * Clear all patterns
-     */
-    public void clearPattern() {
-        data.clearPatterns();
-        logger.info("All patterns cleared");
-
-        // Notify UI of pattern change
-        CommandBus.getInstance().publish(Commands.DRUM_SEQUENCE_UPDATED, this, null);
     }
 
     /**
@@ -1313,34 +1252,6 @@ public class DrumSequencer implements IBusListener {
         CommandBus.getInstance().publish(Commands.DRUM_SEQUENCE_PARAMS_CHANGED, this, drumIndex);
 
         logger.info("Generated pattern for drum {}", drumIndex);
-    }
-
-    /**
-     * Initialize with a simple default pattern
-     */
-    private void initializeDefaultPattern() {
-        // Set up a basic kick/snare pattern on first two drums
-        if (DrumSequenceData.DRUM_PAD_COUNT > 0) {
-            // Kick on quarters (every 4 steps)
-            for (int i = 0; i < 16; i += 4) {
-                data.getPatterns()[0][i] = true;
-            }
-        }
-
-        if (DrumSequenceData.DRUM_PAD_COUNT > 1) {
-            // Snare on 5 and 13
-            data.getPatterns()[1][4] = true;
-            data.getPatterns()[1][12] = true;
-        }
-
-        if (DrumSequenceData.DRUM_PAD_COUNT > 2) {
-            // Hi-hat on even steps
-            for (int i = 0; i < 16; i += 2) {
-                data.getPatterns()[2][i] = true;
-            }
-        }
-
-        logger.info("Default pattern initialized");
     }
 
     /**
@@ -1367,28 +1278,7 @@ public class DrumSequencer implements IBusListener {
         CommandBus.getInstance().publish(Commands.DRUM_SEQUENCE_UPDATED, this, null);
     }
 
-    /**
-     * Set a step update listener
-     */
-    public void setStepUpdateListener(Consumer<DrumStepUpdateEvent> listener) {
-        this.stepUpdateListener = listener;
-    }
-
-    /**
-     * Set a note event listener
-     */
-    public void setNoteEventListener(Consumer<NoteEvent> listener) {
-        this.noteEventListener = listener;
-    }
-
-    /**
-     * Set a note event publisher
-     */
-    public void setNoteEventPublisher(Consumer<NoteEvent> publisher) {
-        this.noteEventPublisher = publisher;
-    }
-
-    /**
+     /**
      * Required by IBusListener interface
      */
     @Override
@@ -1437,7 +1327,7 @@ public class DrumSequencer implements IBusListener {
      * Play a drum note using the Player for the specified drum pad
      */
     public void playDrumNote(int drumIndex, int velocity) {
-        if (drumIndex < 0 || drumIndex >= DrumSequenceData.DRUM_PAD_COUNT) {
+        if (drumIndex < 0 || drumIndex >= Constants.DRUM_PAD_COUNT) {
             logger.warn("Invalid drum index: {}", drumIndex);
             return;
         }
@@ -1450,7 +1340,7 @@ public class DrumSequencer implements IBusListener {
 
         if (player.getInstrument() == null && player.getInstrumentId() != null) {
             player.setInstrument(InstrumentManager.getInstance().getInstrumentById(player.getInstrumentId()));
-            player.getInstrument().setChannel(9);
+            player.getInstrument().setChannel(Constants.MIDI_DRUM_CHANNEL);
         }
 
         if (player.getInstrument() == null) {
@@ -1469,31 +1359,6 @@ public class DrumSequencer implements IBusListener {
             }
         } catch (Exception e) {
             logger.error("Error playing drum note: {}", e.getMessage(), e);
-        }
-    }
-
-    /**
-     * Send a MIDI CC message to the instrument's device if it exists
-     */
-    private boolean sendMidiCC(Player player, int cc, int value) {
-        if (player == null || player.getInstrument() == null) {
-            return false;
-        }
-
-        try {
-            InstrumentWrapper instrument = player.getInstrument();
-            int channel = player.getChannel();
-
-            // Reuse message object instead of creating new ones
-            synchronized (reuseableMessage) {
-                reuseableMessage.setMessage(javax.sound.midi.ShortMessage.CONTROL_CHANGE, channel, cc, value);
-                instrument.getReceiver().send(reuseableMessage, -1);
-            }
-            return true;
-        } catch (Exception e) {
-            // Log only at debug level to reduce logging overhead
-            logger.debug("Error sending MIDI CC: {}", e.getMessage());
-            return false;
         }
     }
 
@@ -1518,28 +1383,28 @@ public class DrumSequencer implements IBusListener {
 
             // Only add effects that have changed
             if (pan != data.getLastPanValues()[drumIndex][stepIndex]) {
-                data.getEffectControllers()[effectCount] = DrumSequenceData.CC_PAN;
+                data.getEffectControllers()[effectCount] = MIDIConstants.CC_PAN;
                 data.getEffectValues()[effectCount] = pan;
                 data.getLastPanValues()[drumIndex][stepIndex] = pan;
                 effectCount++;
             }
 
             if (reverb != data.getLastReverbValues()[drumIndex][stepIndex]) {
-                data.getEffectControllers()[effectCount] = DrumSequenceData.CC_REVERB;
+                data.getEffectControllers()[effectCount] = MIDIConstants.CC_REVERB;
                 data.getEffectValues()[effectCount] = reverb;
                 data.getLastReverbValues()[drumIndex][stepIndex] = reverb;
                 effectCount++;
             }
 
             if (chorus != data.getLastChorusValues()[drumIndex][stepIndex]) {
-                data.getEffectControllers()[effectCount] = DrumSequenceData.CC_CHORUS;
+                data.getEffectControllers()[effectCount] = MIDIConstants.CC_CHORUS;
                 data.getEffectValues()[effectCount] = chorus;
                 data.getLastChorusValues()[drumIndex][stepIndex] = chorus;
                 effectCount++;
             }
 
             if (decay != data.getLastDecayValues()[drumIndex][stepIndex]) {
-                data.getEffectControllers()[effectCount] = DrumSequenceData.CC_DELAY; // Using delay CC for decay
+                data.getEffectControllers()[effectCount] = MIDIConstants.CC_DELAY; // Using delay CC for decay
                 data.getEffectValues()[effectCount] = decay;
                 data.getLastDecayValues()[drumIndex][stepIndex] = decay;
                 effectCount++;
@@ -1547,7 +1412,6 @@ public class DrumSequencer implements IBusListener {
 
             // Send effects only if needed
             if (effectCount > 0) {
-                int channel = player.getChannel();
                 int[] controllers = Arrays.copyOf(data.getEffectControllers(), effectCount);
                 int[] values = Arrays.copyOf(data.getEffectValues(), effectCount);
 
@@ -1572,21 +1436,21 @@ public class DrumSequencer implements IBusListener {
 
         // Connect each drum pad to a valid device
         int connectedCount = 0;
-        for (int i = 0; i < DrumSequenceData.DRUM_PAD_COUNT; i++) {
+        for (int i = 0; i < Constants.DRUM_PAD_COUNT; i++) {
             if (connectDrumPad(i, defaultDevice)) {
                 connectedCount++;
             }
         }
 
-        logger.info("Connected {}/{} drum pads to active devices", connectedCount, DrumSequenceData.DRUM_PAD_COUNT);
+        logger.info("Connected {}/{} drum pads to active devices", connectedCount, Constants.DRUM_PAD_COUNT);
     }
 
     /**
      * Ensure internal synthesizer is available
      */
     private void ensureInternalSynthAvailable() {
-        if (!internalSynthManager.checkInternalSynthAvailable()) {
-            internalSynthManager.initializeSynthesizer();
+        if (!InternalSynthManager.getInstance().checkInternalSynthAvailable()) {
+            InternalSynthManager.getInstance().initializeSynthesizer();
             this.usingInternalSynth = true;
             logger.info("Initialized internal synth for drum sequencer");
         }
@@ -1634,14 +1498,14 @@ public class DrumSequencer implements IBusListener {
         }
 
         // Ensure channel is set correctly
-        player.setDefaultChannel(DrumSequenceData.MIDI_DRUM_CHANNEL);
+        player.setDefaultChannel(MIDIConstants.MIDI_DRUM_CHANNEL);
 
         // Ensure instrument is set
         if (player.getInstrument() == null && player.getInstrumentId() != null) {
             player.setInstrument(InstrumentManager.getInstance().getInstrumentById(player.getInstrumentId()));
             if (player.getInstrument() != null) {
-                player.getInstrument().setChannel(DrumSequenceData.MIDI_DRUM_CHANNEL);
-                player.getInstrument().setReceivedChannels(new Integer[] { DrumSequenceData.MIDI_DRUM_CHANNEL });
+                player.getInstrument().setChannel(MIDIConstants.MIDI_DRUM_CHANNEL);
+                player.getInstrument().setReceivedChannels(new Integer[] { MIDIConstants.MIDI_DRUM_CHANNEL });
             } else {
                 logger.warn("Failed to set instrument for drum {}", drumIndex);
                 return false;
@@ -1720,7 +1584,7 @@ public class DrumSequencer implements IBusListener {
                 if (receiver != null) {
                     // UPDATED: Now directly set the receiver (no AtomicReference)
                     instrument.setReceiver(receiver);
-                    instrument.setChannel(9);
+                    instrument.setChannel(Constants.MIDI_DRUM_CHANNEL);
                     // Initialize sound with proper program change
                     PlayerManager.getInstance().applyInstrumentPreset(players[drumIndex]);
 
@@ -1753,7 +1617,7 @@ public class DrumSequencer implements IBusListener {
         ReceiverManager.getInstance().clearAllReceivers();
 
         // Then try to reconnect all devices
-        for (int i = 0; i < DrumSequenceData.DRUM_PAD_COUNT; i++) {
+        for (int i = 0; i < Constants.DRUM_PAD_COUNT; i++) {
             Player player = players[i];
             if (player != null && player.getInstrument() != null) {
                 InstrumentWrapper instrument = player.getInstrument();
@@ -1799,7 +1663,7 @@ public class DrumSequencer implements IBusListener {
         }
 
         // Force update instrument settings
-        for (int i = 0; i < DrumSequenceData.DRUM_PAD_COUNT; i++) {
+        for (int i = 0; i < Constants.DRUM_PAD_COUNT; i++) {
             Player player = players[i];
             if (player != null && player.getInstrument() != null) {
                 PlayerManager.getInstance().applyInstrumentPreset(player);
@@ -1809,235 +1673,16 @@ public class DrumSequencer implements IBusListener {
         logger.info("MIDI connection repair completed");
     }
 
-    /**
-     * Set instrument for a specific drum with all parameters
-     * 
-     * @param drumIndex     The drum index
-     * @param instrumentId  The instrument ID (or null to create a new one)
-     * @param deviceName    The device name
-     * @param soundbankName The soundbank name
-     * @param preset        The preset number
-     * @param bankIndex     The bank index
-     * @return The instrument that was set
-     */
-    public InstrumentWrapper setDrumInstrument(int drumIndex, Long instrumentId,
-            String deviceName, String soundbankName, Integer preset, Integer bankIndex) {
-
-        // First check if we have an active session
-        Session activeSession = SessionManager.getInstance().getActiveSession();
-        if (activeSession == null) {
-            logger.error("Cannot set drum instrument - no active session");
-            return null;
-        }
-
-        if (drumIndex < 0 || drumIndex >= DrumSequenceData.DRUM_PAD_COUNT) {
-            logger.warn("Invalid drum index: {}", drumIndex);
-            return null;
-        }
-
-        Player player = getPlayer(drumIndex);
-        if (player == null) {
-            logger.warn("No player for drum {}", drumIndex);
-            return null;
-        }
-
-        // First try to get existing instrument by ID
-        InstrumentWrapper instrument = null;
-        if (instrumentId != null) {
-            instrument = InstrumentManager.getInstance().getInstrumentById(instrumentId);
-        }
-
-        // If not found, create a new one
-        if (instrument == null) {
-            // Get device
-            MidiDevice device = null;
-            if (deviceName != null && !deviceName.isEmpty()) {
-                device = DeviceManager.getInstance().acquireDevice(deviceName);
-            }
-
-            // Create new instrument
-            instrument = new InstrumentWrapper(
-                    "Drum " + drumIndex,
-                    device,
-                    DrumSequenceData.MIDI_DRUM_CHANNEL);
-
-            // Set additional parameters
-            if (deviceName != null) {
-                instrument.setDeviceName(deviceName);
-            }
-
-            if (soundbankName != null) {
-                instrument.setSoundbankName(soundbankName);
-            }
-
-            if (preset != null) {
-                instrument.setPreset(preset);
-            }
-
-            if (bankIndex != null) {
-                instrument.setBankIndex(bankIndex);
-            }
-
-            // Save the instrument
-            InstrumentManager.getInstance().updateInstrument(instrument);
-        }
-
-        // Set the instrument on the player
-        player.setInstrument(instrument);
-        player.setInstrumentId(instrument.getId());
-
-        // Apply the instrument preset
-        PlayerManager.getInstance().applyInstrumentPreset(player);
-
-        // Update data for saving
-        data.getInstrumentIds()[drumIndex] = instrument.getId();
-        data.getSoundbankNames()[drumIndex] = instrument.getSoundbankName();
-        data.getPresets()[drumIndex] = instrument.getPreset();
-        data.getBankIndices()[drumIndex] = instrument.getBankIndex();
-        data.getDeviceNames()[drumIndex] = instrument.getDeviceName();
-        data.getInstrumentNames()[drumIndex] = instrument.getName();
-
-        return instrument;
-    }
-
-    /**
-     * Force refresh the sound for a specific drum
-     * 
-     * @param drumIndex The drum index to refresh
-     */
-    public void refreshDrumSound(int drumIndex) {
-        if (drumIndex < 0 || drumIndex >= DrumSequenceData.DRUM_PAD_COUNT) {
-            logger.warn("Invalid drum index for refresh: {}", drumIndex);
-            return;
-        }
-
-        Player player = players[drumIndex];
-        if (player == null || player.getInstrument() == null) {
-            logger.warn("No player or instrument for drum {}", drumIndex);
-            return;
-        }
-
-        try {
-            // First, ensure proper device connection
-            InstrumentWrapper instrument = player.getInstrument();
-
-            // Get device if needed
-            if (instrument.getDevice() == null || !instrument.getDevice().isOpen()) {
-                String deviceName = instrument.getDeviceName();
-                if (deviceName == null || deviceName.isEmpty()) {
-                    deviceName = "Gervill";
-                }
-
-                MidiDevice device = DeviceManager.getInstance().getMidiDevice(deviceName);
-                if (device != null && !device.isOpen()) {
-                    try {
-                        device.open();
-                    } catch (Exception e) {
-                        logger.warn("Could not open device for drum {}: {}", drumIndex, e.getMessage());
-                    }
-                }
-
-                if (device != null) {
-                    instrument.setDevice(device);
-                }
-            }
-
-            // Ensure we have a receiver
-            if (instrument.getReceiver() == null && instrument.getDevice() != null) {
-                instrument.setReceiver(instrument.getDevice().getReceiver());
-            }
-
-            // Now apply the instrument preset
-            PlayerManager.getInstance().applyInstrumentPreset(player);
-
-            // Also try direct MIDI messages for more reliable program change
-            if (instrument.getReceiver() != null) {
-                int channel = player.getChannel();
-                int bankIndex = instrument.getBankIndex() != null ? instrument.getBankIndex() : 0;
-                int preset = instrument.getPreset() != null ? instrument.getPreset() : 0;
-
-                // Send bank select MSB
-                javax.sound.midi.ShortMessage bankMSB = new javax.sound.midi.ShortMessage();
-                bankMSB.setMessage(0xB0 | channel, 0, (bankIndex >> 7) & 0x7F);
-                instrument.getReceiver().send(bankMSB, -1);
-
-                // Send bank select LSB
-                javax.sound.midi.ShortMessage bankLSB = new javax.sound.midi.ShortMessage();
-                bankLSB.setMessage(0xB0 | channel, 32, bankIndex & 0x7F);
-                instrument.getReceiver().send(bankLSB, -1);
-
-                // Send program change
-                javax.sound.midi.ShortMessage pc = new javax.sound.midi.ShortMessage();
-                pc.setMessage(0xC0 | channel, preset, 0);
-                instrument.getReceiver().send(pc, -1);
-
-                logger.info("Sent explicit MIDI program change for drum {}: ch={}, bank={}, program={}",
-                        drumIndex, channel, bankIndex, preset);
-            }
-
-            logger.info("Refreshed drum sound for pad {}: {}", drumIndex, player.getName());
-        } catch (Exception e) {
-            logger.error("Error refreshing drum sound: {}", e.getMessage());
-        }
-    }
-
     // Add a method to update root notes
-    /**
-     * Set the root note for a specific drum pad
-     * 
-     * @param drumIndex The drum pad index
-     * @param rootNote  The MIDI note number to use
-     */
-    public void setDrumRootNote(int drumIndex, int rootNote) {
-        if (drumIndex < 0 || drumIndex >= DrumSequenceData.DRUM_PAD_COUNT) {
-            logger.warn("Invalid drum index for setDrumRootNote: {}", drumIndex);
-            return;
-        }
-
-        // Store in data
-        data.getRootNotes()[drumIndex] = rootNote;
-
-        // Update player if it exists
-        Player player = players[drumIndex];
-        if (player != null) {
-            player.setRootNote(rootNote);
-
-            // Update player name based on new root note
-            String drumName = InternalSynthManager.getInstance().getDrumName(rootNote);
-            if (drumName != null && !drumName.isEmpty()) {
-                player.setName(drumName);
-            }
-
-            logger.info("Updated drum {} root note to {} ({})",
-                    drumIndex, rootNote, drumName);
-
-            // Notify UI of parameter change
-            CommandBus.getInstance().publish(Commands.DRUM_SEQUENCE_PARAMS_CHANGED, this, drumIndex);
-        }
-    }
 
     // Add a getter method for drum root note
-    /**
-     * Get the root note for a specific drum pad
-     * 
-     * @param drumIndex The drum pad index
-     * @return The MIDI note number for this drum
-     */
-    public int getDrumRootNote(int drumIndex) {
-        if (drumIndex < 0 || drumIndex >= DrumSequenceData.DRUM_PAD_COUNT) {
-            logger.warn("Invalid drum index for getDrumRootNote: {}", drumIndex);
-            return DrumSequenceData.MIDI_DRUM_NOTE_OFFSET; // Default to kick drum
-        }
-
-        return data.getRootNotes()[drumIndex];
-    }
 
     /**
      * Update all drum root notes from the sequence data
      * Called after loading a sequence
      */
     private void updateDrumRootNotesFromData() {
-        for (int i = 0; i < DrumSequenceData.DRUM_PAD_COUNT; i++) {
+        for (int i = 0; i < Constants.DRUM_PAD_COUNT; i++) {
             Player player = players[i];
             int rootNote = data.getRootNotes()[i];
 

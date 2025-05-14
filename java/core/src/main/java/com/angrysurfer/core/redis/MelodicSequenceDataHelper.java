@@ -5,13 +5,14 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import com.angrysurfer.core.util.MelodicSequenceDataDeserializer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.angrysurfer.core.api.CommandBus;
 import com.angrysurfer.core.api.Commands;
 import com.angrysurfer.core.event.MelodicSequencerEvent;
-import com.angrysurfer.core.model.Direction;
+import com.angrysurfer.core.sequencer.Direction;
 import com.angrysurfer.core.model.InstrumentWrapper;
 import com.angrysurfer.core.model.Player;
 import com.angrysurfer.core.sequencer.MelodicSequenceData;
@@ -20,6 +21,8 @@ import com.angrysurfer.core.sequencer.Scale;
 import com.angrysurfer.core.sequencer.TimingDivision;
 import com.angrysurfer.core.service.PlayerManager;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.databind.module.SimpleModule;
 
 import lombok.Getter;
 import lombok.Setter;
@@ -37,9 +40,21 @@ public class MelodicSequenceDataHelper {
     // Constants
     private static final int MAX_STEPS = 16;
 
-    public MelodicSequenceDataHelper(JedisPool jedisPool, ObjectMapper objectMapper) {
+    public MelodicSequenceDataHelper(JedisPool jedisPool) {
         this.jedisPool = jedisPool;
-        this.objectMapper = objectMapper;
+        this.objectMapper = new ObjectMapper();
+        configureObjectMapper();  // Add this line
+    }
+
+    private void configureObjectMapper() {
+        // Register custom deserializer for MelodicSequenceData
+        SimpleModule module = new SimpleModule();
+        module.addDeserializer(MelodicSequenceData.class, new MelodicSequenceDataDeserializer());
+        this.objectMapper.registerModule(module);
+        
+        // Enable more tolerant deserialization
+        this.objectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+        this.objectMapper.configure(DeserializationFeature.READ_UNKNOWN_ENUM_VALUES_AS_NULL, true);
     }
 
     /**
@@ -51,23 +66,42 @@ public class MelodicSequenceDataHelper {
  */
 public MelodicSequenceData findMelodicSequenceById(Long id, Integer sequencerId) {
     try (Jedis jedis = jedisPool.getResource()) {
+        String json = null;
+        String source = "unknown";
+        
         // Try first with the newer key format
-        String json = jedis.get("melodicseq:" + sequencerId + ":" + id);
+        json = jedis.get("melodicseq:" + sequencerId + ":" + id);
+        if (json != null) source = "melodicseq key";
         
         // If not found, try the older key format
         if (json == null) {
             json = jedis.get("melseq:" + sequencerId + ":" + id);
+            if (json != null) source = "melseq key";
         }
         
         // If still not found, try looking up in the hash for faster lookup
         if (json == null) {
             json = jedis.hget("melodic-sequences:" + sequencerId, String.valueOf(id));
+            if (json != null) source = "hash table";
         }
         
         if (json != null) {
-            MelodicSequenceData data = objectMapper.readValue(json, MelodicSequenceData.class);
-            logger.info("Loaded melodic sequence {} for sequencer {}", id, sequencerId);
-            return data;
+            // Log a portion of the JSON to debug
+            logger.debug("Found melodic sequence from {}, JSON excerpt: {}", 
+                    source, json.length() > 100 ? json.substring(0, 100) + "..." : json);
+            
+            try {
+                MelodicSequenceData data = objectMapper.readValue(json, MelodicSequenceData.class);
+                logger.info("Loaded melodic sequence {} for sequencer {} with instrument: {} ({})", 
+                        id, sequencerId, 
+                        data.getInstrumentName(), 
+                        data.getPreset() != null ? "Preset " + data.getPreset() : "No preset");
+                return data;
+            } catch (Exception e) {
+                logger.error("Error deserializing melodic sequence: " + e.getMessage(), e);
+                // Return null instead of throwing to make the API more robust
+                return null;
+            }
         }
         
         // If no sequence was found, return null instead of throwing an exception
@@ -147,34 +181,74 @@ public MelodicSequenceData findMelodicSequenceById(Long id, Integer sequencerId)
                 logger.info("Initialized default tilt values");
             }
 
-            // NEW: Apply instrument settings to the player
-            if (sequencer.getPlayer() != null && sequencer.getPlayer().getInstrument() != null) {
+            // Apply instrument settings to the player with better error handling
+            if (sequencer.getPlayer() != null) {
                 Player player = sequencer.getPlayer();
-                InstrumentWrapper instrument = player.getInstrument();
+                
+                if (player.getInstrument() != null) {
+                    InstrumentWrapper instrument = player.getInstrument();
 
-                // Only apply if values are present in the loaded data
-                if (data.getSoundbankName() != null) {
-                    instrument.setSoundbankName(data.getSoundbankName());
+                    // Log the before state
+                    logger.info("Before applying - Instrument settings: soundbank='{}', bank={}, preset={}",
+                            instrument.getSoundbankName(), instrument.getBankIndex(), instrument.getPreset());
+                    
+                    // Log what we're loading from saved data
+                    logger.info("Loaded values from data: soundbank='{}', bank={}, preset={}",
+                            data.getSoundbankName(), data.getBankIndex(), data.getPreset());
+
+                    // Only apply if values are present and valid
+                    boolean settingsChanged = false;
+                    
+                    if (data.getSoundbankName() != null && !data.getSoundbankName().isEmpty()) {
+                        instrument.setSoundbankName(data.getSoundbankName());
+                        settingsChanged = true;
+                    }
+
+                    if (data.getBankIndex() != null && data.getBankIndex() >= 0) {
+                        instrument.setBankIndex(data.getBankIndex());
+                        settingsChanged = true;
+                    }
+
+                    if (data.getPreset() != null && data.getPreset() >= 0) {
+                        instrument.setPreset(data.getPreset());
+                        settingsChanged = true;
+                    }
+
+                    // Device name and other identifiers
+                    if (data.getDeviceName() != null && !data.getDeviceName().isEmpty()) {
+                        instrument.setDeviceName(data.getDeviceName());
+                    }
+                    
+                    if (data.getInstrumentName() != null && !data.getInstrumentName().isEmpty()) {
+                        instrument.setName(data.getInstrumentName());
+                    }
+
+                    logger.info("After applying - Instrument settings: soundbank='{}', bank={}, preset={}",
+                            instrument.getSoundbankName(), instrument.getBankIndex(), instrument.getPreset());
+
+                    // Only send MIDI program changes if settings actually changed
+                    if (settingsChanged) {
+                        try {
+                            logger.info("Applying instrument preset changes to MIDI device");
+                            PlayerManager.getInstance().applyInstrumentPreset(player);
+                            
+                            // Verify the changes were applied
+                            logger.info("Verified final settings: soundbank='{}', bank={}, preset={}",
+                                    player.getInstrument().getSoundbankName(), 
+                                    player.getInstrument().getBankIndex(), 
+                                    player.getInstrument().getPreset());
+                            
+                        } catch (Exception e) {
+                            logger.error("Error applying program change: {}", e.getMessage(), e);
+                        }
+                    } else {
+                        logger.info("No instrument settings changes needed");
+                    }
+                } else {
+                    logger.warn("Player has no instrument to apply settings to");
                 }
-
-                if (data.getBankIndex() != null) {
-                    instrument.setBankIndex(data.getBankIndex());
-                }
-
-                if (data.getPreset() != null) {
-                    player.getInstrument().setPreset(data.getPreset());
-                }
-
-                logger.info("Applied instrument settings: soundbank={}, bank={}, preset={}",
-                        instrument.getSoundbankName(), instrument.getBankIndex(), instrument.getPreset());
-
-                // Send MIDI program changes
-                try {
-                    PlayerManager.getInstance().applyInstrumentPreset(player);
-                    logger.info("Applied program change to instrument");
-                } catch (Exception e) {
-                    logger.error("Error applying program change: {}", e.getMessage(), e);
-                }
+            } else {
+                logger.warn("No player available to apply instrument settings");
             }
 
             // Notify that pattern has updated
@@ -201,28 +275,42 @@ public MelodicSequenceData findMelodicSequenceById(Long id, Integer sequencerId)
                 data.setId(jedis.incr("seq:melodicsequence"));
             }
 
-            // Save instrument settings
+            // Save instrument settings with improved logging
             Player player = sequencer.getPlayer();
             if (player != null && player.getInstrument() != null) {
                 InstrumentWrapper instrument = player.getInstrument();
+                
+                // Store all instrument information
                 data.setSoundbankName(instrument.getSoundbankName());
                 data.setPreset(instrument.getPreset());
                 data.setBankIndex(instrument.getBankIndex());
-
-                // Store device name for reconnection
                 data.setDeviceName(instrument.getDeviceName());
                 data.setInstrumentId(instrument.getId());
                 data.setInstrumentName(instrument.getName());
+                
+                // Detailed logging to confirm values are set
+                logger.info("Saving instrument settings: soundbank='{}', bank={}, preset={}, device='{}', name='{}'",
+                        data.getSoundbankName(), 
+                        data.getBankIndex(), 
+                        data.getPreset(),
+                        data.getDeviceName(),
+                        data.getInstrumentName());
+            } else {
+                logger.warn("No instrument available to save for sequence {}", data.getId());
             }
 
             // Save to Redis
             String json = objectMapper.writeValueAsString(data);
+            
+            // Debug log the JSON to see if instrument data is included
+            logger.debug("Saving melodic sequence JSON (excerpt): {}", 
+                    json.length() > 300 ? json.substring(0, 300) + "..." : json);
+            
+            // Save to both storage formats
             jedis.set("melodicseq:" + sequencer.getId() + ":" + data.getId(), json);
-
-            // Also store in the hash for faster lookup
             jedis.hset("melodic-sequences:" + sequencer.getId(), String.valueOf(data.getId()), json);
 
-            logger.info("Saved melodic sequence {} for sequencer {}",
+            logger.info("Saved melodic sequence {} for sequencer {} with instrument settings",
                     data.getId(), sequencer.getId());
 
             // Notify listeners

@@ -52,6 +52,6 @@ public class Quantizer {
         for (int i = 0; i < value; i += 12)
             octave++;
 
-        return scale[note] + Integer.toString(octave);
+        return scale[note] + octave;
     }
 }

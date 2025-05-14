@@ -1,27 +1,19 @@
 package com.angrysurfer.beats.panel.sequencer.mono;
 
-import java.awt.Dimension;
-import java.awt.FlowLayout;
-import java.awt.Insets;
-
-import javax.swing.JButton;
-import javax.swing.JLabel;
-import javax.swing.JPanel;
-import javax.swing.SwingConstants;
-
-import com.angrysurfer.core.event.MelodicSequencerEvent;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import com.angrysurfer.beats.util.UIHelper;
 import com.angrysurfer.core.api.CommandBus;
 import com.angrysurfer.core.api.Commands;
-import com.angrysurfer.core.model.Direction;
-import com.angrysurfer.core.redis.MelodicSequenceDataHelper;
+import com.angrysurfer.core.event.MelodicSequencerEvent;
 import com.angrysurfer.core.redis.RedisService;
+import com.angrysurfer.core.sequencer.Direction;
 import com.angrysurfer.core.sequencer.MelodicSequencer;
 import com.angrysurfer.core.sequencer.TimingDivision;
 import com.angrysurfer.core.service.MelodicSequencerManager;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import javax.swing.*;
+import java.awt.*;
 
 /**
  * Panel providing navigation controls for melodic sequences
@@ -29,26 +21,18 @@ import com.angrysurfer.core.service.MelodicSequencerManager;
 public class MelodicSequenceNavigationPanel extends JPanel {
 
     private static final Logger logger = LoggerFactory.getLogger(MelodicSequenceNavigationPanel.class);
-
-    private static final int LABEL_WIDTH = 85;
-
+    private final MelodicSequencer sequencer;
+    private final RedisService redisService;
+    private final MelodicSequencerManager manager;
     private JLabel sequenceIdLabel;
     private JButton firstButton;
     private JButton prevButton;
     private JButton nextButton;
     private JButton lastButton;
-    private JButton saveButton;
-    private JButton newButton; // Add new button like in DrumSequenceNavigationPanel
-
-    private final MelodicSequencer sequencer;
-    private final RedisService redisService;
-    private final MelodicSequencerManager manager;
-    private MelodicSequencerPanel parentPanel;
 
     // Update the constructor to accept the parent panel reference
-    public MelodicSequenceNavigationPanel(MelodicSequencer sequencer, MelodicSequencerPanel parentPanel) {
+    public MelodicSequenceNavigationPanel(MelodicSequencer sequencer) {
         this.sequencer = sequencer;
-        this.parentPanel = parentPanel; // Store the reference
 
         // Rest of constructor remains the same
         this.redisService = RedisService.getInstance();
@@ -58,38 +42,48 @@ public class MelodicSequenceNavigationPanel extends JPanel {
     }
 
     private void initializeUI() {
-        // Set layout and border with more compact spacing
-        setLayout(new FlowLayout(FlowLayout.LEFT, 5, 2));
-        UIHelper.setWidgetPanelBorder(this, "Sequence");
+        // Change to use BoxLayout instead of FlowLayout to match SoundParametersPanel
+        setLayout(new BoxLayout(this, BoxLayout.X_AXIS));
 
-        // Create ID label
+        // Match the border style to SoundParametersPanel - use compound border
+        UIHelper.setWidgetPanelBorder(this, "Sequence");
+        // Create ID label with adjusted sizing
         sequenceIdLabel = new JLabel(getFormattedIdText(), SwingConstants.CENTER);
-        sequenceIdLabel.setPreferredSize(new Dimension(LABEL_WIDTH, UIHelper.CONTROL_HEIGHT));
+        sequenceIdLabel.setPreferredSize(new Dimension(UIHelper.ID_LABEL_WIDTH - 5, UIHelper.CONTROL_HEIGHT - 2));
         sequenceIdLabel.setOpaque(true);
         sequenceIdLabel.setBackground(UIHelper.darkGray);
         sequenceIdLabel.setForeground(UIHelper.coolBlue);
         sequenceIdLabel.setFont(sequenceIdLabel.getFont().deriveFont(12f));
 
-        // Create new sequence button with plus icon
-        newButton = createButton("➕", "Create new sequence", e -> createNewSequence());
+        // Add horizontal strut to match spacing in SoundParametersPanel
+        add(Box.createHorizontalStrut(2));
+        add(sequenceIdLabel);
+        add(Box.createHorizontalStrut(4));
 
-        // Create navigation buttons with icons instead of text
+        // Create navigation buttons with consistent styling
+        // Add new button like in DrumSequenceNavigationPanel
+        JButton newButton = createButton("➕", "Create new sequence", e -> createNewSequence());
         firstButton = createButton("⏮", "First sequence", e -> loadFirstSequence());
         prevButton = createButton("◀", "Previous sequence", e -> loadPreviousSequence());
         nextButton = createButton("▶", "Next sequence", e -> loadNextSequence());
         lastButton = createButton("⏭", "Last sequence", e -> loadLastSequence());
+        JButton saveButton = createButton("💾", "Save current sequence", e -> saveCurrentSequence());
 
-        // Create save button with icon
-        saveButton = createButton("💾", "Save current sequence", e -> saveCurrentSequence());
-
-        // Add components to panel
-        add(sequenceIdLabel);
-        add(newButton); // Add new button like in DrumSequenceNavigationPanel
+        // Add components with consistent spacing
+        add(newButton);
+        add(Box.createHorizontalStrut(4));
         add(firstButton);
+        add(Box.createHorizontalStrut(2));
         add(prevButton);
+        add(Box.createHorizontalStrut(2));
         add(nextButton);
+        add(Box.createHorizontalStrut(2));
         add(lastButton);
+        add(Box.createHorizontalStrut(4));
         add(saveButton);
+
+        // Add flexible space at the end
+        add(Box.createHorizontalGlue());
 
         // Set initial button state
         updateButtonStates();
@@ -101,9 +95,10 @@ public class MelodicSequenceNavigationPanel extends JPanel {
         button.addActionListener(listener);
         button.setFocusable(false);
 
-        // Set consistent size and margins to match other panels
-        button.setPreferredSize(new Dimension(24, 24));
-        button.setMargin(new Insets(2, 2, 2, 2));
+        // Match the sizing of buttons in SoundParametersPanel
+        button.setPreferredSize(new Dimension(UIHelper.SMALL_CONTROL_WIDTH, UIHelper.CONTROL_HEIGHT));
+        button.setMaximumSize(new Dimension(UIHelper.SMALL_CONTROL_WIDTH, UIHelper.CONTROL_HEIGHT));
+        button.setMargin(new Insets(1, 1, 1, 1));
 
         return button;
     }
@@ -299,15 +294,4 @@ public class MelodicSequenceNavigationPanel extends JPanel {
                 sequencer.getSequenceData().getId(), sequencer.getId());
     }
 
-    // Modify the navigateToSequence method to use parentPanel instead of
-    // sequencerPanel
-    private void navigateToSequence(Long sequenceId) {
-        // ...existing code to load the sequence...
-
-        // After loading the sequence, explicitly update the tilt panel
-        if (parentPanel != null && parentPanel.getTiltSequencerPanel() != null) {
-            logger.info("Explicitly updating tilt panel after navigation");
-            parentPanel.getTiltSequencerPanel().syncWithSequencer();
-        }
-    }
 }

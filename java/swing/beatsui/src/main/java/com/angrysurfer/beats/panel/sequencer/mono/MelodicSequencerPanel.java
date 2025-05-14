@@ -1,44 +1,30 @@
 package com.angrysurfer.beats.panel.sequencer.mono;
 
-import java.awt.BorderLayout;
-import java.awt.Dimension;
-import java.awt.FlowLayout;
-import java.awt.GridBagConstraints;
-import java.awt.GridBagLayout;
-import java.util.function.Consumer;
-
-import javax.swing.JButton;
-import javax.swing.JComboBox;
-import javax.swing.JLabel;
-import javax.swing.JPanel;
-import javax.swing.JScrollPane;
-import javax.swing.JToggleButton;
-import javax.swing.SwingUtilities;
-
 import com.angrysurfer.beats.Symbols;
 import com.angrysurfer.beats.panel.player.SoundParametersPanel;
-import com.angrysurfer.core.api.*;
-import com.angrysurfer.core.event.MelodicScaleSelectionEvent;
-import com.angrysurfer.core.event.MelodicSequencerEvent;
-import com.angrysurfer.core.event.NoteEvent;
-
-import com.angrysurfer.core.event.PlayerRefreshEvent;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import com.angrysurfer.beats.panel.sequencer.MuteSequencerPanel;
 import com.angrysurfer.beats.panel.sequencer.TiltSequencerPanel;
 import com.angrysurfer.beats.panel.session.SessionControlPanel;
 import com.angrysurfer.beats.util.UIHelper;
+import com.angrysurfer.core.api.*;
+import com.angrysurfer.core.event.MelodicScaleSelectionEvent;
+import com.angrysurfer.core.event.MelodicSequencerEvent;
+import com.angrysurfer.core.event.NoteEvent;
+import com.angrysurfer.core.event.PlayerRefreshEvent;
 import com.angrysurfer.core.redis.RedisService;
 import com.angrysurfer.core.sequencer.MelodicSequenceData;
 import com.angrysurfer.core.sequencer.MelodicSequencer;
 import com.angrysurfer.core.sequencer.TimingDivision;
 import com.angrysurfer.core.service.MelodicSequencerManager;
 import com.angrysurfer.core.service.PlayerManager;
-
 import lombok.Getter;
 import lombok.Setter;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import javax.swing.*;
+import java.awt.*;
+import java.util.function.Consumer;
 
 @Getter
 @Setter
@@ -229,13 +215,13 @@ public class MelodicSequencerPanel extends JPanel implements IBusListener {
         JPanel topPanel = new JPanel(new BorderLayout(2, 2));
 
         // Create sequence navigation panel
-        navigationPanel = new MelodicSequenceNavigationPanel(sequencer, this);
+        navigationPanel = new MelodicSequenceNavigationPanel(sequencer);
 
         // Create sequence parameters panel
         sequenceParamsPanel = new MelodicSequenceParametersPanel(sequencer);
 
         // Navigation panel goes NORTH-WEST
-        westPanel.add(navigationPanel, BorderLayout.WEST);
+        westPanel.add(navigationPanel, BorderLayout.EAST);
 
         // Sound parameters go NORTH-EAST
         eastPanel.add(new SoundParametersPanel(), BorderLayout.NORTH);
@@ -262,8 +248,8 @@ public class MelodicSequencerPanel extends JPanel implements IBusListener {
         UIHelper.addSafely(topPanel, centerPanel, BorderLayout.CENTER);
 
         // Add panels to the top panel
-        topPanel.add(westPanel, BorderLayout.WEST);
-        topPanel.add(eastPanel, BorderLayout.EAST);
+        topPanel.add(westPanel, BorderLayout.EAST);
+        topPanel.add(eastPanel, BorderLayout.WEST);
 
         // Add top panel to main layout
         add(topPanel, BorderLayout.NORTH);
@@ -311,13 +297,13 @@ public class MelodicSequencerPanel extends JPanel implements IBusListener {
         // Add the bottom panel to the SOUTH region of the main panel
         add(bottomPanel, BorderLayout.SOUTH);
 
-        JPanel buttonPanel = UIHelper.createSectionPanel("System");
+        JPanel buttonPanel = new JPanel();
+        UIHelper.setWidgetPanelBorder(buttonPanel, "Debug");
 
         // Create refresh button
-        JButton refreshButton = new JButton(Symbols.get(Symbols.CYCLE));
+        JButton refreshButton = new JButton(Symbols.get(Symbols.REFRESH));
         refreshButton.setToolTipText("Refresh all instrument presets");
-        refreshButton.setPreferredSize(new Dimension(24, 24));
-        refreshButton.setMaximumSize(new Dimension(UIHelper.SMALL_CONTROL_WIDTH, UIHelper.CONTROL_HEIGHT));
+        refreshButton.setPreferredSize(new Dimension(UIHelper.SMALL_CONTROL_WIDTH, UIHelper.CONTROL_HEIGHT));
         refreshButton.addActionListener(e -> {
             CommandBus.getInstance().publish(
                     Commands.REFRESH_ALL_INSTRUMENTS,
@@ -328,7 +314,7 @@ public class MelodicSequencerPanel extends JPanel implements IBusListener {
         buttonPanel.add(createInstrumentRefreshButton());
         buttonPanel.add(createRefreshButton());
         // Add the button to the bottom panel
-        westPanel.add(buttonPanel, BorderLayout.EAST);
+        //westPanel.add(buttonPanel, BorderLayout.WEST);
 
         // Register for command updates
         CommandBus.getInstance().register(this);
@@ -336,7 +322,7 @@ public class MelodicSequencerPanel extends JPanel implements IBusListener {
 
     // Add this as a new method:
     private JButton createInstrumentRefreshButton() {
-        JButton refreshButton = new JButton(Symbols.get(Symbols.CYCLE));
+        JButton refreshButton = new JButton(Symbols.get(Symbols.MIDI));
         refreshButton.setToolTipText("Refresh all instrument sounds (fixes sound issues)");
 
         refreshButton.addActionListener(e -> {
@@ -371,40 +357,40 @@ public class MelodicSequencerPanel extends JPanel implements IBusListener {
     }
 
     private JButton createRefreshButton() {
-        JButton refreshButton = new JButton(Symbols.get(Symbols.CYCLE));
+        JButton refreshButton = new JButton(Symbols.get(Symbols.AUDIO));
         refreshButton.setToolTipText("Refresh instrument preset (fixes sound issues)");
         refreshButton.setPreferredSize(new Dimension(UIHelper.SMALL_CONTROL_WIDTH,
-                                                    UIHelper.CONTROL_HEIGHT));
+                UIHelper.CONTROL_HEIGHT));
         refreshButton.setMaximumSize(new Dimension(UIHelper.SMALL_CONTROL_WIDTH,
-                                                  UIHelper.CONTROL_HEIGHT));
-        
+                UIHelper.CONTROL_HEIGHT));
+
         refreshButton.addActionListener(e -> {
-            if (sequencer != null && sequencer.getPlayer() != null && 
-                sequencer.getPlayer().getInstrument() != null) {
-                
+            if (sequencer != null && sequencer.getPlayer() != null &&
+                    sequencer.getPlayer().getInstrument() != null) {
+
                 // Log current instrument state
                 com.angrysurfer.core.model.InstrumentWrapper instr = sequencer.getPlayer().getInstrument();
-                logger.info("Refreshing instrument: {} (bank={}, program={})", 
-                          instr.getName(), instr.getBankIndex(), instr.getPreset());
-                
+                logger.info("Refreshing instrument: {} (bank={}, program={})",
+                        instr.getName(), instr.getBankIndex(), instr.getPreset());
+
                 // Send the player-specific refresh event
                 PlayerRefreshEvent event = new PlayerRefreshEvent(sequencer.getPlayer());
                 com.angrysurfer.core.api.CommandBus.getInstance().publish(
-                    com.angrysurfer.core.api.Commands.PLAYER_REFRESH_EVENT,
-                    this,
-                    event
+                        com.angrysurfer.core.api.Commands.PLAYER_REFRESH_EVENT,
+                        this,
+                        event
                 );
-                
+
                 // Update UI
                 com.angrysurfer.core.api.CommandBus.getInstance().publish(
-                    com.angrysurfer.core.api.Commands.STATUS_UPDATE, 
-                    this, 
-                    new com.angrysurfer.core.api.StatusUpdate(
-                        "Preset Refresh", "Info", "Refreshed instrument for " + sequencer.getPlayer().getName())
+                        com.angrysurfer.core.api.Commands.STATUS_UPDATE,
+                        this,
+                        new com.angrysurfer.core.api.StatusUpdate(
+                                "Preset Refresh", "Info", "Refreshed instrument for " + sequencer.getPlayer().getName())
                 );
             }
         });
-        
+
         return refreshButton;
     }
 
@@ -415,12 +401,6 @@ public class MelodicSequencerPanel extends JPanel implements IBusListener {
         // Delegate to grid panel
         if (gridPanel != null) {
             gridPanel.updateStepHighlighting(oldStep, newStep);
-        }
-    }
-
-    private void updateOctaveLabel() {
-        if (octaveLabel != null) {
-            octaveLabel.setText(Integer.toString(sequencer.getSequenceData().getOctaveShift()));
         }
     }
 
@@ -497,9 +477,9 @@ public class MelodicSequencerPanel extends JPanel implements IBusListener {
         switch (action.getCommand()) {
             // Arrow syntax for all cases
             case Commands.MELODIC_SEQUENCE_LOADED,
-                    Commands.MELODIC_SEQUENCE_CREATED,
-                    Commands.MELODIC_SEQUENCE_SELECTED,
-                    Commands.MELODIC_SEQUENCE_UPDATED -> {
+                 Commands.MELODIC_SEQUENCE_CREATED,
+                 Commands.MELODIC_SEQUENCE_SELECTED,
+                 Commands.MELODIC_SEQUENCE_UPDATED -> {
                 // Check if this event applies to our sequencer
                 if (action.getData() instanceof MelodicSequencerEvent event) {
                     if (event.getSequencerId().equals(sequencer.getId())) {

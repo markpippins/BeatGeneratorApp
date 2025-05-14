@@ -23,6 +23,8 @@ import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.SwingUtilities;
 
+import com.angrysurfer.beats.panel.PlayerAwarePanel;
+import com.angrysurfer.core.Constants;
 import com.angrysurfer.core.api.Command;
 import com.angrysurfer.core.api.CommandBus;
 import com.angrysurfer.core.api.Commands;
@@ -33,13 +35,14 @@ import com.angrysurfer.core.model.Rule;
 import com.angrysurfer.core.model.Session;
 import com.angrysurfer.core.service.InternalSynthManager;
 
+import com.angrysurfer.core.service.SessionManager;
 import com.angrysurfer.core.service.SoundbankManager;
 import lombok.Getter;
 import lombok.Setter;
 
 @Getter
 @Setter
-public class PlayerTimelinePanel extends JPanel implements IBusListener {
+public class PlayerTimelinePanel extends PlayerAwarePanel implements IBusListener {
 
     private static final Color GRID_BACKGROUND = Color.WHITE;
     private static final Color BAR_LINE_COLOR = new Color(100, 100, 120);
@@ -90,9 +93,8 @@ public class PlayerTimelinePanel extends JPanel implements IBusListener {
      * is selected
      */
     public PlayerTimelinePanel() {
-        super(new BorderLayout());
-
-        // setBackground(UIHelper.coolBlue);
+        super();
+        setLayout(new BorderLayout());
 
         // Set a fixed size that won't change
         int fixedHeight = 200; // Reduced height
@@ -107,10 +109,30 @@ public class PlayerTimelinePanel extends JPanel implements IBusListener {
         CommandBus.getInstance().register(this);
     }
 
-    /**
-     * Set the player and update the timeline display
-     */
-    public void setPlayer(Player player) {
+    @Override
+    public void handlePlayerActivated() {
+        this.player = player;
+
+        if (player == null) {
+            // Show empty placeholder but still draw grid
+            nameLabel.setText("Select a player to view timeline");
+
+            // Clear any existing cells but still show the grid structure
+            clearGrid();
+
+            // Draw empty grid with default values
+            drawEmptyTimelineGrid();
+        } else {
+            // Show timeline with fixed row heights
+            updateTimelineWithFixedRowHeights();
+        }
+
+        // Repaint after changes
+        repaint();
+    }
+
+    @Override
+    public void handlePlayerUpdated() {
         this.player = player;
 
         if (player == null) {
@@ -148,8 +170,7 @@ public class PlayerTimelinePanel extends JPanel implements IBusListener {
         int gridHeight = rowHeight * TOTAL_ROWS;
         gridPanel.setPreferredSize(new Dimension(gridWidth, gridHeight));
 
-        // Add empty time labels with default values
-        addEmptyTimeLabels(4, 4); // Assume 4 beats per bar, 4 bars
+        addEmptyTimeLabels(SessionManager.getInstance().getActiveSession().getBeatsPerBar(), SessionManager.getInstance().getActiveSession().getBars());
 
         // Revalidate to apply changes
         gridPanel.revalidate();
@@ -556,17 +577,17 @@ public class PlayerTimelinePanel extends JPanel implements IBusListener {
                 switch (rule.getComparison()) {
                     // Standard position rules
                     case Comparison.TICK: // Use constant instead of "TICK"
-                        if (rule.getValue().doubleValue() == sessionTick) {
+                        if (rule.getValue() == sessionTick) {
                             results[ROW_TICK][tickIndex] = true;
                         }
                         break;
                     case Comparison.BEAT: // Use constant instead of "BEAT"
-                        if (rule.getValue().doubleValue() == sessionBeat) {
+                        if (rule.getValue() == sessionBeat) {
                             results[ROW_BEAT][beatIndex] = true;
                         }
                         break;
                     case Comparison.BAR: // Use constant instead of "BAR"
-                        if (rule.getValue().doubleValue() == sessionBar) {
+                        if (rule.getValue() == sessionBar) {
                             results[ROW_BAR][bar] = true;
                         }
                         break;
@@ -800,9 +821,9 @@ public class PlayerTimelinePanel extends JPanel implements IBusListener {
                 Long presetNumber = player.getPreset().longValue();
 
                 // For channel 9 (MIDI channel 10), show drum name instead of preset
-                if (player.getChannel() == 9) {
+                if (Objects.equals(player.getChannel(), Constants.MIDI_DRUM_CHANNEL)) {
                     // Get drum name for the note
-                    String drumName = InternalSynthManager.getInstance().getDrumName(player.getRootNote().intValue());
+                    String drumName = InternalSynthManager.getInstance().getDrumName(player.getRootNote());
                     playerInfo.append(" - ").append(drumName);
                 } else if (soundbankName != null && !soundbankName.isEmpty()) {
                     // For instruments with loaded soundbanks

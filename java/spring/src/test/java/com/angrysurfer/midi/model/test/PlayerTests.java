@@ -33,7 +33,7 @@
 //     p.setSession(new Session());
 
 //     Rule r = new Rule(Operator.BEAT, Comparison.EQUALS, 1.0, 0);
-//     p.getRules().add(r);
+//     p.addRule(r);
 //     p.call();
 //     assertTrue(play.get());
 //     play.set(false);
@@ -84,9 +84,9 @@
 //     };
 //     p3.setSession(session);
 
-//     p1.getRules().add(new Rule(Operator.BEAT, Comparison.EQUALS, 1.0, 0));
-//     p2.getRules().add(new Rule(Operator.BEAT, Comparison.EQUALS, 1.0, 0));
-//     p3.getRules().add(new Rule(Operator.BEAT, Comparison.EQUALS, 1.0, 0));
+//     p1.addRule(new Rule(Operator.BEAT, Comparison.EQUALS, 1.0, 0));
+//     p2.addRule(new Rule(Operator.BEAT, Comparison.EQUALS, 1.0, 0));
+//     p3.addRule(new Rule(Operator.BEAT, Comparison.EQUALS, 1.0, 0));
 
 //     try {
 //       executor.invokeAll(List.of(p1, p2, p3));

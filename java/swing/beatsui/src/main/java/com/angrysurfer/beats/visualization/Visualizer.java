@@ -1,23 +1,15 @@
 package com.angrysurfer.beats.visualization;
 
+import com.angrysurfer.beats.visualization.handler.music.ScrollingSequencerVisualization;
+import com.angrysurfer.core.api.*;
+import lombok.Getter;
+import lombok.Setter;
+
+import javax.swing.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Random;
-
-import javax.swing.JButton;
-import javax.swing.JComponent;
-import javax.swing.Timer;
-
-import com.angrysurfer.beats.visualization.handler.music.ScrollingSequencerVisualization;
-import com.angrysurfer.core.api.Command;
-import com.angrysurfer.core.api.CommandBus;
-import com.angrysurfer.core.api.Commands;
-import com.angrysurfer.core.api.IBusListener;
-import com.angrysurfer.core.api.StatusUpdate;
-
-import lombok.Getter;
-import lombok.Setter;
 
 @Getter
 @Setter
@@ -291,12 +283,12 @@ public class Visualizer implements IBusListener {
     }
 
     private void clearDisplay() {
-        for (int row = 0; row < buttons.length; row++) {
+        for (JButton[] button : buttons) {
             for (int col = 0; col < buttons[0].length; col++) {
-                buttons[row][col].setText("");
-                buttons[row][col].setToolTipText("");
-                buttons[row][col].setBackground(getParent().getBackground());
-        
+                button[col].setText("");
+                button[col].setToolTipText("");
+                button[col].setBackground(getParent().getBackground());
+
             }
         }
     }

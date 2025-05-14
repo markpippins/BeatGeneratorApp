@@ -1,18 +1,17 @@
 package com.angrysurfer.beats.panel.sequencer.mono;
 
-import java.awt.*;
-import javax.swing.*;
-import java.util.ArrayList;
-import java.util.List;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import com.angrysurfer.beats.util.UIHelper;
 import com.angrysurfer.beats.widget.Dial;
 import com.angrysurfer.beats.widget.NoteSelectionDial;
 import com.angrysurfer.beats.widget.TriggerButton;
 import com.angrysurfer.core.sequencer.MelodicSequencer;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import javax.swing.*;
+import java.awt.*;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Grid panel for melodic sequencer with step controls
@@ -116,9 +115,7 @@ public class MelodicSequencerGridPanel extends JPanel {
                     gateDials.add(dial);
                     dial.setKnobColor(UIHelper.getDialColor("gate"));
                 }
-                case 4 -> {
-                    noteDials.add(dial);
-                }
+                case 4 -> noteDials.add(dial);
                 case 2 -> {
                     dial.setMinimum(0);
                     dial.setMaximum(100);
@@ -382,34 +379,4 @@ public class MelodicSequencerGridPanel extends JPanel {
         }
     }
 
-    /**
-     * Force explicit update of trigger buttons
-     */
-    public void forceTriggerButtonUpdate() {
-        if (sequencer == null) {
-            logger.error("Cannot update trigger buttons with null sequencer");
-            return;
-        }
-
-        // Get active steps directly from sequencer data
-        List<Boolean> activeStepsList = sequencer.getSequenceData().getActiveSteps();
-        if (activeStepsList == null) {
-            logger.error("Active steps list is null");
-            return;
-        }
-
-        // Log what we're doing
-        int activeCount = (int) activeStepsList.stream().filter(b -> b).count();
-        logger.debug("Updating {} trigger buttons, {} are active",
-                Math.min(triggerButtons.size(), activeStepsList.size()),
-                activeCount);
-
-        // Explicitly update each button
-        for (int i = 0; i < Math.min(triggerButtons.size(), activeStepsList.size()); i++) {
-            // Set selected state
-            triggerButtons.get(i).setSelected(activeStepsList.get(i));
-            // Force immediate visual update
-            triggerButtons.get(i).repaint();
-        }
-    }
 }

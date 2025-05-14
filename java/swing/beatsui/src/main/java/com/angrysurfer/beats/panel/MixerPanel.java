@@ -1,41 +1,22 @@
 package com.angrysurfer.beats.panel;
 
-import java.awt.BorderLayout;
-import java.awt.Color;
-import java.awt.Component;
-import java.awt.Dimension;
-import java.awt.FlowLayout;
-import java.awt.Font;
-import java.awt.GridLayout;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.util.ArrayList;
-import java.util.List;
-
-import javax.sound.midi.MidiChannel;
-import javax.sound.midi.Synthesizer;
-import javax.swing.BorderFactory;
-import javax.swing.Box;
-import javax.swing.BoxLayout;
-import javax.swing.JButton;
-import javax.swing.JLabel;
-import javax.swing.JPanel;
-import javax.swing.JScrollPane;
-import javax.swing.JSlider;
-import javax.swing.JToggleButton;
-import javax.swing.SwingConstants;
-import javax.swing.border.TitledBorder;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
+import com.angrysurfer.beats.util.UIHelper;
 import com.angrysurfer.beats.widget.Dial;
-import com.angrysurfer.beats.util.UIHelper;
-import com.angrysurfer.beats.util.UIHelper;
+import com.angrysurfer.core.Constants;
 import com.angrysurfer.core.api.Command;
 import com.angrysurfer.core.api.CommandBus;
 import com.angrysurfer.core.api.Commands;
 import com.angrysurfer.core.api.IBusListener;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import javax.sound.midi.MidiChannel;
+import javax.sound.midi.Synthesizer;
+import javax.swing.*;
+import javax.swing.border.TitledBorder;
+import java.awt.*;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Mixer panel that provides volume, pan, and effect controls for all sequencers
@@ -46,7 +27,6 @@ public class MixerPanel extends JPanel implements IBusListener {
 
     // Constants
     private static final int CHANNEL_OFFSET = 1; // Mono channels start at 2
-    private static final int DRUMS_CHANNEL = 9; // Standard MIDI drum channel
 
     // MIDI CC values
     private static final int CC_VOLUME = 7;
@@ -65,7 +45,7 @@ public class MixerPanel extends JPanel implements IBusListener {
     };
 
     private final int[] trackChannels = {
-            DRUMS_CHANNEL, DRUMS_CHANNEL,
+            Constants.MIDI_DRUM_CHANNEL, Constants.MIDI_DRUM_CHANNEL,
             CHANNEL_OFFSET, CHANNEL_OFFSET + 1, CHANNEL_OFFSET + 2, CHANNEL_OFFSET + 3,
             CHANNEL_OFFSET + 4, CHANNEL_OFFSET + 5, CHANNEL_OFFSET + 6, CHANNEL_OFFSET + 8,
             CHANNEL_OFFSET + 9, CHANNEL_OFFSET + 10, CHANNEL_OFFSET + 11, CHANNEL_OFFSET + 12,
@@ -90,7 +70,7 @@ public class MixerPanel extends JPanel implements IBusListener {
 
     /**
      * Create a mixer panel with controls for all tracks
-     * 
+     *
      * @param synthesizer The synthesizer to control
      */
     public MixerPanel(Synthesizer synthesizer) {
@@ -116,7 +96,7 @@ public class MixerPanel extends JPanel implements IBusListener {
         reverbDials.clear();
         chorusDials.clear();
         delayDials.clear();
-        
+
         // Create main container with horizontal layout for channel strips
         JPanel mixerPanel = new JPanel();
         mixerPanel.setLayout(new BoxLayout(mixerPanel, BoxLayout.X_AXIS));
@@ -366,9 +346,9 @@ public class MixerPanel extends JPanel implements IBusListener {
      * Setup listeners for all mixer controls
      */
     private void setupControlListeners(int index, int midiChannel,
-            Dial volumeDial, Dial panDial,
-            Dial reverbDial, Dial chorusDial, Dial delayDial,
-            JToggleButton muteButton, JToggleButton soloButton) {
+                                       Dial volumeDial, Dial panDial,
+                                       Dial reverbDial, Dial chorusDial, Dial delayDial,
+                                       JToggleButton muteButton, JToggleButton soloButton) {
 
         // Volume dial listener
         volumeDial.addChangeListener(e -> {
@@ -557,22 +537,22 @@ public class MixerPanel extends JPanel implements IBusListener {
                     volumeDials.get(i).setValue(100);
                     sendMidiCC(channel, CC_VOLUME, 100);
                 }
-                
+
                 if (i < panDials.size()) {
                     panDials.get(i).setValue(64);
                     sendMidiCC(channel, CC_PAN, 64);
                 }
-                
+
                 if (i < reverbDials.size()) {
                     reverbDials.get(i).setValue(0);
                     sendMidiCC(channel, CC_REVERB, 0);
                 }
-                
+
                 if (i < chorusDials.size()) {
                     chorusDials.get(i).setValue(0);
                     sendMidiCC(channel, CC_CHORUS, 0);
                 }
-                
+
                 if (i < delayDials.size()) {
                     delayDials.get(i).setValue(0);
                     sendMidiCC(channel, CC_DELAY, 0);
@@ -581,7 +561,7 @@ public class MixerPanel extends JPanel implements IBusListener {
 
             // Set master to default (with defensive check)
             if (volumeDials.size() > trackChannels.length - 1) {
-                volumeDials.get(volumeDials.size() - 1).setValue(100);
+                volumeDials.getLast().setValue(100);
             }
 
         } finally {

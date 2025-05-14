@@ -17,6 +17,7 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.SwingUtilities;
 
+import com.angrysurfer.core.Constants;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -25,7 +26,6 @@ import com.angrysurfer.core.api.CommandBus;
 import com.angrysurfer.core.api.Commands;
 import com.angrysurfer.core.model.InstrumentWrapper;
 import com.angrysurfer.core.model.Player;
-import com.angrysurfer.core.sequencer.DrumSequenceData;
 import com.angrysurfer.core.sequencer.DrumSequencer;
 import com.angrysurfer.core.service.InstrumentManager;
 import com.angrysurfer.core.service.PlayerManager;
@@ -75,10 +75,10 @@ public class DrumPresetPanel extends JPanel {
         
         // Get available drum instruments
         List<InstrumentWrapper> drumInstruments = InstrumentManager.getInstance().getInstrumentHelper().findAllInstruments()
-                .stream().filter(i -> i.getChannel() == 9).toList();
+                .stream().filter(i -> i.getChannel() == Constants.MIDI_DRUM_CHANNEL).toList();
         
         // For each drum pad, create a combo box for preset selection
-        for (int i = 0; i < DrumSequenceData.DRUM_PAD_COUNT; i++) {
+        for (int i = 0; i < Constants.DRUM_PAD_COUNT; i++) {
             Player player = sequencer.getPlayers()[i];
             
             // Create row panel with alternating background colors
@@ -161,7 +161,7 @@ public class DrumPresetPanel extends JPanel {
      * @param instrument The instrument to set
      */
     private void updateDrumInstrument(int drumIndex, InstrumentWrapper instrument) {
-        if (drumIndex < 0 || drumIndex >= DrumSequenceData.DRUM_PAD_COUNT || instrument == null) {
+        if (drumIndex < 0 || drumIndex >= Constants.DRUM_PAD_COUNT || instrument == null) {
             return;
         }
         
@@ -172,7 +172,7 @@ public class DrumPresetPanel extends JPanel {
             // This is the fix for the NPE - ensure a channel is set
             if (instrument.getChannel() == null) {
                 // Channel 9 is standard for drums (MIDI channel 10)
-                instrument.setChannel(9);
+                instrument.setChannel(Constants.MIDI_DRUM_CHANNEL);
                 logger.info("Set missing channel for instrument {} to 9 (drum channel)", 
                     instrument.getName());
             }
@@ -194,7 +194,7 @@ public class DrumPresetPanel extends JPanel {
     private void resetToDefaults() {
         List<InstrumentWrapper> defaultInstruments = InstrumentManager.getInstance().getDefaultDrumKit();
         
-        for (int i = 0; i < Math.min(DrumSequenceData.DRUM_PAD_COUNT, defaultInstruments.size()); i++) {
+        for (int i = 0; i < Math.min(Constants.DRUM_PAD_COUNT, defaultInstruments.size()); i++) {
             JComboBox<InstrumentWrapper> combo = presetCombos.get(i);
             
             // Find the default instrument in the combo box
@@ -222,7 +222,7 @@ public class DrumPresetPanel extends JPanel {
         
         java.util.Random random = new java.util.Random();
         
-        for (int i = 0; i < DrumSequenceData.DRUM_PAD_COUNT; i++) {
+        for (int i = 0; i < Constants.DRUM_PAD_COUNT; i++) {
             // Select random instrument from list
             int randomIndex = random.nextInt(drumInstruments.size());
             InstrumentWrapper randomInstrument = drumInstruments.get(randomIndex);
@@ -245,7 +245,7 @@ public class DrumPresetPanel extends JPanel {
      * Apply all instrument changes to the sequencer
      */
     private void applyChanges() {
-        for (int i = 0; i < DrumSequenceData.DRUM_PAD_COUNT; i++) {
+        for (int i = 0; i < Constants.DRUM_PAD_COUNT; i++) {
             Player player = sequencer.getPlayers()[i];
             PlayerManager.getInstance().savePlayerProperties(player);
             PlayerManager.getInstance().applyInstrumentPreset(player);

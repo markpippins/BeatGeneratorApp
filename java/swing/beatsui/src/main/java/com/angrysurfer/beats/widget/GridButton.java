@@ -1,15 +1,18 @@
 package com.angrysurfer.beats.widget;
 
-import java.awt.Color;
-import java.awt.Dimension;
+import lombok.Getter;
+import lombok.Setter;
+
+import javax.swing.*;
+import java.awt.*;
 import java.util.Random;
 
-import javax.swing.JButton;
-
+@Getter
+@Setter
 public class GridButton extends JButton {
 
     public static final int BUTTON_SIZE = 15;
-
+    private final Random rand = new Random();
     Color[] colors = {
             new Color(255, 200, 200), // Light red
             new Color(200, 255, 200), // Light green
@@ -18,20 +21,9 @@ public class GridButton extends JButton {
             new Color(255, 200, 255), // Light purple
             new Color(200, 255, 255) // Light cyan
     };
-
-    private final Random rand = new Random();
-
-    private int row;
     private int col;
-    private boolean on;
-
-    public GridButton() {
-        super();
-        setup();
-    }
 
     public GridButton(int row, int col) {
-        this.row = row;
         this.col = col;
         setup();
     }
@@ -54,16 +46,7 @@ public class GridButton extends JButton {
         setBackground(colors[rand.nextInt(colors.length)]);
     }
 
-    public int getRow() {
-        return row;
-    }
-
-    public int getCol() {
-        return col;
-    }
-
     public void setOn(boolean on) {
-        this.on = on;
         if (!on) {
             setBackground(Color.RED);
         }

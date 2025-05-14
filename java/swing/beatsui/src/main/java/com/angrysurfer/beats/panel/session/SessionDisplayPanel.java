@@ -39,7 +39,7 @@ public class SessionDisplayPanel extends JPanel {
 
     private Session currentSession;
 
-    // Timing fields
+// Timing fields
     private JTextField sessionField;
     private JTextField tickField;
     private JTextField beatField;

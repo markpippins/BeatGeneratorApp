@@ -9,6 +9,7 @@ import javax.swing.JPanel;
 import javax.swing.JSlider;
 import javax.swing.JToggleButton;
 
+import com.angrysurfer.core.api.midi.MIDIConstants;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -51,7 +52,7 @@ public class MelodicSequencerSwingPanel extends JPanel {
 
         // Swing amount slider
         swingSlider = new JSlider(JSlider.HORIZONTAL, 
-            MelodicSequencer.MIN_SWING, MelodicSequencer.MAX_SWING, sequencer.getSequenceData().getSwingPercentage());
+            MIDIConstants.MIN_SWING, MIDIConstants.MAX_SWING, sequencer.getSequenceData().getSwingPercentage());
         swingSlider.setMajorTickSpacing(5);
         swingSlider.setPaintTicks(true);
         swingSlider.setPreferredSize(new Dimension(85, 22));

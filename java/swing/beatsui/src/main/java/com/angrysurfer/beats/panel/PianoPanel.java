@@ -64,17 +64,18 @@ public class PianoPanel extends PlayerAwarePanel {
 
     public PianoPanel() {
         super(); // Remove statusConsumer parameter
-        setPreferredSize(new Dimension(255, 60));
-        setMinimumSize(new Dimension(265, 60));
-        setBorder(BorderFactory.createEmptyBorder(20,2,20,2));
+        // Fix #1: Make preferred size larger and consistent with minimum size
+        setPreferredSize(new Dimension(280, 80)); // Increased from 255x60
+        setMinimumSize(new Dimension(280, 80));   // Increased from 265x60
+        setBorder(BorderFactory.createEmptyBorder(5, 2, 5, 2)); // Reduced top/bottom padding
         setOpaque(true);
         setBackground(UIHelper.fadedOrange);
 
-        // Add three colored buttons on the right side
+        // Fix #2: Position buttons with more room
         int buttonWidth = 25;
         int buttonHeight = 15;
-        int startX = getPreferredSize().width - buttonWidth - 5;
-        int startY = 12; // Changed from 10 to 12 to push buttons down 2px
+        int startX = getPreferredSize().width - buttonWidth - 10; // More space from edge
+        int startY = 10; // Moved up slightly
         int spacing = 5;
 
         followScaleBtn = new JButton();
@@ -97,30 +98,31 @@ public class PianoPanel extends PlayerAwarePanel {
         add(button2);
         add(button3);
 
-        // Dimensions for keys
-        int whiteKeyWidth = 30;
-        int whiteKeyHeight = 60;
-        int blackKeyWidth = 17;
-        int blackKeyHeight = 30;
+        // Fix #3: Adjust piano key dimensions and positioning
+        int whiteKeyWidth = 32; // Slightly wider
+        int whiteKeyHeight = 70; // Slightly taller
+        int blackKeyWidth = 18;
+        int blackKeyHeight = 40; // Slightly taller
 
-        // Create white keys
-
+        // Fix #4: More space for white keys and consistent positioning
         String[] whiteNotes = { "C", "D", "E", "F", "G", "A", "B" };
         int[] whiteNoteValues = { 60, 62, 64, 65, 67, 69, 71 }; // MIDI note values
         for (int i = 0; i < 7; i++) {
             JButton whiteKey = createPianoKey(true, whiteNotes[i]);
-            whiteKey.setBounds(i * whiteKeyWidth + 10, 10, whiteKeyWidth - 1, whiteKeyHeight);
+            whiteKey.setBounds(i * whiteKeyWidth + 10, 5, whiteKeyWidth - 2, whiteKeyHeight);
             add(whiteKey);
             noteToKeyMap.put(whiteNoteValues[i], whiteKey); // Map MIDI note to key
         }
 
-        // Create black keys
+        // Fix #5: Correct positioning of black keys
         String[] blackNotes = { "C#", "D#", "", "F#", "G#", "A#", "" };
         int[] blackNoteValues = { 61, 63, -1, 66, 68, 70, -1 }; // MIDI note values
         for (int i = 0; i < 7; i++) {
             if (!blackNotes[i].isEmpty()) {
                 JButton blackKey = createPianoKey(false, blackNotes[i]);
-                blackKey.setBounds(i * whiteKeyWidth + whiteKeyWidth / 2 + 10, 10, blackKeyWidth, blackKeyHeight);
+                // Position black keys precisely between white keys
+                int xPosition = (i * whiteKeyWidth) + (whiteKeyWidth / 2) - (blackKeyWidth / 2) + 10;
+                blackKey.setBounds(xPosition, 5, blackKeyWidth, blackKeyHeight);
                 add(blackKey, 0); // Add black keys first so they appear on top
                 noteToKeyMap.put(blackNoteValues[i], blackKey); // Map MIDI note to key
             }

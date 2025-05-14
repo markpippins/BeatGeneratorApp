@@ -1,11 +1,9 @@
 package com.angrysurfer.beats.panel.sequencer.poly;
 
-import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.Insets;
 
-import javax.swing.BorderFactory;
 import javax.swing.Box;
 import javax.swing.BoxLayout;
 import javax.swing.JButton;
@@ -15,7 +13,6 @@ import javax.swing.JPanel;
 import javax.swing.JSpinner;
 import javax.swing.JToggleButton;
 import javax.swing.SpinnerNumberModel;
-import javax.swing.border.TitledBorder;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -23,7 +20,7 @@ import org.slf4j.LoggerFactory;
 import com.angrysurfer.beats.util.UIHelper;
 import com.angrysurfer.core.api.CommandBus;
 import com.angrysurfer.core.api.Commands;
-import com.angrysurfer.core.model.Direction;
+import com.angrysurfer.core.sequencer.Direction;
 import com.angrysurfer.core.sequencer.DrumSequencer;
 import com.angrysurfer.core.sequencer.TimingDivision;
 
@@ -169,7 +166,7 @@ public class DrumSequencerParametersPanel extends JPanel {
         // Push forward button
         JButton pushForwardButton = new JButton("⟶");
         pushForwardButton.setToolTipText("Push pattern forward (right)");
-        pushForwardButton.setPreferredSize(new Dimension(24, 24));
+        pushForwardButton.setPreferredSize(new Dimension(UIHelper.SMALL_CONTROL_WIDTH, 24));
         pushForwardButton.setMargin(new Insets(2, 2, 2, 2));
         pushForwardButton.addActionListener(e -> {
             sequencer.pushForward();
@@ -185,7 +182,7 @@ public class DrumSequencerParametersPanel extends JPanel {
         // Pull backward button
         JButton pullBackwardButton = new JButton("⟵");
         pullBackwardButton.setToolTipText("Pull pattern backward (left)");
-        pullBackwardButton.setPreferredSize(new Dimension(24, 24));
+        pullBackwardButton.setPreferredSize(new Dimension(UIHelper.SMALL_CONTROL_WIDTH, 24));
         pullBackwardButton.setMargin(new Insets(2, 2, 2, 2));
         pullBackwardButton.addActionListener(e -> {
             sequencer.pullBackward();
@@ -281,19 +278,5 @@ public class DrumSequencerParametersPanel extends JPanel {
             updatingControls = false;
         }
     }
-    
-    /**
-     * Update the Last Step spinner's maximum value
-     */
-    public void updateMaxPatternLength(int newMaxLength) {
-        // Update last step spinner's maximum value
-        SpinnerNumberModel model = (SpinnerNumberModel) lastStepSpinner.getModel();
-        model.setMaximum(newMaxLength);
-        
-        // If current value exceeds new maximum, adjust it
-        int currentValue = (Integer) lastStepSpinner.getValue();
-        if (currentValue > newMaxLength) {
-            lastStepSpinner.setValue(newMaxLength);
-        }
-    }
+
 }

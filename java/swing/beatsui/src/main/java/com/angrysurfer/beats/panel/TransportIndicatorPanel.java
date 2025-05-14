@@ -1,38 +1,20 @@
 package com.angrysurfer.beats.panel;
 
-import java.awt.BorderLayout;
-import java.awt.Color;
-import java.awt.Dimension;
-import java.awt.FlowLayout;
-import java.awt.Font;
-import java.text.SimpleDateFormat;
-import java.util.Random;
-
-import javax.swing.BorderFactory;
-import javax.swing.BoxLayout;
-import javax.swing.JLabel;
-import javax.swing.JPanel;
-import javax.swing.JProgressBar;
-import javax.swing.JTextField;
-import javax.swing.SwingUtilities;
-import javax.swing.Timer;
-
 import com.angrysurfer.beats.util.UIHelper;
 import com.angrysurfer.beats.widget.LEDIndicator;
 import com.angrysurfer.beats.widget.VuMeter;
-import com.angrysurfer.core.api.Command;
-import com.angrysurfer.core.api.CommandBus;
-import com.angrysurfer.core.api.Commands;
-import com.angrysurfer.core.api.IBusListener;
-import com.angrysurfer.core.api.StatusUpdate;
-import com.angrysurfer.core.api.TimingBus;
+import com.angrysurfer.core.api.*;
 import com.angrysurfer.core.model.InstrumentWrapper;
 import com.angrysurfer.core.model.Player;
 import com.angrysurfer.core.model.Session;
 import com.angrysurfer.core.sequencer.TimingUpdate;
-
 import lombok.Getter;
 import lombok.Setter;
+
+import javax.swing.*;
+import java.awt.*;
+import java.text.SimpleDateFormat;
+import java.util.Random;
 
 @Getter
 @Setter

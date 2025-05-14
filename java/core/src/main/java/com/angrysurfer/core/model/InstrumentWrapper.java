@@ -61,6 +61,8 @@ public final class InstrumentWrapper implements Serializable {
 
     private Boolean assignedToPlayer = false;
 
+    private Boolean isDefault = false;
+    
     private List<ControlCode> controlCodes = new ArrayList<>();
 
     private Set<Pad> pads = new HashSet<>();
@@ -260,10 +262,10 @@ public final class InstrumentWrapper implements Serializable {
     public void sendMessage(MidiMessage message) {
         try {
             // First try the direct receiver
-            if (receiver != null) {
-                receiver.send(message, -1);
-                return;
-            }
+//            if (receiver != null) {
+//                receiver.send(message, -1);
+//                return;
+//            }
             
             // If receiver is null but we have a device, try to get a receiver
             if (device != null) {
@@ -356,7 +358,7 @@ public final class InstrumentWrapper implements Serializable {
         try {
             synchronized (cachedNoteOn) {
                 cachedNoteOn.setMessage(ShortMessage.NOTE_ON, channel, note, velocity);
-                sendMessage(cachedNoteOn);
+                 sendMessage(cachedNoteOn);
             }
         } catch (InvalidMidiDataException e) {
             logger.error("Invalid MIDI data for note on: {}", e.getMessage());

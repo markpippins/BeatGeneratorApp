@@ -1,19 +1,14 @@
 package com.angrysurfer.beats.panel.player;
 
-import java.awt.Dimension;
-import java.awt.FlowLayout;
-import java.awt.Insets;
-
-import javax.swing.JButton;
-import javax.swing.JLabel;
-import javax.swing.JPanel;
-
 import com.angrysurfer.beats.Symbols;
 import com.angrysurfer.beats.panel.PlayerAwarePanel;
 import com.angrysurfer.beats.util.UIHelper;
 import com.angrysurfer.beats.widget.ChannelCombo;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import javax.swing.*;
+import java.awt.*;
 
 /**
  * Panel for generating random patterns in the drum player
@@ -68,11 +63,11 @@ public class ChannelComboPanel extends PlayerAwarePanel {
 
     @Override
     public void handlePlayerActivated() {
-        channelCombo.setCurrentPlayer(getPlayer());
+        channelCombo.setCurrentPlayer(getTargetPlayer());
     }
 
     @Override
     public void handlePlayerUpdated() {
-        channelCombo.setCurrentPlayer(getPlayer());
+        channelCombo.setCurrentPlayer(getTargetPlayer());
     }
 }

@@ -382,4 +382,13 @@ public class Commands {
 
     // Add to Commands.java:
     public static final String PLAYER_RULE_UPDATE_EVENT = "PLAYER_RULE_UPDATE_EVENT";
+
+    // In Commands.java
+    public static final String PAD_HIT = "PAD_HIT";
+
+    // Add these new command constants for default player/instrument updates
+    public static final String DEFAULT_PLAYER_UPDATED = "DEFAULT_PLAYER_UPDATED";
+    public static final String DEFAULT_INSTRUMENT_UPDATED = "DEFAULT_INSTRUMENT_UPDATED";
+
+    public static final String DEBUG_USER_CONFIG_SAVE = "DEBUG_USER_CONFIG_SAVE";
 }

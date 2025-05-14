@@ -1,26 +1,7 @@
 package com.angrysurfer.core.model;
 
-import java.io.Serializable;
-import java.util.HashSet;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Objects;
-import java.util.Set;
-import java.util.concurrent.ConcurrentLinkedQueue;
-import java.util.stream.IntStream;
-
-import javax.sound.midi.MidiDevice;
-import javax.sound.midi.MidiUnavailableException;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import com.angrysurfer.core.Constants;
-import com.angrysurfer.core.api.Command;
-import com.angrysurfer.core.api.CommandBus;
-import com.angrysurfer.core.api.Commands;
-import com.angrysurfer.core.api.IBusListener;
-import com.angrysurfer.core.api.TimingBus;
+import com.angrysurfer.core.api.*;
 import com.angrysurfer.core.sequencer.Scale;
 import com.angrysurfer.core.sequencer.TimingUpdate;
 import com.angrysurfer.core.service.DeviceManager;
@@ -29,14 +10,25 @@ import com.angrysurfer.core.service.PlayerManager;
 import com.angrysurfer.core.util.LowLatencyMidiClock;
 import com.angrysurfer.core.util.MidiClockSource;
 import com.fasterxml.jackson.annotation.JsonIgnore;
-
 import jakarta.persistence.Transient;
 import lombok.Getter;
 import lombok.Setter;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import javax.sound.midi.MidiDevice;
+import javax.sound.midi.MidiUnavailableException;
+import java.io.Serializable;
+import java.util.*;
+import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.stream.IntStream;
 
 @Getter
 @Setter
 public class Session implements Serializable, IBusListener {
+
+    @JsonIgnore
+    private Object soloLock;
 
     @JsonIgnore
     @Transient
@@ -143,11 +135,6 @@ public class Session implements Serializable, IBusListener {
     @Transient
     private final MidiClockSource sequencerManager = new MidiClockSource();
 
-    // Consumer for tick callbacks (replacing CyclerListener)
-    // @JsonIgnore
-    // @Transient
-    // private Consumer<Long> tickListener;
-    // Add these fields to the class
     @JsonIgnore
     @Transient
     private Set<IBusListener> tickListeners = new HashSet<>();
@@ -219,6 +206,12 @@ public class Session implements Serializable, IBusListener {
     }
 
     public void addPlayer(Player player) {
+        // Skip default players
+        if (Boolean.TRUE.equals(player.getIsDefault())) {
+            logger.info("Skipping default player: {}", player);
+            return;
+        }
+        
         logger.info("addPlayer() - adding player: {}", player);
         if (isRunning())
             synchronized (getAddList()) {
@@ -270,50 +263,6 @@ public class Session implements Serializable, IBusListener {
             }
         }
         return null;
-    }
-
-    public void setParts(Integer parts) {
-        this.parts = parts;
-    }
-
-    public void setBars(Integer bars) {
-        this.bars = bars;
-    }
-
-    public void setBeatsPerBar(Integer beatsPerBar) {
-        this.beatsPerBar = beatsPerBar;
-    }
-
-    public double getBeat() {
-        return beat;
-    }
-
-    public Integer getBeatCount() {
-        return beatCount;
-    }
-
-    public Long getTick() {
-        return tick;
-    }
-
-    public Long getTickCount() {
-        return tickCount;
-    }
-
-    public Integer getBar() {
-        return bar;
-    }
-
-    public Integer getBarCount() {
-        return barCount;
-    }
-
-    public Integer getPart() {
-        return part;
-    }
-
-    public Integer getPartCount() {
-        return partCount;
     }
 
     public void setPartLength(int partLength) {
@@ -456,31 +405,15 @@ public class Session implements Serializable, IBusListener {
      * Helper method to stop all active notes
      */
     public void stopAllNotes() {
-        IntStream.range(0, 128).forEach(note -> {
-            getPlayers().forEach(p -> {
-                try {
-                    if (p.getInstrument() != null) {
-                        p.getInstrument().noteOff(note, 0);
-                    }
-                } catch (Exception e) {
-                    logger.error("Error stopping note {} on channel {}: {}", note, p.getChannel(), e.getMessage(), e);
+        IntStream.range(0, 128).forEach(note -> getPlayers().forEach(p -> {
+            try {
+                if (p.getInstrument() != null) {
+                    p.getInstrument().noteOff(note, 0);
                 }
-            });
-        });
-    }
-
-    private void updatePlayerConfig() {
-        logger.debug("updatePlayerConfig() - removing {} players, adding {} players", getRemoveList().size(),
-                getAddList().size());
-        if (!getRemoveList().isEmpty()) {
-            getPlayers().removeAll(getRemoveList());
-            getRemoveList().clear();
-        }
-
-        if (!getAddList().isEmpty()) {
-            getPlayers().addAll(getAddList());
-            getAddList().clear();
-        }
+            } catch (Exception e) {
+                logger.error("Error stopping note {} on channel {}: {}", note, p.getChannel(), e.getMessage(), e);
+            }
+        }));
     }
 
     public Float getBeatDuration() {
@@ -489,13 +422,6 @@ public class Session implements Serializable, IBusListener {
         return 60000 / getTempoInBPM() / getTicksPerBeat() / getBeatsPerBar();
     }
 
-    public double getInterval() {
-        logger.debug("getInterval() - calculated interval: {}", 60000 / getTempoInBPM() / getTicksPerBeat());
-        return 60000 / getTempoInBPM() / getTicksPerBeat();
-    }
-
-    @JsonIgnore
-    private Object soloLock;
 
     public Boolean hasSolos() {
         synchronized (soloLock) {
@@ -509,36 +435,19 @@ public class Session implements Serializable, IBusListener {
     }
 
     public boolean isRunning() {
-        boolean running = sequencerManager != null && sequencerManager.isRunning();
-        // System.out.println("Session.isRunning returning: " + running);
-        return running;
-    }
-
-    public Set<Player> getPlayers() {
-        return players;
-    }
-
-    public void setPlayers(Set<Player> players) {
-        this.players = players;
+        return sequencerManager != null && sequencerManager.isRunning();
     }
 
     public synchronized boolean isValid() {
         return (Objects.nonNull(getPlayers()) && !getPlayers().isEmpty()
-                && getPlayers().stream().anyMatch(p -> Objects.nonNull(p.getRules()) && p.getRules().size() > 0));
+                && getPlayers().stream().
+                    anyMatch(p -> Objects.nonNull(p.getRules()) && !p.getRules().isEmpty()));
     }
 
     public void play() {
-        // System.out.println("Session: Starting play sequence for session " + getId());
-
         reset();
-
         initializeDevices();
-
-        // Add all enabled players to tickListeners
         syncPlayersWithTickListeners();
-
-        // System.out.println("Session: " + players.size() + " players, " +
-        // tickListeners.size() + " tick listeners");
         sequencerManager.startSequence();
     }
 
@@ -952,12 +861,18 @@ public class Session implements Serializable, IBusListener {
             logger.warn("Cannot add null player or player without ID");
             return;
         }
+        
+        // Skip default players - they should not be stored in sessions
+        if (Boolean.TRUE.equals(player.getIsDefault())) {
+            logger.debug("Skipping default player {} - not storing in session", player.getId());
+            return;
+        }
 
         // Store in players collection
         players.add(player);
 
-        // Also store the player's instrument if it exists
-        if (player.getInstrument() != null) {
+        // Also store the player's instrument if it exists and is not default
+        if (player.getInstrument() != null && !Boolean.TRUE.equals(player.getInstrument().getIsDefault())) {
             InstrumentManager.getInstance().updateInstrument(player.getInstrument());
         }
 
@@ -965,30 +880,4 @@ public class Session implements Serializable, IBusListener {
         setModified(true);
     }
 
-    /**
-     * Get a player by ID
-     * 
-     * @param playerId The player ID
-     * @return The player, or null if not found
-     */
-    public Player getPlayerById(String playerId) {
-        if (playerId == null)
-            return null;
-
-        for (Player player : players) {
-            if (playerId.equals(player.getId())) {
-                return player;
-            }
-        }
-        return null;
-    }
-
-    /**
-     * Save all players to persistence
-     */
-    public void saveAllPlayers() {
-        for (Player player : players) {
-            PlayerManager.getInstance().savePlayerProperties(player);
-        }
-    }
 }
