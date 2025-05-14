@@ -102,9 +102,8 @@ public class MainPanel extends PlayerAwarePanel implements AutoCloseable, IBusLi
         tabbedPane.addTab("Samples", createSampleBrowserPanel());
         tabbedPane.addTab("Instruments", createCombinedInstrumentsSystemPanel());
 
-        LoggingPanel loggingPanel = new LoggingPanel();
-        tabbedPane.addTab("Logs", loggingPanel);
-        // tabbedPane.addTab("Visualizer", new GridPanel());
+        tabbedPane.addTab("Logs", new LoggingPanel());
+        tabbedPane.addTab("Visualizer", new GridPanel());
 
         tabbedPane.setBorder(BorderFactory.createEmptyBorder(0, 4, 0, 4));
 
@@ -279,8 +278,25 @@ public class MainPanel extends PlayerAwarePanel implements AutoCloseable, IBusLi
             MelodicSequencerPanel melodicPanel = findMelodicSequencerPanel(selectedMelodicTab);
 
             if (melodicPanel != null && melodicPanel.getSequencer() != null) {
+                // Activate player as before
                 Player player = melodicPanel.getSequencer().getPlayer();
                 activatePlayer(player, "melodic tabbed pane");
+                
+                // Force UI refresh for the selected melodic tab
+                // SwingUtilities.invokeLater(() -> {
+                //     // Invalidate and repaint the entire panel
+                //     melodicPanel.invalidate();
+                //     melodicPanel.validate();
+                //     melodicPanel.repaint();
+                    
+                //     // Also refresh specific components that might need it
+                //     if (melodicPanel.getSequenceNavigationPanel() != null) {
+                //         melodicPanel.getSequenceNavigationPanel().invalidate();
+                //         melodicPanel.getSequenceNavigationPanel().repaint();
+                //     }
+                    
+                //     logger.debug("Refreshed UI for melodic tab: {}", player.getName());
+                // });
             }
         }
 

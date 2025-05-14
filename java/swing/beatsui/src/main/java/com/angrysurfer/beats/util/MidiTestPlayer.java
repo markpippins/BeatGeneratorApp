@@ -1,9 +1,14 @@
 package com.angrysurfer.beats.util;
 
-import java.io.File;
-import javax.sound.midi.*;
+import com.angrysurfer.core.api.midi.MidiControlMessageEnum;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import javax.sound.midi.MidiChannel;
+import javax.sound.midi.MidiSystem;
+import javax.sound.midi.Soundbank;
+import javax.sound.midi.Synthesizer;
+import java.io.File;
 
 /**
  * Self-contained class for reliable MIDI testing and preview
@@ -11,9 +16,9 @@ import org.slf4j.LoggerFactory;
 public class MidiTestPlayer {
     private static final Logger logger = LoggerFactory.getLogger(MidiTestPlayer.class);
     private static MidiTestPlayer instance;
-    
+
     private Synthesizer synth;
-    
+
     private MidiTestPlayer() {
         try {
             // Create a dedicated synth for testing
@@ -24,14 +29,14 @@ public class MidiTestPlayer {
             logger.error("Error initializing MidiTestPlayer: {}", e.getMessage());
         }
     }
-    
+
     public static synchronized MidiTestPlayer getInstance() {
         if (instance == null) {
             instance = new MidiTestPlayer();
         }
         return instance;
     }
-    
+
     /**
      * Load a soundbank file into the test synthesizer
      */
@@ -48,7 +53,7 @@ public class MidiTestPlayer {
         }
         return false;
     }
-    
+
     /**
      * Play a test note with specified bank/program
      */
@@ -57,23 +62,23 @@ public class MidiTestPlayer {
             if (!synth.isOpen()) {
                 synth.open();
             }
-            
+
             MidiChannel[] channels = synth.getChannels();
             if (channels == null || channel >= channels.length || channels[channel] == null) {
                 logger.error("Invalid channel: {}", channel);
                 return false;
             }
-            
+
             // Set bank and program
             channels[channel].controlChange(0, bank >> 7); // Bank MSB
-            channels[channel].controlChange(32, bank & 0x7F); // Bank LSB
+            channels[channel].controlChange(32, bank & MidiControlMessageEnum.POLY_MODE_ON); // Bank LSB
             channels[channel].programChange(program);
-            
+
             // Play note
             channels[channel].noteOn(note, velocity);
-            logger.info("Playing note {} on channel {} (bank={}, program={})", 
+            logger.info("Playing note {} on channel {} (bank={}, program={})",
                     note, channel, bank, program);
-            
+
             // Schedule note off
             new Thread(() -> {
                 try {
@@ -83,14 +88,14 @@ public class MidiTestPlayer {
                     // Ignore
                 }
             }).start();
-            
+
             return true;
         } catch (Exception e) {
             logger.error("Error playing test note: {}", e.getMessage());
             return false;
         }
     }
-    
+
     /**
      * Clean up resources
      */

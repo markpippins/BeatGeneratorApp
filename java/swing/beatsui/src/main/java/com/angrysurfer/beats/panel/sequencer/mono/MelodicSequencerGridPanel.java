@@ -18,24 +18,21 @@ import java.util.List;
  */
 public class MelodicSequencerGridPanel extends JPanel {
     private static final Logger logger = LoggerFactory.getLogger(MelodicSequencerGridPanel.class);
-
-    // UI state variables
-    private List<TriggerButton> triggerButtons = new ArrayList<>();
-    private List<Dial> noteDials = new ArrayList<>();
-    private List<Dial> velocityDials = new ArrayList<>();
-    private List<Dial> gateDials = new ArrayList<>();
-    private List<Dial> probabilityDials = new ArrayList<>();
-    private List<Dial> nudgeDials = new ArrayList<>();
-
     // Reference to sequencer
     private final MelodicSequencer sequencer;
-
+    // UI state variables
+    private final List<TriggerButton> triggerButtons = new ArrayList<>();
+    private final List<Dial> noteDials = new ArrayList<>();
+    private final List<Dial> velocityDials = new ArrayList<>();
+    private final List<Dial> gateDials = new ArrayList<>();
+    private final List<Dial> probabilityDials = new ArrayList<>();
+    private final List<Dial> nudgeDials = new ArrayList<>();
     // Flag to prevent recursive updates
     private boolean listenersEnabled = true;
 
     /**
      * Create a new melodic sequencer grid panel
-     * 
+     *
      * @param sequencer The melodic sequencer to control
      */
     public MelodicSequencerGridPanel(MelodicSequencer sequencer) {
@@ -103,7 +100,8 @@ public class MelodicSequencerGridPanel extends JPanel {
             // Set default sizes - we'll update these in updateDialSizes()
             int dialSize = i == 4 ? 60 : 40; // Note dial is larger than others
             dial.setPreferredSize(new Dimension(dialSize, dialSize));
-            dial.setMinimumSize(new Dimension(30, 30)); // Minimum size for any dial
+            dial.setMinimumSize(new Dimension(40, 40)); // Minimum size for any dial
+            dial.setMaximumSize(new Dimension(60, 60)); // Minimum size for any dial
 
             // Store the dial in the appropriate collection based on its type
             switch (i) {

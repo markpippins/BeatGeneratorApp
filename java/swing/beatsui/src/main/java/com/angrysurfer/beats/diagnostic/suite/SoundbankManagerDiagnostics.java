@@ -1,6 +1,7 @@
 package com.angrysurfer.beats.diagnostic.suite;
 
 import com.angrysurfer.beats.diagnostic.DiagnosticLogBuilder;
+import com.angrysurfer.core.api.midi.MidiControlMessageEnum;
 import com.angrysurfer.core.sequencer.SequencerConstants;
 import com.angrysurfer.core.service.InternalSynthManager;
 import com.angrysurfer.core.service.SoundbankManager;
@@ -161,7 +162,7 @@ public class SoundbankManagerDiagnostics {
                                         receiver.send(bankMsb, -1);
 
                                         ShortMessage bankLsb = new ShortMessage();
-                                        bankLsb.setMessage(ShortMessage.CONTROL_CHANGE, testChannel, 32, testBank & 0x7F);
+                                        bankLsb.setMessage(ShortMessage.CONTROL_CHANGE, testChannel, 32, testBank & MidiControlMessageEnum.POLY_MODE_ON);
                                         receiver.send(bankLsb, -1);
                                     }
 

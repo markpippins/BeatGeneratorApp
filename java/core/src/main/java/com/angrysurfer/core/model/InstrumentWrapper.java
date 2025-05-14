@@ -1,5 +1,6 @@
 package com.angrysurfer.core.model;
 
+import com.angrysurfer.core.api.midi.MidiControlMessageEnum;
 import com.angrysurfer.core.model.feature.Pad;
 import com.angrysurfer.core.sequencer.SequencerConstants;
 import com.angrysurfer.core.service.ReceiverManager;
@@ -608,8 +609,8 @@ public final class InstrumentWrapper implements Serializable {
             this.bankLSB = 0;
         } else {
             // Use upper/lower bytes of the integer for MSB/LSB
-            this.bankMSB = (bankIndex >> 7) & 0x7F; // Upper 7 bits
-            this.bankLSB = bankIndex & 0x7F; // Lower 7 bits
+            this.bankMSB = (bankIndex >> 7) & MidiControlMessageEnum.POLY_MODE_ON; // Upper 7 bits
+            this.bankLSB = bankIndex & MidiControlMessageEnum.POLY_MODE_ON; // Lower 7 bits
         }
 
         logger.info("Set bank index to: {} (MSB: {}, LSB: {})",

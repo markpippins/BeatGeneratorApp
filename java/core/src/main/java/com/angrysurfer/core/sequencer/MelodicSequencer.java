@@ -1,6 +1,7 @@
 package com.angrysurfer.core.sequencer;
 
 import com.angrysurfer.core.api.*;
+import com.angrysurfer.core.api.midi.MidiControlMessageEnum;
 import com.angrysurfer.core.event.NoteEvent;
 import com.angrysurfer.core.event.PatternSwitchEvent;
 import com.angrysurfer.core.event.StepUpdateEvent;
@@ -96,7 +97,7 @@ public class MelodicSequencer implements IBusListener {
     }
 
     private void initializePlayer(Player player) {
-        PlayerManager.getInstance().applyInstrumentPreset(player);
+        // PlayerManager.getInstance().applyInstrumentPreset(player);
 
         // Add this explicit program change to ensure the preset is applied:
         if (player != null && player.getInstrument() != null) {
@@ -107,10 +108,14 @@ public class MelodicSequencer implements IBusListener {
                 int bankIndex = instrument.getBankIndex() != null ? instrument.getBankIndex() : 0;
                 int preset = instrument.getPreset() != null ? instrument.getPreset() : 0;
 
+                player.getInstrument().controlChange(0, (bankIndex >> 7) & MidiControlMessageEnum.POLY_MODE_ON);
+                player.getInstrument().controlChange(32, bankIndex & MidiControlMessageEnum.POLY_MODE_ON);
+                player.getInstrument().programChange(preset, 0);
+
                 // Send explicit bank select and program change
-                instrument.controlChange(0, (bankIndex >> 7) & 0x7F);  // Bank MSB
-                instrument.controlChange(32, bankIndex & 0x7F);        // Bank LSB
-                instrument.programChange(preset, 0);
+                // instrument.controlChange(0, (bankIndex >> 7) & MidiControlMessageEnum.POLY_MODE_ON);  // Bank MSB
+                // instrument.controlChange(32, bankIndex & MidiControlMessageEnum.POLY_MODE_ON);        // Bank LSB
+                // instrument.programChange(preset, 0);
 
                 logger.info("Explicitly set instrument {} to bank {} program {} on channel {}",
                         instrument.getName(), bankIndex, preset, channel);
@@ -745,6 +750,122 @@ public class MelodicSequencer implements IBusListener {
                 logger.info("Refreshing instrument preset for melodic sequencer {}", id);
                 if (player != null && player.getInstrument() != null) {
                     PlayerManager.getInstance().applyInstrumentPreset(player);
+                }
+            }
+
+
+            case Commands.PLAYER_PRESET_CHANGE_EVENT -> {
+//                if (action.getData() instanceof PlayerPresetChangeEvent event &&
+//                        player != null &&
+//                        event.getPlayer() != null &&
+//                        player.getId().equals(event.getPlayer().getId())) {
+//
+//                    // Log that we received preset change event for our player
+//                    logger.info("Received preset change event for player {}: bank={}, preset={}",
+//                            player.getName(),
+//                            event.getBankIndex(),
+//                            event.getPresetNumber());
+//
+//                    // Update the instrument with new preset values
+//                    InstrumentWrapper instrument = player.getInstrument();
+//                    if (instrument != null) {
+//                        // Update bank index if provided
+//                        if (event.getBankIndex() != null) {
+//                            instrument.setBankIndex(event.getBankIndex());
+//                        }
+//
+//                        // Update preset number
+//                        if (event.getPresetNumber() != null) {
+//                            instrument.setPreset(event.getPresetNumber());
+//                        }
+//
+//                        // Apply the new preset
+//                        PlayerManager.getInstance().applyInstrumentPreset(player);
+//
+//                        // Also update our sequence data to remember these settings
+//                        updateInstrumentSettingsInSequenceData();
+//
+//                        logger.debug("Applied new preset {}/{} to player {}",
+//                                instrument.getBankIndex(),
+//                                instrument.getPreset(),
+//                                player.getName());
+//                    } else {
+//                        logger.warn("Cannot apply preset change - player has no instrument");
+//                    }
+//                }
+                initializePlayer(player);
+            }
+
+            case Commands.PLAYER_PRESET_CHANGED -> {
+                initializePlayer(player);
+
+                // Handle notification that a player's preset has been changed
+//                if (action.getData() instanceof Player updatedPlayer &&
+//                        player != null &&
+//                        updatedPlayer.getId().equals(player.getId())) {
+//
+//                    // This is a notification that our player's preset has changed
+//                    // We should ensure our local state matches
+//                    logger.info("Player preset changed notification for {}", player.getName());
+//
+//                    // Update our sequence data to match the new instrument settings
+//                    updateInstrumentSettingsInSequenceData();
+//                }
+            }
+
+            case Commands.PLAYER_INSTRUMENT_CHANGE_EVENT -> {
+//                if (action.getData() instanceof PlayerInstrumentChangeEvent event &&
+//                        player != null &&
+//                        event.getPlayer() != null &&
+//                        player.getId().equals(event.getPlayer().getId())) {
+//
+//                    logger.info("Received instrument change event for player {}", player.getName());
+//
+//                    // Apply the new instrument
+//                    InstrumentWrapper instrument = event.getInstrument();
+//                    if (instrument != null) {
+//                        player.setInstrument(instrument);
+//                        player.setInstrumentId(instrument.getId());
+//
+//                        // Apply the instrument preset
+//                        PlayerManager.getInstance().applyInstrumentPreset(player);
+//
+//                        // Update our sequence data
+//                        updateInstrumentSettingsInSequenceData();
+//
+//                        logger.debug("Applied new instrument {} to player {}",
+//                                instrument.getName(),
+//                                player.getName());
+//                    }
+//                }
+                initializePlayer(player);
+            }
+
+            case Commands.PLAYER_UPDATED -> {
+                // If our player was updated elsewhere, refresh our local state
+                if (action.getData() instanceof Player updatedPlayer &&
+                        player != null &&
+                        updatedPlayer.getId().equals(player.getId())) {
+
+                    // Check if instrument or preset changed
+                    if (updatedPlayer.getInstrument() != null &&
+                            (player.getInstrument() == null ||
+                                    !player.getInstrument().getId().equals(updatedPlayer.getInstrument().getId()) ||
+                                    !Objects.equals(player.getInstrument().getPreset(), updatedPlayer.getInstrument().getPreset()) ||
+                                    !Objects.equals(player.getInstrument().getBankIndex(), updatedPlayer.getInstrument().getBankIndex()))) {
+
+                        logger.info("Player {} updated with instrument changes - applying preset", player.getName());
+
+                        // Ensure we have the latest instrument
+                        player.setInstrument(updatedPlayer.getInstrument());
+                        player.setInstrumentId(updatedPlayer.getInstrumentId());
+
+                        // Apply the preset
+                        PlayerManager.getInstance().applyInstrumentPreset(player);
+
+                        // Update our sequence data
+                        updateInstrumentSettingsInSequenceData();
+                    }
                 }
             }
 

@@ -4,6 +4,7 @@ import com.angrysurfer.core.api.Command;
 import com.angrysurfer.core.api.CommandBus;
 import com.angrysurfer.core.api.Commands;
 import com.angrysurfer.core.api.IBusListener;
+import com.angrysurfer.core.api.midi.MidiControlMessageEnum;
 import com.angrysurfer.core.event.*;
 import com.angrysurfer.core.model.InstrumentWrapper;
 import com.angrysurfer.core.model.Player;
@@ -418,8 +419,8 @@ public class PlayerManager implements IBusListener {
 
                         javax.sound.midi.MidiChannel[] channels = synth.getChannels();
                         if (channels != null && channel < channels.length) {
-                            channels[channel].controlChange(0, (bankIndex >> 7) & 0x7F);
-                            channels[channel].controlChange(32, bankIndex & 0x7F);
+                            channels[channel].controlChange(0, (bankIndex >> 7) & MidiControlMessageEnum.POLY_MODE_ON);
+                            channels[channel].controlChange(32, bankIndex & MidiControlMessageEnum.POLY_MODE_ON);
                             channels[channel].programChange(preset);
 
                             logger.info("Directly applied program change to synth channel {}: bank={}, program={}",
@@ -439,18 +440,18 @@ public class PlayerManager implements IBusListener {
                 boolean success = false;
 
                 try {
-                    instrument.controlChange(0, (bankIndex >> 7) & 0x7F);
-                    instrument.controlChange(32, bankIndex & 0x7F);
+                    instrument.controlChange(0, (bankIndex >> 7) & MidiControlMessageEnum.POLY_MODE_ON);
+                    instrument.controlChange(32, bankIndex & MidiControlMessageEnum.POLY_MODE_ON);
                     instrument.programChange(preset, 0);
                     success = true;
 
                     if (instrument.getReceiver() != null) {
                         javax.sound.midi.ShortMessage bankMSB = new javax.sound.midi.ShortMessage();
-                        bankMSB.setMessage(0xB0 | channel, 0, (bankIndex >> 7) & 0x7F);
+                        bankMSB.setMessage(0xB0 | channel, 0, (bankIndex >> 7) & MidiControlMessageEnum.POLY_MODE_ON);
                         instrument.getReceiver().send(bankMSB, -1);
 
                         javax.sound.midi.ShortMessage bankLSB = new javax.sound.midi.ShortMessage();
-                        bankLSB.setMessage(0xB0 | channel, 32, bankIndex & 0x7F);
+                        bankLSB.setMessage(0xB0 | channel, 32, bankIndex & MidiControlMessageEnum.POLY_MODE_ON);
                         instrument.getReceiver().send(bankLSB, -1);
 
                         javax.sound.midi.ShortMessage pc = new javax.sound.midi.ShortMessage();
@@ -492,8 +493,8 @@ public class PlayerManager implements IBusListener {
             } else {
                 // Use standard method for external instruments
                 if (instrument.getBankIndex() != null && instrument.getPreset() != null) {
-                    instrument.controlChange(0, (instrument.getBankIndex() >> 7) & 0x7F);
-                    instrument.controlChange(32, instrument.getBankIndex() & 0x7F);
+                    instrument.controlChange(0, (instrument.getBankIndex() >> 7) & MidiControlMessageEnum.POLY_MODE_ON);
+                    instrument.controlChange(32, instrument.getBankIndex() & MidiControlMessageEnum.POLY_MODE_ON);
                     instrument.programChange(instrument.getPreset(), 0);
                 }
             }
@@ -589,8 +590,8 @@ public class PlayerManager implements IBusListener {
                         javax.sound.midi.MidiChannel[] channels = synth.getChannels();
                         if (channels != null && channel < channels.length) {
                             // Send bank select and program change directly to the MidiChannel
-                            channels[channel].controlChange(0, (bankIndex >> 7) & 0x7F); // Bank MSB
-                            channels[channel].controlChange(32, bankIndex & 0x7F); // Bank LSB
+                            channels[channel].controlChange(0, (bankIndex >> 7) & MidiControlMessageEnum.POLY_MODE_ON); // Bank MSB
+                            channels[channel].controlChange(32, bankIndex & MidiControlMessageEnum.POLY_MODE_ON); // Bank LSB
                             channels[channel].programChange(preset);
 
                             logger.info("Directly applied program change to synth channel {}: bank={}, program={}",
@@ -608,20 +609,20 @@ public class PlayerManager implements IBusListener {
 
                 try {
                     // Apply bank and program changes through the instrument
-                    instrument.controlChange(0, (bankIndex >> 7) & 0x7F); // Bank MSB
-                    instrument.controlChange(32, bankIndex & 0x7F); // Bank LSB
+                    instrument.controlChange(0, (bankIndex >> 7) & MidiControlMessageEnum.POLY_MODE_ON); // Bank MSB
+                    instrument.controlChange(32, bankIndex & MidiControlMessageEnum.POLY_MODE_ON); // Bank LSB
                     instrument.programChange(preset, 0);
 
                     // Also try alternate way with raw MIDI messages if available
                     if (instrument.getReceiver() != null) {
                         // Bank select MSB
                         javax.sound.midi.ShortMessage bankMSB = new javax.sound.midi.ShortMessage();
-                        bankMSB.setMessage(0xB0 | channel, 0, (bankIndex >> 7) & 0x7F);
+                        bankMSB.setMessage(0xB0 | channel, 0, (bankIndex >> 7) & MidiControlMessageEnum.POLY_MODE_ON);
                         instrument.getReceiver().send(bankMSB, -1);
 
                         // Bank select LSB
                         javax.sound.midi.ShortMessage bankLSB = new javax.sound.midi.ShortMessage();
-                        bankLSB.setMessage(0xB0 | channel, 32, bankIndex & 0x7F);
+                        bankLSB.setMessage(0xB0 | channel, 32, bankIndex & MidiControlMessageEnum.POLY_MODE_ON);
                         instrument.getReceiver().send(bankLSB, -1);
 
                         // Program change

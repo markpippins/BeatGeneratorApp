@@ -1,5 +1,6 @@
 package com.angrysurfer.core.service;
 
+import com.angrysurfer.core.api.midi.MidiControlMessageEnum;
 import com.angrysurfer.core.model.InstrumentWrapper;
 import com.angrysurfer.core.model.preset.DrumItem;
 import com.angrysurfer.core.model.preset.SynthData;
@@ -284,8 +285,8 @@ public class InternalSynthManager {
             int channel = instrument.getChannel();
 
             // Send bank select commands
-            int bankMSB = (bankIndex >> 7) & 0x7F;
-            int bankLSB = bankIndex & 0x7F;
+            int bankMSB = (bankIndex >> 7) & MidiControlMessageEnum.POLY_MODE_ON;
+            int bankLSB = bankIndex & MidiControlMessageEnum.POLY_MODE_ON;
 
             // Send through instrument to ensure routing is correct
             instrument.controlChange(0, bankMSB); // Bank MSB
@@ -343,8 +344,8 @@ public class InternalSynthManager {
                 // First apply through the synth's MidiChannels directly
                 MidiChannel[] channels = synthesizer.getChannels();
                 if (channels != null && channel < channels.length) {
-                    channels[channel].controlChange(0, (bankIndex >> 7) & 0x7F);
-                    channels[channel].controlChange(32, bankIndex & 0x7F);
+                    channels[channel].controlChange(0, (bankIndex >> 7) & MidiControlMessageEnum.POLY_MODE_ON);
+                    channels[channel].controlChange(32, bankIndex & MidiControlMessageEnum.POLY_MODE_ON);
                     channels[channel].programChange(preset);
 
                     // For percussion channel, ensure drum mode is enabled
@@ -366,12 +367,12 @@ public class InternalSynthManager {
                     if (receiver != null) {
                         // Bank select MSB
                         javax.sound.midi.ShortMessage bankMSB = new javax.sound.midi.ShortMessage();
-                        bankMSB.setMessage(0xB0 | channel, 0, (bankIndex >> 7) & 0x7F);
+                        bankMSB.setMessage(0xB0 | channel, 0, (bankIndex >> 7) & MidiControlMessageEnum.POLY_MODE_ON);
                         receiver.send(bankMSB, -1);
 
                         // Bank select LSB
                         javax.sound.midi.ShortMessage bankLSB = new javax.sound.midi.ShortMessage();
-                        bankLSB.setMessage(0xB0 | channel, 32, bankIndex & 0x7F);
+                        bankLSB.setMessage(0xB0 | channel, 32, bankIndex & MidiControlMessageEnum.POLY_MODE_ON);
                         receiver.send(bankLSB, -1);
 
                         // Program change

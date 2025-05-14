@@ -1,6 +1,7 @@
 package com.angrysurfer.core.service;
 
 import com.angrysurfer.core.api.*;
+import com.angrysurfer.core.api.midi.MidiControlMessageEnum;
 import com.angrysurfer.core.event.PlayerPresetChangeEvent;
 import com.angrysurfer.core.event.PlayerUpdateEvent;
 import com.angrysurfer.core.model.InstrumentWrapper;
@@ -739,8 +740,8 @@ public class SoundbankManager implements IBusListener {
                 MidiChannel[] channels = synth.getChannels();
                 if (channels != null && channel < channels.length) {
                     // Calculate bank MSB and LSB
-                    int bankMSB = (bankIndex >> 7) & 0x7F;
-                    int bankLSB = bankIndex & 0x7F;
+                    int bankMSB = (bankIndex >> 7) & MidiControlMessageEnum.POLY_MODE_ON;
+                    int bankLSB = bankIndex & MidiControlMessageEnum.POLY_MODE_ON;
 
                     // Send bank select and program change
                     channels[channel].controlChange(0, bankMSB);
@@ -754,8 +755,8 @@ public class SoundbankManager implements IBusListener {
             }
 
             // Fall back to standard MIDI messages via InstrumentWrapper
-            instrument.controlChange(0, (bankIndex >> 7) & 0x7F); // Bank MSB
-            instrument.controlChange(32, bankIndex & 0x7F); // Bank LSB
+            instrument.controlChange(0, (bankIndex >> 7) & MidiControlMessageEnum.POLY_MODE_ON); // Bank MSB
+            instrument.controlChange(32, bankIndex & MidiControlMessageEnum.POLY_MODE_ON); // Bank LSB
             instrument.programChange(presetNumber, 0);
 
         } catch (Exception e) {
@@ -799,8 +800,8 @@ public class SoundbankManager implements IBusListener {
                     javax.sound.midi.MidiChannel[] channels = synth.getChannels();
                     if (channels != null && channel < channels.length) {
                         // Direct channel access to avoid affecting other instruments
-                        channels[channel].controlChange(0, (bankIndex >> 7) & 0x7F);  // Bank MSB
-                        channels[channel].controlChange(32, bankIndex & 0x7F);        // Bank LSB
+                        channels[channel].controlChange(0, (bankIndex >> 7) & MidiControlMessageEnum.POLY_MODE_ON);  // Bank MSB
+                        channels[channel].controlChange(32, bankIndex & MidiControlMessageEnum.POLY_MODE_ON);        // Bank LSB
                         channels[channel].programChange(preset);
 
                         logger.info("Applied preset change directly to player {} on channel {}: bank={}, program={}",
@@ -816,12 +817,12 @@ public class SoundbankManager implements IBusListener {
 
                 // Bank select MSB
                 javax.sound.midi.ShortMessage bankMSB = new javax.sound.midi.ShortMessage();
-                bankMSB.setMessage(0xB0 | channel, 0, (bankIndex >> 7) & 0x7F);
+                bankMSB.setMessage(0xB0 | channel, 0, (bankIndex >> 7) & MidiControlMessageEnum.POLY_MODE_ON);
                 receiver.send(bankMSB, timestamp);
 
                 // Bank select LSB
                 javax.sound.midi.ShortMessage bankLSB = new javax.sound.midi.ShortMessage();
-                bankLSB.setMessage(0xB0 | channel, 32, bankIndex & 0x7F);
+                bankLSB.setMessage(0xB0 | channel, 32, bankIndex & MidiControlMessageEnum.POLY_MODE_ON);
                 receiver.send(bankLSB, timestamp);
 
                 // Program change
