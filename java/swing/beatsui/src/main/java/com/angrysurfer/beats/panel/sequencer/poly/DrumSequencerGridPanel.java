@@ -1,7 +1,7 @@
 package com.angrysurfer.beats.panel.sequencer.poly;
 
 import com.angrysurfer.beats.util.UIHelper;
-import com.angrysurfer.beats.widget.DrumSequencerGridButton;
+import com.angrysurfer.beats.widget.DrumGridButton;
 import com.angrysurfer.beats.widget.DrumSequencerGridPanelContextHandler;
 import com.angrysurfer.core.sequencer.DrumSequencer;
 import com.angrysurfer.core.sequencer.SequencerConstants;
@@ -23,8 +23,8 @@ public class DrumSequencerGridPanel extends JPanel {
     private static final int DRUM_PAD_COUNT = SequencerConstants.DRUM_PAD_COUNT;
     private static final int GRID_BUTTON_SIZE = 24;
     // Core components
-    private final List<DrumSequencerGridButton> triggerButtons = new ArrayList<>();
-    private final DrumSequencerGridButton[][] gridButtons;
+    private final List<DrumGridButton> triggerButtons = new ArrayList<>();
+    private final DrumGridButton[][] gridButtons;
     private final DrumSequencer sequencer;
     private final DrumSequencerPanel parentPanel;
     private final DrumSequencerGridPanelContextHandler contextMenuHandler;
@@ -52,7 +52,7 @@ public class DrumSequencerGridPanel extends JPanel {
         // setBorder(BorderFactory.createEmptyBorder(2, 2, 2, 2));
         // setBorder(BorderFactory.createLoweredBevelBorder());
         // Initialize grid buttons array
-        gridButtons = new DrumSequencerGridButton[DRUM_PAD_COUNT][sequencer.getDefaultPatternLength()];
+        gridButtons = new DrumGridButton[DRUM_PAD_COUNT][sequencer.getDefaultPatternLength()];
         // Create the grid buttons
         createGridButtons();
         // Visualizer gridSaver = new Visualizer(this, gridButtons);
@@ -65,7 +65,7 @@ public class DrumSequencerGridPanel extends JPanel {
         // Create grid buttons
         for (int drumIndex = 0; drumIndex < DRUM_PAD_COUNT; drumIndex++) {
             for (int step = 0; step < sequencer.getDefaultPatternLength(); step++) {
-                DrumSequencerGridButton button = createStepButton(drumIndex, step);
+                DrumGridButton button = createStepButton(drumIndex, step);
 
                 // IMPORTANT: Set initial state based on sequencer
                 boolean isInPattern = step < sequencer.getPatternLength(drumIndex);
@@ -89,8 +89,8 @@ public class DrumSequencerGridPanel extends JPanel {
     /**
      * Create step button with proper behavior
      */
-    private DrumSequencerGridButton createStepButton(int drumIndex, int step) {
-        DrumSequencerGridButton button = new DrumSequencerGridButton();
+    private DrumGridButton createStepButton(int drumIndex, int step) {
+        DrumGridButton button = new DrumGridButton();
 
         // Make button square with constant size
         button.setPreferredSize(new Dimension(GRID_BUTTON_SIZE, GRID_BUTTON_SIZE));
@@ -136,7 +136,7 @@ public class DrumSequencerGridPanel extends JPanel {
         for (int step = 0; step < sequencer.getDefaultPatternLength(); step++) {
             int buttonIndex = (drumIndex * sequencer.getDefaultPatternLength()) + step;
             if (buttonIndex >= 0 && buttonIndex < triggerButtons.size()) {
-                DrumSequencerGridButton button = triggerButtons.get(buttonIndex);
+                DrumGridButton button = triggerButtons.get(buttonIndex);
 
                 // Keep all buttons visible
                 button.setVisible(true);
@@ -183,7 +183,7 @@ public class DrumSequencerGridPanel extends JPanel {
 
             // Safety check
             if (buttonIndex >= 0 && buttonIndex < triggerButtons.size()) {
-                DrumSequencerGridButton button = triggerButtons.get(buttonIndex);
+                DrumGridButton button = triggerButtons.get(buttonIndex);
 
                 // Make button visible regardless of pattern length - CRITICAL FIX
                 button.setVisible(true);
@@ -229,7 +229,7 @@ public class DrumSequencerGridPanel extends JPanel {
 
         // Un-highlight old step
         if (oldButtonIndex >= 0 && oldButtonIndex < triggerButtons.size()) {
-            DrumSequencerGridButton oldButton = triggerButtons.get(oldButtonIndex);
+            DrumGridButton oldButton = triggerButtons.get(oldButtonIndex);
             if (oldButton != null) {
                 oldButton.setHighlighted(false);
                 oldButton.repaint();
@@ -238,7 +238,7 @@ public class DrumSequencerGridPanel extends JPanel {
 
         // Highlight new step if valid and we're playing
         if (isPlaying && newButtonIndex >= 0 && newButtonIndex < triggerButtons.size()) {
-            DrumSequencerGridButton newButton = triggerButtons.get(newButtonIndex);
+            DrumGridButton newButton = triggerButtons.get(newButtonIndex);
             if (newButton != null) {
                 // Choose color based on step position in the pattern
                 Color highlightColor;
@@ -268,7 +268,7 @@ public class DrumSequencerGridPanel extends JPanel {
      * Clear all step highlighting across all drum rows
      */
     public void clearAllStepHighlighting() {
-        for (DrumSequencerGridButton button : triggerButtons) {
+        for (DrumGridButton button : triggerButtons) {
             button.clearTemporaryState();
             button.repaint();
         }
@@ -302,7 +302,7 @@ public class DrumSequencerGridPanel extends JPanel {
                 int buttonIndex = drumIndex * sequencer.getDefaultPatternLength() + step;
 
                 if (buttonIndex < triggerButtons.size()) {
-                    DrumSequencerGridButton button = triggerButtons.get(buttonIndex);
+                    DrumGridButton button = triggerButtons.get(buttonIndex);
 
                     if (button != null) {
                         // Get the current state from the sequencer
@@ -334,7 +334,7 @@ public class DrumSequencerGridPanel extends JPanel {
         // Show indices on buttons in debug mode
         if (triggerButtons != null) {
             for (int i = 0; i < triggerButtons.size(); i++) {
-                DrumSequencerGridButton button = triggerButtons.get(i);
+                DrumGridButton button = triggerButtons.get(i);
                 int drumIndex = i / sequencer.getDefaultPatternLength();
                 int stepIndex = i % sequencer.getDefaultPatternLength();
 
@@ -351,14 +351,14 @@ public class DrumSequencerGridPanel extends JPanel {
     /**
      * Get the list of trigger buttons
      */
-    public List<DrumSequencerGridButton> getTriggerButtons() {
+    public List<DrumGridButton> getTriggerButtons() {
         return triggerButtons;
     }
 
     /**
      * Get the 2D array of grid buttons
      */
-    public DrumSequencerGridButton[][] getGridButtons() {
+    public DrumGridButton[][] getGridButtons() {
         return gridButtons;
     }
 }

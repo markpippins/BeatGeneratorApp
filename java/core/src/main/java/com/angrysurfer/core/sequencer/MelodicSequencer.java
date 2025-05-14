@@ -870,20 +870,37 @@ public class MelodicSequencer implements IBusListener {
         }
     }
 
-    public void updateInstrumentSettingsInSequenceData() {
-        if (player != null && player.getInstrument() != null) {
-            InstrumentWrapper instrument = player.getInstrument();
-
-            sequenceData.setSoundbankName(instrument.getSoundbankName());
-            sequenceData.setBankIndex(instrument.getBankIndex());
-            sequenceData.setPreset(instrument.getPreset());
-            sequenceData.setDeviceName(instrument.getDeviceName());
-            sequenceData.setInstrumentId(instrument.getId());
-            sequenceData.setInstrumentName(instrument.getName());
-
-            logger.debug("Updated sequence data with instrument settings - preset:{}, bank:{}, soundbank:{}",
-                    instrument.getPreset(), instrument.getBankIndex(), instrument.getSoundbankName());
-        }
+public void updateInstrumentSettingsInSequenceData() {
+    if (player == null || player.getInstrument() == null || sequenceData == null) {
+        logger.warn("Cannot update sequence data - missing player, instrument or sequenceData");
+        return;
     }
+
+    InstrumentWrapper instrument = player.getInstrument();
+
+    // Save previous values for logging
+    Integer prevBankIndex = sequenceData.getBankIndex();
+    Integer prevPreset = sequenceData.getPreset();
+    String prevSoundbankName = sequenceData.getSoundbankName();
+    
+    // Update with current instrument data
+    sequenceData.setSoundbankName(instrument.getSoundbankName());
+    sequenceData.setBankIndex(instrument.getBankIndex());
+    sequenceData.setPreset(instrument.getPreset());
+    sequenceData.setDeviceName(instrument.getDeviceName());
+    sequenceData.setInstrumentId(instrument.getId());
+    sequenceData.setInstrumentName(instrument.getName());
+
+    // Log only if there were actual changes
+    if (!Objects.equals(prevBankIndex, instrument.getBankIndex()) ||
+        !Objects.equals(prevPreset, instrument.getPreset()) ||
+        !Objects.equals(prevSoundbankName, instrument.getSoundbankName())) {
+        
+        logger.info("Updated sequence data for {} with instrument settings changed from {}/{}/{} to {}/{}/{}",
+                player.getName(),
+                prevBankIndex, prevPreset, prevSoundbankName,
+                instrument.getBankIndex(), instrument.getPreset(), instrument.getSoundbankName());
+    }
+}
 }
 

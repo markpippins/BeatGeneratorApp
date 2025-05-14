@@ -19,7 +19,7 @@ import java.awt.event.*;
  */
 @Getter
 @Setter
-public class DrumSequencerButton extends JButton implements IBusListener {
+public class DrumSelectorButton extends JButton implements IBusListener {
 
     private int drumPadIndex;
     private DrumSequencer sequencer;
@@ -35,7 +35,7 @@ public class DrumSequencerButton extends JButton implements IBusListener {
      * @param drumPadIndex The index of the drum pad (0-15)
      * @param sequencer    The drum sequencer instance
      */
-    public DrumSequencerButton(int drumPadIndex, DrumSequencer sequencer) {
+    public DrumSelectorButton(int drumPadIndex, DrumSequencer sequencer) {
         super();
         this.drumPadIndex = drumPadIndex;
         this.sequencer = sequencer;

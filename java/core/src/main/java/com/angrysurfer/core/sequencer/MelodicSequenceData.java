@@ -75,12 +75,6 @@ public class MelodicSequenceData {
         Arrays.fill(nudgeValues, 0);
         Arrays.fill(tiltValues, 0);
         Arrays.fill(muteValues, 0); // Initialize mute values to 0 (unmuted)
-
-        // Activate some initial steps for a basic pattern
-        // activeSteps[0] = true;
-        // activeSteps[4] = true;
-        // activeSteps[8] = true;
-        // activeSteps[12] = true;
     }
 
     /**

@@ -13,9 +13,7 @@ import com.angrysurfer.core.event.NoteEvent;
 import com.angrysurfer.core.model.Player;
 import com.angrysurfer.core.sequencer.DrumSequencer;
 import com.angrysurfer.core.sequencer.TimingUpdate;
-import com.angrysurfer.core.service.DeviceManager;
 import com.angrysurfer.core.service.DrumSequencerManager;
-import com.angrysurfer.core.service.PlayerManager;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -313,7 +311,7 @@ public class DrumParamsSequencerPanel extends JPanel implements IBusListener {
                     dial.setMaximum(50);
                     dial.setValue(0); // Default value
                     dial.setKnobColor(UIHelper.getDialColor("nudge")); // Set knob color
-                    // Color.WHITE);
+
                     // Add to collection and event listener
                     nudgeDials.add(dial);
                     dial.addChangeListener(e -> {
@@ -338,9 +336,7 @@ public class DrumParamsSequencerPanel extends JPanel implements IBusListener {
         triggerButton.setName("TriggerButton-" + index);
         triggerButton.setToolTipText("Step " + (index + 1));
         triggerButton.setEnabled(selectedPadIndex >= 0);
-        triggerButton.addActionListener(e -> {
-            toggleStepForActivePad(index);
-        });
+        triggerButton.addActionListener(e -> toggleStepForActivePad(index));
 
         selectorButtons.add(triggerButton);
 
@@ -377,8 +373,7 @@ public class DrumParamsSequencerPanel extends JPanel implements IBusListener {
      */
     public void reset() {
         // Clear all highlighting
-        for (int i = 0; i < selectorButtons.size(); i++) {
-            TriggerButton button = selectorButtons.get(i);
+        for (TriggerButton button : selectorButtons) {
             if (button != null) {
                 button.setHighlighted(false);
                 button.repaint();
@@ -400,7 +395,7 @@ public class DrumParamsSequencerPanel extends JPanel implements IBusListener {
         return sequencer.isLooping(selectedPadIndex);
     }
 
-     /**
+    /**
      * Get the knob label for a specific index
      */
     private String getKnobLabel(int i) {
@@ -543,10 +538,10 @@ public class DrumParamsSequencerPanel extends JPanel implements IBusListener {
                     dial.setValue(sequencer.getStepNudge(selectedPadIndex, step));
                 }
             }
-            
+
             // Also update trigger buttons to reflect active steps
             refreshTriggerButtonsForPad(selectedPadIndex);
-            
+
         } finally {
             updatingControls = false;
         }
@@ -677,23 +672,19 @@ public class DrumParamsSequencerPanel extends JPanel implements IBusListener {
 
                         // Update UI without triggering further events
                         SwingUtilities.invokeLater(() -> {
-                            // Just visually select without callbacks
                             drumPadPanel.selectDrumPadNoCallback(newSelection);
-
-                            // Update minimal UI elements
-                            updateInstrumentInfoLabel();
                             refreshTriggerButtonsForPad(newSelection);
                         });
                     }
                 }
             }
 
-            case Commands.PLAYER_UPDATED, Commands.INSTRUMENT_CHANGED -> {
-                // Update the info label if this affects our selected pad
-                if (selectedPadIndex >= 0) {
-                    SwingUtilities.invokeLater(this::updateInstrumentInfoLabel);
-                }
-            }
+//            case Commands.PLAYER_UPDATED, Commands.INSTRUMENT_CHANGED -> {
+//                // Update the info label if this affects our selected pad
+//                if (selectedPadIndex >= 0) {
+//                    SwingUtilities.invokeLater(this::updateInstrumentInfoLabel);
+//                }
+//            }
         }
     }
 
@@ -771,12 +762,12 @@ public class DrumParamsSequencerPanel extends JPanel implements IBusListener {
                 Player player = sequencer.getPlayers()[padIndex];
 
                 if (player != null && player.getInstrument() != null) {
-                    player.getInstrument().setDevice(DeviceManager.getMidiDevice(player.getInstrument().getDeviceName()));
-                    PlayerManager.getInstance().ensureChannelConsistency();
-                    PlayerManager.getInstance().applyPlayerPreset(player);
+                    // player.getInstrument().setDevice(DeviceManager.getMidiDevice(player.getInstrument().getDeviceName()));
+                    // PlayerManager.getInstance().ensureChannelConsistency();
+                    // PlayerManager.getInstance().applyPlayerPreset(player);
 
-                    player.drumNoteOn(player.getRootNote());
-                    
+                    // player.drumNoteOn(player.getRootNote());
+
                     CommandBus.getInstance().publish(
                             Commands.STATUS_UPDATE,
                             this,
@@ -790,7 +781,6 @@ public class DrumParamsSequencerPanel extends JPanel implements IBusListener {
             }
 
             // Update UI in a specific order
-            updateInstrumentInfoLabel();
             setTriggerButtonsEnabled(true);
             refreshTriggerButtonsForPad(selectedPadIndex);
             updateDialsForSelectedPad();
@@ -799,7 +789,6 @@ public class DrumParamsSequencerPanel extends JPanel implements IBusListener {
             if (sequenceParamsPanel != null) {
                 sequenceParamsPanel.updateControls(padIndex);
             }
-            updateSoundParametersPanel();
 
             // Publish drum pad event LAST and only if we're handling a direct user
             // selection
@@ -828,23 +817,7 @@ public class DrumParamsSequencerPanel extends JPanel implements IBusListener {
     // Update the initializeDrumPads method to delegate to the panel
     private void initializeDrumPads() {
         // Select the first pad after initialization
-        SwingUtilities.invokeLater(() -> {
-            drumPadPanel.selectDrumPad(0);
-        });
+        SwingUtilities.invokeLater(() -> drumPadPanel.selectDrumPad(0));
     }
 
-    /**
-     * Updates the sound parameters panel when a drum is selected
-     */
-    private void updateSoundParametersPanel() {
-
-    }
-
-    /**
-     * Update the instrument info label with current player and instrument
-     * information
-     */
-    private void updateInstrumentInfoLabel() {
-
-    }
 }

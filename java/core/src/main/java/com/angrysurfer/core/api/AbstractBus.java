@@ -132,7 +132,10 @@ public abstract class AbstractBus {
      * Process the command by notifying all listeners
      */
     private void processCommand(Command action) {
+        System.out.println("CommandBus: processign " + action.toString() + ", listeners: " + listeners.size());
+
         listeners.forEach(listener -> {
+            System.out.println("CommandBus: Sending " + action.getCommand() + " to " + listener.getClass().getName());
             try {
                 if (listener != action.getSender())
                     listener.onAction(action);

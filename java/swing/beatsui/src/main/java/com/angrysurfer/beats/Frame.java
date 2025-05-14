@@ -1,25 +1,5 @@
 package com.angrysurfer.beats;
 
-import java.awt.BorderLayout;
-import java.awt.Component;
-import java.awt.Container;
-import java.awt.Dimension;
-import java.awt.KeyEventDispatcher;
-import java.awt.KeyboardFocusManager;
-import java.awt.Window;
-import java.awt.event.KeyEvent;
-import java.util.HashMap;
-import java.util.Map;
-
-import javax.swing.JDialog;
-import javax.swing.JFrame;
-import javax.swing.JPanel;
-import javax.swing.Timer;
-import javax.swing.UIManager;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import com.angrysurfer.beats.panel.MainPanel;
 import com.angrysurfer.beats.panel.internalsynth.InternalSynthControlPanel;
 import com.angrysurfer.beats.panel.session.SessionPanel;
@@ -27,15 +7,19 @@ import com.angrysurfer.core.Constants;
 import com.angrysurfer.core.api.CommandBus;
 import com.angrysurfer.core.api.Commands;
 import com.angrysurfer.core.config.FrameState;
-import com.angrysurfer.core.model.Player;
 import com.angrysurfer.core.redis.RedisService;
-import com.angrysurfer.core.service.PlayerManager;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import javax.swing.*;
+import java.awt.*;
+import java.awt.event.KeyEvent;
+import java.util.HashMap;
+import java.util.Map;
 
 public class Frame extends JFrame implements AutoCloseable {
 
     private static final Logger logger = LoggerFactory.getLogger(Frame.class.getName());
-
-    private StatusBar statusBar = new StatusBar();
 
     private final Map<Character, Integer> keyNoteMap;
     // private BackgroundPanel backgroundPanel;
@@ -66,11 +50,10 @@ public class Frame extends JFrame implements AutoCloseable {
         if (state != null) {
             setSize(state.getFrameSizeX(), state.getFrameSizeY());
             setLocation(state.getFramePosX(), state.getFramePosY());
-            
+
             try {
                 setSelectedTab(state.getSelectedTab());
-            }  
-            catch (Exception e) {
+            } catch (Exception e) {
                 logger.warn("Error setting selected tab: " + e.getMessage());
             }
 
@@ -165,7 +148,7 @@ public class Frame extends JFrame implements AutoCloseable {
 
         setJMenuBar(new MenuBar(this));
         add(new ToolBar(), BorderLayout.NORTH);
-        add(statusBar, BorderLayout.SOUTH);
+        add(new StatusBar(), BorderLayout.SOUTH);
     }
 
     private Map<Character, Integer> setupKeyMap() {
@@ -195,42 +178,42 @@ public class Frame extends JFrame implements AutoCloseable {
                 if (e.getID() != KeyEvent.KEY_PRESSED) {
                     return false;
                 }
-                
+
                 // Check for modal dialogs - don't handle keys when dialogs are showing
                 if (isModalDialogShowing()) {
                     return false;
                 }
-                
+
                 // Handle spacebar for transport control
                 if (e.getKeyCode() == KeyEvent.VK_SPACE) {
                     // Don't intercept space if typing in a text field
                     if (e.getComponent() instanceof javax.swing.text.JTextComponent) {
                         return false;
                     }
-                    
+
                     logger.info("Spacebar pressed - Toggling transport");
                     CommandBus.getInstance().publish(Commands.TOGGLE_TRANSPORT, this);
                     e.consume();
                     return true;
                 }
-                
+
                 // Get the pressed key character
                 char keyChar = Character.toLowerCase(e.getKeyChar());
                 boolean keyMapped = keyNoteMap.containsKey(keyChar);
-                
+
                 if (!keyMapped) {
                     return false; // Not a mapped key, let the event pass through
                 }
-                
+
                 // First check if internal synth tab is active
                 if (mainPanel != null && isInternalSynthTabActive()) {
                     // Play note on the internal synth
                     int baseNote = keyNoteMap.get(keyChar);
-                    
+
                     // Determine command based on shift key
                     String command = e.isShiftDown() ? Commands.KEY_HELD : Commands.KEY_PRESSED;
                     CommandBus.getInstance().publish(command, this, baseNote);
-                    
+
                     // Consume the event
                     e.consume();
                     return true;
@@ -244,39 +227,38 @@ public class Frame extends JFrame implements AutoCloseable {
                         if (mainPanel.getTargetPlayer() != null && mainPanel.getTargetPlayer().getRootNote() != null) {
                             int playerNote = mainPanel.getTargetPlayer().getRootNote().intValue();
                             logger.info("A key pressed - Playing active player's note: " + playerNote);
-                            
+
                             // Determine command based on shift key
                             String command = e.isShiftDown() ? Commands.KEY_HELD : Commands.KEY_PRESSED;
                             CommandBus.getInstance().publish(command, this, playerNote);
-                            
+
                             // Consume the event
                             e.consume();
                             return true;
                         }
-                    }
-                    else if (keyNoteMap.containsKey(keyChar)) {
+                    } else if (keyNoteMap.containsKey(keyChar)) {
                         // Existing code for handling piano keys...
                         int baseNote = keyNoteMap.get(keyChar);
-                        
+
                         // Adjust for active player's octave...
                         int noteToPlay = baseNote;
-                        
+
                         if (mainPanel.getTargetPlayer() != null) {
                             int playerOctave = mainPanel.getTargetPlayer().getRootNote().intValue() / 12;
                             int baseOctave = 5; // Default keyboard mapping is in octave 5
-                            
+
                             // Adjust the note by the octave difference
                             noteToPlay = baseNote + ((playerOctave - baseOctave) * 12);
-                            
+
                             // Ensure within valid MIDI range
                             noteToPlay = Math.max(0, Math.min(127, noteToPlay));
-                            logger.info("Key " + keyChar + " mapped to note " + noteToPlay + 
-                                      " (player octave: " + playerOctave + ")");
+                            logger.info("Key " + keyChar + " mapped to note " + noteToPlay +
+                                    " (player octave: " + playerOctave + ")");
                         }
 
                         String command = e.isShiftDown() ? Commands.KEY_HELD : Commands.KEY_PRESSED;
                         CommandBus.getInstance().publish(command, this, noteToPlay);
-                        
+
                         // Consume the event
                         e.consume();
                         return true;
@@ -287,31 +269,31 @@ public class Frame extends JFrame implements AutoCloseable {
                     // Find X0XPanel within the component hierarchy
                     Component selected = mainPanel.getSelectedComponent();
                     MainPanel x0xPanel = findX0XPanel(selected);
-                    
+
                     if (x0xPanel != null) {
                         // Get base note (for octave 5)
                         int baseNote = keyNoteMap.get(keyChar);
-                        
+
                         // Apply default velocity and duration based on Shift key
                         int velocity = e.isShiftDown() ? 110 : 90;
                         int durationMs = e.isShiftDown() ? 500 : 250;
-                        
+
                         // Play the note directly on X0X synthesizer
                         logger.info("Playing note {} on X0X synthesizer", baseNote);
-                        
+
                         // Use Timer to avoid holding the EDT during note playback
                         Timer noteTimer = new Timer(5, evt -> {
                             x0xPanel.playNote(baseNote, velocity, durationMs);
-                            ((Timer)evt.getSource()).stop();
+                            ((Timer) evt.getSource()).stop();
                         });
                         noteTimer.setRepeats(false);
                         noteTimer.start();
-                        
+
                         e.consume();
                         return true;
                     }
                 }
-                
+
                 return false;
             }
         });
@@ -323,8 +305,8 @@ public class Frame extends JFrame implements AutoCloseable {
     private boolean isInternalSynthTabActive() {
         // Find if the active tab contains the InternalSynthControlPanel
         Component selectedComponent = mainPanel.getSelectedComponent();
-        return selectedComponent instanceof InternalSynthControlPanel || 
-               (selectedComponent != null && findChildOfType(selectedComponent, InternalSynthControlPanel.class) != null);
+        return selectedComponent instanceof InternalSynthControlPanel ||
+                (selectedComponent != null && findChildOfType(selectedComponent, InternalSynthControlPanel.class) != null);
     }
 
     /**
@@ -334,9 +316,8 @@ public class Frame extends JFrame implements AutoCloseable {
         if (type.isInstance(component)) {
             return type.cast(component);
         }
-        
-        if (component instanceof Container) {
-            Container container = (Container) component;
+
+        if (component instanceof Container container) {
             for (int i = 0; i < container.getComponentCount(); i++) {
                 T result = findChildOfType(container.getComponent(i), type);
                 if (result != null) {
@@ -344,7 +325,7 @@ public class Frame extends JFrame implements AutoCloseable {
                 }
             }
         }
-        
+
         return null;
     }
 
@@ -355,13 +336,12 @@ public class Frame extends JFrame implements AutoCloseable {
         if (component == null) {
             return null;
         }
-        
+
         if (component instanceof MainPanel) {
             return (MainPanel) component;
         }
-        
-        if (component instanceof Container) {
-            Container container = (Container) component;
+
+        if (component instanceof Container container) {
             for (Component child : container.getComponents()) {
                 MainPanel panel = findX0XPanel(child);
                 if (panel != null) {
@@ -427,5 +407,5 @@ public class Frame extends JFrame implements AutoCloseable {
         dispose();
     }
 
-    
+
 }

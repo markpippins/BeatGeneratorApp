@@ -1,7 +1,7 @@
 package com.angrysurfer.beats.panel.sequencer.poly;
 
 import com.angrysurfer.beats.panel.MainPanel;
-import com.angrysurfer.beats.widget.DrumSequencerButton;
+import com.angrysurfer.beats.widget.DrumSelectorButton;
 import com.angrysurfer.core.api.Command;
 import com.angrysurfer.core.api.CommandBus;
 import com.angrysurfer.core.api.Commands;
@@ -33,7 +33,7 @@ public class DrumSelectorPanel extends JPanel implements IBusListener {
     private final DrumSequencer sequencer;
     private final DrumSequencerPanel parentPanel;
     // UI components
-    private final List<DrumSequencerButton> drumButtons = new ArrayList<>();
+    private final List<DrumSelectorButton> drumButtons = new ArrayList<>();
     // Command bus for event handling
     private final CommandBus commandBus = CommandBus.getInstance();
 
@@ -146,7 +146,7 @@ public class DrumSelectorPanel extends JPanel implements IBusListener {
         }
 
         // Get the button and player
-        DrumSequencerButton button = drumButtons.get(drumIndex);
+        DrumSelectorButton button = drumButtons.get(drumIndex);
         Player player = sequencer.getPlayer(drumIndex);
 
         if (player == null) {
@@ -222,7 +222,7 @@ public class DrumSelectorPanel extends JPanel implements IBusListener {
             }
 
             // Create the drum button with proper selection handling
-            DrumSequencerButton drumButton = new DrumSequencerButton(drumIndex, sequencer);
+            DrumSelectorButton drumButton = new DrumSelectorButton(drumIndex, sequencer);
 
             // Use the player's name if available, otherwise use default
             String buttonText = (player != null && player.getName() != null) ?
@@ -325,7 +325,7 @@ public class DrumSelectorPanel extends JPanel implements IBusListener {
     /**
      * Get the list of drum buttons
      */
-    public List<DrumSequencerButton> getDrumButtons() {
+    public List<DrumSelectorButton> getDrumButtons() {
         return drumButtons;
     }
 
