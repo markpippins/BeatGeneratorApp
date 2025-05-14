@@ -133,7 +133,27 @@ public class InstrumentCombo extends JComboBox<InstrumentWrapper> implements IBu
                 if (action.getData() instanceof Player player && 
                         currentPlayer != null && 
                         player.getId().equals(currentPlayer.getId())) {
-                    updateSelectedInstrument(player);
+                    // Only update if instrument has changed
+                    if (player.getInstrumentId() != null && 
+                        (currentPlayer.getInstrumentId() == null || 
+                         !player.getInstrumentId().equals(currentPlayer.getInstrumentId()))) {
+                        updateSelectedInstrument(player);
+                    }
+                }
+                break;
+                
+            case Commands.PLAYER_INSTRUMENT_CHANGED:
+                // Handle instrument change notification
+                if (action.getData() instanceof Object[] data && data.length >= 2) {
+                    Long playerId = (Long) data[0];
+                    Long instrumentId = (Long) data[1];
+                    
+                    if (currentPlayer != null && 
+                        playerId != null && 
+                        playerId.equals(currentPlayer.getId())) {
+                        // Instead of full update, just select the right instrument
+                        selectInstrumentById(instrumentId);
+                    }
                 }
                 break;
                 
@@ -318,7 +338,7 @@ public class InstrumentCombo extends JComboBox<InstrumentWrapper> implements IBu
     }
     
     /**
-     * Handle instrument selection change through InstrumentManager
+     * Handle instrument selection change through PlayerInstrumentChangeEvent
      */
     private void handleSelectionChange() {
         if (currentPlayer == null || isInitializing || isUpdatingSelection) return;
@@ -326,11 +346,33 @@ public class InstrumentCombo extends JComboBox<InstrumentWrapper> implements IBu
         InstrumentWrapper selectedInstrument = (InstrumentWrapper) getSelectedItem();
         if (selectedInstrument == null) return;
         
-        // Delegate to command system - PlayerManager will handle assignment
-        commandBus.publish(Commands.PLAYER_INSTRUMENT_CHANGE_REQUEST, this,
-                new Object[] { currentPlayer.getId(), selectedInstrument });
+        // Create a PlayerInstrumentChangeEvent instead of using the legacy request
+        PlayerInstrumentChangeEvent event = new PlayerInstrumentChangeEvent(currentPlayer, selectedInstrument);
+        commandBus.publish(Commands.PLAYER_INSTRUMENT_CHANGE_EVENT, this, event);
         
-        logger.info("Instrument change requested for player {} to {}",
+        logger.info("Instrument change published for player {} to {}",
                 currentPlayer.getName(), selectedInstrument.getName());
+    }
+
+    /**
+     * Select an instrument by ID without triggering further updates
+     */
+    private void selectInstrumentById(Long instrumentId) {
+        if (instrumentId == null) return;
+        
+        isUpdatingSelection = true;
+        try {
+            for (int i = 0; i < getItemCount(); i++) {
+                InstrumentWrapper instrument = getItemAt(i);
+                if (instrument != null && 
+                    instrument.getId() != null && 
+                    instrument.getId().equals(instrumentId)) {
+                    setSelectedIndex(i);
+                    break;
+                }
+            }
+        } finally {
+            isUpdatingSelection = false;
+        }
     }
 }

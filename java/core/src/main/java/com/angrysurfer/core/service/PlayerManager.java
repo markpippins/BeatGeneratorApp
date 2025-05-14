@@ -126,6 +126,14 @@ public class PlayerManager implements IBusListener {
             Player player = event.getPlayer();
             InstrumentWrapper instrument = event.getInstrument();
 
+            // IMPORTANT: Skip processing if player already has this instrument
+            if (player.getInstrumentId() != null && 
+                player.getInstrumentId().equals(instrument.getId())) {
+                logger.debug("Player {} already has instrument {}, skipping update",
+                    player.getName(), instrument.getName());
+                return;
+            }
+
             Long previousInstrumentId = player.getInstrumentId();
 
             boolean isDrumPlayer = Objects.equals(player.getChannel(), Constants.MIDI_DRUM_CHANNEL);

@@ -45,8 +45,9 @@ public class SessionManager {
         return instance;
     }
 
-    public void addPlayerToSession(Session currentSession, Player updatedPlayer) {
-        redisService.addPlayerToSession(currentSession, updatedPlayer);
+    public void addPlayerToSession(Session currentSession, Player player) {
+        if (!player.getIsDefault())
+            redisService.addPlayerToSession(currentSession, player);
     }
 
     void handleSessionRequest() {
@@ -387,7 +388,7 @@ public class SessionManager {
         // Use PlayerManager for consistent player saving
         PlayerManager playerManager = PlayerManager.getInstance();
 
-        if (player.getId() == null) {
+        if (player.getId() == null && !player.getIsDefault()) {
             // New player - save through PlayerManager
             playerManager.savePlayerProperties(player);
 

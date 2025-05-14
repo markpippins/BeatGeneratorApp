@@ -49,14 +49,18 @@ public class InstrumentComboPanel extends PlayerAwarePanel {
     public void handlePlayerUpdated() {
         Player player = getTargetPlayer();
         if (player != null) {
-            logger.debug("Updating player in InstrumentComboPanel: {}", player.getName());
+            logger.debug("Player updated: {}", player.getName());
             
             // Update title if needed
             UIHelper.setWidgetPanelBorder(this, "Instrument - " + player.getName());
             
-            // Update the selected instrument in the combo
-            // This won't trigger a refresh if not needed
-            updateComboFromPlayer(player);
+            // Only update combo if the player's instrument has changed
+            if (combo.getCurrentPlayer() == null || 
+                combo.getCurrentPlayer().getInstrumentId() == null ||
+                player.getInstrumentId() == null ||
+                !player.getInstrumentId().equals(combo.getCurrentPlayer().getInstrumentId())) {
+                updateComboFromPlayer(player);
+            }
         }
     }
 
@@ -73,9 +77,17 @@ public class InstrumentComboPanel extends PlayerAwarePanel {
                 !player.getId().equals(combo.getCurrentPlayer().getId())) {
                 // Different player, set it as current
                 combo.setCurrentPlayer(player);
-            } else {
-                // Same player, just update selected instrument
-                combo.updateSelectedInstrument(player);
+            } else if (player.getInstrumentId() != null) {
+                // Same player but instrument might have changed
+                // Only update if the player's instrument ID has changed
+                if (combo.getCurrentPlayer().getInstrumentId() == null ||
+                    !player.getInstrumentId().equals(combo.getCurrentPlayer().getInstrumentId())) {
+                    logger.debug("Instrument changed for player {}: {} -> {}",
+                        player.getName(),
+                        combo.getCurrentPlayer().getInstrumentId(),
+                        player.getInstrumentId());
+                    combo.updateSelectedInstrument(player);
+                }
             }
         });
     }

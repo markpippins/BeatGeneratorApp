@@ -4,21 +4,20 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Date;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import com.angrysurfer.core.model.Player;
-import com.angrysurfer.core.util.PlayerDeserializer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.angrysurfer.core.config.UserConfig;
+import com.angrysurfer.core.model.Player;
 import com.angrysurfer.core.util.ErrorHandler;
+import com.angrysurfer.core.util.PlayerDeserializer;
+import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
-import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.module.SimpleModule;
 
 import lombok.Getter;
@@ -67,6 +66,8 @@ public class UserConfigHelper {
             if (json != null) {
                 UserConfig config = objectMapper.readValue(json, UserConfig.class);
                 logger.debug("Loaded UserConfig with ID {}", id);
+                logger.info(json);
+
                 return config;
             } else {
                 logger.debug("No UserConfig found with ID {}", id);

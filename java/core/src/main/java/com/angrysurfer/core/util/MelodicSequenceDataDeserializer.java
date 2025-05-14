@@ -144,6 +144,34 @@ public class MelodicSequenceDataDeserializer extends StdDeserializer<MelodicSequ
                 data.setMuteValues(defaultMuteValues);
             }
         }
+
+        // Handle instrument settings
+        if (node.has("soundbankName")) {
+            data.setSoundbankName(node.get("soundbankName").asText());
+        }
+
+        if (node.has("bankIndex")) {
+            data.setBankIndex(node.get("bankIndex").asInt());
+        }
+
+        if (node.has("preset")) {
+            data.setPreset(node.get("preset").asInt());
+        }
+
+        if (node.has("deviceName")) {
+            data.setDeviceName(node.get("deviceName").asText());
+        }
+
+        if (node.has("instrumentId") && !node.get("instrumentId").isNull()) {
+            data.setInstrumentId(node.get("instrumentId").asLong());
+        }
+
+        if (node.has("instrumentName")) {
+            data.setInstrumentName(node.get("instrumentName").asText());
+        }
+
+        logger.debug("Deserialized instrument settings: soundbank='{}', bank={}, preset={}",
+            data.getSoundbankName(), data.getBankIndex(), data.getPreset());
         
         return data;
     }
