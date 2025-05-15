@@ -303,11 +303,15 @@ public class UserConfigManager {
     }
 
     private void initializeInstruments() {
+
         if (this.currentConfig.getInstruments() == null || getCurrentConfig().getInstruments().isEmpty()) {
             // Load instruments from Redis if config doesn't have them
             try {
                 List<InstrumentWrapper> instruments = RedisService.getInstance().findAllInstruments();
                 if (instruments != null && !instruments.isEmpty()) {
+                    instruments.forEach(inst ->
+                            inst.setAvailable(Objects.nonNull(DeviceManager.getMidiDevice(inst.getDeviceName()))));
+
                     getCurrentConfig().setInstruments(instruments);
                     saveConfiguration(getCurrentConfig());
                     logger.info("Loaded {} instruments from Redis", instruments.size());

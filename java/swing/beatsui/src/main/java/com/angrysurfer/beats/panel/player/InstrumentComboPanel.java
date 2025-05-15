@@ -35,7 +35,7 @@ public class InstrumentComboPanel extends PlayerAwarePanel {
             logger.debug("Activating player in InstrumentComboPanel: {}", player.getName());
             
             // Update the panel title with player name
-            UIHelper.setWidgetPanelBorder(this, "Instrument - " + player.getInstrument().getName());
+            UIHelper.setWidgetPanelBorder(this, player.getName());
             
             // Set the player in the combo box - this will refresh the instruments
             combo.setCurrentPlayer(player);
@@ -52,7 +52,7 @@ public class InstrumentComboPanel extends PlayerAwarePanel {
             logger.debug("Player updated: {}", player.getName());
             
             // Update title if needed
-            UIHelper.setWidgetPanelBorder(this, "Instrument - " + player.getInstrument().getName());
+            UIHelper.setWidgetPanelBorder(this, player.getName());
             
             // Only update combo if the player's instrument has changed
             if (combo.getCurrentPlayer() == null || 
@@ -103,7 +103,7 @@ public class InstrumentComboPanel extends PlayerAwarePanel {
         Player player = getTargetPlayer();
         if (player != null) {
             combo.setCurrentPlayer(player);
-            UIHelper.setWidgetPanelBorder(this, "Instrument - " + player.getInstrument().getName());
+            UIHelper.setWidgetPanelBorder(this, player.getName());
         }
 
         add(combo);

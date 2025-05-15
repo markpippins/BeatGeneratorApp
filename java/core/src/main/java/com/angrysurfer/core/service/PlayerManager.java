@@ -28,6 +28,7 @@ import java.util.Set;
 @Getter
 @Setter
 public class PlayerManager implements IBusListener {
+
     private static final Logger logger = LoggerFactory.getLogger(PlayerManager.class);
     private static PlayerManager instance;
     private final Map<Long, Player> playerCache = new HashMap<>();
@@ -116,7 +117,8 @@ public class PlayerManager implements IBusListener {
     }
 
     /**
-     * Handle player preset change events with special handling for default players
+     * Handle player preset change events with special handling for default
+     * players
      */
     private void handlePlayerPresetChangeEvent(PlayerPresetChangeEvent event) {
         Player player = event.getPlayer();
@@ -128,16 +130,31 @@ public class PlayerManager implements IBusListener {
             return;
         }
 
+        // Update the instrument preset
         InstrumentWrapper instrument = player.getInstrument();
+        logger.info("Processing preset change for {} - bank:{}, preset:{}, soundbank:{}",
+                player.getName(), bankIndex, presetNumber, instrument.getSoundbankName());
+
+        // Apply soundbank first if it's an internal synth instrument
+        if (InternalSynthManager.getInstance().isInternalSynthInstrument(instrument)
+                && instrument.getSoundbankName() != null) {
+            boolean soundbankApplied = SoundbankManager.getInstance().applySoundbank(
+                    instrument, instrument.getSoundbankName());
+            logger.info("Applied soundbank {}: {}",
+                    instrument.getSoundbankName(), soundbankApplied ? "SUCCESS" : "FAILED");
+        }
 
         // Update the instrument preset
         if (bankIndex != null) {
             instrument.setBankIndex(bankIndex);
         }
-        instrument.setPreset(presetNumber);
+        if (presetNumber != null) {
+            instrument.setPreset(presetNumber);
+        }
 
-        // Apply the preset change
+        // Apply the preset change with additional log output
         boolean success = applyInstrumentPreset(player);
+        logger.info("Applied preset change: {}", success ? "SUCCESS" : "FAILED");
 
         if (success) {
             // If this is a default player, update in UserConfig
@@ -306,8 +323,9 @@ public class PlayerManager implements IBusListener {
     }
 
     public Player getPlayerById(Long id) {
-        if (id == null)
+        if (id == null) {
             return null;
+        }
 
         Player player = playerCache.get(id);
 
@@ -644,8 +662,8 @@ public class PlayerManager implements IBusListener {
     }
 
     /**
-     * Ensures that all players have consistent channel assignments
-     * and resolves any potential channel conflicts
+     * Ensures that all players have consistent channel assignments and resolves
+     * any potential channel conflicts
      */
     public void ensureChannelConsistency() {
         logger.info("Ensuring channel consistency across all players");
@@ -663,8 +681,9 @@ public class PlayerManager implements IBusListener {
                 Integer channel = player.getChannel();
 
                 // Skip drum channel 9 which can have multiple assignments
-                if (channel == SequencerConstants.MIDI_DRUM_CHANNEL)
+                if (channel == SequencerConstants.MIDI_DRUM_CHANNEL) {
                     continue;
+                }
 
                 if (channelToPlayerId.containsKey(channel)) {
                     // Conflict detected - track it
@@ -690,8 +709,9 @@ public class PlayerManager implements IBusListener {
                     Integer channel = player.getChannel();
 
                     // Skip drum channel
-                    if (channel == SequencerConstants.MIDI_DRUM_CHANNEL)
+                    if (channel == SequencerConstants.MIDI_DRUM_CHANNEL) {
                         continue;
+                    }
 
                     // If this player's channel has a conflict
                     if (channelConflicts.containsKey(channel)) {
@@ -720,8 +740,8 @@ public class PlayerManager implements IBusListener {
 
         // Final pass: ensure all players have valid channels
         for (Player player : playerCache.values()) {
-            if (player != null && (player.getChannel() == null ||
-                    (!player.isDrumPlayer() && player.getChannel() == SequencerConstants.MIDI_DRUM_CHANNEL))) {
+            if (player != null && (player.getChannel() == null
+                    || (!player.isDrumPlayer() && player.getChannel() == SequencerConstants.MIDI_DRUM_CHANNEL))) {
                 // Assign an appropriate channel
                 int newChannel = player.isDrumPlayer() ? 9 : channelManager.getNextAvailableMelodicChannel();
 
@@ -777,7 +797,8 @@ public class PlayerManager implements IBusListener {
      * Handle a rule update and broadcast an event
      *
      * @param player     The player whose rules are updated
-     * @param rule       The specific rule that was modified (can be null for bulk operations)
+     * @param rule       The specific rule that was modified (can be null for bulk
+     *                   operations)
      * @param updateType The type of update that occurred
      */
     public void handleRuleUpdate(Player player, Rule rule, PlayerRuleUpdateEvent.RuleUpdateType updateType) {

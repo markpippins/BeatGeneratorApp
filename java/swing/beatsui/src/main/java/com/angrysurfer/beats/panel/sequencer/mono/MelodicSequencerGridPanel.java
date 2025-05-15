@@ -66,7 +66,7 @@ public class MelodicSequencerGridPanel extends JPanel {
         addComponentListener(new java.awt.event.ComponentAdapter() {
             @Override
             public void componentResized(java.awt.event.ComponentEvent e) {
-                updateDialSizes();
+                // updateDialSizes();
             }
         });
     }
@@ -98,10 +98,7 @@ public class MelodicSequencerGridPanel extends JPanel {
             Dial dial = i == 4 ? new NoteSelectionDial() : new Dial();
 
             // Set default sizes - we'll update these in updateDialSizes()
-            int dialSize = i == 4 ? 60 : 40; // Note dial is larger than others
-            dial.setPreferredSize(new Dimension(dialSize, dialSize));
-            dial.setMinimumSize(new Dimension(40, 40)); // Minimum size for any dial
-            dial.setMaximumSize(new Dimension(60, 60)); // Minimum size for any dial
+            dial.setPreferredSize(new Dimension(50, 50));
 
             // Store the dial in the appropriate collection based on its type
             switch (i) {
@@ -278,7 +275,7 @@ public class MelodicSequencerGridPanel extends JPanel {
     public void addNotify() {
         super.addNotify();
         // Schedule dial size update after component is fully displayed
-        SwingUtilities.invokeLater(this::updateDialSizes);
+        //SwingUtilities.invokeLater(this::updateDialSizes);
     }
 
     /**
@@ -335,7 +332,7 @@ public class MelodicSequencerGridPanel extends JPanel {
         try {
             forceSync();
             // Make sure dial sizes are appropriate
-            updateDialSizes();
+            // updateDialSizes();
         } finally {
             listenersEnabled = true;
         }

@@ -201,7 +201,7 @@ public class DrumSequencerGridPanel extends JPanel {
                     button.setBackground(UIHelper.charcoalGray);
                 } else {
                     if (isActive) {
-                        button.setBackground(UIHelper.deepOrange);
+                        button.setBackground(UIHelper.agedOffWhite);
                     } else {
                         button.setBackground(UIHelper.slateGray);
                     }

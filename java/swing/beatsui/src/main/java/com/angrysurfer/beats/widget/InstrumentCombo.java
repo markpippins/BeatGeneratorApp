@@ -240,10 +240,10 @@ public class InstrumentCombo extends JComboBox<InstrumentWrapper> implements IBu
                 if (!allInstruments.isEmpty()) {
                     for (InstrumentWrapper instrument : allInstruments) {
                         // Only add available instruments
-                        if (instrument != null &&
-                                (instrument.getAvailable() == null || instrument.getAvailable())) {
-                            addItem(instrument);
-                        }
+                        //if (instrument != null &&
+                        //      (instrument.getAvailable() == null || instrument.getAvailable())) {
+                        addItem(instrument);
+                        // }
                     }
 
                     logger.info("Added {} instruments to combo", getItemCount());

@@ -5,6 +5,7 @@ import com.angrysurfer.beats.panel.PlayerAwarePanel;
 import com.angrysurfer.beats.util.UIHelper;
 import com.angrysurfer.core.api.CommandBus;
 import com.angrysurfer.core.api.Commands;
+import com.angrysurfer.core.event.PlayerPresetChangeEvent;
 import com.angrysurfer.core.model.Player;
 import com.angrysurfer.core.model.preset.BankItem;
 import com.angrysurfer.core.model.preset.PresetItem;
@@ -73,17 +74,41 @@ public class SoundParametersPanel extends PlayerAwarePanel {
                 BorderFactory.createEmptyBorder(2, 2, 2, 2)));
         soundbankCombo = new JComboBox<>();
 
-        // 2. Restore soundbank action listener
+        // Update the soundbank action listener to properly apply changes
         soundbankCombo.addActionListener(e -> {
             if (!isInitializing && soundbankCombo.getSelectedItem() != null) {
                 Player currentPlayer = getTargetPlayer();
                 if (currentPlayer != null && currentPlayer.getInstrument() != null) {
                     SoundbankItem item = (SoundbankItem) soundbankCombo.getSelectedItem();
-                    currentPlayer.getInstrument().setSoundbankName(item.getName());
+                    String soundbankName = item.getName();
+
+                    logger.info("Soundbank selected: {}", soundbankName);
+
+                    // Update the instrument property
+                    currentPlayer.getInstrument().setSoundbankName(soundbankName);
+
+                    // IMPORTANT: Actively apply the soundbank using SoundbankManager
+                    boolean applied = SoundbankManager.getInstance().applySoundbank(
+                            currentPlayer.getInstrument(), soundbankName);
+
+                    logger.info("Applied soundbank {} to instrument: {}",
+                            soundbankName, applied ? "SUCCESS" : "FAILED");
 
                     // Update bank and preset UI
                     updateBankCombo();
 
+                    // Create and publish a PresetChangeEvent to ensure the change is applied
+                    CommandBus.getInstance().publish(
+                            Commands.PLAYER_PRESET_CHANGE_EVENT,
+                            this,
+                            new PlayerPresetChangeEvent(
+                                    currentPlayer,
+                                    currentPlayer.getInstrument().getBankIndex(),
+                                    currentPlayer.getInstrument().getPreset()
+                            )
+                    );
+
+                    // Request UI update
                     requestPlayerUpdate();
                 }
             }
@@ -99,18 +124,42 @@ public class SoundParametersPanel extends PlayerAwarePanel {
                 BorderFactory.createEmptyBorder(2, 2, 2, 2)));
         bankCombo = new JComboBox<>();
 
-        // 2. Restore bank action listener
+        // Update the bank action listener to properly apply changes
         bankCombo.addActionListener(e -> {
             if (!isInitializing && bankCombo.getSelectedItem() != null) {
                 Player currentPlayer = getTargetPlayer();
                 if (currentPlayer != null && currentPlayer.getInstrument() != null) {
                     BankItem item = (BankItem) bankCombo.getSelectedItem();
-                    currentPlayer.getInstrument().setBankIndex(item.getIndex());
+                    Integer bankIndex = item.getIndex();
+
+                    logger.info("Bank selected: {}", bankIndex);
+
+                    // Update instrument bank index
+                    currentPlayer.getInstrument().setBankIndex(bankIndex);
                     currentBank = item;
 
                     // Update preset UI based on new bank
                     updatePresetCombo();
 
+                    // Get the current preset (or default to 0 if none)
+                    Integer presetNumber = currentPlayer.getInstrument().getPreset();
+                    if (presetNumber == null) {
+                        presetNumber = 0;
+                        currentPlayer.getInstrument().setPreset(presetNumber);
+                    }
+
+                    // Create and publish a PresetChangeEvent to ensure the change is applied
+                    CommandBus.getInstance().publish(
+                            Commands.PLAYER_PRESET_CHANGE_EVENT,
+                            this,
+                            new PlayerPresetChangeEvent(
+                                    currentPlayer,
+                                    bankIndex,
+                                    presetNumber
+                            )
+                    );
+
+                    // Request UI update
                     requestPlayerUpdate();
                 }
             }
@@ -124,7 +173,7 @@ public class SoundParametersPanel extends PlayerAwarePanel {
         UIHelper.setWidgetPanelBorder(presetPanel, "Preset");
         presetCombo = new JComboBox<>();
 
-        // 2. Restore preset action listener
+        // Update the preset action listener for better logging and consistency
         presetCombo.addActionListener(e -> {
             if (!isInitializing && presetCombo.getSelectedItem() != null) {
                 PresetItem item = (PresetItem) presetCombo.getSelectedItem();
@@ -134,6 +183,8 @@ public class SoundParametersPanel extends PlayerAwarePanel {
 
                 currentPreset = item;
                 Player currentPlayer = getTargetPlayer();
+
+                logger.info("Preset selected: {} - {}", item.getNumber(), item.getName());
 
                 if (currentPlayer != null && currentPlayer.getInstrument() != null) {
                     // Use SoundbankManager to update player sound
@@ -148,8 +199,10 @@ public class SoundParametersPanel extends PlayerAwarePanel {
                         currentPlayer.setRootNote(item.getNumber());
                     }
 
-                    SoundbankManager.getInstance().updatePlayerSound(
+                    boolean success = SoundbankManager.getInstance().updatePlayerSound(
                             currentPlayer, soundbankName, bankIndex, item.getNumber());
+
+                    logger.info("Applied preset to player: {}", success ? "SUCCESS" : "FAILED");
 
                     // Request update
                     requestPlayerUpdate();
