@@ -3,6 +3,11 @@ package com.angrysurfer.beats.panel.sequencer.poly;
 import com.angrysurfer.beats.util.UIHelper;
 import com.angrysurfer.beats.widget.DrumGridButton;
 import com.angrysurfer.beats.widget.DrumSequencerGridPanelContextHandler;
+import com.angrysurfer.core.api.Command;
+import com.angrysurfer.core.api.CommandBus;
+import com.angrysurfer.core.api.Commands;
+import com.angrysurfer.core.api.IBusListener;
+import com.angrysurfer.core.event.DrumStepUpdateEvent;
 import com.angrysurfer.core.sequencer.DrumSequencer;
 import com.angrysurfer.core.sequencer.SequencerConstants;
 import com.angrysurfer.core.service.DrumSequencerManager;
@@ -17,7 +22,7 @@ import java.util.List;
 /**
  * Panel containing the drum sequencing grid buttons
  */
-public class DrumSequencerGridPanel extends JPanel {
+public class DrumSequencerGridPanel extends JPanel implements IBusListener {
     private static final Logger logger = LoggerFactory.getLogger(DrumSequencerGridPanel.class);
     // UI constants
     private static final int DRUM_PAD_COUNT = SequencerConstants.DRUM_PAD_COUNT;
@@ -56,6 +61,7 @@ public class DrumSequencerGridPanel extends JPanel {
         // Create the grid buttons
         createGridButtons();
         // Visualizer gridSaver = new Visualizer(this, gridButtons);
+        CommandBus.getInstance().register(this);
     }
 
     /**
@@ -320,6 +326,33 @@ public class DrumSequencerGridPanel extends JPanel {
             updateRowAppearance(drumIndex, drumIndex == DrumSequencerManager.getInstance().getSelectedPadIndex());
         }
 
+        // Update parameter visualizations for all buttons
+        for (int drumIndex = 0; drumIndex < gridButtons.length; drumIndex++) {
+            DrumGridButton[] row = gridButtons[drumIndex];
+            for (int stepIndex = 0; stepIndex < row.length; stepIndex++) {
+                DrumGridButton button = row[stepIndex];
+
+                // Set step parameters for visualization
+                button.setStepParameters(
+                        sequencer.getStepVelocity(drumIndex, stepIndex),
+                        sequencer.getStepDecay(drumIndex, stepIndex),
+                        sequencer.getStepProbability(drumIndex, stepIndex),
+                        sequencer.getStepNudge(drumIndex, stepIndex)
+                );
+
+                // Set effects parameters
+                button.setEffectsParameters(
+                        sequencer.getStepPan(drumIndex, stepIndex),
+                        sequencer.getStepChorus(drumIndex, stepIndex),
+                        sequencer.getStepReverb(drumIndex, stepIndex)
+                );
+
+                // Set visual modes based on current view
+                button.setShowEffects(false); // Default off, toggle with a view button
+                button.setStepIndex(stepIndex); // For debugging
+            }
+        }
+
         // Ensure proper visual refresh
         revalidate();
         repaint();
@@ -360,5 +393,78 @@ public class DrumSequencerGridPanel extends JPanel {
      */
     public DrumGridButton[][] getGridButtons() {
         return gridButtons;
+    }
+
+    /**
+     * Subscribe to parameter change events from DrumParamsSequencerPanel
+     */
+    @Override
+    public void onAction(Command action) {
+        // Existing code...
+
+        switch (action.getCommand()) {
+            // Existing cases...
+
+            case Commands.DRUM_STEP_UPDATED:
+                if (action.getData() instanceof DrumStepUpdateEvent event) {
+                    updateStepHighlighting(event.getDrumIndex(), event.getOldStep(), event.getNewStep());
+                }
+                break;
+
+            // Add these new cases to handle parameter changes
+            case Commands.DRUM_STEP_PARAMETERS_CHANGED:
+                if (action.getData() instanceof Object[] data && data.length >= 5) {
+                    int drumIndex = (Integer) data[0];
+                    int stepIndex = (Integer) data[1];
+                    int velocity = (Integer) data[2];
+                    int decay = (Integer) data[3];
+                    int probability = (Integer) data[4];
+                    int nudge = data.length > 5 ? (Integer) data[5] : 0;
+
+                    // Update the button visuals
+                    updateStepButtonParameters(drumIndex, stepIndex, velocity, decay, probability, nudge);
+                }
+                break;
+
+            case Commands.DRUM_STEP_EFFECTS_CHANGED:
+                if (action.getData() instanceof Object[] data && data.length >= 5) {
+                    int drumIndex = (Integer) data[0];
+                    int stepIndex = (Integer) data[1];
+                    int pan = (Integer) data[2];
+                    int chorus = (Integer) data[3];
+                    int reverb = (Integer) data[4];
+
+                    // Update the button effects visuals
+                    updateStepButtonEffects(drumIndex, stepIndex, pan, chorus, reverb);
+                }
+                break;
+        }
+    }
+
+    /**
+     * Update a step button's parameter visualizations
+     */
+    private void updateStepButtonParameters(int drumIndex, int stepIndex, int velocity, int decay,
+                                            int probability, int nudge) {
+        if (drumIndex >= 0 && drumIndex < gridButtons.length) {
+            DrumGridButton[] row = gridButtons[drumIndex];
+            if (stepIndex >= 0 && stepIndex < row.length) {
+                DrumGridButton button = row[stepIndex];
+                button.setStepParameters(velocity, decay, probability, nudge);
+            }
+        }
+    }
+
+    /**
+     * Update a step button's effects visualizations
+     */
+    private void updateStepButtonEffects(int drumIndex, int stepIndex, int pan, int chorus, int reverb) {
+        if (drumIndex >= 0 && drumIndex < gridButtons.length) {
+            DrumGridButton[] row = gridButtons[drumIndex];
+            if (stepIndex >= 0 && stepIndex < row.length) {
+                DrumGridButton button = row[stepIndex];
+                button.setEffectsParameters(pan, chorus, reverb);
+            }
+        }
     }
 }

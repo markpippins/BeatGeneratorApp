@@ -394,4 +394,6 @@ public class Commands {
     public static final String SOUNDBANK_CHANGED = "SOUNDBANK_CHANGED";
     public static final String SAMPLE_LOOP_POINTS_CHANGED = "SAMPLE_LOOP_POINTS_CHANGED";
     public static final String SAMPLE_SELECTION_CHANGED = "SAMPLE_SELECTION_CHANGED";
+    public static final String DRUM_STEP_PARAMETERS_CHANGED = "DRUM_STEP_PARAMETERS_CHANGED";
+    public static final String DRUM_STEP_EFFECTS_CHANGED = "DRUM_STEP_EFFECTS_CHANGED";
 }

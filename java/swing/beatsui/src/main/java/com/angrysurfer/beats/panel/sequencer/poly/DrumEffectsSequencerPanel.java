@@ -169,24 +169,8 @@ public class DrumEffectsSequencerPanel extends JPanel implements IBusListener {
         // Navigation panel goes NORTH-WEST
         westPanel.add(navigationPanel, BorderLayout.NORTH);
 
-        // Create center panel for the info label
-        JPanel centerPanel = new JPanel(new GridBagLayout());  // Use GridBagLayout for true centering
-    
-        // Create and add the instrument info label
-        JLabel instrumentInfoLabel = new JLabel("No drum selected");
-        instrumentInfoLabel.setFont(new Font(Font.SANS_SERIF, Font.BOLD, 12));
-
-        // Add constraints to center vertically and horizontally
-        GridBagConstraints gbc = new GridBagConstraints();
-        gbc.gridx = 0;
-        gbc.gridy = 0;
-        gbc.fill = GridBagConstraints.NONE;
-        gbc.anchor = GridBagConstraints.CENTER;
-        centerPanel.add(instrumentInfoLabel, gbc);
-
         // Add panels to the top panel
         topPanel.add(westPanel, BorderLayout.EAST);
-        topPanel.add(centerPanel, BorderLayout.CENTER); // Add center panel with label
         topPanel.add(eastPanel, BorderLayout.WEST);
 
         // Add top panel to main layout
@@ -293,7 +277,21 @@ public class DrumEffectsSequencerPanel extends JPanel implements IBusListener {
                     // Add change listener
                     dial.addChangeListener(e -> {
                         if (!updatingControls && selectedPadIndex >= 0) {
-                            sequencer.setStepPan(selectedPadIndex, index, dial.getValue());
+                            int value = ((Dial)e.getSource()).getValue();
+                            sequencer.setStepPan(selectedPadIndex, index, value);
+                            
+                            // Publish an event for effects change
+                            CommandBus.getInstance().publish(
+                                Commands.DRUM_STEP_EFFECTS_CHANGED,
+                                this,
+                                new Object[] {
+                                    selectedPadIndex,
+                                    index,
+                                    value,
+                                    sequencer.getStepChorus(selectedPadIndex, index),
+                                    sequencer.getStepReverb(selectedPadIndex, index)
+                                }
+                            );
                         }
                     });
                     panDials.add(dial);

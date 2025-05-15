@@ -15,6 +15,25 @@ public class DrumGridButton extends JButton {
     private boolean inPattern = true;
     private Color highlightColor = UIHelper.fadedOrange; // Default highlight color
 
+    // Add properties to store parameter values
+    private int velocity = 100;     // Default values
+    private int decay = 250;
+    private int probability = 100;
+    private int nudge = 0;
+    private int pan = 64;
+    private int chorus = 0;
+    private int reverb = 0;
+    
+    // Flags to indicate which parameters to visualize
+    private boolean showVelocity = true;
+    private boolean showDecay = true;
+    private boolean showProbability = true;
+    private boolean showNudge = true;
+    private boolean showEffects = false;  // pan, chorus, reverb
+    
+    // Step index within pattern (for debugging)
+    private int stepIndex = -1;
+
     /**
      * Create a new trigger button with label
      *
@@ -43,6 +62,90 @@ public class DrumGridButton extends JButton {
         setBorderPainted(false);
         setFocusPainted(false);
         setContentAreaFilled(true);
+    }
+
+    // Add step index setter
+    public void setStepIndex(int index) {
+        this.stepIndex = index;
+    }
+
+    // Add parameter setters
+    public void setStepParameters(int velocity, int decay, int probability, int nudge) {
+        this.velocity = velocity;
+        this.decay = decay;
+        this.probability = probability;
+        this.nudge = nudge;
+        repaint(); // Request repaint to show new parameter values
+    }
+    
+    // Add effects parameter setters
+    public void setEffectsParameters(int pan, int chorus, int reverb) {
+        this.pan = pan;
+        this.chorus = chorus;
+        this.reverb = reverb;
+        repaint(); // Request repaint to show new parameter values
+    }
+    
+    // Individual parameter setters
+    public void setVelocity(int velocity) {
+        this.velocity = velocity;
+        repaint();
+    }
+    
+    public void setDecay(int decay) {
+        this.decay = decay;
+        repaint();
+    }
+    
+    public void setProbability(int probability) {
+        this.probability = probability;
+        repaint();
+    }
+    
+    public void setNudge(int nudge) {
+        this.nudge = nudge;
+        repaint();
+    }
+    
+    public void setPan(int pan) {
+        this.pan = pan;
+        repaint();
+    }
+    
+    public void setChorus(int chorus) {
+        this.chorus = chorus;
+        repaint();
+    }
+    
+    public void setReverb(int reverb) {
+        this.reverb = reverb;
+        repaint();
+    }
+    
+    // Parameter visualization toggles
+    public void setShowVelocity(boolean show) {
+        this.showVelocity = show;
+        repaint();
+    }
+    
+    public void setShowDecay(boolean show) {
+        this.showDecay = show;
+        repaint();
+    }
+    
+    public void setShowProbability(boolean show) {
+        this.showProbability = show;
+        repaint();
+    }
+    
+    public void setShowNudge(boolean show) {
+        this.showNudge = show;
+        repaint();
+    }
+    
+    public void setShowEffects(boolean show) {
+        this.showEffects = show;
+        repaint();
     }
 
     /**
@@ -92,11 +195,7 @@ public class DrumGridButton extends JButton {
      */
     public void setHighlighted(boolean highlighted) {
         this.isHighlighted = highlighted;
-        if (highlighted) {
-            setBackground(Color.ORANGE);
-        } else {
-            setBackground(isSelected() ? new Color(100, 200, 100) : Color.DARK_GRAY);
-        }
+        repaint(); // Just repaint, the actual color is handled in paintComponent
     }
 
     /**
@@ -119,15 +218,6 @@ public class DrumGridButton extends JButton {
         // Set the selected state
         setSelected(toggled);
 
-        // Update background color based on state
-        if (isHighlighted()) {
-            setBackground(Color.ORANGE);
-        } else if (toggled) {
-            setBackground(new Color(100, 200, 100)); // Green for active steps
-        } else {
-            setBackground(Color.DARK_GRAY);  // Dark gray for inactive steps
-        }
-
         // Make sure the change is visible
         repaint();
     }
@@ -137,12 +227,6 @@ public class DrumGridButton extends JButton {
      */
     public void setTemporaryState(boolean state) {
         isTemporary = state;
-        if (state) {
-            normalColor = getBackground();
-            setBackground(temporaryColor);
-        } else {
-            setBackground(isSelected() ? getActiveColor() : getInactiveColor());
-        }
         repaint();
     }
 
@@ -151,7 +235,6 @@ public class DrumGridButton extends JButton {
      */
     public void clearTemporaryState() {
         isTemporary = false;
-        setBackground(isSelected() ? getActiveColor() : getInactiveColor());
         repaint();
     }
 
@@ -171,40 +254,15 @@ public class DrumGridButton extends JButton {
      */
     public void setInPattern(boolean inPattern) {
         this.inPattern = inPattern;
-        updateAppearance();
+        repaint();
     }
 
     /**
-     * Update the appearance of the button based on its state
+     * Set custom highlight color for this step button
      */
-    private void updateAppearance() {
-        if (!isEnabled()) {
-            setBackground(UIHelper.darkGray);
-            return;
-        }
-
-        if (!inPattern) {
-            // Subdued appearance for steps outside the pattern length
-            setBackground(UIHelper.charcoalGray);
-            setBorder(BorderFactory.createLineBorder(UIHelper.slateGray, 1));
-            return;
-        }
-
-        // Regular appearance for steps in the pattern
-        if (isSelected()) {
-            setBackground(isHighlighted() ? UIHelper.dustyAmber : UIHelper.deepOrange);
-        } else {
-            setBackground(isHighlighted() ? UIHelper.fadedOrange : UIHelper.slateGray);
-        }
-    }
-
-    // Helper methods - implement if not already present
-    private Color getActiveColor() {
-        return new Color(60, 180, 120); // Green when active
-    }
-
-    private Color getInactiveColor() {
-        return new Color(60, 60, 60);   // Dark gray when inactive
+    public void setHighlightColor(Color color) {
+        this.highlightColor = color;
+        repaint();
     }
 
     /**
@@ -219,29 +277,125 @@ public class DrumGridButton extends JButton {
         if (oldValue != active) {
             // Use direct model access to avoid firing events
             getModel().setSelected(active);
-            // Update appearance without firing events
-            updateAppearance();
+            // Update appearance 
+            repaint();
         }
     }
-
+    
     /**
-     * Set custom highlight color for this step button
+     * Get the color to use for displaying velocity
      */
-    public void setHighlightColor(Color color) {
-        this.highlightColor = color;
+    private Color getVelocityColor() {
+        // Normalize velocity (0-127) to (0-255)
+        int value = (int)(velocity * 2.0);
+        return new Color(value, value, 0); // Yellow with intensity based on velocity
+    }
+    
+    /**
+     * Get alpha value for probability display
+     */
+    private int getProbabilityAlpha() {
+        return (int)(probability * 2.55); // Convert 0-100 to 0-255
     }
 
     @Override
     protected void paintComponent(Graphics g) {
         super.paintComponent(g);
+        
         Graphics2D g2d = (Graphics2D) g;
+        g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+        
+        int width = getWidth();
+        int height = getHeight();
+        
+        // Base button color
         if (isHighlighted()) {
             g2d.setColor(highlightColor);
         } else if (isSelected()) {
-            g2d.setColor(getActiveColor());
+            if (!inPattern) {
+                g2d.setColor(UIHelper.charcoalGray);
+            } else {
+                // Base color for selected (inactive) buttons
+                g2d.setColor(new Color(60, 180, 120));
+            }
         } else {
-            g2d.setColor(getInactiveColor());
+            if (!inPattern) {
+                g2d.setColor(UIHelper.darkGray);
+            } else {
+                // Base color for inactive buttons
+                g2d.setColor(new Color(60, 60, 60));
+            }
         }
-        g2d.fillRect(0, 0, getWidth(), getHeight());
+        
+        // Fill the base button
+        g2d.fillRect(0, 0, width, height);
+        
+        // Only draw parameter visualization if the button is selected and in pattern
+        if (isSelected() && inPattern) {
+            // Draw probability as overall opacity
+            if (showProbability && probability < 100) {
+                // Create a semi-transparent overlay
+                Color overlayColor = new Color(0, 0, 0, 255 - getProbabilityAlpha());
+                g2d.setColor(overlayColor);
+                g2d.fillRect(0, 0, width, height);
+            }
+            
+            // Draw velocity as a vertical bar
+            if (showVelocity) {
+                // Calculate height based on velocity (0-127)
+                int velocityHeight = (int)(height * (velocity / 127.0));
+                g2d.setColor(new Color(255, 255, 0, 100)); // Semi-transparent yellow
+                g2d.fillRect(0, height - velocityHeight, width/4, velocityHeight);
+            }
+            
+            // Draw decay as a horizontal bar
+            if (showDecay) {
+                // Calculate width based on decay (normalized to reasonable range)
+                int decayWidth = Math.min(width-2, (int)(width * (decay / 500.0)));
+                g2d.setColor(new Color(0, 200, 0, 100)); // Semi-transparent green
+                g2d.fillRect(width/4, height/2, decayWidth, height/4);
+            }
+            
+            // Draw nudge as a position marker
+            if (showNudge && nudge != 0) {
+                int centerX = width / 2;
+                int nudgeOffset = (int)(width * (nudge / 100.0)); // Normalize to reasonable range
+                
+                g2d.setColor(new Color(255, 0, 0, 150)); // Semi-transparent red
+                g2d.fillRect(centerX + nudgeOffset - 1, 0, 3, height/4);
+            }
+            
+            // Draw effects indicators if enabled
+            if (showEffects) {
+                // Draw pan as position (left to right)
+                int panX = (int)(width * (pan / 127.0));
+                g2d.setColor(new Color(0, 0, 255, 150)); // Semi-transparent blue
+                g2d.fillRect(panX - 1, height - 4, 3, 3);
+                
+                // Draw reverb and chorus as small indicators in corners if above threshold
+                if (reverb > 20) {
+                    g2d.setColor(new Color(128, 0, 128, 150)); // Semi-transparent purple
+                    g2d.fillRect(0, 0, 4, 4);
+                }
+                
+                if (chorus > 20) {
+                    g2d.setColor(new Color(0, 128, 128, 150)); // Semi-transparent teal
+                    g2d.fillRect(width - 4, 0, 4, 4);
+                }
+            }
+            
+            // Debug output - draw step number
+            if (stepIndex >= 0) {
+                g2d.setColor(Color.WHITE);
+                g2d.setFont(new Font("Monospaced", Font.PLAIN, 9));
+                g2d.drawString(String.valueOf(stepIndex), width/2 - 3, height/2 + 3);
+            }
+        }
+        
+        // If using temporary state, draw a border
+        if (isTemporary) {
+            g2d.setColor(temporaryColor);
+            g2d.drawRect(0, 0, width-1, height-1);
+        }
     }
 }
