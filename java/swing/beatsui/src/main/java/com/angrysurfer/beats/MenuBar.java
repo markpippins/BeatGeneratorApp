@@ -812,7 +812,7 @@ public class MenuBar extends JMenuBar {
             // 1. Check sequencer status
             log.addSection("1. Sequencer Status");
             log.addIndentedLine("Playing: " + sequencer.isPlaying(), 1)
-                    .addIndentedLine("BPM: " + sequencer.getData().getMasterTempo(), 1)
+                    .addIndentedLine("BPM: " + sequencer.getSequenceData().getMasterTempo(), 1)
                     .addIndentedLine("Swing: " + (sequencer.isSwingEnabled() ? "Enabled" : "Disabled"), 1)
                     .addIndentedLine("Swing Amount: " + sequencer.getSwingPercentage(), 1);
 

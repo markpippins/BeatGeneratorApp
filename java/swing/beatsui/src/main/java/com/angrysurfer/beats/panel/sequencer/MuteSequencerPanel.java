@@ -266,7 +266,7 @@ public class MuteSequencerPanel extends JPanel implements IBusListener {
                 }
 
                 // Update the sequencer
-                drumSequencer.getData().setMuteValues(padIndex, muteValues);
+                drumSequencer.getSequenceData().setMuteValues(padIndex, muteValues);
             }
         } else {
             // For other sequencers, use existing map approach
@@ -305,7 +305,7 @@ public class MuteSequencerPanel extends JPanel implements IBusListener {
 
             if (padIndex >= 0) {
                 // Get mute values for the selected drum
-                List<Integer> muteValues = drumSequencer.getData().getMuteValues(padIndex);
+                List<Integer> muteValues = drumSequencer.getSequenceData().getMuteValues(padIndex);
 
                 // Update UI to reflect loaded pattern
                 SwingUtilities.invokeLater(() -> {
@@ -416,7 +416,7 @@ public class MuteSequencerPanel extends JPanel implements IBusListener {
 
             if (padIndex >= 0) {
                 // Get current mute values
-                List<Integer> muteValues = new ArrayList<>(drumSequencer.getData().getMuteValues(padIndex));
+                List<Integer> muteValues = new ArrayList<>(drumSequencer.getSequenceData().getMuteValues(padIndex));
 
                 // Ensure list is large enough
                 while (muteValues.size() <= step) {
@@ -427,7 +427,7 @@ public class MuteSequencerPanel extends JPanel implements IBusListener {
                 muteValues.set(step, muted ? 1 : 0);
 
                 // Save back to sequencer
-                drumSequencer.getData().setMuteValues(padIndex, muteValues);
+                drumSequencer.getSequenceData().setMuteValues(padIndex, muteValues);
             }
         } else {
             // For other sequencers, use the existing pattern approach

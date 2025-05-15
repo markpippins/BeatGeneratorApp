@@ -396,4 +396,6 @@ public class Commands {
     public static final String SAMPLE_SELECTION_CHANGED = "SAMPLE_SELECTION_CHANGED";
     public static final String DRUM_STEP_PARAMETERS_CHANGED = "DRUM_STEP_PARAMETERS_CHANGED";
     public static final String DRUM_STEP_EFFECTS_CHANGED = "DRUM_STEP_EFFECTS_CHANGED";
+
+    public static final String ENSURE_MIDI_CONNECTIONS = "ENSURE_MIDI_CONNECTIONS";
 }

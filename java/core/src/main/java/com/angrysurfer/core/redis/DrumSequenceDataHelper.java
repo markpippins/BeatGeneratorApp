@@ -66,7 +66,7 @@ class DrumSequenceDataHelper {
 
         try {
             // Set basic sequence ID
-            sequencer.getData().setId(data.getId());
+            sequencer.getSequenceData().setId(data.getId());
 
             // Apply instrument data
             for (int i = 0; i < SequencerConstants.DRUM_PAD_COUNT; i++) {
@@ -206,13 +206,13 @@ class DrumSequenceDataHelper {
                 int drumIndex = i;
                 List<Integer> muteValues = data.getMuteValues(drumIndex);
                 if (muteValues != null && !muteValues.isEmpty()) {
-                    sequencer.getData().setMuteValues(drumIndex, muteValues);
+                    sequencer.getSequenceData().setMuteValues(drumIndex, muteValues);
                     logger.debug("Applied {} mute values to drum {}", muteValues.size(), drumIndex);
                 }
             }
 
             // Notify that pattern has updated
-            commandBus.publish(Commands.DRUM_SEQUENCE_UPDATED, this, sequencer.getData().getId());
+            commandBus.publish(Commands.DRUM_SEQUENCE_UPDATED, this, sequencer.getSequenceData().getId());
 
         } catch (Exception e) {
             logger.error("Error applying drum sequence data to sequencer: " + e.getMessage(), e);
@@ -225,7 +225,7 @@ class DrumSequenceDataHelper {
     public void saveDrumSequence(DrumSequencer sequencer) {
         try (Jedis jedis = jedisPool.getResource()) {
             // Create a data transfer object
-            DrumSequenceData data = sequencer.getData();
+            DrumSequenceData data = sequencer.getSequenceData();
             logger.info(data.toString());
             // Set or generate ID
             if (data.getId() <= 0) {
@@ -249,12 +249,12 @@ class DrumSequenceDataHelper {
             }
 
             // Copy pattern data
-            data.setPatternLengths(Arrays.copyOf(sequencer.getData().getPatternLengths(), DRUM_PAD_COUNT));
-            data.setDirections(Arrays.copyOf(sequencer.getData().getDirections(), DRUM_PAD_COUNT));
-            data.setTimingDivisions(Arrays.copyOf(sequencer.getData().getTimingDivisions(), DRUM_PAD_COUNT));
-            data.setLoopingFlags(Arrays.copyOf(sequencer.getData().getLoopingFlags(), DRUM_PAD_COUNT));
-            data.setVelocities(Arrays.copyOf(sequencer.getData().getVelocities(), DRUM_PAD_COUNT));
-            data.setOriginalVelocities(Arrays.copyOf(sequencer.getData().getOriginalVelocities(), DRUM_PAD_COUNT));
+            data.setPatternLengths(Arrays.copyOf(sequencer.getSequenceData().getPatternLengths(), DRUM_PAD_COUNT));
+            data.setDirections(Arrays.copyOf(sequencer.getSequenceData().getDirections(), DRUM_PAD_COUNT));
+            data.setTimingDivisions(Arrays.copyOf(sequencer.getSequenceData().getTimingDivisions(), DRUM_PAD_COUNT));
+            data.setLoopingFlags(Arrays.copyOf(sequencer.getSequenceData().getLoopingFlags(), DRUM_PAD_COUNT));
+            data.setVelocities(Arrays.copyOf(sequencer.getSequenceData().getVelocities(), DRUM_PAD_COUNT));
+            data.setOriginalVelocities(Arrays.copyOf(sequencer.getSequenceData().getOriginalVelocities(), DRUM_PAD_COUNT));
 
             // Copy step patterns (all drums, all steps)
             boolean[][] patterns = new boolean[DRUM_PAD_COUNT][MAX_STEPS];
@@ -267,7 +267,7 @@ class DrumSequenceDataHelper {
 
             // Save mute values for each drum
             for (int i = 0; i < SequencerConstants.DRUM_PAD_COUNT; i++) {
-                List<Integer> muteValues = sequencer.getData().getMuteValues(i);
+                List<Integer> muteValues = sequencer.getSequenceData().getMuteValues(i);
                 data.setMuteValues(i, muteValues);
             }
 

@@ -19,7 +19,8 @@ import java.awt.*;
 public class DrumSequenceNavigationPanel extends JPanel {
 
     private static final Logger logger = LoggerFactory.getLogger(DrumSequenceNavigationPanel.class);
-
+    private final DrumSequencer sequencer;
+    private final DrumSequencerManager manager;
     private JLabel sequenceIdLabel;
     private JButton firstButton;
     private JButton prevButton;
@@ -27,9 +28,6 @@ public class DrumSequenceNavigationPanel extends JPanel {
     private JButton lastButton;
     private JButton saveButton;
     private JButton newButton; // Add new button field
-
-    private final DrumSequencer sequencer;
-    private final DrumSequencerManager manager;
 
     public DrumSequenceNavigationPanel(DrumSequencer sequencer) {
         this.sequencer = sequencer;
@@ -100,14 +98,14 @@ public class DrumSequenceNavigationPanel extends JPanel {
 
     private String getFormattedIdText() {
         return "Seq: " +
-                (sequencer.getData().getId() == 0 ? "New" : sequencer.getData().getId());
+                (sequencer.getSequenceData().getId() == 0 ? "New" : sequencer.getSequenceData().getId());
     }
 
     /**
      * Enable/disable buttons based on current sequence position
      */
     private void updateButtonStates() {
-        long currentId = sequencer.getData().getId();
+        long currentId = sequencer.getSequenceData().getId();
         boolean hasSequences = manager.hasSequences();
 
         // Get first/last sequence IDs
@@ -123,8 +121,8 @@ public class DrumSequenceNavigationPanel extends JPanel {
         boolean isLast = !hasSequences || (lastId != null && currentId >= lastId);
 
         firstButton.setEnabled(hasSequences && !isFirst);
-        prevButton.setEnabled((hasSequences || sequencer.getData().getId() < 0) && !isFirst);
-        nextButton.setEnabled(sequencer.getData().getId() > 0); // Always enable the next button
+        prevButton.setEnabled((hasSequences || sequencer.getSequenceData().getId() < 0) && !isFirst);
+        nextButton.setEnabled(sequencer.getSequenceData().getId() > 0); // Always enable the next button
         lastButton.setEnabled(hasSequences && !isLast);
 
         logger.debug("Button states: currentId={}, firstId={}, lastId={}, isFirst={}, isLast={}",
@@ -140,10 +138,7 @@ public class DrumSequenceNavigationPanel extends JPanel {
             manager.loadSequence(sequenceId, sequencer);
 
             // Reset the sequencer to ensure proper step indicator state
-            if (sequencer.isPlaying())
-                sequencer.reset(true);
-            else
-                sequencer.reset(false);
+            sequencer.reset(sequencer.isPlaying());
 
             // Update UI
             updateSequenceIdDisplay();
@@ -152,7 +147,7 @@ public class DrumSequenceNavigationPanel extends JPanel {
             CommandBus.getInstance().publish(
                     Commands.PATTERN_LOADED,
                     this,
-                    sequencer.getData().getId());
+                    sequencer.getSequenceData().getId());
         }
     }
 
@@ -170,7 +165,7 @@ public class DrumSequenceNavigationPanel extends JPanel {
      * Load the previous sequence
      */
     private void loadPreviousSequence() {
-        Long prevId = manager.getPreviousSequenceId(sequencer.getData().getId());
+        Long prevId = manager.getPreviousSequenceId(sequencer.getSequenceData().getId());
         if (prevId != null) {
             loadSequence(prevId);
         }
@@ -181,7 +176,7 @@ public class DrumSequenceNavigationPanel extends JPanel {
      */
     private void loadNextSequence() {
         // Get current sequence ID
-        Long currentId = sequencer.getData().getId();
+        Long currentId = sequencer.getSequenceData().getId();
 
         // Find the next sequence ID
         Long nextId = manager.getNextSequenceId(currentId);
@@ -234,9 +229,9 @@ public class DrumSequenceNavigationPanel extends JPanel {
         CommandBus.getInstance().publish(
                 Commands.DRUM_SEQUENCE_SAVED,
                 this,
-                sequencer.getData().getId());
+                sequencer.getSequenceData().getId());
 
-        logger.info("Saved drum sequence: {}", sequencer.getData().getId());
+        logger.info("Saved drum sequence: {}", sequencer.getSequenceData().getId());
     }
 
     /**

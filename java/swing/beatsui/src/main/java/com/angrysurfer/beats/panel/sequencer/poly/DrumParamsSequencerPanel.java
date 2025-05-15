@@ -497,7 +497,7 @@ public class DrumParamsSequencerPanel extends JPanel implements IBusListener {
 
             // Highlight current step if playing
             if (sequencer.isPlaying()) {
-                int[] steps = sequencer.getData().getCurrentStep();
+                int[] steps = sequencer.getSequenceData().getCurrentStep();
                 if (padIndex < steps.length) {
                     button.setHighlighted(i == steps[padIndex]);
                 }
@@ -665,7 +665,7 @@ public class DrumParamsSequencerPanel extends JPanel implements IBusListener {
                 // Only update if we have a drum selected and are playing
                 if (selectedPadIndex >= 0 && sequencer.isPlaying() && action.getData() instanceof TimingUpdate) {
                     // Get the current sequencer state
-                    int[] steps = sequencer.getData().getCurrentStep();
+                    int[] steps = sequencer.getSequenceData().getCurrentStep();
 
                     // Safety check for array bounds
                     if (selectedPadIndex < steps.length) {

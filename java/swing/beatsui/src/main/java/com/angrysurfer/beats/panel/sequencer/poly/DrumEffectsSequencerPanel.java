@@ -197,8 +197,8 @@ public class DrumEffectsSequencerPanel extends JPanel implements IBusListener {
         // Create drum pad panel with callback
         JPanel drumSection = new JPanel(new BorderLayout());
         // drumSection.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5)); 
-        
-        
+
+
         drumSection.add(new MuteSequencerPanel(sequencer), BorderLayout.SOUTH);
         drumPadPanel = new DrumButtonsPanel(sequencer, this::handleDrumPadSelected);
         drumSection.add(drumPadPanel, BorderLayout.CENTER);
@@ -277,20 +277,20 @@ public class DrumEffectsSequencerPanel extends JPanel implements IBusListener {
                     // Add change listener
                     dial.addChangeListener(e -> {
                         if (!updatingControls && selectedPadIndex >= 0) {
-                            int value = ((Dial)e.getSource()).getValue();
+                            int value = ((Dial) e.getSource()).getValue();
                             sequencer.setStepPan(selectedPadIndex, index, value);
-                            
+
                             // Publish an event for effects change
                             CommandBus.getInstance().publish(
-                                Commands.DRUM_STEP_EFFECTS_CHANGED,
-                                this,
-                                new Object[] {
-                                    selectedPadIndex,
-                                    index,
-                                    value,
-                                    sequencer.getStepChorus(selectedPadIndex, index),
-                                    sequencer.getStepReverb(selectedPadIndex, index)
-                                }
+                                    Commands.DRUM_STEP_EFFECTS_CHANGED,
+                                    this,
+                                    new Object[]{
+                                            selectedPadIndex,
+                                            index,
+                                            value,
+                                            sequencer.getStepChorus(selectedPadIndex, index),
+                                            sequencer.getStepReverb(selectedPadIndex, index)
+                                    }
                             );
                         }
                     });
@@ -446,19 +446,19 @@ public class DrumEffectsSequencerPanel extends JPanel implements IBusListener {
         try {
             // Set flag to prevent recursive calls
             isHandlingSelection = true;
-            
+
             selectedPadIndex = padIndex;
             sequencer.setSelectedPadIndex(padIndex);
-            
+
             // Get the player for this pad index
             if (padIndex >= 0 && padIndex < sequencer.getPlayers().length) {
                 Player player = sequencer.getPlayers()[padIndex];
-                
+
                 if (player != null && player.getInstrument() != null) {
                     // Ensure device is connected and open
                     if (player.getInstrument().getDevice() == null || !player.getInstrument().getDevice().isOpen()) {
                         player.getInstrument().setDevice(DeviceManager.getMidiDevice(player.getInstrument().getDeviceName()));
-                        
+
                         // Ensure device is open
                         if (player.getInstrument().getDevice() != null && !player.getInstrument().getDevice().isOpen()) {
                             try {
@@ -468,37 +468,37 @@ public class DrumEffectsSequencerPanel extends JPanel implements IBusListener {
                             }
                         }
                     }
-                    
+
                     // Apply instrument preset BEFORE playing the note
                     PlayerManager.getInstance().applyInstrumentPreset(player);
-                    
+
                     // Play the sound with proper note
                     player.drumNoteOn(player.getRootNote());
-                    
+
                     // Request activation
                     CommandBus.getInstance().publish(
-                        Commands.PLAYER_ACTIVATION_REQUEST,
-                        this, 
-                        player
+                            Commands.PLAYER_ACTIVATION_REQUEST,
+                            this,
+                            player
                     );
                 }
             }
-            
+
             // Update UI in a specific order
             setTriggerButtonsEnabled(true);
             refreshTriggerButtonsForPad(selectedPadIndex);
             updateDialsForSelectedPad();
-            
+
             // Then do other updates
             if (sequenceParamsPanel != null) {
                 sequenceParamsPanel.updateControls(padIndex);
             }
-            
+
             // Publish drum pad event LAST and only if we're handling a direct user selection
             CommandBus.getInstance().publish(
-                Commands.DRUM_PAD_SELECTED,
-                this, 
-                new DrumPadSelectionEvent(-1, padIndex)
+                    Commands.DRUM_PAD_SELECTED,
+                    this,
+                    new DrumPadSelectionEvent(-1, padIndex)
             );
         } finally {
             // Always clear the flag when done
@@ -532,7 +532,7 @@ public class DrumEffectsSequencerPanel extends JPanel implements IBusListener {
 
             // Highlight current step if playing
             if (sequencer.isPlaying()) {
-                int[] steps = sequencer.getData().getCurrentStep();
+                int[] steps = sequencer.getSequenceData().getCurrentStep();
                 if (padIndex < steps.length) {
                     button.setHighlighted(i == steps[padIndex]);
                 }
@@ -674,7 +674,7 @@ public class DrumEffectsSequencerPanel extends JPanel implements IBusListener {
                 // Only update if we have a drum selected and are playing
                 if (selectedPadIndex >= 0 && sequencer.isPlaying() && action.getData() instanceof TimingUpdate) {
                     // Get the current sequencer state
-                    int[] steps = sequencer.getData().getCurrentStep();
+                    int[] steps = sequencer.getSequenceData().getCurrentStep();
 
                     // Safety check for array bounds
                     if (selectedPadIndex < steps.length) {
@@ -730,20 +730,20 @@ public class DrumEffectsSequencerPanel extends JPanel implements IBusListener {
                 // Only respond to events from other panels to avoid loops
                 if (action.getData() instanceof DrumPadSelectionEvent event && action.getSender() != this) {
                     int newSelection = event.getNewSelection();
-                    
+
                     // Check if index is valid and different
-                    if (newSelection != selectedPadIndex && 
-                        newSelection >= 0 && 
-                        newSelection < drumPadPanel.getButtonCount()) {
-                        
+                    if (newSelection != selectedPadIndex &&
+                            newSelection >= 0 &&
+                            newSelection < drumPadPanel.getButtonCount()) {
+
                         // Skip heavy operations - just update necessary state
                         selectedPadIndex = newSelection;
-                        
+
                         // Update UI without triggering further events
                         SwingUtilities.invokeLater(() -> {
                             // Just visually select without callbacks
                             drumPadPanel.selectDrumPadNoCallback(newSelection);
-                            
+
                             // Update minimal UI elements
                             refreshTriggerButtonsForPad(newSelection);
                         });

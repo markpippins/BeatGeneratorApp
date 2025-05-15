@@ -541,7 +541,7 @@ public class RedisService implements IBusListener {
     }
 
     public void applyDrumSequenceToSequencer(DrumSequenceData data, DrumSequencer sequencer) {
-        sequencer.setData(data);
+        sequencer.setSequenceData(data);
         //drumSequenceHelper.applyToSequencer(data, sequencer);
     }
 

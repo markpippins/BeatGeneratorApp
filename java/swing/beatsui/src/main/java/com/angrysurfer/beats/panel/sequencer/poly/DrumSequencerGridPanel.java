@@ -300,7 +300,7 @@ public class DrumSequencerGridPanel extends JPanel implements IBusListener {
             return;
         }
 
-        logger.info("Refreshing entire grid UI for sequence {}", sequencer.getData().getId());
+        logger.info("Refreshing entire grid UI for sequence {}", sequencer.getSequenceData().getId());
 
         // Ensure we refresh ALL drums and ALL steps
         for (int drumIndex = 0; drumIndex < DRUM_PAD_COUNT; drumIndex++) {
