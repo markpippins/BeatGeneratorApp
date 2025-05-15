@@ -57,7 +57,7 @@ public class Commands {
 
     public static final String PLAYER_ACTIVATION_REQUEST = "PLAYER_ACTIVATION_REQUEST";
     public static final String PLAYER_ACTIVATED = "PLAYER_ACTIVATED";
-    
+
     public static final String PLAYER_ADDED = "PLAYER_ADDED";
     public static final String PLAYER_UPDATED = "PLAYER_UPDATED";
     public static final String PLAYER_DELETED = "PLAYER_DELETED";
@@ -358,7 +358,7 @@ public class Commands {
     public static final String SOUNDBANKS_REFRESHED = "SOUNDBANKS_REFRESHED";
 
     public static final String CHANNEL_ASSIGNMENT_CHANGED = "CHANNEL_ASSIGNMENT_CHANGED";
-    
+
     public static final String DELETE_UNUSED_INSTRUMENTS = "DELETE_UNUSED_INSTRUMENTS";
     public static final String UPDATE_STATUS = "UPDATE_STATUS";
     public static final String REPAIR_MIDI_CONNECTIONS = "REPAIR_MIDI_CONNECTIONS";
@@ -391,4 +391,7 @@ public class Commands {
     public static final String DEFAULT_INSTRUMENT_UPDATED = "DEFAULT_INSTRUMENT_UPDATED";
 
     public static final String DEBUG_USER_CONFIG_SAVE = "DEBUG_USER_CONFIG_SAVE";
+    public static final String SOUNDBANK_CHANGED = "SOUNDBANK_CHANGED";
+    public static final String SAMPLE_LOOP_POINTS_CHANGED = "SAMPLE_LOOP_POINTS_CHANGED";
+    public static final String SAMPLE_SELECTION_CHANGED = "SAMPLE_SELECTION_CHANGED";
 }

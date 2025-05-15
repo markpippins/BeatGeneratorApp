@@ -1,6 +1,22 @@
 package com.angrysurfer.core.sequencer;
 
-import com.angrysurfer.core.api.*;
+import java.util.Arrays;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
+import java.util.function.Consumer;
+
+import javax.sound.midi.MidiDevice;
+import javax.sound.midi.Receiver;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import com.angrysurfer.core.api.Command;
+import com.angrysurfer.core.api.CommandBus;
+import com.angrysurfer.core.api.Commands;
+import com.angrysurfer.core.api.IBusListener;
+import com.angrysurfer.core.api.TimingBus;
 import com.angrysurfer.core.api.midi.MIDIConstants;
 import com.angrysurfer.core.event.DrumPadSelectionEvent;
 import com.angrysurfer.core.event.DrumStepUpdateEvent;
@@ -10,19 +26,17 @@ import com.angrysurfer.core.model.InstrumentWrapper;
 import com.angrysurfer.core.model.Player;
 import com.angrysurfer.core.model.Session;
 import com.angrysurfer.core.redis.RedisService;
-import com.angrysurfer.core.service.*;
+import com.angrysurfer.core.service.DeviceManager;
+import com.angrysurfer.core.service.DrumSequencerManager;
+import com.angrysurfer.core.service.InstrumentManager;
+import com.angrysurfer.core.service.InternalSynthManager;
+import com.angrysurfer.core.service.PlayerManager;
+import com.angrysurfer.core.service.ReceiverManager;
+import com.angrysurfer.core.service.SessionManager;
+import com.angrysurfer.core.service.UserConfigManager;
+
 import lombok.Getter;
 import lombok.Setter;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import javax.sound.midi.MidiDevice;
-import javax.sound.midi.Receiver;
-import java.util.Arrays;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
-import java.util.function.Consumer;
 
 /**
  * Core sequencer engine that handles drum pattern sequencing and playback with
@@ -157,10 +171,10 @@ public class DrumSequencer implements IBusListener {
         // Look for a player that's associated with this sequencer and has the right
         // drum index
         for (Player p : session.getPlayers()) {
-            if (p.getOwner() != null &&
-                    p.getOwner() instanceof DrumSequencer &&
-                    p.getClass().getSimpleName().equals("Strike") &&
-                    p.getRootNote() == SequencerConstants.MIDI_DRUM_NOTE_OFFSET + drumIndex) {
+            if (p.getOwner() != null
+                    && p.getOwner() instanceof DrumSequencer
+                    && p.getClass().getSimpleName().equals("Strike")
+                    && p.getRootNote() == SequencerConstants.MIDI_DRUM_NOTE_OFFSET + drumIndex) {
 
                 return p;
             }
@@ -172,9 +186,9 @@ public class DrumSequencer implements IBusListener {
     /**
      * Initialize a drum pad with proper device connections
      *
-     * @param drumIndex     The index of the drum pad to initialize
-     * @param defaultDevice The default MIDI device to use if a specific one isn't
-     *                      available
+     * @param drumIndex The index of the drum pad to initialize
+     * @param defaultDevice The default MIDI device to use if a specific one
+     * isn't available
      */
     private void initializeDrumPadConnections(int drumIndex, MidiDevice defaultDevice) {
         try {
@@ -285,7 +299,7 @@ public class DrumSequencer implements IBusListener {
 
         // Notify UI of parameter change
         CommandBus.getInstance().publish(Commands.DRUM_SEQUENCE_PARAMS_CHANGED, this, -1 // -1 indicates global
-                // parameter
+        // parameter
         );
     }
 
@@ -302,7 +316,8 @@ public class DrumSequencer implements IBusListener {
     }
 
     /**
-     * Load a sequence while preserving playback position if sequencer is running
+     * Load a sequence while preserving playback position if sequencer is
+     * running
      *
      * @param sequenceId The ID of the sequence to load
      * @return true if sequence loaded successfully
@@ -483,7 +498,7 @@ public class DrumSequencer implements IBusListener {
      * completes
      *
      * @param patternId The ID of the next pattern, or null to disable automatic
-     *                  switching
+     * switching
      */
     public void setNextPatternId(Long patternId) {
         data.setNextPatternId(patternId);
@@ -521,8 +536,10 @@ public class DrumSequencer implements IBusListener {
         int length = data.getPatternLengths()[drumIndex];
 
         return switch (direction) {
-            case FORWARD -> (currentPos + length - 1) % length;
-            case BACKWARD -> (currentPos + 1) % length;
+            case FORWARD ->
+                (currentPos + length - 1) % length;
+            case BACKWARD ->
+                (currentPos + 1) % length;
             case BOUNCE -> {
                 // For bounce, it depends on the current bounce direction
                 if (data.getBounceDirections()[drumIndex] > 0) {
@@ -531,7 +548,8 @@ public class DrumSequencer implements IBusListener {
                     yield currentPos < length - 1 ? currentPos + 1 : length - 1;
                 }
             }
-            case RANDOM -> currentPos; // For random, just use current position
+            case RANDOM ->
+                currentPos; // For random, just use current position
         };
     }
 
@@ -625,30 +643,45 @@ public class DrumSequencer implements IBusListener {
     private int calculateSwingAmount(int drumIndex) {
         // Get session BPM
         float bpm = SessionManager.getInstance().getActiveSession().getTempoInBPM();
-        if (bpm <= 0)
+        if (bpm <= 0) {
             bpm = 120; // Default fallback
-
+        }
         // Calculate step duration in milliseconds
         TimingDivision division = data.getTimingDivisions()[drumIndex];
         float stepDurationMs = 60000f / bpm; // Duration of quarter note in ms
 
         // Adjust for timing division based on actual enum values
         switch (division) {
-            case NORMAL -> stepDurationMs *= 1; // No change for normal timing
-            case DOUBLE -> stepDurationMs /= 2; // Double time (faster)
-            case HALF -> stepDurationMs *= 2; // Half-time (slower)
-            case QUARTER -> stepDurationMs *= 4; // Quarter time (very slow)
-            case TRIPLET -> stepDurationMs *= 2.0f / 3.0f; // Triplet feel
-            case QUARTER_TRIPLET -> stepDurationMs *= 4.0f / 3.0f; // Quarter note triplets
-            case EIGHTH_TRIPLET -> stepDurationMs *= 1.0f / 3.0f; // Eighth note triplets
-            case SIXTEENTH -> stepDurationMs *= 1.0f / 4.0f; // Sixteenth notes
-            case SIXTEENTH_TRIPLET -> stepDurationMs *= 1.0f / 6.0f; // Sixteenth note triplets
-            case BEBOP -> stepDurationMs *= 1; // Same as normal for swing calculations
-            case FIVE_FOUR -> stepDurationMs *= 5.0f / 4.0f; // 5/4 time
-            case SEVEN_EIGHT -> stepDurationMs *= 7.0f / 8.0f; // 7/8 time
-            case NINE_EIGHT -> stepDurationMs *= 9.0f / 8.0f; // 9/8 time
-            case TWELVE_EIGHT -> stepDurationMs *= 12.0f / 8.0f; // 12/8 time
-            case SIX_FOUR -> stepDurationMs *= 6.0f / 4.0f; // 6/4 time
+            case NORMAL ->
+                stepDurationMs *= 1; // No change for normal timing
+            case DOUBLE ->
+                stepDurationMs /= 2; // Double time (faster)
+            case HALF ->
+                stepDurationMs *= 2; // Half-time (slower)
+            case QUARTER ->
+                stepDurationMs *= 4; // Quarter time (very slow)
+            case TRIPLET ->
+                stepDurationMs *= 2.0f / 3.0f; // Triplet feel
+            case QUARTER_TRIPLET ->
+                stepDurationMs *= 4.0f / 3.0f; // Quarter note triplets
+            case EIGHTH_TRIPLET ->
+                stepDurationMs *= 1.0f / 3.0f; // Eighth note triplets
+            case SIXTEENTH ->
+                stepDurationMs *= 1.0f / 4.0f; // Sixteenth notes
+            case SIXTEENTH_TRIPLET ->
+                stepDurationMs *= 1.0f / 6.0f; // Sixteenth note triplets
+            case BEBOP ->
+                stepDurationMs *= 1; // Same as normal for swing calculations
+            case FIVE_FOUR ->
+                stepDurationMs *= 5.0f / 4.0f; // 5/4 time
+            case SEVEN_EIGHT ->
+                stepDurationMs *= 7.0f / 8.0f; // 7/8 time
+            case NINE_EIGHT ->
+                stepDurationMs *= 9.0f / 8.0f; // 9/8 time
+            case TWELVE_EIGHT ->
+                stepDurationMs *= 12.0f / 8.0f; // 12/8 time
+            case SIX_FOUR ->
+                stepDurationMs *= 6.0f / 4.0f; // 6/4 time
         }
 
         // Calculate swing percentage (convert from 50-75% to 0-25%)
@@ -758,8 +791,8 @@ public class DrumSequencer implements IBusListener {
      * @return The new state of the step (true=active, false=inactive)
      */
     public boolean toggleStep(int drumIndex, int stepIndex) {
-        if (drumIndex >= 0 && drumIndex < SequencerConstants.DRUM_PAD_COUNT &&
-                stepIndex >= 0 && stepIndex < data.getMaxPatternLength()) {
+        if (drumIndex >= 0 && drumIndex < SequencerConstants.DRUM_PAD_COUNT
+                && stepIndex >= 0 && stepIndex < data.getMaxPatternLength()) {
 
             // Toggle the step
             boolean[][] patterns = data.getPatterns();
@@ -1485,7 +1518,7 @@ public class DrumSequencer implements IBusListener {
     /**
      * Connect a specific drum pad to a valid MIDI device
      *
-     * @param drumIndex     The index of the drum pad to connect
+     * @param drumIndex The index of the drum pad to connect
      * @param defaultDevice The default device to use as fallback
      * @return true if successfully connected, false otherwise
      */
@@ -1520,10 +1553,10 @@ public class DrumSequencer implements IBusListener {
     /**
      * Connect an instrument to a MIDI device
      *
-     * @param drumIndex     The drum pad index (for logging)
-     * @param instrument    The instrument to connect
+     * @param drumIndex The drum pad index (for logging)
+     * @param instrument The instrument to connect
      * @param defaultDevice The default device to use if preferred device isn't
-     *                      available
+     * available
      * @return true if successfully connected, false otherwise
      */
     private boolean connectInstrumentToDevice(int drumIndex, InstrumentWrapper instrument, MidiDevice defaultDevice) {
@@ -1675,12 +1708,10 @@ public class DrumSequencer implements IBusListener {
     }
 
     // Add a method to update root notes
-
     // Add a getter method for drum root note
-
     /**
-     * Update all drum root notes from the sequence data
-     * Called after loading a sequence
+     * Update all drum root notes from the sequence data Called after loading a
+     * sequence
      */
     private void updateDrumRootNotesFromData() {
         for (int i = 0; i < SequencerConstants.DRUM_PAD_COUNT; i++) {
@@ -1701,5 +1732,27 @@ public class DrumSequencer implements IBusListener {
 
         // Log results
         logger.info("Updated drum root notes from sequence data");
+    }
+
+    /**
+     * Refresh a player from its data source
+     *
+     * @param index The player index to refresh
+     */
+    public void refreshPlayer(int index) {
+        if (index < 0 || index >= players.length || players[index] == null) {
+            return;
+        }
+
+        Player player = players[index];
+        Player refreshedPlayer = PlayerManager.getInstance().getPlayerById(player.getId());
+
+        if (refreshedPlayer != null) {
+            // Update our player reference with refreshed data
+            players[index] = refreshedPlayer;
+            // Ensure owner is set
+            refreshedPlayer.setOwner(this);
+            logger.debug("Refreshed player at index {}: {}", index, refreshedPlayer.getName());
+        }
     }
 }

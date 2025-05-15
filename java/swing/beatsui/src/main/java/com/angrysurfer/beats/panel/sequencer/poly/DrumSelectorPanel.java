@@ -6,6 +6,8 @@ import com.angrysurfer.core.api.Command;
 import com.angrysurfer.core.api.CommandBus;
 import com.angrysurfer.core.api.Commands;
 import com.angrysurfer.core.api.IBusListener;
+import com.angrysurfer.core.event.PlayerPresetChangeEvent;
+import com.angrysurfer.core.event.PlayerUpdateEvent;
 import com.angrysurfer.core.model.Player;
 import com.angrysurfer.core.sequencer.DrumSequencer;
 import com.angrysurfer.core.sequencer.SequencerConstants;
@@ -58,7 +60,7 @@ public class DrumSelectorPanel extends JPanel implements IBusListener {
     }
 
     /**
-     * Handle command bus events
+     * Update the onAction method to properly handle all preset change cases
      */
     @Override
     public void onAction(Command action) {
@@ -72,6 +74,17 @@ public class DrumSelectorPanel extends JPanel implements IBusListener {
                     // Check if this player belongs to our sequencer
                     if (player.getOwner() == sequencer) {
                         updateButtonForPlayer(player);
+                        logger.debug("Updated drum button for player: {}", player.getName());
+                    }
+                }
+                break;
+
+            case Commands.PLAYER_UPDATE_EVENT:
+                if (action.getData() instanceof PlayerUpdateEvent event) {
+                    // Check if this player belongs to our sequencer
+                    if (event.getPlayer().getOwner() == sequencer) {
+                        updateButtonForPlayer(event.getPlayer());
+                        logger.debug("Updated drum button for player: {}", event.getPlayer().getName());
                     }
                 }
                 break;
@@ -84,8 +97,35 @@ public class DrumSelectorPanel extends JPanel implements IBusListener {
                     for (int i = 0; i < DRUM_PAD_COUNT; i++) {
                         Player player = sequencer.getPlayer(i);
                         if (player != null && playerId.equals(player.getId())) {
+                            // First, refresh the player to ensure we have the latest data
+                            sequencer.refreshPlayer(i);
+                            player = sequencer.getPlayer(i); // Get updated reference
+
                             updateButtonForPlayer(player);
+                            logger.debug("Updated drum button for player {} after preset change",
+                                    player.getName());
                             break;
+                        }
+                    }
+                }
+                break;
+
+            // Add direct handler for preset change events
+            case Commands.PLAYER_PRESET_CHANGE_EVENT:
+                if (action.getData() instanceof PlayerPresetChangeEvent event) {
+                    Player eventPlayer = event.getPlayer();
+                    if (eventPlayer != null) {
+                        // Check if this player belongs to our sequencer
+                        for (int i = 0; i < DRUM_PAD_COUNT; i++) {
+                            Player player = sequencer.getPlayer(i);
+                            if (player != null && player.getId().equals(eventPlayer.getId())) {
+                                // Ensure our player is updated with latest name
+                                sequencer.refreshPlayer(i);
+                                updateButtonForDrumPad(i);
+                                logger.debug("Updated drum button {} after preset change event for: {}",
+                                        i, player.getName());
+                                break;
+                            }
                         }
                     }
                 }
@@ -99,7 +139,12 @@ public class DrumSelectorPanel extends JPanel implements IBusListener {
                     for (int i = 0; i < DRUM_PAD_COUNT; i++) {
                         Player player = sequencer.getPlayer(i);
                         if (player != null && playerId.equals(player.getId())) {
+                            // Refresh the player to ensure we have the latest data
+                            sequencer.refreshPlayer(i);
+                            player = sequencer.getPlayer(i);
                             updateButtonForPlayer(player);
+                            logger.debug("Updated drum button for player {} after instrument change",
+                                    player.getName());
                             break;
                         }
                     }
@@ -116,6 +161,23 @@ public class DrumSelectorPanel extends JPanel implements IBusListener {
                         Player player = sequencer.getPlayer(drumIndex);
                         if (player != null) {
                             updateButtonForPlayer(player);
+                        }
+                    }
+                }
+                break;
+
+            // Add handler for soundbank changes which also need to update buttons
+            case Commands.SOUNDBANK_CHANGED:
+                if (action.getData() instanceof Player player) {
+                    // Check if this player belongs to our sequencer
+                    for (int i = 0; i < DRUM_PAD_COUNT; i++) {
+                        Player sequencerPlayer = sequencer.getPlayer(i);
+                        if (sequencerPlayer != null && sequencerPlayer.getId().equals(player.getId())) {
+                            sequencer.refreshPlayer(i);
+                            updateButtonForDrumPad(i);
+                            logger.debug("Updated drum button {} after soundbank change for: {}",
+                                    i, player.getName());
+                            break;
                         }
                     }
                 }
@@ -138,7 +200,7 @@ public class DrumSelectorPanel extends JPanel implements IBusListener {
     }
 
     /**
-     * Update button text and tooltip for a specific drum pad
+     * Update button text and tooltip for a specific drum pad with more detailed info
      */
     private void updateButtonForDrumPad(int drumIndex) {
         if (drumIndex < 0 || drumIndex >= drumButtons.size()) {
@@ -155,17 +217,75 @@ public class DrumSelectorPanel extends JPanel implements IBusListener {
 
         // Use SwingUtilities.invokeLater to ensure thread safety
         SwingUtilities.invokeLater(() -> {
-            // Update button text with player name (which should reflect preset)
-            String buttonText = player.getName();
-            button.setText(buttonText);
+            try {
+                // Update button text with player name (which should reflect preset)
+                String buttonText = player.getName();
 
-            // Update tooltip with MIDI note information
-            Integer noteNumber = player.getRootNote();
-            button.setToolTipText("Select " + buttonText + (noteNumber != null ?
-                    " (Note: " + noteNumber + ")" : ""));
+                // Add instrument info if available
+                if (player.getInstrument() != null) {
+                    String instrumentInfo = "";
 
-            logger.debug("Updated drum button {} to '{}' (Note: {})",
-                    drumIndex, buttonText, noteNumber);
+                    // Add preset name/number if available
+//                    if (player.getInstrument().getPreset() != null) {
+//                        instrumentInfo = " (" + player.getInstrument().getPreset();
+//
+//                        // Add bank if available and not default
+//                        if (player.getInstrument().getBankIndex() != null && player.getInstrument().getBankIndex() != 0) {
+//                            instrumentInfo += "/" + player.getInstrument().getBankIndex();
+//                        }
+//
+//                        instrumentInfo += ")";
+//                    }
+
+                    // If button text would be too long, use a shorter representation
+                    if ((buttonText + instrumentInfo).length() > 25) {
+                        buttonText = buttonText.substring(0, Math.min(buttonText.length(), 20)) +
+                                instrumentInfo;
+                    } else {
+                        buttonText += instrumentInfo;
+                    }
+                }
+
+                button.setText(buttonText);
+
+                // Update tooltip with detailed information
+                StringBuilder tooltip = new StringBuilder();
+                tooltip.append("Select ").append(player.getName());
+
+                // Add MIDI note information
+                Integer noteNumber = player.getRootNote();
+                if (noteNumber != null) {
+                    tooltip.append(" (Note: ").append(noteNumber).append(")");
+                }
+
+                // Add instrument information
+                if (player.getInstrument() != null) {
+                    tooltip.append("<br>Instrument: ").append(player.getInstrument().getName());
+
+                    if (player.getInstrument().getPreset() != null) {
+                        tooltip.append("<br>Preset: ").append(player.getInstrument().getPreset());
+                    }
+
+                    if (player.getInstrument().getBankIndex() != null) {
+                        tooltip.append("<br>Bank: ").append(player.getInstrument().getBankIndex());
+                    }
+
+                    if (player.getInstrument().getSoundbankName() != null) {
+                        tooltip.append("<br>Soundbank: ").append(player.getInstrument().getSoundbankName());
+                    }
+                }
+
+                button.setToolTipText("<html>" + tooltip + "</html>");
+
+                logger.debug("Updated drum button {} to '{}' (Note: {})",
+                        drumIndex, buttonText, noteNumber);
+
+                // Force button to repaint
+                button.invalidate();
+                button.repaint();
+            } catch (Exception e) {
+                logger.error("Error updating button for drum {}: {}", drumIndex, e.getMessage(), e);
+            }
         });
     }
 

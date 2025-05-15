@@ -107,7 +107,8 @@ public abstract class Player implements Callable<Boolean>, Serializable, IBusLis
     private Integer fadeIn = 0;
     private Boolean accent = false;
     private String scale = "Chromatic";
-    private Integer duration = 100;
+    private double duration = 100.0;
+
     @JsonIgnore
     private Boolean enabled = false;
     @JsonIgnore
