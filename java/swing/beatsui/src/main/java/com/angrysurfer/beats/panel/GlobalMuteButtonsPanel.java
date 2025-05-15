@@ -1,9 +1,16 @@
 package com.angrysurfer.beats.panel;
 
-import java.awt.Color;
-import java.awt.Dimension;
-import java.awt.FlowLayout;
-import java.awt.Font;
+import com.angrysurfer.core.api.*;
+import com.angrysurfer.core.event.NoteEvent;
+import com.angrysurfer.core.sequencer.DrumSequencer;
+import com.angrysurfer.core.sequencer.MelodicSequencer;
+import com.angrysurfer.core.service.MelodicSequencerManager;
+import com.angrysurfer.core.service.PlayerManager;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import javax.swing.*;
+import java.awt.*;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -12,49 +19,24 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
-import javax.swing.BorderFactory;
-import javax.swing.Box;
-import javax.swing.BoxLayout;
-import javax.swing.JPanel;
-import javax.swing.JToggleButton;
-import javax.swing.SwingUtilities;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import com.angrysurfer.core.api.Command;
-import com.angrysurfer.core.api.CommandBus;
-import com.angrysurfer.core.api.Commands;
-import com.angrysurfer.core.api.IBusListener;
-import com.angrysurfer.core.api.TimingBus;
-import com.angrysurfer.core.event.NoteEvent;
-import com.angrysurfer.core.sequencer.DrumSequencer;
-import com.angrysurfer.core.sequencer.MelodicSequencer;
-import com.angrysurfer.core.service.MelodicSequencerManager;
-import com.angrysurfer.core.service.PlayerManager;
-
 /**
  * Panel that handles all mute buttons for both drum and melodic sequencers
  */
 public class GlobalMuteButtonsPanel extends JPanel implements IBusListener {
     private static final Logger logger = LoggerFactory.getLogger(GlobalMuteButtonsPanel.class);
-
-    // Button lists
-    private final List<JToggleButton> drumMuteButtons = new ArrayList<>();
-    private final List<JToggleButton> melodicMuteButtons = new ArrayList<>();
-
-    // Sequencer references
-    private DrumSequencer drumSequencer;
-    private List<MelodicSequencer> melodicSequencers;
-
     // Button colors
     private static final Color DRUM_UNMUTED_COLOR = new Color(128, 0, 128); // Purple
     private static final Color MELODIC_UNMUTED_COLOR = new Color(0, 0, 200); // Blue
     private static final Color MUTED_COLOR = new Color(255, 0, 0); // Bright red
-
+    private static final Dimension buttonSize = new Dimension(18, 18); // Square button
+    // Button lists
+    private final List<JToggleButton> drumMuteButtons = new ArrayList<>();
+    private final List<JToggleButton> melodicMuteButtons = new ArrayList<>();
     // Track active notes for visual effect duration
     private final Map<Integer, ScheduledExecutorService> activeNoteTimers = new HashMap<>();
-
+    // Sequencer references
+    private DrumSequencer drumSequencer;
+    private List<MelodicSequencer> melodicSequencers;
     // Activity indicator
     private JPanel activityIndicator;
     private long lastActivityTime = 0;
@@ -81,7 +63,7 @@ public class GlobalMuteButtonsPanel extends JPanel implements IBusListener {
     }
 
     private void registerWithCommandBus() {
-        CommandBus.getInstance().register(this);
+        CommandBus.getInstance().register(this, new String[]{Commands.DRUM_NOTE_TRIGGERED, Commands.MELODIC_NOTE_TRIGGERED});
         TimingBus.getInstance().register(this);
         logger.info("MuteButtonsPanel registered with CommandBus, listening for note events");
     }
@@ -139,9 +121,7 @@ public class GlobalMuteButtonsPanel extends JPanel implements IBusListener {
             }
 
             case Commands.MELODIC_NOTE_TRIGGERED -> {
-                if (action.getData() instanceof NoteEvent && action.getSender() instanceof MelodicSequencer) {
-                    MelodicSequencer source = (MelodicSequencer) action.getSender();
-                    NoteEvent noteEvent = (NoteEvent) action.getData();
+                if (action.getData() instanceof NoteEvent noteEvent && action.getSender() instanceof MelodicSequencer source) {
 
                     // Find the index of the sequencer that triggered the note
                     if (melodicSequencers != null) {
@@ -154,7 +134,7 @@ public class GlobalMuteButtonsPanel extends JPanel implements IBusListener {
                                 try {
                                     if (noteEvent.getDurationMs() > 0) {
                                         // Cap at 500ms to prevent sticking
-                                        durationMs = Math.min(500, (int) noteEvent.getDurationMs() / 4);
+                                        durationMs = Math.min(500, noteEvent.getDurationMs() / 4);
                                     }
                                 } catch (Exception ex) {
                                     // If any error occurs, use the default
@@ -265,7 +245,7 @@ public class GlobalMuteButtonsPanel extends JPanel implements IBusListener {
      * Helper method to reset button appearance
      */
     private void resetButtonAppearance(JToggleButton button, Color originalBg, Color originalFg,
-            javax.swing.border.Border originalBorder, int buttonId) {
+                                       javax.swing.border.Border originalBorder, int buttonId) {
         SwingUtilities.invokeLater(() -> {
             try {
                 // Restore original appearance
@@ -394,14 +374,12 @@ public class GlobalMuteButtonsPanel extends JPanel implements IBusListener {
         });
         muteMelodicsButton.setToolTipText("Mute All Melodics");
         buttonPanel.add(muteMelodicsButton);
-        
+
         buttonPanel.add(Box.createHorizontalStrut(4));
         buttonPanel.add(activityIndicator);
 
         return buttonPanel;
     }
-
-    private static Dimension buttonSize = new Dimension(18, 18); // Square button
 
     private JToggleButton createMuteButton(int index, boolean isDrum) {
         JToggleButton muteButton = new JToggleButton();
@@ -446,7 +424,7 @@ public class GlobalMuteButtonsPanel extends JPanel implements IBusListener {
 
             // Update color based on mute state - use VERY bright red for muted
             muteButton.setBackground(isMuted ? MUTED_COLOR : defaultColor);
-            muteButton.setForeground(isMuted ? Color.WHITE : Color.WHITE);
+            muteButton.setForeground(Color.WHITE);
 
             if (isDrum) {
                 toggleDrumMute(index, isMuted);
@@ -500,7 +478,7 @@ public class GlobalMuteButtonsPanel extends JPanel implements IBusListener {
 
             // Update color based on mute state - use VERY bright red for muted
             muteButton.setBackground(isMuted ? MUTED_COLOR : defaultColor);
-            muteButton.setForeground(isMuted ? Color.WHITE : Color.WHITE);
+            muteButton.setForeground(Color.WHITE);
 
             // if (isDrum) {
             //     toggleDrumMute(index, isMuted);
@@ -519,34 +497,34 @@ public class GlobalMuteButtonsPanel extends JPanel implements IBusListener {
         }
     }
 
-private void toggleMelodicMute(int seqIndex, boolean muted) {
-    logger.info("{}muting melodic sequencer {}", muted ? "" : "Un", seqIndex + 1);
-    if (melodicSequencers != null && seqIndex < melodicSequencers.size()) {
-        MelodicSequencer sequencer = melodicSequencers.get(seqIndex);
-        if (sequencer != null && sequencer.getPlayer() != null) {
-            // Set the player level
-            sequencer.getPlayer().setLevel(muted ? 0 : 100);
-            
-            // Log the new level to help diagnose issues
-            logger.debug("Set melodic sequencer {} player level to {}", 
-                    seqIndex, sequencer.getPlayer().getLevel());
-                    
-            // Ensure changes are persisted
-            PlayerManager.getInstance().savePlayerProperties(sequencer.getPlayer());
-            
-            // Publish an event so other components can be notified
-            CommandBus.getInstance().publish(
-                Commands.PLAYER_LEVEL_CHANGED, 
-                this, 
-                Map.of("playerId", sequencer.getPlayer().getId(), "level", muted ? 0 : 100)
-            );
+    private void toggleMelodicMute(int seqIndex, boolean muted) {
+        logger.info("{}muting melodic sequencer {}", muted ? "" : "Un", seqIndex + 1);
+        if (melodicSequencers != null && seqIndex < melodicSequencers.size()) {
+            MelodicSequencer sequencer = melodicSequencers.get(seqIndex);
+            if (sequencer != null && sequencer.getPlayer() != null) {
+                // Set the player level
+                sequencer.getPlayer().setLevel(muted ? 0 : 100);
+
+                // Log the new level to help diagnose issues
+                logger.debug("Set melodic sequencer {} player level to {}",
+                        seqIndex, sequencer.getPlayer().getLevel());
+
+                // Ensure changes are persisted
+                PlayerManager.getInstance().savePlayerProperties(sequencer.getPlayer());
+
+                // Publish an event so other components can be notified
+                CommandBus.getInstance().publish(
+                        Commands.PLAYER_LEVEL_CHANGED,
+                        this,
+                        Map.of("playerId", sequencer.getPlayer().getId(), "level", muted ? 0 : 100)
+                );
+            } else {
+                logger.warn("Cannot mute melodic sequencer {} - sequencer or player is null", seqIndex);
+            }
         } else {
-            logger.warn("Cannot mute melodic sequencer {} - sequencer or player is null", seqIndex);
+            logger.warn("Cannot mute melodic sequencer {} - index out of range", seqIndex);
         }
-    } else {
-        logger.warn("Cannot mute melodic sequencer {} - index out of range", seqIndex);
     }
-}
 
     /**
      * Set the drum sequencer to control

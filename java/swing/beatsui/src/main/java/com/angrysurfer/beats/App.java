@@ -25,9 +25,13 @@ public class App implements IBusListener {
     private static final CommandBus commandBus = CommandBus.getInstance();
 
     private static final boolean showSplash = true;
-
-    private Frame frame;
     private static SplashScreen splash;
+    private Frame frame;
+
+    public App() {
+        // Register for theme changes using the correct method
+        CommandBus.getInstance().register(this, new String[]{Commands.CHANGE_THEME});
+    }
 
     public static void main(String[] args) {
         // Configure logging first
@@ -107,42 +111,6 @@ public class App implements IBusListener {
         }).start();
     }
 
-    private void createAndShowGUI() {
-        frame = new Frame();
-        
-        UIErrorHandler.initialize(frame);
-        
-        frame.loadFrameState();
-        frame.setVisible(true);
-        UIErrorHandler.initialize(frame);
-    }
-
-    @Override
-    public void onAction(Command action) {
-        if (Commands.CHANGE_THEME.equals(action.getCommand())) {
-            SwingUtilities.invokeLater(() -> {
-                try {
-                    frame.saveFrameState();
-                    String newLafClass = (String) action.getData();
-                    UIManager.setLookAndFeel(newLafClass);
-                    final Frame oldFrame = frame;
-
-                    Frame newFrame = new Frame();
-                    newFrame.loadFrameState();
-                    newFrame.setVisible(true);
-
-                    oldFrame.close();
-
-                    frame = newFrame;
-                    CommandBus.getInstance().publish(Commands.THEME_CHANGED, App.class, null);
-
-                } catch (Exception e) {
-                    logger.error("Error handling theme change: {}", e.getMessage());
-                }
-            });
-        }
-    }
-
     private static void setupLookAndFeel() {
         try {
             // Add logging
@@ -201,7 +169,7 @@ public class App implements IBusListener {
             UserConfigManager.getInstance().initialize();
 
             splash.completeTask("Loaded user configuration");
-            
+
             // Initialize SessionManager AFTER instruments are loaded
             SessionManager sessionManager = SessionManager.getInstance();
             sessionManager.initialize();
@@ -228,11 +196,11 @@ public class App implements IBusListener {
         SwingUtilities.invokeLater(() -> {
             String fullMessage = String.format("""
                     Failed to initialize application: %s
-
+                    
                     Error details: %s
-
+                    
                     Please ensure Redis is running and try again.
-
+                    
                     The application will now exit.""", errorMessage, e.getMessage());
 
             JOptionPane.showMessageDialog(null, fullMessage, "Initialization Error", JOptionPane.ERROR_MESSAGE);
@@ -241,8 +209,40 @@ public class App implements IBusListener {
         });
     }
 
-    public App() {
-        // Register for theme changes using the correct method
-        commandBus.register(this);
+    private void createAndShowGUI() {
+        frame = new Frame();
+
+        UIErrorHandler.initialize(frame);
+
+        frame.loadFrameState();
+        frame.setVisible(true);
+        UIErrorHandler.initialize(frame);
     }
+
+    @Override
+    public void onAction(Command action) {
+        if (Commands.CHANGE_THEME.equals(action.getCommand())) {
+            SwingUtilities.invokeLater(() -> {
+                try {
+                    frame.saveFrameState();
+                    String newLafClass = (String) action.getData();
+                    UIManager.setLookAndFeel(newLafClass);
+                    final Frame oldFrame = frame;
+
+                    Frame newFrame = new Frame();
+                    newFrame.loadFrameState();
+                    newFrame.setVisible(true);
+
+                    oldFrame.close();
+
+                    frame = newFrame;
+                    CommandBus.getInstance().publish(Commands.THEME_CHANGED, App.class, null);
+
+                } catch (Exception e) {
+                    logger.error("Error handling theme change: {}", e.getMessage());
+                }
+            });
+        }
+    }
+
 }

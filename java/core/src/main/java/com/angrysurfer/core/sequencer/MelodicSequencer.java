@@ -53,7 +53,19 @@ public class MelodicSequencer implements IBusListener {
         setId(id);
         //setChannel(SEQUENCER_CHANNELS[id]);
         initializePlayer(SequencerConstants.SEQUENCER_CHANNELS[id]);
-        CommandBus.getInstance().register(this);
+        CommandBus.getInstance().register(this, new String[] {
+            Commands.REPAIR_MIDI_CONNECTIONS,
+            Commands.TIMING_UPDATE,
+            Commands.TRANSPORT_START,
+            Commands.TRANSPORT_STOP,
+            Commands.REFRESH_ALL_INSTRUMENTS,
+            Commands.PLAYER_PRESET_CHANGE_EVENT,
+            Commands.PLAYER_PRESET_CHANGED,
+            Commands.PLAYER_INSTRUMENT_CHANGE_EVENT,
+            Commands.PLAYER_UPDATED,
+            Commands.REFRESH_PLAYER_INSTRUMENT
+        });
+        
         TimingBus.getInstance().register(this);
 
         updateQuantizer();

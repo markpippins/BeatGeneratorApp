@@ -68,7 +68,20 @@ public class DrumSequencer implements IBusListener {
         initializePlayers();
 
         // Register with command bus
-        CommandBus.getInstance().register(this);
+        CommandBus.getInstance().register(this, new String[] {
+            Commands.REPAIR_MIDI_CONNECTIONS,
+            Commands.TIMING_UPDATE,
+            Commands.TRANSPORT_START,
+            Commands.TRANSPORT_STOP,
+            Commands.UPDATE_TEMPO,
+            Commands.DRUM_PAD_SELECTED,
+            Commands.DRUM_STEP_UPDATED,
+            Commands.REFRESH_ALL_INSTRUMENTS,
+            Commands.REFRESH_PLAYER_INSTRUMENT,
+            Commands.PLAYER_UPDATED,
+            Commands.PLAYER_INSTRUMENT_CHANGED
+        });
+        
         TimingBus.getInstance().register(this);
 
         // Load first saved sequence (if available) instead of default pattern

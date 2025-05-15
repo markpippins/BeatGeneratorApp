@@ -329,7 +329,7 @@ public class PlayerEditDetailPanel extends JPanel {
                 player.setName(InternalSynthManager.getInstance().getDrumName(player.getRootNote()));
 
             // Create a player update event
-            commandBus.publish(
+            CommandBus.getInstance().publish(
                     Commands.PLAYER_UPDATE_EVENT,
                     this,
                     new PlayerUpdateEvent(player)
@@ -348,7 +348,7 @@ public class PlayerEditDetailPanel extends JPanel {
             player.setPanPosition(value);
 
             // Create a player update event
-            commandBus.publish(
+            CommandBus.getInstance().publish(
                     Commands.PLAYER_UPDATE_EVENT,
                     this,
                     new PlayerUpdateEvent(player)
@@ -364,7 +364,7 @@ public class PlayerEditDetailPanel extends JPanel {
                     noteDial.setValue((Integer) action.getData(), false);
                 }
             }
-        });
+        }, new String[] { Commands.NEW_VALUE_NOTE });
 
         // Add velocity min slider change listener
         velocityMinSlider.addChangeListener(e -> {

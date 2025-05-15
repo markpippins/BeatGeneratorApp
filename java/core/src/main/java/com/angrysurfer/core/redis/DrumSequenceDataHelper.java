@@ -30,7 +30,6 @@ class DrumSequenceDataHelper {
     private static final int MAX_STEPS = 64;
     private final JedisPool jedisPool;
     private final ObjectMapper objectMapper;
-    private final CommandBus commandBus = CommandBus.getInstance();
 
     public DrumSequenceDataHelper(JedisPool jedisPool, ObjectMapper objectMapper) {
         this.jedisPool = jedisPool;
@@ -212,7 +211,7 @@ class DrumSequenceDataHelper {
             }
 
             // Notify that pattern has updated
-            commandBus.publish(Commands.DRUM_SEQUENCE_UPDATED, this, sequencer.getSequenceData().getId());
+            CommandBus.getInstance().publish(Commands.DRUM_SEQUENCE_UPDATED, this, sequencer.getSequenceData().getId());
 
         } catch (Exception e) {
             logger.error("Error applying drum sequence data to sequencer: " + e.getMessage(), e);
@@ -281,7 +280,7 @@ class DrumSequenceDataHelper {
             logger.info("Saved drum sequence {}", data.getId());
 
             // Notify listeners
-            commandBus.publish(Commands.DRUM_SEQUENCE_SAVED, this, data.getId());
+            CommandBus.getInstance().publish(Commands.DRUM_SEQUENCE_SAVED, this, data.getId());
 
         } catch (Exception e) {
             logger.error("Error saving drum sequence: " + e.getMessage(), e);
@@ -498,7 +497,7 @@ class DrumSequenceDataHelper {
                 logger.info("Successfully deleted drum sequence with ID {}", id);
 
                 // Notify listeners
-                commandBus.publish(Commands.DRUM_SEQUENCE_DELETED, this, id);
+                CommandBus.getInstance().publish(Commands.DRUM_SEQUENCE_DELETED, this, id);
             } else {
                 logger.warn("Failed to delete drum sequence with ID {}", id);
             }

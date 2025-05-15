@@ -46,9 +46,9 @@ public class MidiClockSource implements IBusListener {
             e.printStackTrace();
         }
 
-        CommandBus.getInstance().register(this);
-        // System.out.println("SequencerManager: Initialization complete");
-        // isInitialized = true;
+        CommandBus.getInstance().register(this, new String[]{
+                Commands.SESSION_SELECTED, Commands.METRONOME_START, Commands.METRONOME_STOP
+        });
     }
 
     // Optimize buffer size and latency settings
@@ -176,7 +176,7 @@ public class MidiClockSource implements IBusListener {
                 // System.out.println("SequencerManager: Sequencer started");
 
                 // Publish state change - CRITICAL for UI updates
-                commandBus.publish(Commands.TRANSPORT_STATE_CHANGED, this, true);
+                CommandBus.getInstance().publish(Commands.TRANSPORT_STATE_CHANGED, this, true);
                 // System.out.println("SequencerManager: Published TRANSPORT_STATE_CHANGED event");
             } else {
                 // System.out.println("SequencerManager: Cannot start - sequencer is null or already running");
@@ -200,7 +200,7 @@ public class MidiClockSource implements IBusListener {
                 sequencer.setMicrosecondPosition(0);
 
                 // Publish state change - CRITICAL for UI updates
-                commandBus.publish(Commands.TRANSPORT_STATE_CHANGED, this, false);
+                CommandBus.getInstance().publish(Commands.TRANSPORT_STATE_CHANGED, this, false);
                 // System.out.println("SequencerManager: Stopped sequencer, publishing state change event");
             }
         } catch (Exception e) {

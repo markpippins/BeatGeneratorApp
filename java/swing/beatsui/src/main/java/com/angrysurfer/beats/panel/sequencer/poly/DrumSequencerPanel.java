@@ -106,14 +106,16 @@ public class DrumSequencerPanel extends JPanel implements IBusListener {
                 event -> gridPanel.updateStepHighlighting(event.getDrumIndex(), event.getOldStep(),
                         event.getNewStep()));
 
-        // Register with the command bus - MAKE SURE THIS IS HERE
-        CommandBus.getInstance().register(this);
-
-        // Debug: Print confirmation of registration
-        System.out.println("DrumSequencerPanel registered with CommandBus");
-
         // Add as listener
-        CommandBus.getInstance().register(this);
+    CommandBus.getInstance().register(this, new String[] {
+        Commands.DRUM_STEP_UPDATED,
+        Commands.DRUM_SEQUENCE_GRID_RECREATE_REQUESTED,
+        Commands.DRUM_PAD_SELECTED,
+        Commands.DRUM_STEP_PARAMETERS_CHANGED,
+        Commands.DRUM_STEP_EFFECTS_CHANGED,
+        Commands.HIGHLIGHT_STEP,
+        Commands.WINDOW_RESIZED
+    });
         logger.info("DrumSequencerPanel registered as listener");
 
         // Initialize UI components

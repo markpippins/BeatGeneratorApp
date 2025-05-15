@@ -96,7 +96,13 @@ public class SongPanel extends JPanel implements IBusListener {
         currentBar = 0;
 
         // Initialize busses - ensure this happens early
-        CommandBus.getInstance().register(this);
+        CommandBus.getInstance().register(this, new String[] {
+            Commands.TIMING_UPDATE,
+            Commands.DRUM_PATTERN_SWITCHED,
+            Commands.MELODIC_PATTERN_SWITCHED,
+            Commands.TIMING_BAR
+        });
+        
         TimingBus.getInstance().register(this);
 
         // Initialize sequencer managers

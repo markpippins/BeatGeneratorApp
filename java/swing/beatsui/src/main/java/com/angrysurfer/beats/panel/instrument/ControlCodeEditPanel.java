@@ -1,37 +1,22 @@
 package com.angrysurfer.beats.panel.instrument;
 
-import java.awt.BorderLayout;
-import java.awt.FlowLayout;
-import java.awt.GridBagConstraints;
-import java.awt.GridBagLayout;
-import java.awt.Insets;
-import java.util.HashSet;
-
-import javax.swing.JButton;
-import javax.swing.JComponent;
-import javax.swing.JLabel;
-import javax.swing.JPanel;
-import javax.swing.JScrollPane;
-import javax.swing.JSpinner;
-import javax.swing.JTable;
-import javax.swing.JTextField;
-import javax.swing.ListSelectionModel;
-import javax.swing.SpinnerNumberModel;
-import javax.swing.table.DefaultTableModel;
-
 import com.angrysurfer.beats.Dialog;
 import com.angrysurfer.core.api.CommandBus;
 import com.angrysurfer.core.api.Commands;
 import com.angrysurfer.core.model.ControlCode;
 import com.angrysurfer.core.model.ControlCodeCaption;
-
 import lombok.Getter;
 import lombok.Setter;
+
+import javax.swing.*;
+import javax.swing.table.DefaultTableModel;
+import java.awt.*;
+import java.util.HashSet;
 
 @Getter
 @Setter
 public class ControlCodeEditPanel extends JPanel {
-    private CommandBus commandBus = CommandBus.getInstance();
+
     private ControlCode controlCode;
     private JTextField nameField;
     private JSpinner codeSpinner;
@@ -48,23 +33,23 @@ public class ControlCodeEditPanel extends JPanel {
 
         // Create input fields
         nameField = new JTextField(controlCode.getName(), 20);
-        
+
         // Fix spinners to use proper initialization
         codeSpinner = new JSpinner(new SpinnerNumberModel(
-            controlCode.getCode() != null ? controlCode.getCode() : 0, 
-            0, 127, 1));
-            
+                controlCode.getCode() != null ? controlCode.getCode() : 0,
+                0, 127, 1));
+
         lowerBoundSpinner = new JSpinner(new SpinnerNumberModel(
-            controlCode.getLowerBound() != null ? controlCode.getLowerBound() : 0, 
-            0, 127, 1));
-            
+                controlCode.getLowerBound() != null ? controlCode.getLowerBound() : 0,
+                0, 127, 1));
+
         upperBoundSpinner = new JSpinner(new SpinnerNumberModel(
-            controlCode.getUpperBound() != null ? controlCode.getUpperBound() : 127, 
-            0, 127, 1));
+                controlCode.getUpperBound() != null ? controlCode.getUpperBound() : 127,
+                0, 127, 1));
 
         // Setup main form panel
         JPanel formPanel = createFormPanel();
-        
+
         // Setup captions panel
         JPanel captionsPanel = createCaptionsPanel();
 
@@ -89,8 +74,8 @@ public class ControlCodeEditPanel extends JPanel {
         return panel;
     }
 
-    private void addFormField(JPanel panel, String label, JComponent field, 
-                            GridBagConstraints gbc, int row) {
+    private void addFormField(JPanel panel, String label, JComponent field,
+                              GridBagConstraints gbc, int row) {
         gbc.gridx = 0;
         gbc.gridy = row;
         panel.add(new JLabel(label), gbc);
@@ -102,26 +87,26 @@ public class ControlCodeEditPanel extends JPanel {
 
     private JPanel createCaptionsPanel() {
         JPanel panel = new JPanel(new BorderLayout());
-        
+
         // Create captions table
         captionsTable = createCaptionsTable();
-        
+
         // Create button panel
         JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
         addCaptionButton = new JButton("Add");
         editCaptionButton = new JButton("Edit");
         deleteCaptionButton = new JButton("Delete");
-        
+
         buttonPanel.add(addCaptionButton);
         buttonPanel.add(editCaptionButton);
         buttonPanel.add(deleteCaptionButton);
 
         // Add listeners
         setupButtonListeners();
-        
+
         panel.add(buttonPanel, BorderLayout.NORTH);
         panel.add(new JScrollPane(captionsTable), BorderLayout.CENTER);
-        
+
         return panel;
     }
 
@@ -136,7 +121,7 @@ public class ControlCodeEditPanel extends JPanel {
 
         JTable table = new JTable(model);
         table.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
-        
+
         // Load existing captions
         if (controlCode.getCaptions() != null) {
             for (ControlCodeCaption caption : controlCode.getCaptions()) {
@@ -160,7 +145,7 @@ public class ControlCodeEditPanel extends JPanel {
         addCaptionButton.addActionListener(e -> showCaptionDialog(null));
         editCaptionButton.addActionListener(e -> editSelectedCaption());
         deleteCaptionButton.addActionListener(e -> deleteSelectedCaption());
-        
+
         // Initial button states
         editCaptionButton.setEnabled(false);
         deleteCaptionButton.setEnabled(false);
@@ -180,9 +165,9 @@ public class ControlCodeEditPanel extends JPanel {
         if (dialog.showDialog()) {
             ControlCodeCaption updatedCaption = editorPanel.getUpdatedCaption();
             updateCaptionsTable(updatedCaption, captionsTable.getSelectedRow());
-            
+
             // Use CommandBus publish method directly
-            commandBus.publish(isNew ? Commands.CAPTION_ADDED : Commands.CAPTION_UPDATED, this, updatedCaption);
+            CommandBus.getInstance().publish(isNew ? Commands.CAPTION_ADDED : Commands.CAPTION_UPDATED, this, updatedCaption);
         }
     }
 
@@ -199,8 +184,8 @@ public class ControlCodeEditPanel extends JPanel {
         if (row >= 0) {
             ControlCodeCaption caption = getCaptionFromRow(row);
             ((DefaultTableModel) captionsTable.getModel()).removeRow(row);
-            
-            commandBus.publish(Commands.CAPTION_DELETED, this, caption);
+
+            CommandBus.getInstance().publish(Commands.CAPTION_DELETED, this, caption);
         }
     }
 
@@ -230,7 +215,7 @@ public class ControlCodeEditPanel extends JPanel {
         controlCode.setCode((Integer) codeSpinner.getValue());
         controlCode.setLowerBound((Integer) lowerBoundSpinner.getValue());
         controlCode.setUpperBound((Integer) upperBoundSpinner.getValue());
-        
+
         // Update captions
         DefaultTableModel model = (DefaultTableModel) captionsTable.getModel();
         HashSet<ControlCodeCaption> captions = new HashSet<>();
@@ -242,7 +227,7 @@ public class ControlCodeEditPanel extends JPanel {
             captions.add(caption);
         }
         controlCode.setCaptions(captions);
-        
+
         return controlCode;
     }
 }

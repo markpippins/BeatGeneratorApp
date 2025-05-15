@@ -4,6 +4,10 @@ import com.angrysurfer.beats.util.UIHelper;
 import com.angrysurfer.beats.widget.Dial;
 import com.angrysurfer.beats.widget.NoteSelectionDial;
 import com.angrysurfer.beats.widget.TriggerButton;
+import com.angrysurfer.core.api.Command;
+import com.angrysurfer.core.api.CommandBus;
+import com.angrysurfer.core.api.Commands;
+import com.angrysurfer.core.api.IBusListener;
 import com.angrysurfer.core.sequencer.MelodicSequencer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -16,7 +20,7 @@ import java.util.List;
 /**
  * Grid panel for melodic sequencer with step controls
  */
-public class MelodicSequencerGridPanel extends JPanel {
+public class MelodicSequencerGridPanel extends JPanel implements IBusListener {
     private static final Logger logger = LoggerFactory.getLogger(MelodicSequencerGridPanel.class);
     // Reference to sequencer
     private final MelodicSequencer sequencer;
@@ -374,4 +378,26 @@ public class MelodicSequencerGridPanel extends JPanel {
         }
     }
 
+    /**
+     * Register for command bus events
+     */
+    private void registerForEvents() {
+        // Register for specific events only
+        CommandBus.getInstance().register(this, new String[]{
+                Commands.PATTERN_UPDATED,
+                Commands.MELODIC_SEQUENCE_UPDATED,
+                Commands.MELODIC_SEQUENCE_CREATED,
+                Commands.MELODIC_SEQUENCE_LOADED,
+                Commands.SCALE_SELECTED,
+                Commands.HIGHLIGHT_SCALE_NOTE,
+                Commands.WINDOW_RESIZED
+        });
+
+        logger.debug("MelodicSequencerGridPanel registered for specific events");
+    }
+
+    @Override
+    public void onAction(Command action) {
+
+    }
 }

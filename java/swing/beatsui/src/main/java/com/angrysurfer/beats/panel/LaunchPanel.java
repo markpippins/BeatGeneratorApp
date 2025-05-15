@@ -1,35 +1,19 @@
 package com.angrysurfer.beats.panel;
 
-import java.awt.BorderLayout;
-import java.awt.Color;
-import java.awt.Dimension;
-import java.awt.Font;
-import java.awt.FontMetrics;
-import java.awt.Graphics;
-import java.awt.Graphics2D;
-import java.awt.GridLayout;
-import java.awt.RenderingHints;
-
-import javax.swing.JButton;
-import javax.swing.JComponent;
-import javax.swing.JPanel;
-import javax.swing.SwingUtilities;
-import javax.swing.Timer;
-import javax.swing.border.EmptyBorder;
-import javax.swing.plaf.basic.BasicButtonUI;
-
 import com.angrysurfer.beats.util.UIHelper;
 import com.angrysurfer.core.api.*;
 
+import javax.swing.*;
+import javax.swing.plaf.basic.BasicButtonUI;
+import java.awt.*;
+
 public class LaunchPanel extends JPanel implements IBusListener {
 
-    private final CommandBus commandBus = CommandBus.getInstance();
-
     private static final int[] LAUNCH_PAD_LABELS = {
-        13, 14, 15, 16, // inputs 1-4 map to 13,14,15,16
-        9, 10, 11, 12, // inputs 5-8 map to 9,10,11,12
-        5, 6, 7, 8, // inputs 9-12 map to 5,6,7,8
-        1, 2, 3, 4 // inputs 13-16 map to 1,2,3,4
+            13, 14, 15, 16, // inputs 1-4 map to 13,14,15,16
+            9, 10, 11, 12, // inputs 5-8 map to 9,10,11,12
+            5, 6, 7, 8, // inputs 9-12 map to 5,6,7,8
+            1, 2, 3, 4 // inputs 13-16 map to 1,2,3,4
     };
 
     JPanel gridPanel;
@@ -37,7 +21,7 @@ public class LaunchPanel extends JPanel implements IBusListener {
     public LaunchPanel() {
         super(new BorderLayout());
         UIHelper.setPanelBorder(this);
-        commandBus.register(this);
+        CommandBus.getInstance().register(this, new String[]{Commands.CHANGE_THEME});
         setup();
     }
 
@@ -47,15 +31,15 @@ public class LaunchPanel extends JPanel implements IBusListener {
             SwingUtilities.invokeLater(() -> {
                 // Remove existing grid panel
                 remove(gridPanel);
-                
+
                 // Create new grid panel with updated theme colors
                 gridPanel = createGridPanel();
                 add(gridPanel, BorderLayout.CENTER);
-                
+
                 // Ensure proper layout
                 revalidate();
                 repaint();
-                
+
                 // Add debug message
                 System.out.println("LaunchPanel: Grid panel recreated after theme change");
             });
@@ -72,10 +56,10 @@ public class LaunchPanel extends JPanel implements IBusListener {
         // gridPanel.setBorder(new EmptyBorder(5, 5, 5, 5));
 
         Color[] quadrantColors = {
-            UIHelper.mutedRed, // Top-left
-            UIHelper.mutedOlive, // Top-right
-            UIHelper.warmMustard, // Bottom-left
-            UIHelper.fadedOrange // Bottom-right
+                UIHelper.mutedRed, // Top-left
+                UIHelper.mutedOlive, // Top-right
+                UIHelper.warmMustard, // Bottom-left
+                UIHelper.fadedOrange // Bottom-right
         };
 
         int[] count = {1, 1, 1, 1};

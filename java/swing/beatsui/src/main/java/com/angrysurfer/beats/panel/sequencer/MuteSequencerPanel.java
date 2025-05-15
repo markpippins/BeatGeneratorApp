@@ -111,7 +111,12 @@ public class MuteSequencerPanel extends JPanel implements IBusListener {
         add(buttonPanel, BorderLayout.CENTER);
 
         // Register with command bus for events
-        CommandBus.getInstance().register(this);
+        CommandBus.getInstance().register(this, new String[] {
+        Commands.TIMING_UPDATE,
+        Commands.DRUM_PAD_SELECTED,
+        Commands.PLAYER_ACTIVATED,
+        Commands.TRANSPORT_STOP
+    });
         TimingBus.getInstance().register(this);
     }
 

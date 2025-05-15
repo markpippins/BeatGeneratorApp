@@ -2,6 +2,7 @@ package com.angrysurfer.core.service;
 
 import com.angrysurfer.core.api.Command;
 import com.angrysurfer.core.api.CommandBus;
+import com.angrysurfer.core.api.Commands;
 import com.angrysurfer.core.api.IBusListener;
 import com.angrysurfer.core.exception.MidiDeviceException;
 import com.angrysurfer.core.model.InstrumentWrapper;
@@ -22,13 +23,13 @@ public class DeviceManager implements IBusListener {
     private static final boolean disableExcessiveValidation = true;
     private static DeviceManager instance;
     private final List<MidiDevice> availableOutputDevices = new ArrayList<>();
-    private final CommandBus commandBus = CommandBus.getInstance();
+
     private final Map<String, MidiDevice> activeDevices = new ConcurrentHashMap<>();
 
     // Private constructor for singleton
     private DeviceManager() {
         refreshDeviceList();
-        commandBus.register(this);
+        CommandBus.getInstance().register(this, new String[]{Commands.REFRESH_MIDI_DEVICES});
     }
 
     // Singleton accessor
@@ -200,7 +201,7 @@ public class DeviceManager implements IBusListener {
             return;
 
         switch (action.getCommand()) {
-            case "REFRESH_MIDI_DEVICES" -> refreshDeviceList();
+            case Commands.REFRESH_MIDI_DEVICES -> refreshDeviceList();
         }
     }
 

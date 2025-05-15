@@ -35,7 +35,6 @@ public class MenuBar extends JMenuBar {
 
     private final JFrame parentFrame;
     private final ThemeManager themeManager;
-    private final CommandBus commandBus = CommandBus.getInstance();
 
     public MenuBar(JFrame parentFrame) {
         super();
@@ -88,7 +87,7 @@ public class MenuBar extends JMenuBar {
                     JOptionPane.WARNING_MESSAGE);
 
             if (result == JOptionPane.YES_OPTION) {
-                commandBus.publish(Commands.CLEAR_DATABASE, this);
+                CommandBus.getInstance().publish(Commands.CLEAR_DATABASE, this);
             }
         });
 
@@ -102,7 +101,7 @@ public class MenuBar extends JMenuBar {
                     JOptionPane.WARNING_MESSAGE);
 
             if (result == JOptionPane.YES_OPTION) {
-                commandBus.publish(Commands.CLEAR_INVALID_SESSIONS, this);
+                CommandBus.getInstance().publish(Commands.CLEAR_INVALID_SESSIONS, this);
             }
         });
 
@@ -117,7 +116,7 @@ public class MenuBar extends JMenuBar {
                     JOptionPane.WARNING_MESSAGE);
 
             if (result == JOptionPane.YES_OPTION) {
-                commandBus.publish(Commands.DELETE_UNUSED_INSTRUMENTS, this);
+                CommandBus.getInstance().publish(Commands.DELETE_UNUSED_INSTRUMENTS, this);
             }
         });
 
@@ -129,7 +128,7 @@ public class MenuBar extends JMenuBar {
 
         JMenuItem loadConfig = new JMenuItem("Load Configuration...");
         loadConfig.addActionListener(e -> {
-            commandBus.publish(Commands.LOAD_CONFIG, this);
+            CommandBus.getInstance().publish(Commands.LOAD_CONFIG, this);
         });
         dbMenu.add(loadConfig);
         optionsMenu.add(dbMenu);
@@ -137,7 +136,7 @@ public class MenuBar extends JMenuBar {
         // Add Load Config
         JMenuItem saveConfig = new JMenuItem("Save Configuration");
         saveConfig.addActionListener(e -> {
-            commandBus.publish(Commands.SAVE_CONFIG, this);
+            CommandBus.getInstance().publish(Commands.SAVE_CONFIG, this);
         });
         dbMenu.add(saveConfig);
         optionsMenu.add(dbMenu);
@@ -150,7 +149,7 @@ public class MenuBar extends JMenuBar {
         diagnosticsMenu.setMnemonic(KeyEvent.VK_D);
 
         // Initialize DiagnosticsManager
-        DiagnosticsManager diagnosticsManager = DiagnosticsManager.getInstance(parentFrame, commandBus);
+        DiagnosticsManager diagnosticsManager = DiagnosticsManager.getInstance(parentFrame);
 
         // All diagnostics
         JMenuItem allDiagnostics = new JMenuItem("Run All Diagnostics");
@@ -574,7 +573,7 @@ public class MenuBar extends JMenuBar {
         optionsMenu.add(diagnosticsMenu);
 
         // Register visualization listener
-        commandBus.register(new IBusListener() {
+        CommandBus.getInstance().register(new IBusListener() {
             final boolean[] visualizationsEnabled = {false};
             final JMenuItem startVisualizationItem = new JMenuItem("Start Visualization");
             final JMenuItem stopVisualizationItem = new JMenuItem("Stop Visualization");
@@ -726,7 +725,7 @@ public class MenuBar extends JMenuBar {
 
                     case Commands.LOCK_CURRENT_VISUALIZATION:
                         // The lock command was sent - follow up with the locked event
-                        commandBus.publish(Commands.VISUALIZATION_LOCKED, this);
+                        CommandBus.getInstance().publish(Commands.VISUALIZATION_LOCKED, this);
                         break;
 
                     case Commands.VISUALIZATION_LOCKED:
@@ -738,7 +737,7 @@ public class MenuBar extends JMenuBar {
 
                     case Commands.UNLOCK_CURRENT_VISUALIZATION:
                         // The unlock command was sent - follow up with the unlocked event
-                        commandBus.publish(Commands.VISUALIZATION_UNLOCKED, this);
+                        CommandBus.getInstance().publish(Commands.VISUALIZATION_UNLOCKED, this);
                         break;
 
                     case Commands.VISUALIZATION_UNLOCKED:
@@ -756,6 +755,14 @@ public class MenuBar extends JMenuBar {
                         break;
                 }
             }
+        }, new String[] {
+            Commands.VISUALIZATION_REGISTERED,
+            Commands.VISUALIZATION_STARTED,
+            Commands.LOCK_CURRENT_VISUALIZATION,
+            Commands.VISUALIZATION_LOCKED,
+            Commands.UNLOCK_CURRENT_VISUALIZATION,
+            Commands.VISUALIZATION_UNLOCKED,
+            Commands.VISUALIZATION_STOPPED
         });
 
         // Help Menu
@@ -775,7 +782,7 @@ public class MenuBar extends JMenuBar {
 
     private void addMenuItem(JMenu menu, JMenuItem item, String command, Object data, ActionListener extraAction) {
         item.addActionListener(e -> {
-            commandBus.publish(command, this, data);
+            CommandBus.getInstance().publish(command, this, data);
             if (extraAction != null) {
                 extraAction.actionPerformed(e);
             }
@@ -786,7 +793,7 @@ public class MenuBar extends JMenuBar {
     private void addMenuItem(JMenu menu, String name, String command, ActionListener extraAction) {
         JMenuItem item = new JMenuItem(name);
         item.addActionListener(e -> {
-            commandBus.publish(command, this);
+            CommandBus.getInstance().publish(command, this);
             if (extraAction != null) {
                 extraAction.actionPerformed(e);
             }

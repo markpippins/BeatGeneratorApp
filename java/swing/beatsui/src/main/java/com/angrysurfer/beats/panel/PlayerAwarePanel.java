@@ -7,36 +7,34 @@ import com.angrysurfer.core.api.IBusListener;
 import com.angrysurfer.core.event.PlayerSelectionEvent;
 import com.angrysurfer.core.event.PlayerUpdateEvent;
 import com.angrysurfer.core.model.Player;
-
-import javax.swing.*;
-
 import lombok.Getter;
 import lombok.Setter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.swing.*;
+
 /**
  * Base class for panels that work with a specific player
  */
 
- @Getter
- @Setter
+@Getter
+@Setter
 public abstract class PlayerAwarePanel extends JPanel implements IBusListener {
     private static final long serialVersionUID = 1L;
     private static final Logger logger = LoggerFactory.getLogger(PlayerAwarePanel.class);
-    
-    // The player this panel is working with
-    private Player targetPlayer;
-    
     // Flag to prevent recursive calls during initialization
     protected boolean isInitializing = false;
-    
+    // The player this panel is working with
+    private Player targetPlayer;
+
     /**
      * Constructor
      */
     public PlayerAwarePanel() {
         super();
-        CommandBus.getInstance().register(this);
+        CommandBus.getInstance().register(this, new String[]{Commands.PLAYER_ACTIVATED,
+                Commands.PLAYER_UPDATED, Commands.PLAYER_SELECTION_EVENT, Commands.PLAYER_UPDATE_EVENT});
     }
 
     /**
@@ -47,7 +45,7 @@ public abstract class PlayerAwarePanel extends JPanel implements IBusListener {
         if (action == null || action.getCommand() == null) {
             return;
         }
-        
+
         try {
             switch (action.getCommand()) {
                 // Handle new player selection event
@@ -56,21 +54,21 @@ public abstract class PlayerAwarePanel extends JPanel implements IBusListener {
                         handlePlayerSelectionEvent(event);
                     }
                 }
-                
+
                 // Handle player update event
                 case Commands.PLAYER_UPDATE_EVENT -> {
                     if (action.getData() instanceof PlayerUpdateEvent event) {
                         handlePlayerUpdateEvent(event);
                     }
                 }
-                
+
                 // Legacy support for old events
                 case Commands.PLAYER_ACTIVATED -> {
                     if (action.getData() instanceof Player player) {
                         handleLegacyPlayerActivated(player);
                     }
                 }
-                
+
                 case Commands.PLAYER_UPDATED -> {
                     if (action.getData() instanceof Player player) {
                         handleLegacyPlayerUpdated(player);
@@ -81,7 +79,7 @@ public abstract class PlayerAwarePanel extends JPanel implements IBusListener {
             logger.error("Error handling command: {}", e.getMessage(), e);
         }
     }
-    
+
     /**
      * Handle a player selection event
      */
@@ -89,9 +87,9 @@ public abstract class PlayerAwarePanel extends JPanel implements IBusListener {
         if (event == null || event.getPlayer() == null) {
             return;
         }
-        
+
         Player newPlayer = event.getPlayer();
-        
+
         // Only process if this is a different player
         if (targetPlayer == null || !targetPlayer.getId().equals(newPlayer.getId())) {
             logger.debug("Player selected: {} (ID: {})", newPlayer.getName(), newPlayer.getId());
@@ -99,7 +97,7 @@ public abstract class PlayerAwarePanel extends JPanel implements IBusListener {
             handlePlayerActivated();
         }
     }
-    
+
     /**
      * Handle a player update event
      */
@@ -107,9 +105,9 @@ public abstract class PlayerAwarePanel extends JPanel implements IBusListener {
         if (event == null || event.getPlayer() == null) {
             return;
         }
-        
+
         Player updatedPlayer = event.getPlayer();
-        
+
         // Only process if this is our target player
         if (targetPlayer != null && targetPlayer.getId().equals(updatedPlayer.getId())) {
             logger.debug("Target player updated: {} (ID: {})", updatedPlayer.getName(), updatedPlayer.getId());
@@ -117,7 +115,7 @@ public abstract class PlayerAwarePanel extends JPanel implements IBusListener {
             handlePlayerUpdated();
         }
     }
-    
+
     /**
      * Legacy handler for PLAYER_ACTIVATED command
      */
@@ -125,7 +123,7 @@ public abstract class PlayerAwarePanel extends JPanel implements IBusListener {
         if (player == null) {
             return;
         }
-        
+
         // Only process if this is a different player
         if (targetPlayer == null || !targetPlayer.getId().equals(player.getId())) {
             logger.debug("Legacy player activated: {} (ID: {})", player.getName(), player.getId());
@@ -133,7 +131,7 @@ public abstract class PlayerAwarePanel extends JPanel implements IBusListener {
             handlePlayerActivated();
         }
     }
-    
+
     /**
      * Legacy handler for PLAYER_UPDATED command
      */
@@ -141,7 +139,7 @@ public abstract class PlayerAwarePanel extends JPanel implements IBusListener {
         if (player == null) {
             return;
         }
-        
+
         // Only process if this is our target player
         if (targetPlayer != null && targetPlayer.getId().equals(player.getId())) {
             logger.debug("Legacy player updated: {} (ID: {})", player.getName(), player.getId());
@@ -149,50 +147,50 @@ public abstract class PlayerAwarePanel extends JPanel implements IBusListener {
             handlePlayerUpdated();
         }
     }
-    
+
     /**
      * Set the target player for this panel
-     * 
+     *
      * @param player The player to set
      */
     public void setPlayer(Player player) {
         if (player == null) {
             return;
         }
-        
+
         boolean differentPlayer = targetPlayer == null || !targetPlayer.getId().equals(player.getId());
-        
+
         targetPlayer = player;
-        
+
         if (differentPlayer) {
             handlePlayerActivated();
         } else {
             handlePlayerUpdated();
         }
     }
-  
+
     /**
      * Request player refresh (force instrument preset application)
      */
     protected void requestPlayerRefresh() {
         if (targetPlayer != null && targetPlayer.getInstrument() != null) {
             CommandBus.getInstance().publish(
-                Commands.PLAYER_REFRESH_EVENT,
-                this,
-                new com.angrysurfer.core.event.PlayerRefreshEvent(targetPlayer)
+                    Commands.PLAYER_REFRESH_EVENT,
+                    this,
+                    new com.angrysurfer.core.event.PlayerRefreshEvent(targetPlayer)
             );
         }
     }
-    
+
     /**
      * Send a player update event
      */
     protected void requestPlayerUpdate() {
         if (targetPlayer != null) {
             CommandBus.getInstance().publish(
-                Commands.PLAYER_UPDATE_EVENT,
-                this,
-                new com.angrysurfer.core.event.PlayerUpdateEvent(targetPlayer)
+                    Commands.PLAYER_UPDATE_EVENT,
+                    this,
+                    new com.angrysurfer.core.event.PlayerUpdateEvent(targetPlayer)
             );
         }
     }
@@ -201,7 +199,7 @@ public abstract class PlayerAwarePanel extends JPanel implements IBusListener {
      * Called when a new player is activated for this panel
      */
     public abstract void handlePlayerActivated();
-    
+
     /**
      * Called when the panel's player is updated
      */

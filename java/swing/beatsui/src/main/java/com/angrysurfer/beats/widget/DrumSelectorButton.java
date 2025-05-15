@@ -54,7 +54,7 @@ public class DrumSelectorButton extends JButton implements IBusListener {
         setFont(new Font(getFont().getName(), Font.BOLD, 11));
 
         // Register for command bus events to track selection changes
-        CommandBus.getInstance().register(this);
+        CommandBus.getInstance().register(this, new String[]{Commands.DRUM_PAD_SELECTED});
 
         // Replace existing action listeners to prevent toggle behavior
         for (ActionListener al : getActionListeners()) {

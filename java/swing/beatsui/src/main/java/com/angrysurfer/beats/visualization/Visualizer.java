@@ -6,6 +6,7 @@ import lombok.Getter;
 import lombok.Setter;
 
 import javax.swing.*;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -15,25 +16,17 @@ import java.util.Random;
 @Setter
 public class Visualizer implements IBusListener {
 
+    private static final int VISUALIZATION_DELAY = 300; // 30 seconds
+    private static final int VISUALIZATION_CHANGE_DELAY = 100; // 10 seconds * 6 = 1 minu
     private final JComponent parent;
-
     private JButton[][] buttons;
     private Timer animationTimer;
     private IVisualizationHandler currentVisualization = null;
-
     private Random random = new Random();
-
     private boolean isVisualizationMode = false;
     private long lastInteraction;
-
     private Timer visualizationTimer;
     private Timer visualizationChangeTimer;
-
-    private static final int VISUALIZATION_DELAY = 300; // 30 seconds
-    private static final int VISUALIZATION_CHANGE_DELAY = 100; // 10 seconds * 6 = 1 minute
-
-    private final CommandBus commandBus = CommandBus.getInstance();
-
     private List<IVisualizationHandler> visualizations = new ArrayList<>();
 
     private boolean isLocked = false; // Add this field
@@ -44,7 +37,18 @@ public class Visualizer implements IBusListener {
         initializeVisualizations();
         setupTimers();
         setupAnimation();
-        commandBus.register(this);
+        CommandBus.getInstance().register(this, new String[]{
+                Commands.START_VISUALIZATION,
+                Commands.STOP_VISUALIZATION,
+                Commands.LOCK_CURRENT_VISUALIZATION,
+                Commands.UNLOCK_CURRENT_VISUALIZATION,
+                Commands.VISUALIZATION_SELECTED,
+                Commands.VISUALIZATION_HANDLER_REFRESH_REQUESTED,
+                Commands.TRANSPORT_START,
+                Commands.TRANSPORT_STATE_CHANGED,
+                Commands.PLAYER_ACTIVATED,
+                Commands.TRANSPORT_STOP
+        });
     }
 
     @Override
@@ -129,7 +133,7 @@ public class Visualizer implements IBusListener {
         visualizations.clear();
         visualizations = getVisualizations();
         for (IVisualizationHandler handler : visualizations) {
-            commandBus.publish(Commands.VISUALIZATION_REGISTERED, this, handler);
+            CommandBus.getInstance().publish(Commands.VISUALIZATION_REGISTERED, this, handler);
         }
     }
 
@@ -152,7 +156,7 @@ public class Visualizer implements IBusListener {
     }
 
     private void scanPackageForVisualizations(String packageName, ClassLoader classLoader,
-            List<IVisualizationHandler> visualizations) {
+                                              List<IVisualizationHandler> visualizations) {
         try {
             String path = packageName.replace('.', '/');
             java.net.URL resource = classLoader.getResource(path);
@@ -166,7 +170,7 @@ public class Visualizer implements IBusListener {
                 // Handle JAR files
                 String jarPath = resource.getPath().substring(5, resource.getPath().indexOf("!"));
                 try (java.util.jar.JarFile jar = new java.util.jar.JarFile(
-                        java.net.URLDecoder.decode(jarPath, "UTF-8"))) {
+                        java.net.URLDecoder.decode(jarPath, StandardCharsets.UTF_8))) {
                     java.util.Enumeration<java.util.jar.JarEntry> entries = jar.entries();
                     while (entries.hasMoreElements()) {
                         String name = entries.nextElement().getName();
@@ -189,7 +193,7 @@ public class Visualizer implements IBusListener {
     }
 
     private void scanDirectory(java.io.File directory, String packageName,
-            List<IVisualizationHandler> visualizations) {
+                               List<IVisualizationHandler> visualizations) {
         java.io.File[] files = directory.listFiles();
         if (files != null) {
             for (java.io.File file : files) {
@@ -256,12 +260,12 @@ public class Visualizer implements IBusListener {
         isVisualizationMode = true;
         visualizationChangeTimer.stop(); // Don't auto-change during sequencer mode
         setDisplayMode(handler);
-        commandBus.publish(Commands.VISUALIZATION_STARTED, this, handler);
+        CommandBus.getInstance().publish(Commands.VISUALIZATION_STARTED, this, handler);
     }
 
     public void stopVisualizer() {
         isVisualizationMode = false;
-        commandBus.publish(Commands.VISUALIZATION_STOPPED, this, null);
+        CommandBus.getInstance().publish(Commands.VISUALIZATION_STOPPED, this, null);
         visualizationChangeTimer.stop();
         clearDisplay();
         currentVisualization = null; // Reset current mode
@@ -311,5 +315,4 @@ public class Visualizer implements IBusListener {
         }
     }
 
-    // ... other necessary supporting classes ...
 }

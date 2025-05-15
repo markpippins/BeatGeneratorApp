@@ -70,7 +70,7 @@ public class TransportIndicatorPanel extends JPanel implements IBusListener {
     private JTextField messageField;
 
     // Data fields
-    private CommandBus commandBus = CommandBus.getInstance();
+
     private int tickCount = 0;
     private int beatCount = 0;
     private int barCount = 0;
@@ -93,14 +93,26 @@ public class TransportIndicatorPanel extends JPanel implements IBusListener {
 
     private void registerForEvents() {
         TimingBus.getInstance().register(this);
-        commandBus.register(this);
+        CommandBus.getInstance().register(this, new String[] {
+        Commands.PLAYER_UPDATED,
+        Commands.TIMING_UPDATE,
+        Commands.TEMPO_CHANGE,
+        Commands.TIME_SIGNATURE_CHANGE,
+        Commands.TIMING_RESET,
+        Commands.TRANSPORT_START,
+        Commands.TRANSPORT_STOP,
+        Commands.TRANSPORT_RECORD,
+        Commands.TRANSPORT_PAUSE,
+        Commands.SESSION_LOADED,
+        Commands.SESSION_CHANGED
+    });
     }
 
     private void requestInitialData() {
         SwingUtilities.invokeLater(() -> {
-            commandBus.publish(Commands.SESSION_REQUEST, this);
-            commandBus.publish(Commands.TRANSPORT_STATE_REQUEST, this);
-            commandBus.publish(Commands.ACTIVE_PLAYER_REQUEST, this);
+            CommandBus.getInstance().publish(Commands.SESSION_REQUEST, this);
+            CommandBus.getInstance().publish(Commands.TRANSPORT_STATE_REQUEST, this);
+            CommandBus.getInstance().publish(Commands.ACTIVE_PLAYER_REQUEST, this);
         });
     }
 

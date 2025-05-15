@@ -25,8 +25,6 @@ import java.util.List;
 @Setter
 public class InstrumentCombo extends JComboBox<InstrumentWrapper> implements IBusListener {
     private static final Logger logger = LoggerFactory.getLogger(InstrumentCombo.class);
-    private final CommandBus commandBus = CommandBus.getInstance();
-    private final InstrumentManager instrumentManager = InstrumentManager.getInstance();
 
     private Player currentPlayer;
     private boolean isInitializing = false;
@@ -38,7 +36,10 @@ public class InstrumentCombo extends JComboBox<InstrumentWrapper> implements IBu
     public InstrumentCombo() {
         super();
         configureRenderer();
-        commandBus.register(this);
+        CommandBus.getInstance().register(this, new String[]{Commands.PLAYER_ACTIVATED,
+                Commands.INSTRUMENTS_REFRESHED, Commands.INSTRUMENT_UPDATED, Commands.PLAYER_UPDATED,
+                Commands.PLAYER_INSTRUMENT_CHANGED});
+
         setPreferredSize(new Dimension(UIHelper.LARGE_CONTROL_WIDTH * 2, UIHelper.CONTROL_HEIGHT));
         setMinimumSize(new Dimension(UIHelper.LARGE_CONTROL_WIDTH * 2, UIHelper.CONTROL_HEIGHT));
         // Add action listener to handle selection changes
@@ -262,11 +263,16 @@ public class InstrumentCombo extends JComboBox<InstrumentWrapper> implements IBu
         }
     }
 
+    /**
+     * Get all instrument wrappers, sorted in a user-friendly way
+     * - Channel-appropriate instruments first
+     * - Alphabetical order with proper numerical sorting
+     */
     private List<InstrumentWrapper> getAllInstrumentWrappers(Integer playerChannel) {
         List<InstrumentWrapper> allInstruments =
-                instrumentManager.getCachedInstruments();
+                InstrumentManager.getInstance().getCachedInstruments();
 
-        // Sort instruments - put channel-appropriate ones first
+        // Sort instruments with enhanced alphanumeric sorting
         allInstruments.sort((a, b) -> {
             // Primary sort: channel-appropriate instruments first
             boolean aForChannel = isInstrumentForChannel(a, playerChannel);
@@ -275,10 +281,71 @@ public class InstrumentCombo extends JComboBox<InstrumentWrapper> implements IBu
             if (aForChannel && !bForChannel) return -1;
             if (!aForChannel && bForChannel) return 1;
 
-            // Secondary sort: by name
-            return a.getName().compareTo(b.getName());
+            // Secondary sort: by name with numerical awareness
+            return compareNaturalOrder(a.getName(), b.getName());
         });
+
         return allInstruments;
+    }
+
+    /**
+     * Compare strings with awareness of embedded numbers
+     * Ensures "Default Drum 2" comes before "Default Drum 10"
+     */
+    private int compareNaturalOrder(String a, String b) {
+        if (a == null && b == null) return 0;
+        if (a == null) return -1;
+        if (b == null) return 1;
+
+        // Implementation of natural sort for alphanumeric strings
+        int aIndex = 0, bIndex = 0;
+
+        while (aIndex < a.length() && bIndex < b.length()) {
+            // Skip leading spaces
+            while (aIndex < a.length() && Character.isWhitespace(a.charAt(aIndex))) aIndex++;
+            while (bIndex < b.length() && Character.isWhitespace(b.charAt(bIndex))) bIndex++;
+
+            // If we've reached the end of either string
+            if (aIndex >= a.length() || bIndex >= b.length()) {
+                break;
+            }
+
+            // If both characters are digits, extract and compare the numbers
+            if (Character.isDigit(a.charAt(aIndex)) && Character.isDigit(b.charAt(bIndex))) {
+                // Extract the numbers
+                int aNum = 0;
+                while (aIndex < a.length() && Character.isDigit(a.charAt(aIndex))) {
+                    aNum = aNum * 10 + (a.charAt(aIndex) - '0');
+                    aIndex++;
+                }
+
+                int bNum = 0;
+                while (bIndex < b.length() && Character.isDigit(b.charAt(bIndex))) {
+                    bNum = bNum * 10 + (b.charAt(bIndex) - '0');
+                    bIndex++;
+                }
+
+                // Compare numbers
+                if (aNum != bNum) {
+                    return Integer.compare(aNum, bNum);
+                }
+            }
+            // If not both digits, compare characters
+            else {
+                char aChar = Character.toLowerCase(a.charAt(aIndex));
+                char bChar = Character.toLowerCase(b.charAt(bIndex));
+
+                if (aChar != bChar) {
+                    return aChar - bChar;
+                }
+
+                aIndex++;
+                bIndex++;
+            }
+        }
+
+        // If we've exhausted one string but not the other
+        return Integer.compare(a.length() - aIndex, b.length() - bIndex);
     }
 
     /**
@@ -343,7 +410,7 @@ public class InstrumentCombo extends JComboBox<InstrumentWrapper> implements IBu
 
         // Create a PlayerInstrumentChangeEvent instead of using the legacy request
         PlayerInstrumentChangeEvent event = new PlayerInstrumentChangeEvent(currentPlayer, selectedInstrument);
-        commandBus.publish(Commands.PLAYER_INSTRUMENT_CHANGE_EVENT, this, event);
+        CommandBus.getInstance().publish(Commands.PLAYER_INSTRUMENT_CHANGE_EVENT, this, event);
 
         logger.info("Instrument change published for player {} to {}",
                 currentPlayer.getName(), selectedInstrument.getName());

@@ -398,4 +398,9 @@ public class Commands {
     public static final String DRUM_STEP_EFFECTS_CHANGED = "DRUM_STEP_EFFECTS_CHANGED";
 
     public static final String ENSURE_MIDI_CONNECTIONS = "ENSURE_MIDI_CONNECTIONS";
+    public static final String REFRESH_MIDI_DEVICES = "REFRESH_MIDI_DEVICES";
+    public static final String DRUM_STEP_SELECTED = "DRUM_STEP_SELECTED";
+    public static final String HIGHLIGHT_STEP = "HIGHLIGHT_STEP";
+    public static final String MELODIC_SEQUENCE_DELETED = "MELODIC_SEQUENCE_DELETED";
+    public static final String HIGHLIGHT_SCALE_NOTE = "HIGHLIGHT_SCALE_NOTE";
 }

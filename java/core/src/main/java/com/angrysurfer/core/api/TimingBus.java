@@ -8,24 +8,20 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 public class TimingBus extends AbstractBus {
+    private static final String[] EMPTY = new String[]{};
     private static TimingBus instance;
-
     // Initialize field BEFORE constructor is called
     private final ConcurrentLinkedQueue<IBusListener> timingListeners = new ConcurrentLinkedQueue<>();
-
     private final ExecutorService timingExecutor = Executors.newSingleThreadExecutor(r -> {
         Thread t = new Thread(r, "TimingBus-Thread");
         t.setPriority(Thread.MAX_PRIORITY);
         return t;
     });
-
     // Add this field for reusing the same Command object
     private final Command sharedCommand = new Command(null, null, null);
-
+    private final boolean diagnostic = false;
     // Diagnostic counter for timing events
     private int eventCount = 0;
-
-    private boolean diagnostic = false;
 
     // Constructor must be after field initialization
     private TimingBus() {
@@ -123,8 +119,12 @@ public class TimingBus extends AbstractBus {
         }
     }
 
-    @Override
     public void register(IBusListener listener) {
+        register(listener, EMPTY);
+    }
+
+    @Override
+    public void register(IBusListener listener, String[] commands) {
         if (listener != null) {
             if (timingListeners == null) {
                 System.err.println("TimingBus: timingListeners is null!");
@@ -133,7 +133,7 @@ public class TimingBus extends AbstractBus {
 
             if (!timingListeners.contains(listener)) {
                 timingListeners.add(listener);
-                System.out.println("TimingBus: Registered listener: " + (listener.getClass() != null ? listener.getClass().getSimpleName() + ": " +  listener.toString() : "null"));
+                System.out.println("TimingBus: Registered listener: " + (listener.getClass() != null ? listener.getClass().getSimpleName() + ": " + listener : "null"));
             }
         }
     }

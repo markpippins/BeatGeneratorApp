@@ -3,7 +3,6 @@ package com.angrysurfer.beats.panel;
 import com.angrysurfer.beats.util.UIHelper;
 import com.angrysurfer.beats.widget.Dial;
 import com.angrysurfer.core.api.Command;
-import com.angrysurfer.core.api.CommandBus;
 import com.angrysurfer.core.api.Commands;
 import com.angrysurfer.core.api.IBusListener;
 import com.angrysurfer.core.sequencer.SequencerConstants;
@@ -80,8 +79,7 @@ public class MixerPanel extends JPanel implements IBusListener {
         setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
         setupUI();
 
-        // Register with command bus
-        CommandBus.getInstance().register(this);
+        // CommandBus.getInstance().register(this);
     }
 
     /**

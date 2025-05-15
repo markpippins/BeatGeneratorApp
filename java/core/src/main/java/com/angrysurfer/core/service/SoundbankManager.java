@@ -32,7 +32,8 @@ public class SoundbankManager implements IBusListener {
 
     private SoundbankManager() {
         // Register with command bus
-        CommandBus.getInstance().register(this);
+        CommandBus.getInstance().register(this, new String[]{
+                Commands.REFRESH_SOUNDBANKS, Commands.LOAD_SOUNDBANK});
     }
 
     public static SoundbankManager getInstance() {
@@ -839,64 +840,65 @@ public class SoundbankManager implements IBusListener {
     }
 
     /**
- * Apply a soundbank to an instrument
- * @param instrument The instrument to apply the soundbank to
- * @param soundbankName The name of the soundbank to apply
- * @return true if successful, false otherwise
- */
-public boolean applySoundbank(InstrumentWrapper instrument, String soundbankName) {
-    if (instrument == null || soundbankName == null || soundbankName.isEmpty()) {
-        logger.warn("Cannot apply soundbank: Invalid parameters");
-        return false;
-    }
-
-    try {
-        // Get the actual Soundbank object by name
-        Soundbank soundbank = soundbanks.get(soundbankName);
-        if (soundbank == null) {
-            logger.warn("Soundbank not found: {}", soundbankName);
+     * Apply a soundbank to an instrument
+     *
+     * @param instrument    The instrument to apply the soundbank to
+     * @param soundbankName The name of the soundbank to apply
+     * @return true if successful, false otherwise
+     */
+    public boolean applySoundbank(InstrumentWrapper instrument, String soundbankName) {
+        if (instrument == null || soundbankName == null || soundbankName.isEmpty()) {
+            logger.warn("Cannot apply soundbank: Invalid parameters");
             return false;
         }
 
-        // Determine if this is an internal or external instrument
-        boolean isInternalSynth = InternalSynthManager.getInstance().isInternalSynthInstrument(instrument);
-        
-        if (isInternalSynth) {
-            // Get the synthesizer from InternalSynthManager for consistency
-            Synthesizer synth = InternalSynthManager.getInstance().getSynthesizer();
-            if (synth == null || !synth.isOpen()) {
-                logger.warn("Synthesizer not available");
+        try {
+            // Get the actual Soundbank object by name
+            Soundbank soundbank = soundbanks.get(soundbankName);
+            if (soundbank == null) {
+                logger.warn("Soundbank not found: {}", soundbankName);
                 return false;
             }
-            
-            // Check if soundbank is supported
-            if (!synth.isSoundbankSupported(soundbank)) {
-                logger.warn("Soundbank not supported by synthesizer: {}", soundbankName);
-                return false;
-            }
-            
-            // Load the soundbank (unload previous if needed)
-            synth.unloadAllInstruments(synth.getDefaultSoundbank());
-            boolean success = synth.loadAllInstruments(soundbank);
-            
-            // Store the soundbank name in the instrument
-            if (success) {
+
+            // Determine if this is an internal or external instrument
+            boolean isInternalSynth = InternalSynthManager.getInstance().isInternalSynthInstrument(instrument);
+
+            if (isInternalSynth) {
+                // Get the synthesizer from InternalSynthManager for consistency
+                Synthesizer synth = InternalSynthManager.getInstance().getSynthesizer();
+                if (synth == null || !synth.isOpen()) {
+                    logger.warn("Synthesizer not available");
+                    return false;
+                }
+
+                // Check if soundbank is supported
+                if (!synth.isSoundbankSupported(soundbank)) {
+                    logger.warn("Soundbank not supported by synthesizer: {}", soundbankName);
+                    return false;
+                }
+
+                // Load the soundbank (unload previous if needed)
+                synth.unloadAllInstruments(synth.getDefaultSoundbank());
+                boolean success = synth.loadAllInstruments(soundbank);
+
+                // Store the soundbank name in the instrument
+                if (success) {
+                    instrument.setSoundbankName(soundbankName);
+                    logger.info("Successfully loaded soundbank: {}", soundbankName);
+                }
+
+                return success;
+            } else {
+                // For external devices, just store the soundbank name
                 instrument.setSoundbankName(soundbankName);
-                logger.info("Successfully loaded soundbank: {}", soundbankName);
+                logger.info("Set soundbank name for external instrument: {}", soundbankName);
+                return true;
             }
-            
-            return success;
-        } else {
-            // For external devices, just store the soundbank name
-            instrument.setSoundbankName(soundbankName);
-            logger.info("Set soundbank name for external instrument: {}", soundbankName);
-            return true;
+        } catch (Exception e) {
+            logger.error("Error applying soundbank: {}", e.getMessage(), e);
+            return false;
         }
-    } catch (Exception e) {
-        logger.error("Error applying soundbank: {}", e.getMessage(), e);
-        return false;
     }
-}
 
     /**
      * Check if soundbanks are properly loaded and load them if not

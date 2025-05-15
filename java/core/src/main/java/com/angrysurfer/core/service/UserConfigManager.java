@@ -150,7 +150,7 @@ public class UserConfigManager {
         }
 
         // Now that initialization is complete, we can safely notify listeners
-        commandBus.publish(Commands.USER_CONFIG_LOADED, this, null);
+        CommandBus.getInstance().publish(Commands.USER_CONFIG_LOADED, this, null);
         initializeInstruments();
     }
 
@@ -173,7 +173,7 @@ public class UserConfigManager {
                     ensureDefaultsExist();
 
                     if (!isInitializing) {
-                        commandBus.publish(Commands.USER_CONFIG_LOADED, this, this.currentConfig);
+                        CommandBus.getInstance().publish(Commands.USER_CONFIG_LOADED, this, this.currentConfig);
                     }
                     return;
                 }
@@ -207,7 +207,7 @@ public class UserConfigManager {
             if (loadedConfig != null) {
                 currentConfig = loadedConfig;
                 configHelper.saveConfig(currentConfig);
-                commandBus.publish(Commands.USER_CONFIG_LOADED, this, currentConfig);
+                CommandBus.getInstance().publish(Commands.USER_CONFIG_LOADED, this, currentConfig);
                 logger.info("Configuration loaded and saved successfully");
             }
         } catch (Exception e) {
@@ -251,7 +251,7 @@ public class UserConfigManager {
             }
 
             // Notify listeners
-            commandBus.publish(Commands.USER_CONFIG_LOADED, this, currentConfig);
+            CommandBus.getInstance().publish(Commands.USER_CONFIG_LOADED, this, currentConfig);
 
             logger.info("Successfully saved UserConfig {} with timestamp {}",
                     config.getId(), config.getLastUpdated());
@@ -529,7 +529,7 @@ public class UserConfigManager {
                     // Save to persistent storage
                     configHelper.saveConfig(restoredConfig);
                     currentConfig = restoredConfig;
-                    commandBus.publish(Commands.USER_CONFIG_LOADED, this, currentConfig);
+                    CommandBus.getInstance().publish(Commands.USER_CONFIG_LOADED, this, currentConfig);
                     return true;
                 } else {
                     logger.warn("Restored configuration failed validation");
@@ -642,7 +642,7 @@ public class UserConfigManager {
             currentConfig = tempConfig;
 
             // Notify listeners
-            commandBus.publish(Commands.USER_CONFIG_UPDATED, this, currentConfig);
+            CommandBus.getInstance().publish(Commands.USER_CONFIG_UPDATED, this, currentConfig);
 
             return true;
         } catch (Exception e) {
@@ -915,7 +915,7 @@ public class UserConfigManager {
 
             logger.info("Redis has a newer configuration, updating local copy");
             currentConfig = redisConfig;
-            commandBus.publish(Commands.USER_CONFIG_LOADED, this, currentConfig);
+            CommandBus.getInstance().publish(Commands.USER_CONFIG_LOADED, this, currentConfig);
         } else if (currentConfig.getLastUpdated() != null &&
                 (redisConfig.getLastUpdated() == null ||
                         currentConfig.getLastUpdated().after(redisConfig.getLastUpdated()))) {
@@ -984,7 +984,7 @@ public class UserConfigManager {
                 ensureDefaultsExist();
 
                 // Notify listeners
-                commandBus.publish(Commands.USER_CONFIG_LOADED, this, currentConfig);
+                CommandBus.getInstance().publish(Commands.USER_CONFIG_LOADED, this, currentConfig);
 
                 logger.info("Loaded user configuration with ID: {}", id);
                 return true;
@@ -1229,7 +1229,7 @@ public class UserConfigManager {
 
                 if (saved) {
                     // Refresh all objects after save
-                    commandBus.publish(Commands.USER_CONFIG_LOADED, this, currentConfig);
+                    CommandBus.getInstance().publish(Commands.USER_CONFIG_LOADED, this, currentConfig);
                 }
             }
             // Add other cases here as needed

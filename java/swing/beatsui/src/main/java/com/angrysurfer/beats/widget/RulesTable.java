@@ -183,15 +183,13 @@ public class RulesTable extends JTable {
                             });
                         }
                         break;
-                        
-                    // case Commands.PLAYER_UNSELECTED:
-                    //     SwingUtilities.invokeLater(() -> {
-                    //         // Clear the table when no player is selected
-                    //         tableModel.setRules(Set.of());
-                    //     });
-                    //     break;
                 }
             }
+        }, new String[] {
+            Commands.RULE_ADDED,
+            Commands.RULE_EDITED,
+            Commands.RULE_DELETED,
+            Commands.PLAYER_ACTIVATED
         });
     }
     

@@ -42,7 +42,6 @@ public class StatusBar extends JPanel implements IBusListener {
     private JTextField messageField;
 
     // Data fields
-    private CommandBus commandBus = CommandBus.getInstance();
     private int tickCount = 0;
     private int beatCount = 0;
     private int barCount = 0;
@@ -66,14 +65,15 @@ public class StatusBar extends JPanel implements IBusListener {
 
     private void registerForEvents() {
         TimingBus.getInstance().register(this);
-        commandBus.register(this);
+        CommandBus.getInstance().register(this, new String[]{Commands.SESSION_REQUEST,
+                Commands.TRANSPORT_STATE_REQUEST, Commands.ACTIVE_PLAYER_REQUEST});
     }
 
     private void requestInitialData() {
         SwingUtilities.invokeLater(() -> {
-            commandBus.publish(Commands.SESSION_REQUEST, this);
-            commandBus.publish(Commands.TRANSPORT_STATE_REQUEST, this);
-            commandBus.publish(Commands.ACTIVE_PLAYER_REQUEST, this);
+            CommandBus.getInstance().publish(Commands.SESSION_REQUEST, this);
+            CommandBus.getInstance().publish(Commands.TRANSPORT_STATE_REQUEST, this);
+            CommandBus.getInstance().publish(Commands.ACTIVE_PLAYER_REQUEST, this);
         });
     }
 

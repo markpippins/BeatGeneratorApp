@@ -131,7 +131,7 @@ public class Session implements Serializable, IBusListener {
         }
 
         // Register with buses after fields are initialized
-        commandBus.register(this);
+        CommandBus.getInstance().register(this, new String[]{Commands.TIMING_PARAMETERS_CHANGED});
         timingBus.register(this);
     }
 
@@ -194,7 +194,7 @@ public class Session implements Serializable, IBusListener {
         }
 
         player.setSession(this);
-        commandBus.publish(Commands.PLAYER_ADDED, this, player);
+        CommandBus.getInstance().publish(Commands.PLAYER_ADDED, this, player);
 
         // Auto-register as tick listener if session is running
         if (isRunning() && player.getEnabled()) {
@@ -213,7 +213,7 @@ public class Session implements Serializable, IBusListener {
         }
 
         player.setSession(null);
-        commandBus.publish(Commands.PLAYER_ADDED, this, player);
+        CommandBus.getInstance().publish(Commands.PLAYER_ADDED, this, player);
 
         // Unregister from tick listeners
         unregisterTickListener(player);
@@ -362,14 +362,14 @@ public class Session implements Serializable, IBusListener {
         System.out.println("Session: Registered with timing bus");
 
         // Notify about tempo to all sequencers
-        commandBus.publish(Commands.UPDATE_TEMPO, this, ticksPerBeat);
+        CommandBus.getInstance().publish(Commands.UPDATE_TEMPO, this, ticksPerBeat);
 
         // Set active state
         isActive = true;
         System.out.println("Session: Session marked as active");
 
         // Publish session starting event
-        commandBus.publish(Commands.SESSION_STARTING, this);
+        CommandBus.getInstance().publish(Commands.SESSION_STARTING, this);
         System.out.println("Session: Published SESSION_STARTING event");
     }
 
@@ -709,7 +709,7 @@ public class Session implements Serializable, IBusListener {
     public void setTicksPerBeat(int ticksPerBeat) {
         this.ticksPerBeat = ticksPerBeat;
         // Notify about tempo change
-        commandBus.publish(Commands.UPDATE_TEMPO, this, ticksPerBeat);
+        CommandBus.getInstance().publish(Commands.UPDATE_TEMPO, this, ticksPerBeat);
 
         if (isRunning()) {
             syncToSequencer();

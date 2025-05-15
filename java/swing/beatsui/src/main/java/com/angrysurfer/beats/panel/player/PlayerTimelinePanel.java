@@ -85,8 +85,16 @@ public class PlayerTimelinePanel extends PlayerAwarePanel implements IBusListene
         // Create the empty grid with initial placeholders
         initEmptyComponents();
 
-        // Register for player selection events
-        CommandBus.getInstance().register(this);
+        // Register for specific events only
+        CommandBus.getInstance().register(this, new String[] {
+            Commands.PLAYER_ACTIVATED,
+            Commands.PLAYER_UPDATED,
+            Commands.NEW_VALUE_NOTE,
+            Commands.PRESET_UP,
+            Commands.PRESET_DOWN,
+            Commands.PLAYER_ROW_REFRESH,
+            Commands.SESSION_CHANGED
+        });
     }
 
     @Override

@@ -37,12 +37,7 @@ public abstract class Player implements Callable<Boolean>, Serializable, IBusLis
     private static final long MIN_UI_UPDATE_INTERVAL = 100; // Only update UI every 100ms max
     private static final long NOTE_THROTTLE_THRESHOLD = 1; // 1ms minimum between notes
     static Logger logger = LoggerFactory.getLogger(Player.class.getCanonicalName());
-    @JsonIgnore
-    @Transient
-    private final TimingBus timingBus = TimingBus.getInstance();
-    @JsonIgnore
-    @Transient
-    private final CommandBus commandBus = CommandBus.getInstance();
+
     // Update these fields
     @JsonIgnore
     private transient final ShortMessage reuseableMessage = new ShortMessage();
@@ -173,14 +168,22 @@ public abstract class Player implements Callable<Boolean>, Serializable, IBusLis
      */
     protected void initialize(String name, Session session, InstrumentWrapper instrument,
                               List<Integer> allowedControlMessages) {
-        // Register with command and timing buses
+        // Set basic properties
         setName(name);
         setSession(session);
         setInstrument(instrument);
         setAllowedControlMessages(allowedControlMessages);
 
-        commandBus.register(this);
-        timingBus.register(this);
+        // Register with command bus for specific commands only
+        CommandBus.getInstance().register(this, new String[]{
+                Commands.TIMING_UPDATE,      // For timing-based note triggers
+                Commands.TRANSPORT_STOP,     // To disable when transport stops
+                Commands.TRANSPORT_START,    // To re-enable when transport starts
+                Commands.ALL_NOTES_OFF       // Optional - if you want to handle this globally
+        });
+
+        // Register with timing bus (assuming this still uses the old registration method)
+        TimingBus.getInstance().register(this);
 
         // Initialize rules collection
         rules = new HashSet<>();
@@ -873,7 +876,7 @@ public abstract class Player implements Callable<Boolean>, Serializable, IBusLis
      */
     public void dispose() {
         // Unregister from command bus to prevent memory leaks
-        commandBus.unregister(this);
+        CommandBus.getInstance().unregister(this);
     }
 
     // Add getter/setter

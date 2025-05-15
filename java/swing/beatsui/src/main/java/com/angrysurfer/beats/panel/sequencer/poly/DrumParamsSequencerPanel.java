@@ -96,8 +96,15 @@ public class DrumParamsSequencerPanel extends JPanel implements IBusListener {
         navigationPanel = new DrumSequenceNavigationPanel(sequencer);
         drumPadPanel = new DrumButtonsPanel(sequencer, this::handleDrumPadSelected);
 
-        // Register with CommandBus for updates
-        CommandBus.getInstance().register(this);
+        CommandBus.getInstance().register(this, new String[]{
+                Commands.DRUM_PAD_SELECTED,
+                Commands.DRUM_STEP_SELECTED,
+                Commands.DRUM_INSTRUMENTS_UPDATED,
+                Commands.HIGHLIGHT_STEP
+        });
+
+        logger.info("DrumParamsSequencerPanel registered for specific events");
+
         TimingBus.getInstance().register(this);
 
         // Initialize UI components

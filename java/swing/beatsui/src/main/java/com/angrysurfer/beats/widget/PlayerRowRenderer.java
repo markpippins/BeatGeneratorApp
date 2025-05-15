@@ -25,11 +25,17 @@ public class PlayerRowRenderer extends DefaultTableCellRenderer implements IBusL
     // Track the current session note offset
     private int sessionNoteOffset = 0;
 
+    // Update the constructor 
     public PlayerRowRenderer(PlayersTable table) {
         this.table = table;
 
-        // Register for command bus events to track session offset changes
-        CommandBus.getInstance().register(this);
+        // Register for specific command bus events
+        CommandBus.getInstance().register(this, new String[] {
+            Commands.SESSION_UPDATED,
+            Commands.SESSION_SELECTED,
+            Commands.TRANSPOSE_UP,
+            Commands.TRANSPOSE_DOWN
+        });
 
         // Initialize with current session's offset if available
         Session currentSession = SessionManager.getInstance().getActiveSession();

@@ -1,14 +1,10 @@
 package com.angrysurfer.core.api;
 
-import java.util.List;
-import java.util.concurrent.CopyOnWriteArrayList;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ThreadFactory;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicInteger;
-
 import com.angrysurfer.core.service.LogManager;
+
+import java.util.List;
+import java.util.concurrent.*;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public abstract class AbstractBus {
 
@@ -54,6 +50,11 @@ public abstract class AbstractBus {
         // register(this);
     }
 
+    public void register(IBusListener listener, String[] commands) {
+        if (listener != null && !listeners.contains(listener))
+            listeners.add(listener);
+    }
+
     public void register(IBusListener listener) {
         if (listener != null && !listeners.contains(listener))
             listeners.add(listener);
@@ -89,7 +90,7 @@ public abstract class AbstractBus {
      * Publishes a command to be processed by all registered listeners.
      * Depending on the bus configuration, processing will happen either
      * synchronously in the current thread or asynchronously in the thread pool.
-     * 
+     *
      * @param action The command to publish
      */
     public void publish(Command action) {
@@ -116,7 +117,7 @@ public abstract class AbstractBus {
     /**
      * Publish a command with immediate execution regardless of async setting.
      * Use this for commands that must be processed immediately.
-     * 
+     *
      * @param action The command to publish immediately
      */
     public void publishImmediate(Command action) {
@@ -190,13 +191,6 @@ public abstract class AbstractBus {
 //        }
 //    }
 
-    // Helper record for log messages
-    public record LogMessage(String source, String message, Throwable throwable) {
-        public LogMessage(String source, String message) {
-            this(source, message, null);
-        }
-    }
-
     // Helper methods to publish log messages
     public void debug(String source, String message) {
         publish(Commands.LOG_DEBUG, this, new LogMessage(source, message));
@@ -216,5 +210,12 @@ public abstract class AbstractBus {
 
     public void error(String source, String message, Throwable e) {
         publish(Commands.LOG_ERROR, this, new LogMessage(source, message, e));
+    }
+
+    // Helper record for log messages
+    public record LogMessage(String source, String message, Throwable throwable) {
+        public LogMessage(String source, String message) {
+            this(source, message, null);
+        }
     }
 }

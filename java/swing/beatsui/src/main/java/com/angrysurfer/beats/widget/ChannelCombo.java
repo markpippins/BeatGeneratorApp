@@ -32,7 +32,8 @@ public class ChannelCombo extends JComboBox<Integer> implements IBusListener {
      */
     public ChannelCombo() {
         super();
-        CommandBus.getInstance().register(this);
+        CommandBus.getInstance().register(this, new String[]{Commands.PLAYER_ACTIVATED,
+                Commands.PLAYER_UPDATED, Commands.CHANNEL_ASSIGNMENT_CHANGED});
 
         // Populate all 16 channels
         for (int i = 0; i < 16; i++) {

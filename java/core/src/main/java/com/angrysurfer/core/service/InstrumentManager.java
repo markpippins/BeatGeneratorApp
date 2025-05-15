@@ -27,7 +27,7 @@ public class InstrumentManager implements IBusListener {
     private static InstrumentManager instance;
     private final InstrumentHelper instrumentHelper;
     private final Map<Long, InstrumentWrapper> instrumentCache = new HashMap<>();
-    private final CommandBus commandBus = CommandBus.getInstance();
+
     private List<MidiDevice> midiDevices = new ArrayList<>();
     private List<String> devices = new ArrayList<>();
     private boolean needsRefresh = true;
@@ -37,7 +37,10 @@ public class InstrumentManager implements IBusListener {
     private InstrumentManager() {
         this.instrumentHelper = RedisService.getInstance().getInstrumentHelper();
         // Register for command events
-        commandBus.register(this);
+        CommandBus.getInstance().register(this, new String[]{
+                Commands.INSTRUMENT_UPDATED, Commands.INSTRUMENTS_REFRESHED, Commands.USER_CONFIG_LOADED
+        });
+
         // Initial cache load
         refreshInstruments();
     }
@@ -87,6 +90,7 @@ public class InstrumentManager implements IBusListener {
                     logger.info("Updated instrument in cache: {}", instrument.getName());
                 }
             }
+
             case Commands.INSTRUMENTS_REFRESHED -> {
                 // Force cache refresh
                 refreshInstruments();
@@ -267,7 +271,7 @@ public class InstrumentManager implements IBusListener {
             instrumentCache.put(instrument.getId(), instrument);
 
             // Notify listeners
-            commandBus.publish(Commands.INSTRUMENT_UPDATED, this, instrument);
+            CommandBus.getInstance().publish(Commands.INSTRUMENT_UPDATED, this, instrument);
 
         } catch (Exception e) {
             logger.error("Error updating instrument: {}", e.getMessage(), e);

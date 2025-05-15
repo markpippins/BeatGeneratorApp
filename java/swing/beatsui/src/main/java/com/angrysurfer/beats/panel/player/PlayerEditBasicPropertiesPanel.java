@@ -30,7 +30,7 @@ public class PlayerEditBasicPropertiesPanel extends JPanel {
     // Service references
     private final SoundbankManager soundbankManager = SoundbankManager.getInstance();
     private final InternalSynthManager synthManager = InternalSynthManager.getInstance();
-    private final CommandBus commandBus = CommandBus.getInstance();
+
     // State tracking
     private final AtomicBoolean initializing = new AtomicBoolean(false);
     // Player reference
@@ -513,7 +513,7 @@ public class PlayerEditBasicPropertiesPanel extends JPanel {
             }
 
             // Publish player update event
-            commandBus.publish(
+            CommandBus.getInstance().publish(
                     Commands.PLAYER_UPDATE_EVENT,
                     this,
                     new PlayerUpdateEvent(player)
@@ -588,16 +588,16 @@ public class PlayerEditBasicPropertiesPanel extends JPanel {
             File file = chooser.getSelectedFile();
 
             // Load soundbank through SoundbankManager
-            commandBus.publish(Commands.LOAD_SOUNDBANK, this, file);
+            CommandBus.getInstance().publish(Commands.LOAD_SOUNDBANK, this, file);
 
             // Wait for soundbank loaded event
-            commandBus.registerOneTime(action -> {
+            CommandBus.getInstance().registerOneTime(action -> {
                 if (Commands.SOUNDBANK_LOADED.equals(action.getCommand()) &&
                         action.getData() instanceof String) {
 
                     SwingUtilities.invokeLater(this::refreshSoundControls);
                 }
-            });
+            }, new String[]{Commands.SOUNDBANK_LOADED});
         }
     }
 }

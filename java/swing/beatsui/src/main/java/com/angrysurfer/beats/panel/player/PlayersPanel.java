@@ -527,7 +527,26 @@ public class PlayersPanel extends JPanel {
 
         // Register the single listener on both buses
         TimingBus.getInstance().register(consolidatedListener);
-        CommandBus.getInstance().register(consolidatedListener);
+     CommandBus.getInstance().register(consolidatedListener, new String[] {
+        Commands.PLAYER_TABLE_REFRESH_REQUEST,
+        Commands.SESSION_SELECTED,
+        Commands.SESSION_CHANGED,
+        Commands.SESSION_LOADED,
+        Commands.PLAYER_ROW_REFRESH,
+        Commands.PLAYER_ADDED,
+        Commands.SHOW_PLAYER_EDITOR_OK,
+        Commands.PLAYER_DELETED,
+        Commands.NEW_VALUE_LEVEL,
+        Commands.NEW_VALUE_NOTE,
+        Commands.NEW_VALUE_SWING,
+        Commands.NEW_VALUE_PROBABILITY, 
+        Commands.NEW_VALUE_VELOCITY_MIN,
+        Commands.NEW_VALUE_VELOCITY_MAX,
+        Commands.NEW_VALUE_RANDOM,
+        Commands.NEW_VALUE_PAN,
+        Commands.NEW_VALUE_SPARSE,
+        Commands.PLAYER_UPDATED
+    });
     }
 
     // Add a field to track the last selected row

@@ -164,8 +164,9 @@ public class CustomControlsPanel extends JPanel implements IBusListener {
             }
         });
 
-        // Register for resize events
-        CommandBus.getInstance().register(this);
+    CommandBus.getInstance().register(this, new String[] { Commands.WINDOW_RESIZED });
+    logger.info("CustomControlsPanel registered for WINDOW_RESIZED event");
+
     }
 
     public CustomControlsPanel(boolean showToolbar) {

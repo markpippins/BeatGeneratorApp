@@ -79,7 +79,12 @@ public class DrumEffectsSequencerPanel extends JPanel implements IBusListener {
         }
 
         // Register with CommandBus for updates
-        CommandBus.getInstance().register(this);
+        CommandBus.getInstance().register(this, new String[] {
+            Commands.DRUM_PAD_SELECTED,
+            Commands.DRUM_STEP_SELECTED,
+            Commands.DRUM_INSTRUMENTS_UPDATED,
+            Commands.HIGHLIGHT_STEP
+        });
         TimingBus.getInstance().register(this);
 
         // Initialize UI components

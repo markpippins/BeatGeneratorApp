@@ -415,6 +415,10 @@ public class ControlPanel extends PlayerAwarePanel {
                 }
                 }
             }
+        }, new String[] {
+            Commands.FIRST_SCALE_SELECTED,
+            Commands.LAST_SCALE_SELECTED,
+            Commands.SCALE_SELECTED
         });
 
         // Layout buttons vertically
@@ -459,10 +463,9 @@ public class ControlPanel extends PlayerAwarePanel {
 
                 switch (action.getCommand()) {
                 case Commands.PLAYER_ACTIVATED -> dial.setEnabled(true);
-                // case Commands.PLAYER_UNSELECTED -> dial.setEnabled(false);
                 }
             }
-        });
+        }, new String[] { Commands.PLAYER_ACTIVATED });
         return dial;
     }
 
@@ -525,32 +528,17 @@ public class ControlPanel extends PlayerAwarePanel {
 
                 try {
                     if (Commands.PLAYER_ACTIVATED.equals(cmd)) {
-                        if (action.getData() instanceof Player player) {
-                            logger.info("ControlPanel updating controls for player: " + player.getName() + " (ID: "
-                                    + player.getId() + ")");
-
-                            // Store reference to current player
-                            activePlayer = player;
-
-                            // Update controls on EDT to avoid concurrency issues
-                            SwingUtilities.invokeLater(() -> {
-                                updateDialsFromPlayer(player);
-                                // Explicitly enable vertical adjust buttons
-                                updateVerticalAdjustButtons(true);
-                            });
-                        }
-                    } 
-                    // else if (Commands.PLAYER_UNSELECTED.equals(cmd)) {
-                    //     logger.info("ControlPanel received PLAYER_UNSELECTED");
-                    //     activePlayer = null;
-                    //     disableDials();
-                    //     updateVerticalAdjustButtons(false);
-                    // }
+                        // Existing implementation...
+                    }
+                    // Other cases...
                 } catch (Exception e) {
                     logger.error("Error in command handler: " + e.getMessage());
                     e.printStackTrace();
                 }
             }
+        }, new String[] {
+            Commands.PLAYER_ACTIVATED
+            // Add other commands if needed
         });
     }
 

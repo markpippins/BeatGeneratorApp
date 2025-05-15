@@ -17,27 +17,27 @@ import java.awt.*;
 @Setter
 public class AddInstrumentButton extends JButton implements IBusListener {
     private static final Logger logger = LoggerFactory.getLogger(AddInstrumentButton.class);
-    private final CommandBus commandBus = CommandBus.getInstance();
+
     private Player currentPlayer;
-    
+
     /**
      * Create a new Add Instrument button
      */
     public AddInstrumentButton() {
         super("+");
-        
+
         // Set appropriate styling
         setToolTipText("Create a new instrument for this player");
-        setMargin(new Insets(1, 4, 1, 4)); 
+        setMargin(new Insets(1, 4, 1, 4));
         setPreferredSize(new Dimension(24, 24));
-        
+
         // Register for events
-        commandBus.register(this);
-        
+        CommandBus.getInstance().register(this, new String[]{Commands.PLAYER_ACTIVATED});
+
         // Add action handler
         addActionListener(e -> handleButtonClick());
     }
-    
+
     /**
      * Create with an initial player
      */
@@ -45,24 +45,24 @@ public class AddInstrumentButton extends JButton implements IBusListener {
         this();
         this.currentPlayer = player;
     }
-    
+
     /**
      * Handle button click - request instrument creation dialog via command bus
      */
     private void handleButtonClick() {
         if (currentPlayer == null) {
-            commandBus.publish(
-                Commands.STATUS_UPDATE, 
-                this, 
-                new StatusUpdate("AddInstrumentButton", "Warning", "No player selected")
+            CommandBus.getInstance().publish(
+                    Commands.STATUS_UPDATE,
+                    this,
+                    new StatusUpdate("AddInstrumentButton", "Warning", "No player selected")
             );
             return;
         }
-        
+
         // Request the dialog via command bus - the DialogManager will handle it
-        commandBus.publish(Commands.CREATE_INSTRUMENT_FOR_PLAYER_REQUEST, this, currentPlayer);
+        CommandBus.getInstance().publish(Commands.CREATE_INSTRUMENT_FOR_PLAYER_REQUEST, this, currentPlayer);
     }
-    
+
     /**
      * Handle command bus events - primarily player selection
      */

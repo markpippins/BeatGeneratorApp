@@ -1123,6 +1123,9 @@ public class InternalSynthPresetPanel extends JPanel {
                     });
                 }
             }
+        }, new String[]{
+                Commands.INSTRUMENT_UPDATED,
+                Commands.USER_CONFIG_LOADED
         });
     }
 }

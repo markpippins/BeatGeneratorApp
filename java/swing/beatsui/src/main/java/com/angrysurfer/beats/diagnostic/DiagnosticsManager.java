@@ -22,7 +22,6 @@ public class DiagnosticsManager {
 
     // Reference to main frame
     private final JFrame parentFrame;
-    private final CommandBus commandBus;
 
     // Helper instances
     private final MidiDiagnostics midiHelper;
@@ -43,9 +42,8 @@ public class DiagnosticsManager {
     /**
      * Private constructor for singleton pattern
      */
-    private DiagnosticsManager(JFrame parentFrame, CommandBus commandBus) {
+    private DiagnosticsManager(JFrame parentFrame) {
         this.parentFrame = parentFrame;
-        this.commandBus = commandBus;
 
         // Initialize helpers
         this.midiHelper = new MidiDiagnostics(parentFrame);
@@ -67,9 +65,9 @@ public class DiagnosticsManager {
     /**
      * Get singleton instance
      */
-    public static synchronized DiagnosticsManager getInstance(JFrame parentFrame, CommandBus commandBus) {
+    public static synchronized DiagnosticsManager getInstance(JFrame parentFrame) {
         if (instance == null) {
-            instance = new DiagnosticsManager(parentFrame, commandBus);
+            instance = new DiagnosticsManager(parentFrame);
         }
         return instance;
     }

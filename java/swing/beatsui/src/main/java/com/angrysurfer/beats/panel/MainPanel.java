@@ -61,7 +61,10 @@ public class MainPanel extends PlayerAwarePanel implements AutoCloseable, IBusLi
     public MainPanel() {
         super();
         setLayout(new BorderLayout());
-        CommandBus.getInstance().register(this);
+        CommandBus.getInstance().register(this, new String[]{
+                Commands.SEQUENCER_STEP_UPDATE, Commands.SCALE_SELECTED, Commands.TOGGLE_TRANSPORT, Commands.ROOT_NOTE_SELECTED,
+                Commands.SESSION_UPDATED, Commands.TRANSPORT_STOP, Commands.TRANSPORT_START
+        });
         setupTabbedPane();
         add(tabbedPane, BorderLayout.CENTER);
     }
@@ -702,7 +705,7 @@ public class MainPanel extends PlayerAwarePanel implements AutoCloseable, IBusLi
                     });
                     break;
             }
-        });
+        }, new String[]{Commands.METRONOME_STARTED, Commands.METRONOME_STOPPED});
 
         return metronomeButton;
     }

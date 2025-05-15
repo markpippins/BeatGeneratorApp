@@ -1,25 +1,15 @@
 package com.angrysurfer.beats.widget;
 
-import java.awt.Color;
-import java.awt.Dimension;
-import java.awt.Font;
-import java.awt.FontMetrics;
-import java.awt.Graphics;
-import java.awt.Graphics2D;
-import java.awt.RenderingHints;
-
-import javax.swing.JButton;
-import javax.swing.JComponent;
-import javax.swing.Timer;
-import javax.swing.plaf.basic.BasicButtonUI;
-
 import com.angrysurfer.core.api.Command;
 import com.angrysurfer.core.api.CommandBus;
 import com.angrysurfer.core.api.Commands;
 import com.angrysurfer.core.api.IBusListener;
-
 import lombok.Getter;
 import lombok.Setter;
+
+import javax.swing.*;
+import javax.swing.plaf.basic.BasicButtonUI;
+import java.awt.*;
 
 @Getter
 @Setter
@@ -27,16 +17,16 @@ public class DrumButton extends JButton implements IBusListener {
 
     private int padNumber;
     private boolean isMainBeat;
-    
+
     // Just one boolean for exclusive group behavior
-    private boolean exclusive; 
-    
+    private boolean exclusive;
+
     // Visual state (separate from selection)
     private boolean highlighted = false;
-    
+
     // Animation state
     private boolean flashing = false;
-    
+
     // Colors
     private Color defaultColor = new Color(50, 130, 200);
     private Color selectedColor = new Color(255, 100, 100);
@@ -45,9 +35,9 @@ public class DrumButton extends JButton implements IBusListener {
 
     public DrumButton() {
         super();
-        
+
         // Register this button to listen for PAD_SELECTED messages
-        CommandBus.getInstance().register(this);
+        CommandBus.getInstance().register(this, new String[]{Commands.DRUM_BUTTON_SELECTED});
 
         // Add action listener to handle selection behavior
         addActionListener(e -> {
@@ -61,7 +51,7 @@ public class DrumButton extends JButton implements IBusListener {
                 setSelected(!isSelected());
             }
         });
-        
+
         setup();
     }
 
@@ -116,7 +106,7 @@ public class DrumButton extends JButton implements IBusListener {
                 if (displayText == null || displayText.isEmpty()) {
                     displayText = (padNumber > 0) ? String.valueOf(padNumber) : "";
                 }
-                
+
                 if (!displayText.isEmpty()) {
                     // Use white text for better contrast
                     g2d.setColor(Color.WHITE);

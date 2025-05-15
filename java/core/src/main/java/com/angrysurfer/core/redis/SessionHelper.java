@@ -1,32 +1,24 @@
 package com.angrysurfer.core.redis;
 
-import java.lang.reflect.Field;
-import java.lang.reflect.Method;
+import com.angrysurfer.core.api.CommandBus;
+import com.angrysurfer.core.api.Commands;
+import com.angrysurfer.core.model.Player;
+import com.angrysurfer.core.model.Session;
+import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
+import lombok.Getter;
+import lombok.Setter;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import redis.clients.jedis.Jedis;
+import redis.clients.jedis.JedisPool;
+
+import javax.swing.*;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-
-import javax.swing.JOptionPane;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import com.angrysurfer.core.api.CommandBus;
-import com.angrysurfer.core.api.Commands;
-import com.angrysurfer.core.model.InstrumentWrapper;
-import com.angrysurfer.core.model.Note;
-import com.angrysurfer.core.model.Player;
-import com.angrysurfer.core.model.Session;
-import com.angrysurfer.core.model.Strike;
-import com.fasterxml.jackson.databind.DeserializationFeature;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializationFeature;
-
-import lombok.Getter;
-import lombok.Setter;
-import redis.clients.jedis.Jedis;
-import redis.clients.jedis.JedisPool;
 
 @Getter
 @Setter
@@ -35,7 +27,6 @@ public class SessionHelper {
     private final JedisPool jedisPool;
     private final ObjectMapper objectMapper;
     private final PlayerHelper playerHelper;
-    private final CommandBus commandBus = CommandBus.getInstance();
 
     public SessionHelper(JedisPool jedisPool, ObjectMapper objectMapper) {
         this.jedisPool = jedisPool;
@@ -63,15 +54,15 @@ public class SessionHelper {
 
                 // Check for different player types
                 String[] playerTypes = {"Strike", "Note"};
-                
+
                 for (String playerType : playerTypes) {
                     // Load players for this session (using a consistent key format)
                     String playerSetKey = "session:" + id + ":players:" + playerType.toLowerCase();
                     Set<String> playerIds = jedis.smembers(playerSetKey);
-                    
+
                     if (!playerIds.isEmpty()) {
                         logger.info("Found {} {} players for session {}", playerIds.size(), playerType, id);
-                        
+
                         for (String playerId : playerIds) {
                             Player player = playerHelper.findPlayerById(Long.parseLong(playerId), playerType);
                             if (player != null) {
@@ -110,9 +101,9 @@ public class SessionHelper {
                     String className = player.getClass().getSimpleName().toLowerCase();
                     String playerSetKey = "session:" + session.getId() + ":players:" + className;
                     jedis.sadd(playerSetKey, player.getId().toString());
-                    
-                    logger.debug("Added player {} of type {} to session {}", 
-                        player.getId(), className, session.getId());
+
+                    logger.debug("Added player {} of type {} to session {}",
+                            player.getId(), className, session.getId());
                 });
             }
 
@@ -186,7 +177,7 @@ public class SessionHelper {
             jedis.del("session:" + sessionId);
 
             // Notify via command bus
-            commandBus.publish(Commands.SESSION_DELETED, this, sessionId);
+            CommandBus.getInstance().publish(Commands.SESSION_DELETED, this, sessionId);
             logger.info("Successfully deleted session " + sessionId + " and all related entities");
         } catch (Exception e) {
             JOptionPane.showMessageDialog(null, "Error deleting session " + sessionId + ": " + e.getMessage());
@@ -285,21 +276,21 @@ public class SessionHelper {
             // Determine player type from player class
             String playerType = player.getClass().getSimpleName().toLowerCase();
             logger.debug("Finding session for player {} of type {}", player.getId(), playerType);
-            
+
             Set<String> sessionKeys = jedis.keys("session:*");
             for (String sessionKey : sessionKeys) {
                 if (!sessionKey.contains(":players")) {
                     String sessionId = sessionKey.split(":")[1];
                     String playersKey = "session:" + sessionId + ":players:" + playerType;
-                    
+
                     if (jedis.sismember(playersKey, player.getId().toString())) {
-                        logger.info("Found session {} for player {} of type {}", 
-                                   sessionId, player.getId(), playerType);
+                        logger.info("Found session {} for player {} of type {}",
+                                sessionId, player.getId(), playerType);
                         return findSessionById(Long.valueOf(sessionId));
                     }
                 }
             }
-            
+
             logger.warn("No session found for player {} of type {}", player.getId(), playerType);
         } catch (Exception e) {
             JOptionPane.showMessageDialog(null, "Error finding session for player: " + e.getMessage());
@@ -316,7 +307,7 @@ public class SessionHelper {
             logger.warn("Cannot add player to session: null reference");
             return;
         }
-        
+
         // Skip default players
         if (Boolean.TRUE.equals(player.getIsDefault())) {
             logger.info("Skipping default player: not adding to session");
@@ -348,10 +339,10 @@ public class SessionHelper {
      */
     public List<Session> findAllSessions() {
         List<Session> sessions = new ArrayList<>();
-        
+
         try (Jedis jedis = jedisPool.getResource()) {
             Set<String> keys = jedis.keys("session:*");
-            
+
             for (String key : keys) {
                 try {
                     String json = jedis.get(key);
@@ -365,7 +356,7 @@ public class SessionHelper {
                 }
             }
         }
-        
+
         return sessions;
     }
 

@@ -1,15 +1,13 @@
 package com.angrysurfer.core.model;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import com.angrysurfer.core.api.CommandBus;
 import com.angrysurfer.core.api.Commands;
 import com.angrysurfer.core.api.TimingBus;
 import com.angrysurfer.core.sequencer.TimingUpdate;
-
 import lombok.Getter;
 import lombok.Setter;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @Getter
 @Setter
@@ -64,7 +62,8 @@ public class Ratchet extends Strike {
             logger.info("Published PLAYER_ADDED for Ratchet: {}", getName());
         }
 
-        CommandBus.getInstance().register(this);
+        CommandBus.getInstance().register(this, new String[]{Commands.TIMING_UPDATE});
+
         logger.info("New Ratchet created: {}", this);
         TimingBus.getInstance().register(this);
         logger.info("New Ratchet registered with TimingBus: {}", this);

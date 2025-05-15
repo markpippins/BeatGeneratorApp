@@ -36,8 +36,6 @@ public class DrumSelectorPanel extends JPanel implements IBusListener {
     private final DrumSequencerPanel parentPanel;
     // UI components
     private final List<DrumSelectorButton> drumButtons = new ArrayList<>();
-    // Command bus for event handling
-    private final CommandBus commandBus = CommandBus.getInstance();
 
     /**
      * Creates a new DrumSelectorPanel
@@ -56,7 +54,10 @@ public class DrumSelectorPanel extends JPanel implements IBusListener {
         initializeButtons();
 
         // Register for events
-        commandBus.register(this);
+        CommandBus.getInstance().register(this, new String[]{Commands.PLAYER_UPDATED, Commands.PLAYER_UPDATE_EVENT,
+                Commands.PLAYER_PRESET_CHANGED, Commands.PLAYER_PRESET_CHANGE_EVENT, Commands.PLAYER_INSTRUMENT_CHANGED,
+                Commands.DRUM_PLAYER_INSTRUMENT_CHANGED, Commands.SOUNDBANK_CHANGED
+        });
     }
 
     /**

@@ -1,20 +1,6 @@
 package com.angrysurfer.beats;
 
-import java.awt.BorderLayout;
-import java.awt.Dimension;
-import java.util.Objects;
-
-import javax.swing.BorderFactory;
-import javax.swing.JButton;
-import javax.swing.JLabel;
-import javax.swing.JPanel;
-import javax.swing.JTextField;
-import javax.swing.JToolBar;
-import javax.swing.SwingUtilities;
-
-import com.angrysurfer.beats.panel.GlobalMuteButtonsPanel;
 import com.angrysurfer.beats.panel.TransportPanel;
-import com.angrysurfer.beats.panel.player.SoundParametersPanel;
 import com.angrysurfer.beats.panel.session.SessionControlPanel;
 import com.angrysurfer.beats.panel.session.SessionDisplayPanel;
 import com.angrysurfer.core.api.Command;
@@ -24,16 +10,18 @@ import com.angrysurfer.core.api.IBusListener;
 import com.angrysurfer.core.model.Session;
 import com.angrysurfer.core.service.SessionManager;
 
+import javax.swing.*;
+import java.awt.*;
+import java.util.Objects;
+
 public class ToolBar extends JToolBar {
 
-    private final CommandBus commandBus = CommandBus.getInstance();
+    static final int PANEL_WIDTH = 450;
     private Session currentSession;
-
     // Main panels
     private SessionDisplayPanel displayPanel;
     private TransportPanel transportPanel;
     private SessionControlPanel controlPanel;
-
     private JTextField sessionNameField;
 
     public ToolBar() {
@@ -42,7 +30,7 @@ public class ToolBar extends JToolBar {
         setup();
 
         // Set up command bus listener
-        commandBus.register(new IBusListener() {
+        CommandBus.getInstance().register(new IBusListener() {
             @Override
             public void onAction(Command action) {
                 // Skip if this ToolBar is the sender
@@ -55,8 +43,7 @@ public class ToolBar extends JToolBar {
                         case Commands.SESSION_SELECTED:
                         case Commands.SESSION_UPDATED:
                         case Commands.SESSION_CREATED:
-                            if (action.getData() instanceof Session) {
-                                Session session = (Session) action.getData();
+                            if (action.getData() instanceof Session session) {
                                 displayPanel.setSession(session);
                                 controlPanel.setSession(session);
                                 // transportPanel.updateTransportState(session);
@@ -67,20 +54,22 @@ public class ToolBar extends JToolBar {
                     }
                 }
             }
-        });
+        }, new String[] {
+    Commands.SESSION_SELECTED,
+    Commands.SESSION_UPDATED,
+    Commands.SESSION_CREATED
+});
 
         // Request the initial session state
         SwingUtilities.invokeLater(() -> {
             Session currentSession = SessionManager.getInstance().getActiveSession();
             if (currentSession != null) {
-                commandBus.publish(Commands.SESSION_SELECTED, this, currentSession);
+                CommandBus.getInstance().publish(Commands.SESSION_SELECTED, this, currentSession);
             } else {
-                commandBus.publish(Commands.SESSION_REQUEST, this);
+                CommandBus.getInstance().publish(Commands.SESSION_REQUEST, this);
             }
         });
     }
-
-    static final int PANEL_WIDTH = 450;
 
     private void setup() {
         setFloatable(false);
@@ -101,9 +90,9 @@ public class ToolBar extends JToolBar {
         // Let the transport panel take the center space
         // add(transportPanel, BorderLayout.CENTER);
         //add(new SoundParametersPanel(), BorderLayout.CENTER);
-        
+
         controlPanel = new SessionControlPanel();
-        
+
         controlPanel.setPreferredSize(new Dimension(PANEL_WIDTH, 80));
         controlPanel.setMaximumSize(new Dimension(PANEL_WIDTH, 80));
         add(controlPanel, BorderLayout.EAST);

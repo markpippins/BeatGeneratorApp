@@ -41,9 +41,11 @@ public class DrumSequencerManager implements IBusListener {
     // Private constructor for singleton pattern
     private DrumSequencerManager() {
         this.redisService = RedisService.getInstance();
-        CommandBus commandBus = CommandBus.getInstance();
+
         this.sequencers = new ArrayList<>();
-        commandBus.register(this);
+        CommandBus.getInstance().register(this, new String[]{Commands.SAVE_DRUM_SEQUENCE,
+                Commands.LOAD_DRUM_SEQUENCE, Commands.REPAIR_MIDI_CONNECTIONS,
+                Commands.ENSURE_MIDI_CONNECTIONS});
     }
 
     // Singleton access method

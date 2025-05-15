@@ -61,7 +61,7 @@ public class DrumSequencerGridPanel extends JPanel implements IBusListener {
         // Create the grid buttons
         createGridButtons();
         // Visualizer gridSaver = new Visualizer(this, gridButtons);
-        CommandBus.getInstance().register(this);
+        CommandBus.getInstance().register(this, new String[]{"*"});
     }
 
     /**
