@@ -196,12 +196,23 @@ public class TuringMachinePanel extends JPanel implements IBusListener {
         clockDivisionCombo.addActionListener(e -> {
             int index = clockDivisionCombo.getSelectedIndex();
             switch (index) {
-                case 0: ticksPerClock = 24; break;
-                case 1: ticksPerClock = 48; break;
-                case 2: ticksPerClock = 96; break;
-                case 3: ticksPerClock = 192; break;
-                case 4: ticksPerClock = 384; break;
-                default: ticksPerClock = 96;
+                case 0:
+                    ticksPerClock = 24;
+                    break;
+                case 1:
+                    ticksPerClock = 48;
+                    break;
+                case 2:
+                    ticksPerClock = 96;
+                    break;
+                case 3:
+                    ticksPerClock = 192;
+                    break;
+                case 4:
+                    ticksPerClock = 384;
+                    break;
+                default:
+                    ticksPerClock = 96;
             }
         });
 
@@ -370,11 +381,11 @@ public class TuringMachinePanel extends JPanel implements IBusListener {
         outputValue = (float) sum / maxValue;
 
         // Publish the output value on the command bus so other modules can use it
-        CommandBus.getInstance().publish(
-                Commands.MODULATION_VALUE_CHANGED,
-                this,
-                new Object[]{"TuringMachine", outputValue}
-        );
+//        CommandBus.getInstance().publish(
+//                Commands.MODULATION_VALUE_CHANGED,
+//                this,
+//                new Object[]{"TuringMachine", outputValue}
+//        );
     }
 
     @Override

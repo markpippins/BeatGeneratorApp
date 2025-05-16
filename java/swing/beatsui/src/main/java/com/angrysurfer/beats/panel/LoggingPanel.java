@@ -139,6 +139,31 @@ public class LoggingPanel extends JPanel {
                 e.getAdjustable().setValue(e.getAdjustable().getMaximum());
             }
         });
+        
+        // Add mouse wheel listener for smooth scrolling
+        logTextPane.addMouseWheelListener(e -> {
+            JScrollBar verticalBar = scrollPane.getVerticalScrollBar();
+            int notches = e.getWheelRotation();
+            int scrollAmount = notches * verticalBar.getUnitIncrement();
+            
+            // Calculate new position
+            int newValue = verticalBar.getValue() + scrollAmount;
+            
+            // Ensure value is within bounds
+            if (newValue < verticalBar.getMinimum()) {
+                newValue = verticalBar.getMinimum();
+            } else if (newValue > verticalBar.getMaximum() - verticalBar.getVisibleAmount()) {
+                newValue = verticalBar.getMaximum() - verticalBar.getVisibleAmount();
+            }
+            
+            // Set the scrollbar position and disable auto-scroll if scrolling up
+            if (notches < 0) {
+                autoScroll = false;
+                autoScrollCheck.setSelected(false);
+            }
+            
+            verticalBar.setValue(newValue);
+        });
 
         // Controls Panel
         JPanel controlsPanel = new JPanel(new BorderLayout(5, 0));
