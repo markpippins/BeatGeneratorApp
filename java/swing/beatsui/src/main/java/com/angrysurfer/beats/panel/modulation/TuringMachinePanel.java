@@ -48,11 +48,14 @@ public class TuringMachinePanel extends JPanel implements IBusListener {
     // CV Output value (0-1 float)
     private float outputValue = 0f;
 
+    /**
+     * Constructor - add panelNumber parameter to identify each panel
+     */
     public TuringMachinePanel() {
         setLayout(new BorderLayout());
-        setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createEmptyBorder(10, 10, 10, 10),
-                BorderFactory.createTitledBorder("Turing Machine")));
+
+        // Use a simpler border without the title (title will be on container)
+        setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
 
         setupComponents();
         randomizeRegister();
@@ -69,37 +72,35 @@ public class TuringMachinePanel extends JPanel implements IBusListener {
         startInternalClock();
     }
 
+    /**
+     * Make components more compact for grid layout
+     */
     private void setupComponents() {
-        // Main content panel with some padding
-        JPanel contentPanel = new JPanel(new BorderLayout(10, 10));
-        contentPanel.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
+        // More compact spacing
+        JPanel contentPanel = new JPanel(new BorderLayout(5, 5));
+        contentPanel.setBorder(BorderFactory.createEmptyBorder(2, 2, 2, 2));
 
-        // Top section with register display
-        registerPanel = new JPanel(new GridLayout(1, 8, 4, 0));
-        registerPanel.setBorder(BorderFactory.createTitledBorder("Shift Register"));
+        // More compact register display
+        registerPanel = new JPanel(new GridLayout(1, 8, 2, 0));
+        registerPanel.setBorder(BorderFactory.createTitledBorder("Register"));
 
         // Create LEDs for each bit
         for (int i = 0; i < 8; i++) {
             leds[i] = new TuringMachineLED(Integer.toString(i + 1));
+            // Make LEDs smaller for grid layout
+            leds[i].setPreferredSize(new Dimension(20, 20));
             registerPanel.add(leds[i]);
         }
 
-        // Control panel with dials and buttons
-        JPanel controlPanel = new JPanel(new GridLayout(2, 1, 0, 10));
-
-        // Upper controls - randomness and steps
-        JPanel upperControls = new JPanel(new FlowLayout(FlowLayout.CENTER, 15, 0));
+        // Two-column layout for more compact controls
+        JPanel controlPanel = new JPanel(new GridLayout(3, 2, 5, 5));
 
         // Randomness control
         JPanel randomnessPanel = new JPanel(new BorderLayout());
         randomnessPanel.setBorder(BorderFactory.createTitledBorder("Randomness"));
         randomnessDial = new Dial(0, 100, 50);
-        randomnessDial.setPreferredSize(new Dimension(60, 60));
-        randomnessDial.addChangeListener(e -> {
-            if (!randomnessDial.isDragging()) {
-                logger.debug("Randomness set to: {}%", randomnessDial.getValue());
-            }
-        });
+        // Smaller dial
+        randomnessDial.setPreferredSize(new Dimension(40, 40));
         randomnessPanel.add(randomnessDial, BorderLayout.CENTER);
 
         // Steps control
@@ -107,82 +108,115 @@ public class TuringMachinePanel extends JPanel implements IBusListener {
         stepsPanel.setBorder(BorderFactory.createTitledBorder("Steps"));
         SpinnerNumberModel stepsModel = new SpinnerNumberModel(8, 1, 8, 1);
         stepsSpinner = new JSpinner(stepsModel);
+        stepsPanel.add(stepsSpinner, BorderLayout.CENTER);
+
+        // Clock division selection
+        JPanel clockDivPanel = new JPanel(new BorderLayout());
+        clockDivPanel.setBorder(BorderFactory.createTitledBorder("Clock Div"));
+        clockDivisionCombo = new JComboBox<>(new String[]{
+                "1/16", "1/8", "1/4", "1/2", "1"
+        });
+        clockDivPanel.add(clockDivisionCombo, BorderLayout.CENTER);
+
+        // Button panel - combined into one panel
+        JPanel buttonPanel = new JPanel(new GridLayout(1, 2, 2, 0));
+        buttonPanel.setBorder(BorderFactory.createTitledBorder("Controls"));
+
+        // Loop button
+        loopButton = new JToggleButton("Loop");
+        buttonPanel.add(loopButton);
+
+        // Randomize button
+        randomizeButton = new JButton("Random");
+        buttonPanel.add(randomizeButton);
+
+        // Clock panel
+        JPanel clockPanel = new JPanel(new BorderLayout());
+        clockPanel.setBorder(BorderFactory.createTitledBorder("Clock"));
+
+        // Internal/External selection
+        externalClockCheckbox = new JCheckBox("External", useExternalClock);
+
+        // Internal clock speed dial
+        clockSpeedDial = new Dial(50, 1000, 200);
+        clockSpeedDial.setPreferredSize(new Dimension(40, 40));
+
+        JPanel clockControlPanel = new JPanel(new BorderLayout());
+        clockControlPanel.add(externalClockCheckbox, BorderLayout.NORTH);
+        clockControlPanel.add(clockSpeedDial, BorderLayout.CENTER);
+        clockPanel.add(clockControlPanel);
+
+        // Output panel
+        JPanel outputPanel = new JPanel(new BorderLayout());
+        outputPanel.setBorder(BorderFactory.createTitledBorder("Output"));
+        JProgressBar outputBar = new JProgressBar(0, 100);
+        outputBar.setStringPainted(true);
+
+        // Add to the grid layout
+        controlPanel.add(randomnessPanel);
+        controlPanel.add(stepsPanel);
+        controlPanel.add(clockDivPanel);
+        controlPanel.add(buttonPanel);
+        controlPanel.add(clockPanel);
+        controlPanel.add(outputPanel);
+
+        // Add to content panel
+        contentPanel.add(registerPanel, BorderLayout.NORTH);
+        contentPanel.add(controlPanel, BorderLayout.CENTER);
+
+        // Add content panel to main panel
+        add(contentPanel, BorderLayout.CENTER);
+
+        // Add event handlers (same as before)
+        setupEventHandlers();
+    }
+
+    /**
+     * Setup event handlers for all components
+     */
+    private void setupEventHandlers() {
+        // Moved from the setupComponents method to keep it clean
+        // Add all the existing action listeners/change listeners here
+
+        // Randomness dial
+        randomnessDial.addChangeListener(e -> {
+            if (!randomnessDial.isDragging()) {
+                logger.debug("Randomness set to: {}%", randomnessDial.getValue());
+            }
+        });
+
+        // Steps spinner
         stepsSpinner.addChangeListener(e -> {
             numSteps = (int) stepsSpinner.getValue();
             updateLEDLabels();
             logger.debug("Steps set to: {}", numSteps);
         });
-        stepsPanel.add(stepsSpinner, BorderLayout.CENTER);
 
-        // Clock division selection
-        JPanel clockDivPanel = new JPanel(new BorderLayout());
-        clockDivPanel.setBorder(BorderFactory.createTitledBorder("Clock Division"));
-        clockDivisionCombo = new JComboBox<>(new String[]{
-                "1/16 Note", "1/8 Note", "1/4 Note", "1/2 Note", "Whole Note"
-        });
+        // Clock division
         clockDivisionCombo.addActionListener(e -> {
             int index = clockDivisionCombo.getSelectedIndex();
-            // Calculate ticks per clock based on selection (assumes 96 PPQN)
             switch (index) {
-                case 0:
-                    ticksPerClock = 24;
-                    break;    // 1/16 note
-                case 1:
-                    ticksPerClock = 48;
-                    break;    // 1/8 note
-                case 2:
-                    ticksPerClock = 96;
-                    break;    // 1/4 note
-                case 3:
-                    ticksPerClock = 192;
-                    break;   // 1/2 note
-                case 4:
-                    ticksPerClock = 384;
-                    break;   // whole note
-                default:
-                    ticksPerClock = 96;
+                case 0: ticksPerClock = 24; break;
+                case 1: ticksPerClock = 48; break;
+                case 2: ticksPerClock = 96; break;
+                case 3: ticksPerClock = 192; break;
+                case 4: ticksPerClock = 384; break;
+                default: ticksPerClock = 96;
             }
-            logger.debug("Clock division set to: {} (ticks: {})",
-                    clockDivisionCombo.getSelectedItem(), ticksPerClock);
         });
-        clockDivisionCombo.setSelectedIndex(2); // Default to 1/4 note
-        clockDivPanel.add(clockDivisionCombo, BorderLayout.CENTER);
-
-        // Add upper controls
-        upperControls.add(randomnessPanel);
-        upperControls.add(stepsPanel);
-        upperControls.add(clockDivPanel);
-
-        // Lower controls - buttons and clock settings
-        JPanel lowerControls = new JPanel(new FlowLayout(FlowLayout.CENTER, 15, 0));
-
-        // Button panel
-        JPanel buttonPanel = new JPanel(new GridLayout(1, 2, 5, 0));
 
         // Loop button
-        loopButton = new JToggleButton("Loop");
         loopButton.addActionListener(e -> {
             boolean looping = loopButton.isSelected();
             loopButton.setText(looping ? "Looping" : "Loop");
-            loopButton.setBackground(looping ? new Color(120, 200, 120) : null);
-            logger.debug("Loop mode: {}", looping ? "ON" : "OFF");
         });
-        buttonPanel.add(loopButton);
 
         // Randomize button
-        randomizeButton = new JButton("Randomize");
         randomizeButton.addActionListener(e -> {
             randomizeRegister();
-            logger.debug("Register randomized");
         });
-        buttonPanel.add(randomizeButton);
 
-        // Clock panel
-        JPanel clockPanel = new JPanel(new BorderLayout());
-        clockPanel.setBorder(BorderFactory.createTitledBorder("Clock Source"));
-
-        // Internal/External selection
-        externalClockCheckbox = new JCheckBox("Use External Clock", useExternalClock);
+        // External clock checkbox
         externalClockCheckbox.addActionListener(e -> {
             useExternalClock = externalClockCheckbox.isSelected();
             clockSpeedDial.setEnabled(!useExternalClock);
@@ -192,13 +226,9 @@ public class TuringMachinePanel extends JPanel implements IBusListener {
             } else {
                 stopInternalClock();
             }
-            logger.debug("Clock source: {}", useExternalClock ? "EXTERNAL" : "INTERNAL");
         });
 
-        // Internal clock speed dial
-        clockSpeedDial = new Dial(50, 1000, 200);
-        clockSpeedDial.setPreferredSize(new Dimension(60, 60));
-        clockSpeedDial.setEnabled(!useExternalClock);
+        // Clock speed dial
         clockSpeedDial.addChangeListener(e -> {
             if (!clockSpeedDial.isDragging()) {
                 internalClockInterval = clockSpeedDial.getValue();
@@ -207,49 +237,8 @@ public class TuringMachinePanel extends JPanel implements IBusListener {
                     stopInternalClock();
                     startInternalClock();
                 }
-                logger.debug("Internal clock speed: {} ms", internalClockInterval);
             }
         });
-
-        JPanel clockControlPanel = new JPanel(new BorderLayout());
-        clockControlPanel.add(externalClockCheckbox, BorderLayout.NORTH);
-        clockControlPanel.add(clockSpeedDial, BorderLayout.CENTER);
-        clockPanel.add(clockControlPanel);
-
-        // Add output value panel
-        JPanel outputPanel = new JPanel(new BorderLayout());
-        outputPanel.setBorder(BorderFactory.createTitledBorder("Output"));
-        JProgressBar outputBar = new JProgressBar(0, 100);
-        outputBar.setPreferredSize(new Dimension(100, 20));
-        outputBar.setStringPainted(true);
-
-        // Update output bar when output value changes
-        Timer outputUpdateTimer = new Timer(50, e -> {
-            outputBar.setValue((int) (outputValue * 100));
-            outputBar.setString(String.format("%.2f", outputValue));
-        });
-        outputUpdateTimer.start();
-
-        outputPanel.add(outputBar, BorderLayout.CENTER);
-
-        // Add lower controls
-        lowerControls.add(buttonPanel);
-        lowerControls.add(clockPanel);
-        lowerControls.add(outputPanel);
-
-        // Add all control sections
-        controlPanel.add(upperControls);
-        controlPanel.add(lowerControls);
-
-        // Add to content panel
-        contentPanel.add(registerPanel, BorderLayout.NORTH);
-        contentPanel.add(controlPanel, BorderLayout.CENTER);
-
-        // Add content panel to main panel
-        add(contentPanel, BorderLayout.CENTER);
-
-        // Update initial LED labels
-        updateLEDLabels();
     }
 
     /**

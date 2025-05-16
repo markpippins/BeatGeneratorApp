@@ -1,6 +1,11 @@
 package com.angrysurfer.beats.panel.sample;
 
+import com.angrysurfer.core.api.CommandBus;
+import com.angrysurfer.core.api.Commands;
+import com.angrysurfer.core.model.InstrumentWrapper;
 import com.angrysurfer.core.model.Sample;
+import com.angrysurfer.core.model.Strike;
+import com.angrysurfer.core.service.SessionManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -153,6 +158,9 @@ public class SampleViewerPanel extends JPanel implements
 
                     // Update properties panel
                     propertiesPanel.setSample(sample);
+
+                    // Enable the Create Player button
+                    controlsPanel.setCreatePlayerEnabled(true);
                 });
 
                 // Prepare audio clip for playback
@@ -527,5 +535,111 @@ public class SampleViewerPanel extends JPanel implements
         stopAndCloseAudio();
         stopPlayheadUpdate(); // Stop playhead updates
         executor.shutdown();
+    }
+
+    @Override
+    public void onCreatePlayerRequested() {
+        if (sample == null || sample.getAudioFile() == null) {
+            logger.warn("No sample loaded, can't create player");
+            return;
+        }
+
+        try {
+            // Get the current session
+            SessionManager sessionManager = SessionManager.getInstance();
+            if (sessionManager == null || sessionManager.getActiveSession() == null) {
+                logger.error("No active session available");
+                JOptionPane.showMessageDialog(this,
+                        "No active session available. Please create or load a session first.",
+                        "Cannot Create Player",
+                        JOptionPane.WARNING_MESSAGE);
+                return;
+            }
+
+            // Create a descriptive name for the player based on sample file
+            String sampleName = sample.getAudioFile().getName();
+            if (sampleName.toLowerCase().endsWith(".wav")) {
+                sampleName = sampleName.substring(0, sampleName.length() - 4);
+            }
+            String playerName = "Sample: " + sampleName;
+
+            // Create a new instrument wrapper for sample playback
+            InstrumentWrapper instrument = createSampleInstrument(sample);
+
+            // Create a new Strike player (for percussive samples)
+            Strike player = new Strike();
+            player.setName(playerName);
+            player.setInstrument(instrument);
+            player.setEnabled(true);
+
+            // Initialize selection points
+            if (sample.getSampleStart() != 0 || sample.getSampleEnd() != sample.getAudioData().length) {
+                // If selection exists, store in player properties
+                player.getProperties().put("sampleStart", sample.getSampleStart());
+                player.getProperties().put("sampleEnd", sample.getSampleEnd());
+            }
+
+            // Add loop points if enabled
+            if (sample.isLoopEnabled()) {
+                player.getProperties().put("loopEnabled", true);
+                player.getProperties().put("loopStart", sample.getLoopStart());
+                player.getProperties().put("loopEnd", sample.getLoopEnd());
+            }
+
+            // Add the player to the session
+            sessionManager.getActiveSession().addPlayer(player);
+
+            // Notify the system about the new player
+            CommandBus.getInstance().publish(
+                    Commands.PLAYER_ADDED,
+                    this,
+                    player);
+
+            // Show confirmation to user
+            JOptionPane.showMessageDialog(this,
+                    "Created new player: " + playerName,
+                    "Player Created",
+                    JOptionPane.INFORMATION_MESSAGE);
+
+        } catch (Exception e) {
+            logger.error("Error creating player from sample: {}", e.getMessage(), e);
+            JOptionPane.showMessageDialog(this,
+                    "Error creating player: " + e.getMessage(),
+                    "Player Creation Failed",
+                    JOptionPane.ERROR_MESSAGE);
+        }
+    }
+
+    /**
+     * Create an instrument wrapper for the sample
+     */
+    private InstrumentWrapper createSampleInstrument(Sample sample) {
+        // Create a new instrument wrapper specifically for sample playback
+        InstrumentWrapper instrument = new InstrumentWrapper();
+        instrument.setName("Sample: " + sample.getAudioFile().getName());
+        instrument.setInternal(true);
+
+        // Store sample data in the instrument
+        instrument.getProperties().put("sampleFile", sample.getAudioFile().getAbsolutePath());
+        instrument.getProperties().put("sampleData", sample.getAudioData());
+        instrument.getProperties().put("sampleFormat", sample.getAudioFormat());
+
+        // Configure instrument with sample metadata
+        instrument.getProperties().put("sampleRate", sample.getSampleRate());
+        instrument.getProperties().put("channels", sample.getChannels());
+        instrument.getProperties().put("sampleSizeInBits", sample.getSampleSizeInBits());
+
+        // Mark as a sample instrument type
+        instrument.getProperties().put("type", "sample");
+
+        return instrument;
+    }
+
+    /**
+     * Get the waveform controls panel
+     * @return The WaveformControlsPanel instance
+     */
+    public WaveformControlsPanel getControlsPanel() {
+        return controlsPanel;
     }
 }

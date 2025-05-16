@@ -101,6 +101,10 @@ public class MainPanel extends PlayerAwarePanel implements AutoCloseable, IBusLi
         tabbedPane.addTab("Matrix", createModulationMatrixPanel());
         tabbedPane.addTab("Players", new SessionPanel());
 
+        JPanel pianoPanel = new JPanel(new BorderLayout());
+        pianoPanel.add(new PianoPanel(), BorderLayout.SOUTH);
+        tabbedPane.addTab("Piano", new PianoPanel());
+
         tabbedPane.addTab("Launch", new LaunchPanel());
 
         tabbedPane.addTab("Samples", createSampleBrowserPanel());
@@ -521,8 +525,24 @@ public class MainPanel extends PlayerAwarePanel implements AutoCloseable, IBusLi
         modulationTabbedPane.addTab("Complex LFO", new ComplexLFOPanel());
         modulationTabbedPane.addTab("XY Pad", createXYPadPanel());
 
-        // Add the new Turing Machine panel
-        modulationTabbedPane.addTab("Turing Machine", new TuringMachinePanel());
+        // Create a container panel for multiple Turing Machines
+        JPanel turingMachinesContainer = new JPanel(new GridLayout(2, 3, 10, 10));
+        turingMachinesContainer.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+
+        // Create and add 6 independent Turing Machine panels
+        for (int i = 0; i < 6; i++) {
+            TuringMachinePanel panel = new TuringMachinePanel();
+            // Modify each panel to use a more compact appearance for the grid layout
+            panel.setBorder(BorderFactory.createCompoundBorder(
+                    BorderFactory.createTitledBorder("TM " + (i + 1)),
+                    BorderFactory.createEmptyBorder(3, 3, 3, 3)));
+            // Give each a unique identifier for command bus messages
+            panel.setName("TuringMachine" + (i + 1));
+            turingMachinesContainer.add(panel);
+        }
+
+        // Add the Turing Machines container to the tabbed pane
+        modulationTabbedPane.addTab("Turing Machines", turingMachinesContainer);
 
         return modulationTabbedPane;
     }

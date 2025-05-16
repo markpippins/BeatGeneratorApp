@@ -146,6 +146,14 @@ public abstract class Player implements Callable<Boolean>, Serializable, IBusLis
     @JsonIgnore
     private long lastTriggeredTick = -1;
 
+    // Add to Player class:
+    @JsonIgnore
+    private final Map<String, Object> properties = new HashMap<>();
+
+    public Map<String, Object> getProperties() {
+        return properties;
+    }
+
     // Add cleanup method to shutdown pools on application exit
     public static void shutdownExecutors() {
         NOTE_EXECUTOR.shutdown();

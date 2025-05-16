@@ -15,14 +15,16 @@ public class WaveformControlsPanel extends JPanel {
     public interface AudioControlListener {
         void onPlayRequested();
         void onStopRequested();
-        void onPlaySelectionRequested(); // New method
+        void onPlaySelectionRequested();
         void onZoomChanged(double zoomFactor);
+        void onCreatePlayerRequested(); // New method
     }
     
     // UI Components
     private JButton playButton;
     private JButton playSelectionButton; // New button
     private JButton stopButton;
+    private JButton createPlayerButton; // New button
     private JLabel durationLabel;
     private JLabel selectionLabel;
     private JSlider zoomSlider;
@@ -67,6 +69,15 @@ public class WaveformControlsPanel extends JPanel {
             }
         });
         
+        // Create Player button - new addition
+        createPlayerButton = new JButton("➕ Create Player");
+        createPlayerButton.setEnabled(false);
+        createPlayerButton.addActionListener(e -> {
+            if (listener != null) {
+                listener.onCreatePlayerRequested();
+            }
+        });
+        
         // Zoom slider with expanded range (0.1x to 10x)
         zoomSlider = new JSlider(1, 100, 50); // Values will be mapped
         zoomSlider.setPreferredSize(new Dimension(150, 20));
@@ -98,6 +109,7 @@ public class WaveformControlsPanel extends JPanel {
         buttonsPanel.add(playButton);
         buttonsPanel.add(playSelectionButton); // Add the new button
         buttonsPanel.add(stopButton);
+        buttonsPanel.add(createPlayerButton); // Add the new button
         buttonsPanel.add(new JLabel("Zoom:"));
         buttonsPanel.add(zoomSlider);
         buttonsPanel.add(zoomLabel);
@@ -126,6 +138,10 @@ public class WaveformControlsPanel extends JPanel {
     
     public void setStopEnabled(boolean enabled) {
         stopButton.setEnabled(enabled);
+    }
+    
+    public void setCreatePlayerEnabled(boolean enabled) {
+        createPlayerButton.setEnabled(enabled);
     }
     
     public void updateDurationLabel(double duration) {
