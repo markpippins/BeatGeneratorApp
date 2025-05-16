@@ -59,6 +59,9 @@ public abstract class Player implements Callable<Boolean>, Serializable, IBusLis
     private final Set<Rule> barCountRuleCache = new HashSet<>();
     @JsonIgnore
     private final Set<Rule> partCountRuleCache = new HashSet<>();
+    // Add to Player class:
+    @JsonIgnore
+    private final Map<String, Object> properties = new HashMap<>();
     @JsonIgnore
     public transient boolean isSelected = false;
     private Set<Pad> pads = new HashSet<>();
@@ -103,7 +106,6 @@ public abstract class Player implements Callable<Boolean>, Serializable, IBusLis
     private Boolean accent = false;
     private String scale = "Chromatic";
     private double duration = 100.0;
-
     @JsonIgnore
     private Boolean enabled = false;
     @JsonIgnore
@@ -133,7 +135,6 @@ public abstract class Player implements Callable<Boolean>, Serializable, IBusLis
     private boolean usingInternalSynth = true;
     private InternalSynthManager internalSynthManager = null;
     private long lastNoteTime = 0;
-
     // public Long getSubPosition() {
     // return getSub();
     // }
@@ -146,18 +147,14 @@ public abstract class Player implements Callable<Boolean>, Serializable, IBusLis
     @JsonIgnore
     private long lastTriggeredTick = -1;
 
-    // Add to Player class:
-    @JsonIgnore
-    private final Map<String, Object> properties = new HashMap<>();
-
-    public Map<String, Object> getProperties() {
-        return properties;
-    }
-
     // Add cleanup method to shutdown pools on application exit
     public static void shutdownExecutors() {
         NOTE_EXECUTOR.shutdown();
         NOTE_OFF_SCHEDULER.shutdown();
+    }
+
+    public Map<String, Object> getProperties() {
+        return properties;
     }
 
     // Add initialization method
@@ -246,7 +243,7 @@ public abstract class Player implements Callable<Boolean>, Serializable, IBusLis
 
         NOTE_OFF_SCHEDULER.schedule(() -> {
             try {
-                triggerNoteWithThrottle(note + randWeight + getSession().getNoteOffset(), velocity);
+                triggerNoteWithThrottle(note + randWeight + (Objects.nonNull(getSession()) ? getSession().getNoteOffset() : 0), velocity);
             } catch (Exception e) {
                 logger.error("Error in scheduled noteOff: {}", e.getMessage(), e);
             }

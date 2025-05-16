@@ -33,8 +33,9 @@ public abstract class PlayerAwarePanel extends JPanel implements IBusListener {
      */
     public PlayerAwarePanel() {
         super();
-        CommandBus.getInstance().register(this, new String[]{Commands.PLAYER_ACTIVATED,
-                Commands.PLAYER_UPDATED, Commands.PLAYER_SELECTION_EVENT, Commands.PLAYER_UPDATE_EVENT});
+        CommandBus.getInstance().register(this, new String[]{Commands.PLAYER_SELECTION_EVENT});
+//        CommandBus.getInstance().register(this, new String[]{Commands.PLAYER_ACTIVATED,
+//                Commands.PLAYER_UPDATED, Commands.PLAYER_SELECTION_EVENT, Commands.PLAYER_UPDATE_EVENT});
     }
 
     /**
@@ -46,8 +47,11 @@ public abstract class PlayerAwarePanel extends JPanel implements IBusListener {
             return;
         }
 
+        logger.debug(getClass().getSimpleName() + " received command: " + action.getCommand());
+
         try {
             switch (action.getCommand()) {
+
                 // Handle new player selection event
                 case Commands.PLAYER_SELECTION_EVENT -> {
                     if (action.getData() instanceof PlayerSelectionEvent event) {

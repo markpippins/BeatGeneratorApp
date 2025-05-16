@@ -9,6 +9,8 @@ import lombok.Setter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Objects;
+
 @Getter
 @Setter
 public class Ratchet extends Strike {
@@ -76,7 +78,7 @@ public class Ratchet extends Strike {
     public void onTick(TimingUpdate timingUpdate) {
 
         if (isProbable()) {
-            drumNoteOn((getRootNote() + getSession().getNoteOffset()));
+            drumNoteOn((getRootNote() + (Objects.nonNull(getSession()) ? getSession().getNoteOffset() : 0)));
         }
 
         if (timingUpdate.tickCount() > targetTick + 1) {

@@ -3,10 +3,7 @@ package com.angrysurfer.beats.panel.sequencer.poly;
 import com.angrysurfer.beats.util.UIHelper;
 import com.angrysurfer.beats.widget.DrumGridButton;
 import com.angrysurfer.beats.widget.DrumSequencerGridPanelContextHandler;
-import com.angrysurfer.core.api.Command;
-import com.angrysurfer.core.api.CommandBus;
-import com.angrysurfer.core.api.Commands;
-import com.angrysurfer.core.api.IBusListener;
+import com.angrysurfer.core.api.*;
 import com.angrysurfer.core.event.DrumStepUpdateEvent;
 import com.angrysurfer.core.sequencer.DrumSequencer;
 import com.angrysurfer.core.sequencer.SequencerConstants;
@@ -61,7 +58,12 @@ public class DrumSequencerGridPanel extends JPanel implements IBusListener {
         // Create the grid buttons
         createGridButtons();
         // Visualizer gridSaver = new Visualizer(this, gridButtons);
-        CommandBus.getInstance().register(this, new String[]{"*"});
+        TimingBus.getInstance().register(this);
+        CommandBus.getInstance().register(this, new String[]{Commands.DRUM_STEP_UPDATED,
+                Commands.DRUM_STEP_PARAMETERS_CHANGED, Commands.DRUM_STEP_EFFECTS_CHANGED});
+//        TimingBus.getInstance().register(this, new String[]{Commands.DRUM_STEP_UPDATED,
+//                Commands.DRUM_STEP_PARAMETERS_CHANGED, Commands.DRUM_STEP_EFFECTS_CHANGED});
+
     }
 
     /**
@@ -403,7 +405,6 @@ public class DrumSequencerGridPanel extends JPanel implements IBusListener {
         // Existing code...
 
         switch (action.getCommand()) {
-            // Existing cases...
 
             case Commands.DRUM_STEP_UPDATED:
                 if (action.getData() instanceof DrumStepUpdateEvent event) {

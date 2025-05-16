@@ -19,6 +19,8 @@ public class MelodicSequenceData {
     private static final Logger logger = LoggerFactory.getLogger(MelodicSequenceData.class);
     // Id and metadata
     private Long id = 0L;
+    private Long playerId; 
+    
     private String name = "New Pattern";
     private Long createdAt = System.currentTimeMillis();
     private Long updatedAt = System.currentTimeMillis();
