@@ -1,25 +1,15 @@
 package com.angrysurfer.beats.widget;
 
-import java.awt.BasicStroke;
-import java.awt.Color;
-import java.awt.Dimension;
-import java.awt.GradientPaint;
-import java.awt.Graphics;
-import java.awt.Graphics2D;
-import java.awt.RenderingHints;
-import java.awt.Window;
-import java.util.ArrayList;
-import java.util.List;
-
-import javax.swing.JComponent;
-import javax.swing.SwingUtilities;
-import javax.swing.event.ChangeEvent;
-import javax.swing.event.ChangeListener;
-
 import com.angrysurfer.core.api.CommandBus;
-
 import lombok.Getter;
 import lombok.Setter;
+
+import javax.swing.*;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
+import java.awt.*;
+import java.util.ArrayList;
+import java.util.List;
 
 @Getter
 @Setter
@@ -40,12 +30,13 @@ public class Dial extends JComponent {
     private String label;
     private List<ChangeListener> changeListeners = new ArrayList<>();
 
-    private int minSize = 50;
-    private int maxSize = 50;
+    private int minSize = 35;
+    private int maxSize = 60;
 
     private Color gradientStartColor = new Color(60, 130, 255);
     private Color gradientEndColor = new Color(20, 80, 200);
     private Color knobColor = new Color(30, 100, 255);
+    private boolean updateOnResize = false;
 
     public Dial() {
         this.command = null;
@@ -139,8 +130,6 @@ public class Dial extends JComponent {
         this.gradientStartColor = color.brighter();
         this.gradientEndColor = color.darker();
     }
-
-    private boolean updateOnResize = false;
 
     protected void updateSize() {
         Window window = SwingUtilities.getWindowAncestor(this);
@@ -251,12 +240,12 @@ public class Dial extends JComponent {
         }
     }
 
+    public String getLabel() {
+        return this.label;
+    }
+
     public void setLabel(String label) {
         this.label = label;
         repaint();
-    }
-
-    public String getLabel() {
-        return this.label;
     }
 }

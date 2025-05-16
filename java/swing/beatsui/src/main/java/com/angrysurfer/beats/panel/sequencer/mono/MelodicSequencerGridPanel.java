@@ -4,6 +4,10 @@ import com.angrysurfer.beats.util.UIHelper;
 import com.angrysurfer.beats.widget.Dial;
 import com.angrysurfer.beats.widget.NoteSelectionDial;
 import com.angrysurfer.beats.widget.TriggerButton;
+import com.angrysurfer.core.api.Command;
+import com.angrysurfer.core.api.CommandBus;
+import com.angrysurfer.core.api.Commands;
+import com.angrysurfer.core.api.IBusListener;
 import com.angrysurfer.core.sequencer.MelodicSequencer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -16,26 +20,23 @@ import java.util.List;
 /**
  * Grid panel for melodic sequencer with step controls
  */
-public class MelodicSequencerGridPanel extends JPanel {
+public class MelodicSequencerGridPanel extends JPanel implements IBusListener {
     private static final Logger logger = LoggerFactory.getLogger(MelodicSequencerGridPanel.class);
-
-    // UI state variables
-    private List<TriggerButton> triggerButtons = new ArrayList<>();
-    private List<Dial> noteDials = new ArrayList<>();
-    private List<Dial> velocityDials = new ArrayList<>();
-    private List<Dial> gateDials = new ArrayList<>();
-    private List<Dial> probabilityDials = new ArrayList<>();
-    private List<Dial> nudgeDials = new ArrayList<>();
-
     // Reference to sequencer
     private final MelodicSequencer sequencer;
-
+    // UI state variables
+    private final List<TriggerButton> triggerButtons = new ArrayList<>();
+    private final List<Dial> noteDials = new ArrayList<>();
+    private final List<Dial> velocityDials = new ArrayList<>();
+    private final List<Dial> gateDials = new ArrayList<>();
+    private final List<Dial> probabilityDials = new ArrayList<>();
+    private final List<Dial> nudgeDials = new ArrayList<>();
     // Flag to prevent recursive updates
     private boolean listenersEnabled = true;
 
     /**
      * Create a new melodic sequencer grid panel
-     * 
+     *
      * @param sequencer The melodic sequencer to control
      */
     public MelodicSequencerGridPanel(MelodicSequencer sequencer) {
@@ -69,7 +70,7 @@ public class MelodicSequencerGridPanel extends JPanel {
         addComponentListener(new java.awt.event.ComponentAdapter() {
             @Override
             public void componentResized(java.awt.event.ComponentEvent e) {
-                updateDialSizes();
+                // updateDialSizes();
             }
         });
     }
@@ -101,9 +102,7 @@ public class MelodicSequencerGridPanel extends JPanel {
             Dial dial = i == 4 ? new NoteSelectionDial() : new Dial();
 
             // Set default sizes - we'll update these in updateDialSizes()
-            int dialSize = i == 4 ? 60 : 40; // Note dial is larger than others
-            dial.setPreferredSize(new Dimension(dialSize, dialSize));
-            dial.setMinimumSize(new Dimension(30, 30)); // Minimum size for any dial
+            dial.setPreferredSize(new Dimension(50, 50));
 
             // Store the dial in the appropriate collection based on its type
             switch (i) {
@@ -280,7 +279,7 @@ public class MelodicSequencerGridPanel extends JPanel {
     public void addNotify() {
         super.addNotify();
         // Schedule dial size update after component is fully displayed
-        SwingUtilities.invokeLater(this::updateDialSizes);
+        //SwingUtilities.invokeLater(this::updateDialSizes);
     }
 
     /**
@@ -337,7 +336,7 @@ public class MelodicSequencerGridPanel extends JPanel {
         try {
             forceSync();
             // Make sure dial sizes are appropriate
-            updateDialSizes();
+            // updateDialSizes();
         } finally {
             listenersEnabled = true;
         }
@@ -379,4 +378,26 @@ public class MelodicSequencerGridPanel extends JPanel {
         }
     }
 
+    /**
+     * Register for command bus events
+     */
+    private void registerForEvents() {
+        // Register for specific events only
+        CommandBus.getInstance().register(this, new String[]{
+                Commands.PATTERN_UPDATED,
+                Commands.MELODIC_SEQUENCE_UPDATED,
+                Commands.MELODIC_SEQUENCE_CREATED,
+                Commands.MELODIC_SEQUENCE_LOADED,
+                Commands.SCALE_SELECTED,
+                Commands.HIGHLIGHT_SCALE_NOTE,
+                Commands.WINDOW_RESIZED
+        });
+
+        logger.debug("MelodicSequencerGridPanel registered for specific events");
+    }
+
+    @Override
+    public void onAction(Command action) {
+
+    }
 }

@@ -120,7 +120,7 @@ public class LoggingPanel extends JPanel {
 
                 addLogEntry(new LogEntry("COMMAND", message, timestamp));
             }
-        });
+        }, new String[]{"*"});
     }
 
     /**

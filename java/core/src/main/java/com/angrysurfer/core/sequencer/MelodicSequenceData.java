@@ -1,6 +1,5 @@
 package com.angrysurfer.core.sequencer;
 
-import com.angrysurfer.core.api.midi.MIDIConstants;
 import lombok.Getter;
 import lombok.Setter;
 import org.slf4j.Logger;
@@ -14,12 +13,10 @@ import java.util.stream.Collectors;
 @Getter
 @Setter
 public class MelodicSequenceData {
-    private static final Logger logger = LoggerFactory.getLogger(MelodicSequenceData.class);
-
     // Constants
     public static final int MAX_STEPS = 16;
     public static final int MAX_BARS = 16;
-
+    private static final Logger logger = LoggerFactory.getLogger(MelodicSequenceData.class);
     // Id and metadata
     private Long id = 0L;
     private String name = "New Pattern";
@@ -71,19 +68,13 @@ public class MelodicSequenceData {
     private void initializeArrays() {
         // Initialize all arrays with default values
         Arrays.fill(activeSteps, false);
-        Arrays.fill(noteValues, MIDIConstants.DEFAULT_NOTE);
-        Arrays.fill(velocityValues, MIDIConstants.DEFAULT_VELOCITY);
-        Arrays.fill(gateValues, MIDIConstants.DEFAULT_GATE);
-        Arrays.fill(probabilityValues, MIDIConstants.DEFAULT_PROBABILITY);
+        Arrays.fill(noteValues, SequencerConstants.DEFAULT_NOTE);
+        Arrays.fill(velocityValues, SequencerConstants.DEFAULT_VELOCITY);
+        Arrays.fill(gateValues, SequencerConstants.DEFAULT_GATE);
+        Arrays.fill(probabilityValues, SequencerConstants.DEFAULT_PROBABILITY);
         Arrays.fill(nudgeValues, 0);
         Arrays.fill(tiltValues, 0);
         Arrays.fill(muteValues, 0); // Initialize mute values to 0 (unmuted)
-    
-        // Activate some initial steps for a basic pattern
-        // activeSteps[0] = true;
-        // activeSteps[4] = true;
-        // activeSteps[8] = true;
-        // activeSteps[12] = true;
     }
 
     /**
@@ -121,7 +112,7 @@ public class MelodicSequenceData {
         if (step >= 0 && step < MAX_STEPS) {
             return noteValues[step];
         }
-        return MIDIConstants.DEFAULT_NOTE;
+        return SequencerConstants.DEFAULT_NOTE;
     }
 
     /**
@@ -144,7 +135,7 @@ public class MelodicSequenceData {
         if (step >= 0 && step < MAX_STEPS) {
             return velocityValues[step];
         }
-        return MIDIConstants.DEFAULT_VELOCITY;
+        return SequencerConstants.DEFAULT_VELOCITY;
     }
 
     /**
@@ -167,7 +158,7 @@ public class MelodicSequenceData {
         if (step >= 0 && step < MAX_STEPS) {
             return gateValues[step];
         }
-        return MIDIConstants.DEFAULT_GATE;
+        return SequencerConstants.DEFAULT_GATE;
     }
 
     /**
@@ -190,7 +181,7 @@ public class MelodicSequenceData {
         if (step >= 0 && step < MAX_STEPS) {
             return probabilityValues[step];
         }
-        return MIDIConstants.DEFAULT_PROBABILITY;
+        return SequencerConstants.DEFAULT_PROBABILITY;
     }
 
     /**
@@ -250,6 +241,22 @@ public class MelodicSequenceData {
     }
 
     /**
+     * Get raw harmonic tilt values array
+     */
+    public int[] getHarmonicTiltValuesRaw() {
+        return tiltValues;
+    }
+
+    /**
+     * Get harmonic tilt values as a list
+     *
+     * @return List of harmonic tilt values
+     */
+    public List<Integer> getHarmonicTiltValues() {
+        return Arrays.stream(tiltValues).boxed().collect(Collectors.toList());
+    }
+
+    /**
      * Set harmonic tilt values from array
      */
     public void setHarmonicTiltValues(int[] values) {
@@ -259,22 +266,6 @@ public class MelodicSequenceData {
         } else {
             logger.warn("Attempted to set null tilt values array");
         }
-    }
-
-    /**
-     * Get raw harmonic tilt values array
-     */
-    public int[] getHarmonicTiltValuesRaw() {
-        return tiltValues;
-    }
-
-    /**
-     * Get harmonic tilt values as a list
-     * 
-     * @return List of harmonic tilt values
-     */
-    public List<Integer> getHarmonicTiltValues() {
-        return Arrays.stream(tiltValues).boxed().collect(Collectors.toList());
     }
 
     /**
@@ -404,7 +395,7 @@ public class MelodicSequenceData {
 
     /**
      * Set the root note from a string value
-     * 
+     *
      * @param rootNoteStr The root note as a string (e.g., "C", "F#")
      */
     public void setRootNoteFromString(String rootNoteStr) {
@@ -414,7 +405,7 @@ public class MelodicSequenceData {
         }
 
         // Map from note name to integer value
-        String[] noteNames = { "C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B" };
+        String[] noteNames = {"C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"};
 
         for (int i = 0; i < noteNames.length; i++) {
             if (noteNames[i].equalsIgnoreCase(rootNoteStr)) {
@@ -424,7 +415,7 @@ public class MelodicSequenceData {
         }
 
         // Also check for flat notes
-        String[] flatNoteNames = { "C", "Db", "D", "Eb", "E", "F", "Gb", "G", "Ab", "A", "Bb", "B" };
+        String[] flatNoteNames = {"C", "Db", "D", "Eb", "E", "F", "Gb", "G", "Ab", "A", "Bb", "B"};
 
         for (int i = 0; i < flatNoteNames.length; i++) {
             if (flatNoteNames[i].equalsIgnoreCase(rootNoteStr)) {
@@ -440,11 +431,11 @@ public class MelodicSequenceData {
 
     /**
      * Get the root note as a string
-     * 
+     *
      * @return The root note name
      */
     public String getRootNoteAsString() {
-        String[] noteNames = { "C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B" };
+        String[] noteNames = {"C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"};
         int index = (rootNote != null) ? (rootNote % 12) : 0;
         if (index < 0)
             index += 12;
@@ -496,10 +487,10 @@ public class MelodicSequenceData {
      */
     public void clearPattern() {
         Arrays.fill(activeSteps, false);
-        Arrays.fill(noteValues, MIDIConstants.DEFAULT_NOTE);
-        Arrays.fill(velocityValues, MIDIConstants.DEFAULT_VELOCITY);
-        Arrays.fill(gateValues, MIDIConstants.DEFAULT_GATE);
-        Arrays.fill(probabilityValues, MIDIConstants.DEFAULT_PROBABILITY);
+        Arrays.fill(noteValues, SequencerConstants.DEFAULT_NOTE);
+        Arrays.fill(velocityValues, SequencerConstants.DEFAULT_VELOCITY);
+        Arrays.fill(gateValues, SequencerConstants.DEFAULT_GATE);
+        Arrays.fill(probabilityValues, SequencerConstants.DEFAULT_PROBABILITY);
         Arrays.fill(nudgeValues, 0);
     }
 
@@ -613,7 +604,7 @@ public class MelodicSequenceData {
      * Set step data with probability and nudge
      */
     public void setStepData(int stepIndex, boolean active, int note, int velocity, int gate, int probability,
-            int nudge) {
+                            int nudge) {
         setStepData(stepIndex, active, note, velocity, gate);
         if (stepIndex >= 0 && stepIndex < MAX_STEPS) {
             setProbabilityValue(stepIndex, probability);
@@ -644,6 +635,22 @@ public class MelodicSequenceData {
     }
 
     /**
+     * Get raw mute values array
+     */
+    public int[] getMuteValuesRaw() {
+        return muteValues;
+    }
+
+    /**
+     * Get mute values as a list
+     *
+     * @return List of mute values
+     */
+    public List<Integer> getMuteValues() {
+        return Arrays.stream(muteValues).boxed().collect(Collectors.toList());
+    }
+
+    /**
      * Set mute values from array
      */
     public void setMuteValues(int[] values) {
@@ -653,21 +660,5 @@ public class MelodicSequenceData {
         } else {
             logger.warn("Attempted to set null mute values array");
         }
-    }
-
-    /**
-     * Get raw mute values array
-     */
-    public int[] getMuteValuesRaw() {
-        return muteValues;
-    }
-
-    /**
-     * Get mute values as a list
-     * 
-     * @return List of mute values
-     */
-    public List<Integer> getMuteValues() {
-        return Arrays.stream(muteValues).boxed().collect(Collectors.toList());
     }
 }

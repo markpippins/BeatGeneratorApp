@@ -1,8 +1,7 @@
 package com.angrysurfer.core.sequencer;
 
-import com.angrysurfer.core.Constants;
 import com.angrysurfer.core.api.*;
-import com.angrysurfer.core.api.midi.MIDIConstants;
+import com.angrysurfer.core.api.midi.MidiControlMessageEnum;
 import com.angrysurfer.core.event.NoteEvent;
 import com.angrysurfer.core.event.PatternSwitchEvent;
 import com.angrysurfer.core.event.StepUpdateEvent;
@@ -53,8 +52,20 @@ public class MelodicSequencer implements IBusListener {
 
         setId(id);
         //setChannel(SEQUENCER_CHANNELS[id]);
-        initializePlayer(MIDIConstants.SEQUENCER_CHANNELS[id]);
-        CommandBus.getInstance().register(this);
+        initializePlayer(SequencerConstants.SEQUENCER_CHANNELS[id]);
+        CommandBus.getInstance().register(this, new String[] {
+            Commands.REPAIR_MIDI_CONNECTIONS,
+            Commands.TIMING_UPDATE,
+            Commands.TRANSPORT_START,
+            Commands.TRANSPORT_STOP,
+            Commands.REFRESH_ALL_INSTRUMENTS,
+            Commands.PLAYER_PRESET_CHANGE_EVENT,
+            Commands.PLAYER_PRESET_CHANGED,
+            Commands.PLAYER_INSTRUMENT_CHANGE_EVENT,
+            Commands.PLAYER_UPDATED,
+            Commands.REFRESH_PLAYER_INSTRUMENT
+        });
+        
         TimingBus.getInstance().register(this);
 
         updateQuantizer();
@@ -98,7 +109,7 @@ public class MelodicSequencer implements IBusListener {
     }
 
     private void initializePlayer(Player player) {
-        PlayerManager.getInstance().applyInstrumentPreset(player);
+        // PlayerManager.getInstance().applyInstrumentPreset(player);
 
         // Add this explicit program change to ensure the preset is applied:
         if (player != null && player.getInstrument() != null) {
@@ -109,10 +120,14 @@ public class MelodicSequencer implements IBusListener {
                 int bankIndex = instrument.getBankIndex() != null ? instrument.getBankIndex() : 0;
                 int preset = instrument.getPreset() != null ? instrument.getPreset() : 0;
 
+                player.getInstrument().controlChange(0, (bankIndex >> 7) & MidiControlMessageEnum.POLY_MODE_ON);
+                player.getInstrument().controlChange(32, bankIndex & MidiControlMessageEnum.POLY_MODE_ON);
+                player.getInstrument().programChange(preset, 0);
+
                 // Send explicit bank select and program change
-                instrument.controlChange(0, (bankIndex >> 7) & 0x7F);  // Bank MSB
-                instrument.controlChange(32, bankIndex & 0x7F);        // Bank LSB
-                instrument.programChange(preset, 0);
+                // instrument.controlChange(0, (bankIndex >> 7) & MidiControlMessageEnum.POLY_MODE_ON);  // Bank MSB
+                // instrument.controlChange(32, bankIndex & MidiControlMessageEnum.POLY_MODE_ON);        // Bank LSB
+                // instrument.programChange(preset, 0);
 
                 logger.info("Explicitly set instrument {} to bank {} program {} on channel {}",
                         instrument.getName(), bankIndex, preset, channel);
@@ -154,7 +169,7 @@ public class MelodicSequencer implements IBusListener {
 
     public void ensurePlayerHasInstrument() {
         if (player != null && player.getInstrument() == null) {
-            logger.warn("Player {} has no instrument, initializing default", MIDIConstants.SEQUENCER_CHANNELS[id]);
+            logger.warn("Player {} has no instrument, initializing default", SequencerConstants.SEQUENCER_CHANNELS[id]);
             PlayerManager.getInstance().initializeInternalInstrument(player, true, player.getId().intValue());
         }
     }
@@ -367,7 +382,7 @@ public class MelodicSequencer implements IBusListener {
 
         try {
             long currentTime = System.currentTimeMillis();
-            if (currentTime - lastNoteTriggeredTime < MIDIConstants.MIN_NOTE_INTERVAL_MS) {
+            if (currentTime - lastNoteTriggeredTime < SequencerConstants.MIN_NOTE_INTERVAL_MS) {
                 logger.debug("Ignoring note trigger - too soon after last note ({} ms)",
                         currentTime - lastNoteTriggeredTime);
                 return;
@@ -439,10 +454,8 @@ public class MelodicSequencer implements IBusListener {
             return;
         }
 
-        List<Note> ordered = UserConfigManager.getInstance().getNotesOrderedById();
-        List<Note> notes = UserConfigManager.getInstance().getCurrentConfig().getDefaultNotes();
-
-        Optional<Note> opt = notes.stream().filter(p -> p.getChannel().equals(playerChannel)).findFirst();
+        Optional<Note> opt = UserConfigManager.getInstance().getCurrentConfig().getDefaultNotes()
+                .stream().filter(p -> p.getChannel().equals(playerChannel)).findFirst();
 
         if (opt.isPresent()) {
 
@@ -468,25 +481,13 @@ public class MelodicSequencer implements IBusListener {
             player.setDefaultChannel(playerChannel);
         }
 
-        //InstrumentWrapper instrument = UserConfigManager.getInstance().getCurrentConfig().getInstruments()
-        //        .stream().filter(InstrumentWrapper::getIsDefault).toList().get(getId());
-
-
-//        if (player.getInstrument() != null) {
-//            InternalSynthManager.getInstance().initializeInstrumentState(player.getInstrument());
-//        } else {
-//            logger.warn("Could not create instrument for melodic sequencer {}", id);
-//        }
-
         if (player.getInstrument() != null) {
             DeviceManager.getInstance();
             MidiDevice device = DeviceManager.getMidiDevice(player.getInstrument().getDeviceName());
             if (device != null) {
                 player.getInstrument().setDevice(device);
-            }
-            player.getInstrument().setAssignedToPlayer(true);
-
-            PlayerManager.getInstance().initializeInternalInstrument(player, true, player.getId().intValue());
+                player.getInstrument().setAssignedToPlayer(true);
+            } else PlayerManager.getInstance().initializeInternalInstrument(player, true, player.getId().intValue());
         }
 
         if (sequenceData != null) {
@@ -508,7 +509,7 @@ public class MelodicSequencer implements IBusListener {
         }
 
         InstrumentWrapper instrument = player.getInstrument();
-        if (!instrument.isInternalSynth() && instrument.getChannel() != Constants.MIDI_DRUM_CHANNEL) {
+        if (!instrument.isInternalSynth() && instrument.getChannel() != SequencerConstants.MIDI_DRUM_CHANNEL) {
 
             if (sequenceData.getSoundbankName() != null) {
                 instrument.setSoundbankName(sequenceData.getSoundbankName());
@@ -522,7 +523,8 @@ public class MelodicSequencer implements IBusListener {
                 instrument.setPreset(sequenceData.getPreset());
             }
 
-            PlayerManager.getInstance().applyInstrumentPreset(player);
+            // PlayerManager.getInstance().applyInstrumentPreset(player);
+            initializePlayer(player);
         }
 
         logger.debug("Applied sequence data settings to instrument: preset:{}, bank:{}, soundbank:{}",
@@ -546,13 +548,13 @@ public class MelodicSequencer implements IBusListener {
                     p.getOwner() instanceof MelodicSequencer &&
                     ((MelodicSequencer) p.getOwner()).getId() != null &&
                     ((MelodicSequencer) p.getOwner()).getId().equals(id) &&
-                    p.getChannel() == MIDIConstants.SEQUENCER_CHANNELS[id]) {
+                    p.getChannel() == SequencerConstants.SEQUENCER_CHANNELS[id]) {
                 // p.noteOn(p.getRootNote(), 100);
                 return p;
             }
         }
 
-        logger.info("No player found for sequencer {} and channel {}", id, MIDIConstants.SEQUENCER_CHANNELS[id]);
+        logger.info("No player found for sequencer {} and channel {}", id, SequencerConstants.SEQUENCER_CHANNELS[id]);
         return null;
     }
 
@@ -745,22 +747,13 @@ public class MelodicSequencer implements IBusListener {
                 stop();
             }
 
-            case Commands.REFRESH_ALL_INSTRUMENTS -> {
-                logger.info("Refreshing instrument preset for melodic sequencer {}", id);
-                if (player != null && player.getInstrument() != null) {
-                    PlayerManager.getInstance().applyInstrumentPreset(player);
-                }
+            case Commands.REFRESH_ALL_INSTRUMENTS, Commands.PLAYER_PRESET_CHANGE_EVENT,
+                 Commands.PLAYER_PRESET_CHANGED, Commands.PLAYER_INSTRUMENT_CHANGE_EVENT,
+                 Commands.PLAYER_UPDATED, Commands.REFRESH_PLAYER_INSTRUMENT -> {
+                initializePlayer(player);
+                updateInstrumentSettingsInSequenceData();
             }
 
-            case Commands.REFRESH_PLAYER_INSTRUMENT -> {
-                if (action.getData() instanceof Long playerId &&
-                        player != null &&
-                        player.getId().equals(playerId)) {
-
-                    logger.info("Explicit refresh requested for player instrument: {}", playerId);
-                    PlayerManager.getInstance().applyInstrumentPreset(player);
-                }
-            }
         }
     }
 
@@ -833,7 +826,7 @@ public class MelodicSequencer implements IBusListener {
         try {
             if (player == null) {
                 logger.warn("No player for sequencer {}, creating", id);
-                initializePlayer(MIDIConstants.SEQUENCER_CHANNELS[id]);
+                initializePlayer(SequencerConstants.SEQUENCER_CHANNELS[id]);
                 return;
             }
 
@@ -850,7 +843,7 @@ public class MelodicSequencer implements IBusListener {
 
             String deviceName = instrument.getDeviceName();
             if (deviceName == null || deviceName.isEmpty()) {
-                deviceName = "Gervill"; // Default to Gervill
+                deviceName = SequencerConstants.GERVILL; // Default to Gervill
                 instrument.setDeviceName(deviceName);
             }
 
@@ -873,7 +866,9 @@ public class MelodicSequencer implements IBusListener {
                 if (receiver != null) {
                     logger.info("Successfully reconnected sequencer {} to device {}", id, deviceName);
 
-                    PlayerManager.getInstance().applyInstrumentPreset(player);
+                    // PlayerManager.getInstance().applyInstrumentPreset(player);
+                    initializePlayer(player);
+
                 } else {
                     logger.warn("Failed to get receiver for sequencer {}", id);
                 }
@@ -887,20 +882,37 @@ public class MelodicSequencer implements IBusListener {
         }
     }
 
-    public void updateInstrumentSettingsInSequenceData() {
-        if (player != null && player.getInstrument() != null) {
-            InstrumentWrapper instrument = player.getInstrument();
-
-            sequenceData.setSoundbankName(instrument.getSoundbankName());
-            sequenceData.setBankIndex(instrument.getBankIndex());
-            sequenceData.setPreset(instrument.getPreset());
-            sequenceData.setDeviceName(instrument.getDeviceName());
-            sequenceData.setInstrumentId(instrument.getId());
-            sequenceData.setInstrumentName(instrument.getName());
-
-            logger.debug("Updated sequence data with instrument settings - preset:{}, bank:{}, soundbank:{}",
-                    instrument.getPreset(), instrument.getBankIndex(), instrument.getSoundbankName());
-        }
+public void updateInstrumentSettingsInSequenceData() {
+    if (player == null || player.getInstrument() == null || sequenceData == null) {
+        logger.warn("Cannot update sequence data - missing player, instrument or sequenceData");
+        return;
     }
+
+    InstrumentWrapper instrument = player.getInstrument();
+
+    // Save previous values for logging
+    Integer prevBankIndex = sequenceData.getBankIndex();
+    Integer prevPreset = sequenceData.getPreset();
+    String prevSoundbankName = sequenceData.getSoundbankName();
+    
+    // Update with current instrument data
+    sequenceData.setSoundbankName(instrument.getSoundbankName());
+    sequenceData.setBankIndex(instrument.getBankIndex());
+    sequenceData.setPreset(instrument.getPreset());
+    sequenceData.setDeviceName(instrument.getDeviceName());
+    sequenceData.setInstrumentId(instrument.getId());
+    sequenceData.setInstrumentName(instrument.getName());
+
+    // Log only if there were actual changes
+    if (!Objects.equals(prevBankIndex, instrument.getBankIndex()) ||
+        !Objects.equals(prevPreset, instrument.getPreset()) ||
+        !Objects.equals(prevSoundbankName, instrument.getSoundbankName())) {
+        
+        logger.info("Updated sequence data for {} with instrument settings changed from {}/{}/{} to {}/{}/{}",
+                player.getName(),
+                prevBankIndex, prevPreset, prevSoundbankName,
+                instrument.getBankIndex(), instrument.getPreset(), instrument.getSoundbankName());
+    }
+}
 }
 

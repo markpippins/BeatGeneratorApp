@@ -6,7 +6,6 @@ import com.angrysurfer.beats.panel.player.PlayerEditPanel;
 import com.angrysurfer.beats.panel.player.PlayerInstrumentPanel;
 import com.angrysurfer.beats.panel.player.RuleEditPanel;
 import com.angrysurfer.beats.panel.sequencer.poly.DrumPresetPanel;
-import com.angrysurfer.core.Constants;
 import com.angrysurfer.core.api.*;
 import com.angrysurfer.core.config.UserConfig;
 import com.angrysurfer.core.model.InstrumentWrapper;
@@ -15,6 +14,7 @@ import com.angrysurfer.core.model.Rule;
 import com.angrysurfer.core.model.Session;
 import com.angrysurfer.core.redis.RedisService;
 import com.angrysurfer.core.sequencer.DrumSequencer;
+import com.angrysurfer.core.sequencer.SequencerConstants;
 import com.angrysurfer.core.service.InstrumentManager;
 import com.angrysurfer.core.service.PlayerManager;
 import com.angrysurfer.core.service.SessionManager;
@@ -34,20 +34,32 @@ public class DialogManager implements IBusListener {
     private static final Logger logger = LoggerFactory.getLogger(DialogManager.class.getName());
 
     private static DialogManager instance;
-    private final CommandBus commandBus = CommandBus.getInstance();
-    private final RedisService redisService = RedisService.getInstance();
+
     private final Frame frame;
+
+    private DialogManager(Frame frame) {
+        this.frame = frame;
+        CommandBus.getInstance().register(this, new String[]{
+                Commands.PLAYER_ADD_REQUEST,
+                Commands.PLAYER_EDIT_REQUEST,
+                Commands.RULE_ADD_REQUEST,
+                Commands.RULE_EDIT_REQUEST,
+                Commands.EDIT_PLAYER_PARAMETERS,
+                Commands.CREATE_INSTRUMENT_FOR_PLAYER_REQUEST,
+                Commands.LOAD_CONFIG,
+                Commands.SAVE_CONFIG,
+                Commands.SHOW_MAX_LENGTH_DIALOG,
+                Commands.SHOW_EUCLIDEAN_DIALOG,
+                Commands.SHOW_FILL_DIALOG,
+                Commands.DRUM_PRESET_SELECTION_REQUEST
+        });
+    }
 
     public static DialogManager initialize(Frame frame) {
         if (instance == null) {
             instance = new DialogManager(frame);
         }
         return instance;
-    }
-
-    private DialogManager(Frame frame) {
-        this.frame = frame;
-        commandBus.register(this);
     }
 
     @Override
@@ -60,7 +72,7 @@ public class DialogManager implements IBusListener {
             case Commands.RULE_EDIT_REQUEST -> handleEditRule((Rule) action.getData());
             case Commands.EDIT_PLAYER_PARAMETERS -> handlePlayerParameters((Player) action.getData());
             case Commands.CREATE_INSTRUMENT_FOR_PLAYER_REQUEST ->
-                handleCreateInstrumentForPlayer((Player) action.getData());
+                    handleCreateInstrumentForPlayer((Player) action.getData());
             case Commands.LOAD_CONFIG -> SwingUtilities.invokeLater(this::showConfigFileChooserDialog);
             case Commands.SAVE_CONFIG -> SwingUtilities.invokeLater(this::showConfigFileSaverDialog);
             case Commands.SHOW_MAX_LENGTH_DIALOG -> handleMaxLengthDialog((DrumSequencer) action.getData());
@@ -92,6 +104,7 @@ public class DialogManager implements IBusListener {
 
                 if (currentSession != null) {
                     // Initialize player
+                    RedisService.getInstance();
                     Player newPlayer = RedisService.getInstance().newStrike(); // initializeNewPlayer();
                     newPlayer.setName(
                             newPlayer.getClass().getSimpleName() + " " + (currentSession.getPlayers().size() + 1));
@@ -216,21 +229,21 @@ public class DialogManager implements IBusListener {
 
                         // If this was a drum player in a sequencer whose instrument changed,
                         // other drum players may have been updated too
-                        if (Objects.equals(updatedPlayer.getChannel(), Constants.MIDI_DRUM_CHANNEL) && updatedPlayer.getOwner() instanceof DrumSequencer sequencer) {
+                        if (Objects.equals(updatedPlayer.getChannel(), SequencerConstants.MIDI_DRUM_CHANNEL) && updatedPlayer.getOwner() instanceof DrumSequencer sequencer) {
                             for (Player drumPlayer : sequencer.getPlayers()) {
                                 if (drumPlayer != null && !drumPlayer.equals(updatedPlayer)) {
                                     PlayerManager.getInstance().savePlayerProperties(drumPlayer);
-                                    commandBus.publish(Commands.PLAYER_UPDATED, this, drumPlayer);
+                                    CommandBus.getInstance().publish(Commands.PLAYER_UPDATED, this, drumPlayer);
                                 }
                             }
                         }
 
                         // CRITICAL STEP: Activate player and request update through command bus
-                        commandBus.publish(Commands.PLAYER_ACTIVATION_REQUEST, this, updatedPlayer);
-                        commandBus.publish(Commands.PLAYER_UPDATE_REQUEST, this, updatedPlayer);
+                        CommandBus.getInstance().publish(Commands.PLAYER_ACTIVATION_REQUEST, this, updatedPlayer);
+                        CommandBus.getInstance().publish(Commands.PLAYER_UPDATE_REQUEST, this, updatedPlayer);
 
                         // Publish dialog-specific completion event
-                        commandBus.publish(Commands.SHOW_PLAYER_EDITOR_OK, this, updatedPlayer);
+                        CommandBus.getInstance().publish(Commands.SHOW_PLAYER_EDITOR_OK, this, updatedPlayer);
                     }
                 } catch (Exception e) {
                     logger.error("Error editing player: {}", e.getMessage(), e);
@@ -243,24 +256,24 @@ public class DialogManager implements IBusListener {
         if (player != null) {
             SwingUtilities.invokeLater(() -> {
                 try {
-                    Rule newRule = redisService.newRule();
+                    Rule newRule = RedisService.getInstance().newRule();
                     RuleEditPanel panel = new RuleEditPanel(newRule);
                     Dialog<Rule> dialog = frame.createDialog(newRule, panel);
                     dialog.setTitle("Add Rule");
 
                     if (dialog.showDialog()) {
                         Rule updatedRule = panel.getUpdatedRule();
-                        if (redisService.isValidNewRule(player, updatedRule)) {
-                            redisService.addRuleToPlayer(player, updatedRule);
+                        if (RedisService.getInstance().isValidNewRule(player, updatedRule)) {
+                            RedisService.getInstance().addRuleToPlayer(player, updatedRule);
                             // Get fresh state
-                            // Player refreshedPlayer = redisService.findPlayerById(player.getId());
-                            // Session session = redisService.findSessionForPlayer(refreshedPlayer);
+                            // Player refreshedPlayer = RedisService.getInstance().findPlayerById(player.getId());
+                            // Session session = RedisService.getInstance().findSessionForPlayer(refreshedPlayer);
 
                             // Re-select the player to update rules display
-                            commandBus.publish(Commands.RULE_ADDED, this, player);
-                            commandBus.publish(Commands.PLAYER_ACTIVATION_REQUEST, this, player);
+                            CommandBus.getInstance().publish(Commands.RULE_ADDED, this, player);
+                            CommandBus.getInstance().publish(Commands.PLAYER_ACTIVATION_REQUEST, this, player);
                             CommandBus.getInstance().publish(Commands.PLAYER_ROW_REFRESH, this, player);
-                            // commandBus.publish(Commands.SESSION_UPDATED, this, session);
+                            // CommandBus.getInstance().publish(Commands.SESSION_UPDATED, this, session);
                         } else {
                             // ... existing error handling ...
                         }
@@ -292,14 +305,14 @@ public class DialogManager implements IBusListener {
                     }
 
                     if (player != null) {
-                        redisService.saveRule(updatedRule);
-                        redisService.savePlayer(player);
+                        RedisService.getInstance().saveRule(updatedRule);
+                        RedisService.getInstance().savePlayer(player);
                         // Get fresh state and re-select player
-                        // Player refreshedPlayer = redisService.findPlayerById(player.getId());
-                        commandBus.publish(Commands.RULE_EDITED, this, updatedRule);
-                        // commandBus.publish(Commands.PLAYER_UPDATED, this, player);
-                        commandBus.publish(Commands.PLAYER_ACTIVATION_REQUEST, this, player);
-                        // commandBus.publish(Commands.RULE_SELECTED, this, updatedRule);
+                        // Player refreshedPlayer = RedisService.getInstance().findPlayerById(player.getId());
+                        CommandBus.getInstance().publish(Commands.RULE_EDITED, this, updatedRule);
+                        // CommandBus.getInstance().publish(Commands.PLAYER_UPDATED, this, player);
+                        CommandBus.getInstance().publish(Commands.PLAYER_ACTIVATION_REQUEST, this, player);
+                        // CommandBus.getInstance().publish(Commands.RULE_SELECTED, this, updatedRule);
                         CommandBus.getInstance().publish(Commands.PLAYER_ROW_REFRESH, this, player);
                     }
                 }
@@ -361,7 +374,7 @@ public class DialogManager implements IBusListener {
 
                 } catch (Exception e) {
                     logger.error("Error creating instrument for player: {}", e.getMessage(), e);
-                    commandBus.publish(
+                    CommandBus.getInstance().publish(
                             Commands.STATUS_UPDATE,
                             this,
                             new StatusUpdate("DialogManager", "Error",
@@ -381,10 +394,11 @@ public class DialogManager implements IBusListener {
             String filePath = fileChooser.getSelectedFile().getAbsolutePath();
             logger.info("Selected file: {}", filePath);
             try {
+                RedisService.getInstance();
                 RedisService redisService = RedisService.getInstance();
 
                 // Load and validate the config
-                UserConfig config = redisService.loadConfigFromJSON(filePath);
+                UserConfig config = RedisService.getInstance().loadConfigFromJSON(filePath);
                 if (config == null || config.getInstruments() == null || config.getInstruments().isEmpty()) {
                     // setStatus("Error: No instruments found in config file");
                     return;
@@ -396,14 +410,14 @@ public class DialogManager implements IBusListener {
                 // Save instruments to Redis
                 for (InstrumentWrapper instrument : config.getInstruments()) {
                     logger.info("Saving instrument: {}", instrument.getName());
-                    redisService.saveInstrument(instrument);
+                    RedisService.getInstance().saveInstrument(instrument);
                 }
 
                 // Save the entire config
-                redisService.saveConfig(config);
+                RedisService.getInstance().saveConfig(config);
 
                 // Verify the save
-                List<InstrumentWrapper> savedInstruments = redisService.findAllInstruments();
+                List<InstrumentWrapper> savedInstruments = RedisService.getInstance().findAllInstruments();
                 logger.info("Found {} instruments in Redis after save", savedInstruments.size());
 
                 // Refresh the UI
@@ -442,21 +456,21 @@ public class DialogManager implements IBusListener {
                 UserConfig config = new UserConfig();
 
                 // Get instruments from Redis
-                List<InstrumentWrapper> instruments = redisService.findAllInstruments();
+                List<InstrumentWrapper> instruments = RedisService.getInstance().findAllInstruments();
                 config.setInstruments(instruments);
                 logger.info("Found {} instruments to save", instruments.size());
 
                 // Save based on selected format
                 if (selectedFilter == jsonFilter) {
-                    redisService.getObjectMapper().writerWithDefaultPrettyPrinter()
+                    RedisService.getInstance().getObjectMapper().writerWithDefaultPrettyPrinter()
                             .writeValue(new File(filePath), config);
                 } else {
                     // Use converter for XML
                     UserConfigConverter converter = new UserConfigConverter();
                     // First save as JSON
-                    // String tempJson = redisService.getObjectMapper().writeValueAsString(config);
+                    // String tempJson = RedisService.getInstance().getObjectMapper().writeValueAsString(config);
                     File tempFile = File.createTempFile("config", ".json");
-                    redisService.getObjectMapper().writeValue(tempFile, config);
+                    RedisService.getInstance().getObjectMapper().writeValue(tempFile, config);
                     // Then convert to XML
                     converter.convertJsonToXml(tempFile.getPath(), filePath);
                     tempFile.delete();
@@ -509,7 +523,7 @@ public class DialogManager implements IBusListener {
             JButton applyButton = new JButton("Apply");
             applyButton.addActionListener(e -> {
                 int maxLength = (Integer) lengthSpinner.getValue();
-                commandBus.publish(Commands.MAX_LENGTH_SELECTED, this, maxLength);
+                CommandBus.getInstance().publish(Commands.MAX_LENGTH_SELECTED, this, maxLength);
                 dialog.dispose();
             });
 
@@ -552,8 +566,8 @@ public class DialogManager implements IBusListener {
             JButton applyButton = new JButton("Apply Pattern");
             applyButton.addActionListener(e -> {
                 boolean[] pattern = patternPanel.getPattern();
-                Object[] result = new Object[] { drumIndex, pattern };
-                commandBus.publish(Commands.EUCLIDEAN_PATTERN_SELECTED, this, result);
+                Object[] result = new Object[]{drumIndex, pattern};
+                CommandBus.getInstance().publish(Commands.EUCLIDEAN_PATTERN_SELECTED, this, result);
                 dialog.dispose();
             });
 
@@ -611,8 +625,8 @@ public class DialogManager implements IBusListener {
                 else if (decayButton.isSelected())
                     fillType = "decay";
 
-                Object[] result = new Object[] { drumIndex, startStep, fillType };
-                commandBus.publish(Commands.FILL_PATTERN_SELECTED, this, result);
+                Object[] result = new Object[]{drumIndex, startStep, fillType};
+                CommandBus.getInstance().publish(Commands.FILL_PATTERN_SELECTED, this, result);
                 dialog.dispose();
             });
 
@@ -629,7 +643,7 @@ public class DialogManager implements IBusListener {
 
     /**
      * Handle request to show drum preset selection dialog
-     * 
+     *
      * @param sequencer The drum sequencer to configure
      */
     private void handleDrumPresetSelection(DrumSequencer sequencer) {
@@ -663,7 +677,7 @@ public class DialogManager implements IBusListener {
 
                     // Ensure instrument has channel set
                     if (player.getInstrument() != null && player.getInstrument().getChannel() == null) {
-                        player.getInstrument().setChannel(Constants.MIDI_DRUM_CHANNEL); // Set drum channel
+                        player.getInstrument().setChannel(SequencerConstants.MIDI_DRUM_CHANNEL); // Set drum channel
                     }
                 }
             }
@@ -710,7 +724,7 @@ public class DialogManager implements IBusListener {
                 }
             } catch (Exception e) {
                 logger.error("Error showing drum preset dialog: {}", e.getMessage(), e);
-                commandBus.publish(
+                CommandBus.getInstance().publish(
                         Commands.STATUS_UPDATE,
                         this,
                         new StatusUpdate("DialogManager", "Error",

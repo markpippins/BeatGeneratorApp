@@ -1,6 +1,5 @@
 package com.angrysurfer.core.service;
 
-import com.angrysurfer.core.Constants;
 import com.angrysurfer.core.api.Command;
 import com.angrysurfer.core.api.CommandBus;
 import com.angrysurfer.core.api.Commands;
@@ -11,6 +10,7 @@ import com.angrysurfer.core.redis.InstrumentHelper;
 import com.angrysurfer.core.redis.RedisService;
 import com.angrysurfer.core.sequencer.DrumSequencer;
 import com.angrysurfer.core.sequencer.MelodicSequencer;
+import com.angrysurfer.core.sequencer.SequencerConstants;
 import lombok.Getter;
 import lombok.Setter;
 import org.slf4j.Logger;
@@ -27,17 +27,20 @@ public class InstrumentManager implements IBusListener {
     private static InstrumentManager instance;
     private final InstrumentHelper instrumentHelper;
     private final Map<Long, InstrumentWrapper> instrumentCache = new HashMap<>();
+
     private List<MidiDevice> midiDevices = new ArrayList<>();
     private List<String> devices = new ArrayList<>();
     private boolean needsRefresh = true;
-    private final CommandBus commandBus = CommandBus.getInstance();
     private boolean isInitializing = false;
 
     // Private constructor for singleton pattern
     private InstrumentManager() {
         this.instrumentHelper = RedisService.getInstance().getInstrumentHelper();
         // Register for command events
-        commandBus.register(this);
+        CommandBus.getInstance().register(this, new String[]{
+                Commands.INSTRUMENT_UPDATED, Commands.INSTRUMENTS_REFRESHED, Commands.USER_CONFIG_LOADED
+        });
+
         // Initial cache load
         refreshInstruments();
     }
@@ -48,6 +51,22 @@ public class InstrumentManager implements IBusListener {
             instance = new InstrumentManager();
         }
         return instance;
+    }
+
+    private static InstrumentWrapper getInternalInstrument(int channel) {
+        InstrumentWrapper internalInstrument = new InstrumentWrapper(
+                "Internal Synth",
+                null, // Internal synth uses null device
+                channel);
+
+        // Configure as internal instrument
+        internalInstrument.setInternal(true);
+        internalInstrument.setDeviceName(SequencerConstants.GERVILL);
+        internalInstrument.setSoundbankName("Default");
+        internalInstrument.setBankIndex(0);
+        internalInstrument.setPreset(0); // Piano
+        internalInstrument.setId(9985L + channel);
+        return internalInstrument;
     }
 
     @Override
@@ -71,6 +90,7 @@ public class InstrumentManager implements IBusListener {
                     logger.info("Updated instrument in cache: {}", instrument.getName());
                 }
             }
+
             case Commands.INSTRUMENTS_REFRESHED -> {
                 // Force cache refresh
                 refreshInstruments();
@@ -146,7 +166,7 @@ public class InstrumentManager implements IBusListener {
 
     /**
      * Get an instrument by ID
-     * 
+     *
      * @param id The instrument ID to look up
      * @return The instrument with the specified ID, or null if not found
      */
@@ -235,7 +255,7 @@ public class InstrumentManager implements IBusListener {
             logger.warn("Cannot update null instrument");
             return;
         }
-        
+
         try {
             // Check if this is a default instrument
             if (Boolean.TRUE.equals(instrument.getIsDefault())) {
@@ -246,13 +266,13 @@ public class InstrumentManager implements IBusListener {
                 // Regular instrument - save to instrument storage
                 RedisService.getInstance().saveInstrument(instrument);
             }
-            
+
             // Update the in-memory cache
             instrumentCache.put(instrument.getId(), instrument);
-            
+
             // Notify listeners
-            commandBus.publish(Commands.INSTRUMENT_UPDATED, this, instrument);
-            
+            CommandBus.getInstance().publish(Commands.INSTRUMENT_UPDATED, this, instrument);
+
         } catch (Exception e) {
             logger.error("Error updating instrument: {}", e.getMessage(), e);
         }
@@ -260,7 +280,7 @@ public class InstrumentManager implements IBusListener {
 
     /**
      * Removes an instrument from the cache and from UserConfigManager
-     * 
+     *
      * @param instrumentId The ID of the instrument to remove
      */
     public void removeInstrument(Long instrumentId) {
@@ -284,7 +304,7 @@ public class InstrumentManager implements IBusListener {
 
     /**
      * Find or create an internal instrument for the specified channel
-     * 
+     *
      * @param channel The MIDI channel
      * @return An InstrumentWrapper for the internal synth
      */
@@ -306,25 +326,9 @@ public class InstrumentManager implements IBusListener {
         return internalInstrument;
     }
 
-    private static InstrumentWrapper getInternalInstrument(int channel) {
-        InstrumentWrapper internalInstrument = new InstrumentWrapper(
-                "Internal Synth",
-                null, // Internal synth uses null device
-                channel);
-
-        // Configure as internal instrument
-        internalInstrument.setInternal(true);
-        internalInstrument.setDeviceName("Gervill");
-        internalInstrument.setSoundbankName("Default");
-        internalInstrument.setBankIndex(0);
-        internalInstrument.setPreset(0); // Piano
-        internalInstrument.setId(9985L + channel);
-        return internalInstrument;
-    }
-
     /**
      * Get instrument for internal synthesizer on a specific channel
-     * 
+     *
      * @param channel MIDI channel
      * @return The instrument, creating it if necessary
      */
@@ -354,9 +358,9 @@ public class InstrumentManager implements IBusListener {
         }
 
         // No instrument found, create a new one using InternalSynthManager
-        boolean isDrumChannel = (channel == Constants.MIDI_DRUM_CHANNEL);
+        boolean isDrumChannel = (channel == SequencerConstants.MIDI_DRUM_CHANNEL);
         instrument = InternalSynthManager.getInstance().createInternalInstrument(
-                channel, isDrumChannel, isDrumChannel ? "Internal Drums " + tag : "Unknown " + channel + "-" + tag);
+                channel, isDrumChannel, isDrumChannel ? "Internal Drums " + tag : "Internal Melo " + channel + "-" + tag);
 
         if (instrument != null) {
             // Store in our cache
@@ -372,23 +376,23 @@ public class InstrumentManager implements IBusListener {
     }
 
     /**
- * Refresh the instrument cache with the provided list of instruments
- */
-public void refreshCache(List<InstrumentWrapper> instruments) {
-    if (instruments == null) return;
-    
-    // Clear the existing cache
-    instrumentCache.clear();
-    
-    // Add all instruments to the cache
-    for (InstrumentWrapper instrument : instruments) {
-        if (instrument != null && instrument.getId() != null) {
-            instrumentCache.put(instrument.getId(), instrument);
+     * Refresh the instrument cache with the provided list of instruments
+     */
+    public void refreshCache(List<InstrumentWrapper> instruments) {
+        if (instruments == null) return;
+
+        // Clear the existing cache
+        instrumentCache.clear();
+
+        // Add all instruments to the cache
+        for (InstrumentWrapper instrument : instruments) {
+            if (instrument != null && instrument.getId() != null) {
+                instrumentCache.put(instrument.getId(), instrument);
+            }
         }
+
+        logger.debug("Refreshed instrument cache with {} instruments", instruments.size());
     }
-    
-    logger.debug("Refreshed instrument cache with {} instruments", instruments.size());
-}
 
 
     /**
@@ -455,34 +459,34 @@ public void refreshCache(List<InstrumentWrapper> instruments) {
 
     /**
      * Get available drum instruments
-     * 
+     *
      * @return List of drum instruments
      */
     public List<InstrumentWrapper> getDrumInstruments() {
         List<InstrumentWrapper> drumInstruments = new ArrayList<>();
-        
+
         try {
             // Get all instruments from the database
             List<InstrumentWrapper> allInstruments = getCachedInstruments();
-            
+
             // Filter for drum instruments (typically bank 128 or those with drum-related names)
             for (InstrumentWrapper instrument : allInstruments) {
                 // Check if it's a drum bank (128) or has drum-related keywords in the name
-                if (instrument.getBankIndex() == 128 || 
-                    isDrumInstrumentByName(instrument.getName())) {
+                if (instrument.getBankIndex() == 128 ||
+                        isDrumInstrumentByName(instrument.getName())) {
                     drumInstruments.add(instrument);
                 }
             }
-            
+
             // If no drum instruments found, return all instruments as fallback
             if (drumInstruments.isEmpty()) {
                 logger.warn("No drum instruments found, returning all instruments");
                 return allInstruments;
             }
-            
+
             // Sort by name for easier selection
             drumInstruments.sort(Comparator.comparing(InstrumentWrapper::getName));
-            
+
             logger.info("Found {} drum instruments", drumInstruments.size());
             return drumInstruments;
         } catch (Exception e) {
@@ -493,69 +497,69 @@ public void refreshCache(List<InstrumentWrapper> instruments) {
 
     /**
      * Check if an instrument is a drum based on its name
-     * 
+     *
      * @param name The instrument name
      * @return true if it appears to be a drum instrument
      */
     private boolean isDrumInstrumentByName(String name) {
         if (name == null) return false;
-        
+
         String lowerName = name.toLowerCase();
         String[] drumKeywords = {
-            "drum", "kick", "snare", "tom", "cymbal", "hat", "clap", "rim", 
-            "percussion", "conga", "bongo", "tabla", "timbale", "wood", "stick",
-            "shaker", "guiro", "bell", "tambourine", "triangle"
+                "drum", "kick", "snare", "tom", "cymbal", "hat", "clap", "rim",
+                "percussion", "conga", "bongo", "tabla", "timbale", "wood", "stick",
+                "shaker", "guiro", "bell", "tambourine", "triangle"
         };
-        
+
         for (String keyword : drumKeywords) {
             if (lowerName.contains(keyword)) {
                 return true;
             }
         }
-        
+
         return false;
     }
 
     /**
      * Get default drum kit instruments
-     * 
+     *
      * @return List of default drum instruments
      */
     public List<InstrumentWrapper> getDefaultDrumKit() {
         List<InstrumentWrapper> defaultKit = new ArrayList<>();
-        
+
         try {
             // Get all drum instruments
             List<InstrumentWrapper> allDrums = getDrumInstruments();
-            
+
             // If no instruments found, return empty list
             if (allDrums.isEmpty()) {
                 logger.warn("No instruments found for default drum kit");
                 return defaultKit;
             }
-            
+
             // Define preferred drum names for a standard kit
             String[] standardDrumNames = {
-                "Kick", "Snare", "Closed Hi-hat", "Open Hi-hat", 
-                "Tom Low", "Tom Mid", "Tom High", "Crash", 
-                "Ride", "Clap", "Rim", "Percussion", 
-                "Cowbell", "Conga", "Shaker", "Tambourine"
+                    "Kick", "Snare", "Closed Hi-hat", "Open Hi-hat",
+                    "Tom Low", "Tom Mid", "Tom High", "Crash",
+                    "Ride", "Clap", "Rim", "Percussion",
+                    "Cowbell", "Conga", "Shaker", "Tambourine"
             };
-            
+
             // Try to find drums that match these standard names
             for (String drumName : standardDrumNames) {
                 boolean found = false;
-                
+
                 // First try exact matches
                 for (InstrumentWrapper instr : allDrums) {
-                    if (instr.getName().equalsIgnoreCase(drumName) || 
-                        instr.getName().contains(drumName)) {
+                    if (instr.getName().equalsIgnoreCase(drumName) ||
+                            instr.getName().contains(drumName)) {
                         defaultKit.add(instr);
                         found = true;
                         break;
                     }
                 }
-                
+
                 // If not found, try partial matches
                 if (!found) {
                     String lowerDrumName = drumName.toLowerCase();
@@ -568,7 +572,7 @@ public void refreshCache(List<InstrumentWrapper> instruments) {
                         }
                     }
                 }
-                
+
                 // Still not found, add any drum
                 if (!found && !allDrums.isEmpty()) {
                     // Take the first available
@@ -578,19 +582,19 @@ public void refreshCache(List<InstrumentWrapper> instruments) {
                         allDrums.removeFirst();
                     }
                 }
-                
+
                 // If we've filled all 16 slots, stop
-                if (defaultKit.size() >= Constants.DRUM_PAD_COUNT) {
+                if (defaultKit.size() >= SequencerConstants.DRUM_PAD_COUNT) {
                     break;
                 }
             }
-            
+
             // Fill remaining slots if needed
-            while (defaultKit.size() < Constants.DRUM_PAD_COUNT && !allDrums.isEmpty()) {
+            while (defaultKit.size() < SequencerConstants.DRUM_PAD_COUNT && !allDrums.isEmpty()) {
                 defaultKit.add(allDrums.getFirst());
                 allDrums.removeFirst();
             }
-            
+
             logger.info("Created default drum kit with {} instruments", defaultKit.size());
             return defaultKit;
         } catch (Exception e) {

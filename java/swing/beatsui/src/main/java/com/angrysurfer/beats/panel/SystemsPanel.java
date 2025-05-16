@@ -7,6 +7,7 @@ import com.angrysurfer.core.api.Commands;
 import com.angrysurfer.core.api.StatusUpdate;
 import com.angrysurfer.core.model.InstrumentWrapper;
 import com.angrysurfer.core.redis.RedisService;
+import com.angrysurfer.core.sequencer.SequencerConstants;
 import com.angrysurfer.core.service.InstrumentManager;
 import lombok.Getter;
 import lombok.Setter;
@@ -27,10 +28,10 @@ import java.util.TimerTask;
 @Setter
 class SystemsPanel extends JPanel {
 
+    private static final Logger logger = LoggerFactory.getLogger(SystemsPanel.class);
     private final JTable devicesTable;
     private final JPopupMenu contextMenu;
     private final JMenuItem createInstrumentMenuItem;
-    private static final Logger logger = LoggerFactory.getLogger(SystemsPanel.class);
 
     public SystemsPanel() {
         super(new BorderLayout());
@@ -41,19 +42,44 @@ class SystemsPanel extends JPanel {
         setupLayout();
     }
 
+    private static DefaultTableModel createTableModel() {
+        String[] columns = {
+                "Name", "Description", "Vendor", "Version", "Max Receivers",
+                "Max Transmitters", "Receivers", "Transmitters", "Receiver", "Transmitter"
+        };
+
+        return new DefaultTableModel(columns, 0) {
+            @Override
+            public boolean isCellEditable(int row, int column) {
+                return false;
+            }
+
+            @Override
+            public Class<?> getColumnClass(int column) {
+                if (column == 8 || column == 9) {
+                    return Boolean.class;
+                }
+                if (column >= 4 && column <= 7) {
+                    return Integer.class;
+                }
+                return String.class;
+            }
+        };
+    }
+
     private void setupLayout() {
         setLayout(new BorderLayout());
-        
+
         // Create toolbar with refresh button only
         JPanel toolBar = new JPanel(new FlowLayout(FlowLayout.LEFT));
         JButton refreshButton = new JButton("Refresh Devices");
         refreshButton.addActionListener(e -> refreshDevicesTable());
         toolBar.add(refreshButton);
-        
+
         // Add components to panel
         add(toolBar, BorderLayout.NORTH);
         add(new JScrollPane(devicesTable), BorderLayout.CENTER);
-        
+
         // Add MIDI test controls to the bottom of the panel instead of toolbar
         add(createMidiTestControls(), BorderLayout.SOUTH);
     }
@@ -71,23 +97,23 @@ class SystemsPanel extends JPanel {
             public void mousePressed(MouseEvent e) {
                 handleMouseEvent(e);
             }
-            
+
             @Override
             public void mouseReleased(MouseEvent e) {
                 handleMouseEvent(e);
             }
-            
+
             private void handleMouseEvent(MouseEvent e) {
                 if (e.isPopupTrigger()) {
                     // Get the row at the click location
                     Point p = e.getPoint();
                     int row = devicesTable.rowAtPoint(p);
-                    
+
                     // If row is valid and not already selected, select it
                     if (row >= 0 && !devicesTable.isRowSelected(row)) {
                         devicesTable.setRowSelectionInterval(row, row);
                     }
-                    
+
                     // Only enable Create Instrument if device is a receiver (output device)
                     boolean isOutputDevice = false;
                     if (row >= 0) {
@@ -95,7 +121,7 @@ class SystemsPanel extends JPanel {
                         Object maxReceivers = devicesTable.getValueAt(row, 4);
                         isOutputDevice = maxReceivers != null && !maxReceivers.equals(0);
                     }
-                    
+
                     createInstrumentMenuItem.setEnabled(isOutputDevice);
                     contextMenu.show(e.getComponent(), e.getX(), e.getY());
                 }
@@ -127,56 +153,31 @@ class SystemsPanel extends JPanel {
             table.getColumnModel().getColumn(i).setPreferredWidth(60);
             table.getColumnModel().getColumn(i).setMaxWidth(60);
         }
-        
+
         // Populate the table
         loadMidiDevices(model);
-        
+
         return table;
-    }
-
-    private static DefaultTableModel createTableModel() {
-        String[] columns = {
-            "Name", "Description", "Vendor", "Version", "Max Receivers",
-            "Max Transmitters", "Receivers", "Transmitters", "Receiver", "Transmitter"
-        };
-
-        return new DefaultTableModel(columns, 0) {
-            @Override
-            public boolean isCellEditable(int row, int column) {
-                return false;
-            }
-
-            @Override
-            public Class<?> getColumnClass(int column) {
-                if (column == 8 || column == 9) {
-                    return Boolean.class;
-                }
-                if (column >= 4 && column <= 7) {
-                    return Integer.class;
-                }
-                return String.class;
-            }
-        };
     }
 
     private void loadMidiDevices(DefaultTableModel model) {
         model.setRowCount(0); // Clear existing rows
-        
+
         try {
             MidiDevice.Info[] infos = MidiSystem.getMidiDeviceInfo();
             for (MidiDevice.Info info : infos) {
                 MidiDevice device = MidiSystem.getMidiDevice(info);
                 model.addRow(new Object[]{
-                    info.getName(),
-                    info.getDescription(),
-                    info.getVendor(),
-                    info.getVersion(),
-                    device.getMaxReceivers(),
-                    device.getMaxTransmitters(),
-                    device.getReceivers().size(),
-                    device.getTransmitters().size(),
-                    device.getMaxReceivers() != 0,
-                    device.getMaxTransmitters() != 0
+                        info.getName(),
+                        info.getDescription(),
+                        info.getVendor(),
+                        info.getVersion(),
+                        device.getMaxReceivers(),
+                        device.getMaxTransmitters(),
+                        device.getReceivers().size(),
+                        device.getTransmitters().size(),
+                        device.getMaxReceivers() != 0,
+                        device.getMaxTransmitters() != 0
                 });
             }
         } catch (MidiUnavailableException e) {
@@ -187,7 +188,7 @@ class SystemsPanel extends JPanel {
             logger.error("Error loading MIDI devices: {}", e.getMessage(), e);
         }
     }
-    
+
     private void refreshDevicesTable() {
         DefaultTableModel model = (DefaultTableModel) devicesTable.getModel();
         loadMidiDevices(model);
@@ -197,15 +198,15 @@ class SystemsPanel extends JPanel {
                 new StatusUpdate("Systems Panel", "Info", "MIDI devices refreshed"));
         logger.info("MIDI devices refreshed");
     }
-    
+
     private void createInstrumentFromDevice() {
         int row = devicesTable.getSelectedRow();
         if (row < 0) return;
-        
+
         try {
             // Get the device name from the selected row
             String deviceName = (String) devicesTable.getValueAt(row, 0);
-            
+
             // Create a new InstrumentWrapper pre-configured with the device
             InstrumentWrapper newInstrument = new InstrumentWrapper();
             newInstrument.setDeviceName(deviceName);
@@ -213,38 +214,38 @@ class SystemsPanel extends JPanel {
             newInstrument.setLowestNote(0);    // Default range
             newInstrument.setHighestNote(127); // Default range
             newInstrument.setInitialized(true);
-            
+
             // Generate a consistent ID for this device
             // Use a hash of the device name to make it consistent
             long deviceId = Math.abs(deviceName.hashCode());
-            
+
             // For Gervill specifically, use a well-known ID to match MelodicSequencer
-            if ("Gervill".equals(deviceName) || deviceName.contains("Gervill")) {
+            if (SequencerConstants.GERVILL.equals(deviceName) || deviceName.contains(SequencerConstants.GERVILL)) {
                 // Base ID for Gervill (matches MelodicSequencer's 9985L base)
                 deviceId = 9985L;
             }
-            
+
             newInstrument.setId(deviceId);
-            
+
             // Show the edit dialog
             InstrumentEditPanel editorPanel = new InstrumentEditPanel(newInstrument);
             Dialog<InstrumentWrapper> dialog = new Dialog<>(newInstrument, editorPanel);
             dialog.setTitle("Create Instrument from Device");
-            
+
             if (dialog.showDialog()) {
                 InstrumentWrapper updatedInstrument = editorPanel.getUpdatedInstrument();
-                
+
                 // Ensure ID is preserved
                 if (updatedInstrument.getId() == null) {
                     updatedInstrument.setId(deviceId);
                 }
-                
+
                 // Save the new instrument
                 RedisService.getInstance().saveInstrument(updatedInstrument);
-                
+
                 // Update local cache too
                 InstrumentManager.getInstance().updateInstrument(updatedInstrument);
-                
+
                 // Rest of notification code...
             }
         } catch (Exception e) {
@@ -258,9 +259,9 @@ class SystemsPanel extends JPanel {
     private JPanel createMidiTestControls() {
         JPanel panel = new JPanel(new FlowLayout(FlowLayout.LEFT, 5, 0));
         panel.setBorder(BorderFactory.createTitledBorder("MIDI Test"));
-        
+
         // --- Note testing section ---
-        
+
         // Channel selector for notes (shared by all sections)
         JPanel channelPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 2, 0));
         channelPanel.add(new JLabel("Ch:"));
@@ -269,7 +270,7 @@ class SystemsPanel extends JPanel {
         channelSpinner.setToolTipText("MIDI Channel (1-16)");
         channelPanel.add(channelSpinner);
         panel.add(channelPanel);
-        
+
         // Note selector
         JPanel notePanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 2, 0));
         notePanel.add(new JLabel("Note:"));
@@ -278,7 +279,7 @@ class SystemsPanel extends JPanel {
         noteSpinner.setToolTipText("MIDI Note (0-127)");
         notePanel.add(noteSpinner);
         panel.add(notePanel);
-        
+
         // Velocity selector
         JPanel velocityPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 2, 0));
         velocityPanel.add(new JLabel("Vel:"));
@@ -287,22 +288,22 @@ class SystemsPanel extends JPanel {
         velocitySpinner.setToolTipText("Note Velocity (1-127)");
         velocityPanel.add(velocitySpinner);
         panel.add(velocityPanel);
-        
+
         // Send note button
         JButton sendNoteButton = new JButton("Send Note");
         sendNoteButton.setMargin(new Insets(2, 8, 2, 8));
         sendNoteButton.addActionListener(e -> sendMidiNote(
-            (Integer)channelSpinner.getValue() - 1, // Convert 1-16 to 0-15
-            (Integer)noteSpinner.getValue(),
-            (Integer)velocitySpinner.getValue()
+                (Integer) channelSpinner.getValue() - 1, // Convert 1-16 to 0-15
+                (Integer) noteSpinner.getValue(),
+                (Integer) velocitySpinner.getValue()
         ));
         panel.add(sendNoteButton);
-        
+
         // Add separator
         panel.add(Box.createHorizontalStrut(15));
-        
+
         // --- Control Change section ---
-        
+
         // CC number selector
         JPanel ccPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 2, 0));
         ccPanel.add(new JLabel("CC:"));
@@ -311,7 +312,7 @@ class SystemsPanel extends JPanel {
         ccSpinner.setToolTipText("Control Change Number (0-127)");
         ccPanel.add(ccSpinner);
         panel.add(ccPanel);
-        
+
         // CC value selector
         JPanel valuePanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 2, 0));
         valuePanel.add(new JLabel("Val:"));
@@ -320,22 +321,22 @@ class SystemsPanel extends JPanel {
         valueSpinner.setToolTipText("Control Change Value (0-127)");
         valuePanel.add(valueSpinner);
         panel.add(valuePanel);
-        
+
         // Send CC button
         JButton sendCCButton = new JButton("Send CC");
         sendCCButton.setMargin(new Insets(2, 8, 2, 8));
         sendCCButton.addActionListener(e -> sendMidiControlChange(
-            (Integer)channelSpinner.getValue() - 1, // Convert 1-16 to 0-15
-            (Integer)ccSpinner.getValue(),
-            (Integer)valueSpinner.getValue()
+                (Integer) channelSpinner.getValue() - 1, // Convert 1-16 to 0-15
+                (Integer) ccSpinner.getValue(),
+                (Integer) valueSpinner.getValue()
         ));
         panel.add(sendCCButton);
-        
+
         // Add separator
         panel.add(Box.createHorizontalStrut(15));
-        
+
         // --- Program Change section ---
-        
+
         // Program number selector
         JPanel programPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 2, 0));
         programPanel.add(new JLabel("Program:"));
@@ -344,16 +345,16 @@ class SystemsPanel extends JPanel {
         programSpinner.setToolTipText("Program Number (0-127)");
         programPanel.add(programSpinner);
         panel.add(programPanel);
-        
+
         // Send Program Change button
         JButton sendPCButton = new JButton("Send PC");
         sendPCButton.setMargin(new Insets(2, 8, 2, 8));
         sendPCButton.addActionListener(e -> sendMidiProgramChange(
-            (Integer)channelSpinner.getValue() - 1, // Convert 1-16 to 0-15
-            (Integer)programSpinner.getValue()
+                (Integer) channelSpinner.getValue() - 1, // Convert 1-16 to 0-15
+                (Integer) programSpinner.getValue()
         ));
         panel.add(sendPCButton);
-        
+
         return panel;
     }
 
@@ -366,30 +367,30 @@ class SystemsPanel extends JPanel {
             MidiDevice device = getSelectedOutputDevice();
             if (device == null) {
                 CommandBus.getInstance().publish(
-                    Commands.STATUS_UPDATE,
-                    this,
-                    new StatusUpdate("MIDI Test", "Error", "No MIDI output device selected")
+                        Commands.STATUS_UPDATE,
+                        this,
+                        new StatusUpdate("MIDI Test", "Error", "No MIDI output device selected")
                 );
                 return;
             }
-            
+
             // Open device if not already open
             if (!device.isOpen()) {
                 device.open();
             }
-            
+
             // Get receiver
             Receiver receiver = device.getReceiver();
-            
+
             // Create note on message
             ShortMessage noteOn = new ShortMessage();
             noteOn.setMessage(ShortMessage.NOTE_ON, channel, noteNumber, velocity);
             receiver.send(noteOn, -1);
-            
+
             // Create note off message (to be sent after a delay)
             ShortMessage noteOff = new ShortMessage();
             noteOff.setMessage(ShortMessage.NOTE_OFF, channel, noteNumber, 0);
-            
+
             // Schedule note off message after 500ms
             new Timer().schedule(new TimerTask() {
                 @Override
@@ -397,21 +398,21 @@ class SystemsPanel extends JPanel {
                     receiver.send(noteOff, -1);
                 }
             }, 500);
-            
+
             // Log and update status
             CommandBus.getInstance().publish(
-                Commands.STATUS_UPDATE,
-                this,
-                new StatusUpdate("MIDI Test", "Info", 
-                    String.format("Sent note: %d on channel: %d with velocity: %d", 
-                        noteNumber, channel + 1, velocity))
+                    Commands.STATUS_UPDATE,
+                    this,
+                    new StatusUpdate("MIDI Test", "Info",
+                            String.format("Sent note: %d on channel: %d with velocity: %d",
+                                    noteNumber, channel + 1, velocity))
             );
-            
+
         } catch (Exception e) {
             CommandBus.getInstance().publish(
-                Commands.STATUS_UPDATE,
-                this,
-                new StatusUpdate("MIDI Test", "Error", "Failed to send MIDI note: " + e.getMessage())
+                    Commands.STATUS_UPDATE,
+                    this,
+                    new StatusUpdate("MIDI Test", "Error", "Failed to send MIDI note: " + e.getMessage())
             );
             logger.error("Error sending MIDI note", e);
         }
@@ -426,40 +427,40 @@ class SystemsPanel extends JPanel {
             MidiDevice device = getSelectedOutputDevice();
             if (device == null) {
                 CommandBus.getInstance().publish(
-                    Commands.STATUS_UPDATE,
-                    this,
-                    new StatusUpdate("MIDI Test", "Error", "No MIDI output device selected")
+                        Commands.STATUS_UPDATE,
+                        this,
+                        new StatusUpdate("MIDI Test", "Error", "No MIDI output device selected")
                 );
                 return;
             }
-            
+
             // Open device if not already open
             if (!device.isOpen()) {
                 device.open();
             }
-            
+
             // Get receiver
             Receiver receiver = device.getReceiver();
-            
+
             // Create control change message
             ShortMessage cc = new ShortMessage();
             cc.setMessage(ShortMessage.CONTROL_CHANGE, channel, controlNumber, value);
             receiver.send(cc, -1);
-            
+
             // Log and update status
             CommandBus.getInstance().publish(
-                Commands.STATUS_UPDATE,
-                this,
-                new StatusUpdate("MIDI Test", "Info", 
-                    String.format("Sent CC: %d on channel: %d with value: %d", 
-                        controlNumber, channel + 1, value))
+                    Commands.STATUS_UPDATE,
+                    this,
+                    new StatusUpdate("MIDI Test", "Info",
+                            String.format("Sent CC: %d on channel: %d with value: %d",
+                                    controlNumber, channel + 1, value))
             );
-            
+
         } catch (Exception e) {
             CommandBus.getInstance().publish(
-                Commands.STATUS_UPDATE,
-                this,
-                new StatusUpdate("MIDI Test", "Error", "Failed to send MIDI CC: " + e.getMessage())
+                    Commands.STATUS_UPDATE,
+                    this,
+                    new StatusUpdate("MIDI Test", "Error", "Failed to send MIDI CC: " + e.getMessage())
             );
             logger.error("Error sending MIDI control change", e);
         }
@@ -474,40 +475,40 @@ class SystemsPanel extends JPanel {
             MidiDevice device = getSelectedOutputDevice();
             if (device == null) {
                 CommandBus.getInstance().publish(
-                    Commands.STATUS_UPDATE,
-                    this,
-                    new StatusUpdate("MIDI Test", "Error", "No MIDI output device selected")
+                        Commands.STATUS_UPDATE,
+                        this,
+                        new StatusUpdate("MIDI Test", "Error", "No MIDI output device selected")
                 );
                 return;
             }
-            
+
             // Open device if not already open
             if (!device.isOpen()) {
                 device.open();
             }
-            
+
             // Get receiver
             Receiver receiver = device.getReceiver();
-            
+
             // Create program change message
             ShortMessage pc = new ShortMessage();
             pc.setMessage(ShortMessage.PROGRAM_CHANGE, channel, programNumber, 0);
             receiver.send(pc, -1);
-            
+
             // Log and update status
             CommandBus.getInstance().publish(
-                Commands.STATUS_UPDATE,
-                this,
-                new StatusUpdate("MIDI Test", "Info", 
-                    String.format("Sent Program Change: %d on channel: %d", 
-                        programNumber, channel + 1))
+                    Commands.STATUS_UPDATE,
+                    this,
+                    new StatusUpdate("MIDI Test", "Info",
+                            String.format("Sent Program Change: %d on channel: %d",
+                                    programNumber, channel + 1))
             );
-            
+
         } catch (Exception e) {
             CommandBus.getInstance().publish(
-                Commands.STATUS_UPDATE,
-                this,
-                new StatusUpdate("MIDI Test", "Error", "Failed to send Program Change: " + e.getMessage())
+                    Commands.STATUS_UPDATE,
+                    this,
+                    new StatusUpdate("MIDI Test", "Error", "Failed to send Program Change: " + e.getMessage())
             );
             logger.error("Error sending MIDI program change", e);
         }
@@ -523,10 +524,10 @@ class SystemsPanel extends JPanel {
         if (selectedRow < 0) {
             return null;
         }
-        
+
         // Get the device name from selected row
-        String deviceName = (String)devicesTable.getValueAt(selectedRow, 0);
-        
+        String deviceName = (String) devicesTable.getValueAt(selectedRow, 0);
+
         // Find the matching device
         try {
             MidiDevice.Info[] infos = MidiSystem.getMidiDeviceInfo();
@@ -542,7 +543,7 @@ class SystemsPanel extends JPanel {
         } catch (MidiUnavailableException e) {
             logger.error("Error getting MIDI device", e);
         }
-        
+
         return null;
     }
 }

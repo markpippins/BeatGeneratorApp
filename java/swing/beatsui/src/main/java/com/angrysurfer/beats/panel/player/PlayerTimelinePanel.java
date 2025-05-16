@@ -1,30 +1,6 @@
 package com.angrysurfer.beats.panel.player;
 
-import java.awt.BasicStroke;
-import java.awt.BorderLayout;
-import java.awt.Color;
-import java.awt.Dimension;
-import java.awt.Font;
-import java.awt.Graphics;
-import java.awt.Graphics2D;
-import java.awt.Point;
-import java.awt.Rectangle;
-import java.awt.RenderingHints;
-import java.awt.event.ComponentAdapter;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Set;
-
-import javax.swing.BorderFactory;
-import javax.swing.JButton;
-import javax.swing.JLabel;
-import javax.swing.JPanel;
-import javax.swing.JScrollPane;
-import javax.swing.SwingUtilities;
-
 import com.angrysurfer.beats.panel.PlayerAwarePanel;
-import com.angrysurfer.core.Constants;
 import com.angrysurfer.core.api.Command;
 import com.angrysurfer.core.api.CommandBus;
 import com.angrysurfer.core.api.Commands;
@@ -33,12 +9,20 @@ import com.angrysurfer.core.model.Comparison;
 import com.angrysurfer.core.model.Player;
 import com.angrysurfer.core.model.Rule;
 import com.angrysurfer.core.model.Session;
+import com.angrysurfer.core.sequencer.SequencerConstants;
 import com.angrysurfer.core.service.InternalSynthManager;
-
 import com.angrysurfer.core.service.SessionManager;
 import com.angrysurfer.core.service.SoundbankManager;
 import lombok.Getter;
 import lombok.Setter;
+
+import javax.swing.*;
+import java.awt.*;
+import java.awt.event.ComponentAdapter;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
 
 @Getter
 @Setter
@@ -63,7 +47,11 @@ public class PlayerTimelinePanel extends PlayerAwarePanel implements IBusListene
     private static final int ROW_PART = 6;
     private static final int ROW_PART_COUNT = 7;
     private static final int TOTAL_ROWS = 8;
-
+    // Add these constants at the top of the class with the other constants
+    private static final int RULE_TYPE_TICK = 0;
+    private static final int RULE_TYPE_BEAT = 1;
+    private static final int RULE_TYPE_BAR = 2;
+    private static final int RULE_TYPE_PART = 3;
     // Add labels for the rows
     private JLabel ticksRowLabel;
     private JLabel beatsRowLabel;
@@ -75,18 +63,10 @@ public class PlayerTimelinePanel extends PlayerAwarePanel implements IBusListene
     private JPanel timeLabelsPanel;
     private Map<Point, JPanel> gridCells = new HashMap<>();
     private boolean[] activeBeatMap;
-
     // Replace cellSize with separate width and height
     private int cellWidth = 6; // Default cell width
     private int cellHeight = 15; // Default cell height (matches row height)
-
     private ComponentAdapter resizeListener;
-
-    // Add these constants at the top of the class with the other constants
-    private static final int RULE_TYPE_TICK = 0;
-    private static final int RULE_TYPE_BEAT = 1;
-    private static final int RULE_TYPE_BAR = 2;
-    private static final int RULE_TYPE_PART = 3;
 
     /**
      * Create an empty placeholder timeline that will be filled in when a player
@@ -105,8 +85,16 @@ public class PlayerTimelinePanel extends PlayerAwarePanel implements IBusListene
         // Create the empty grid with initial placeholders
         initEmptyComponents();
 
-        // Register for player selection events
-        CommandBus.getInstance().register(this);
+        // Register for specific events only
+        CommandBus.getInstance().register(this, new String[] {
+            Commands.PLAYER_ACTIVATED,
+            Commands.PLAYER_UPDATED,
+            Commands.NEW_VALUE_NOTE,
+            Commands.PRESET_UP,
+            Commands.PRESET_DOWN,
+            Commands.PLAYER_ROW_REFRESH,
+            Commands.SESSION_CHANGED
+        });
     }
 
     @Override
@@ -290,7 +278,7 @@ public class PlayerTimelinePanel extends PlayerAwarePanel implements IBusListene
 
         // Draw vertical tick lines (thinner)
         g2d.setColor(new Color(220, 220, 220)); // Very light gray
-        g2d.setStroke(new BasicStroke(1, BasicStroke.CAP_BUTT, BasicStroke.JOIN_MITER, 10, new float[] { 1, 2 }, 0));
+        g2d.setStroke(new BasicStroke(1, BasicStroke.CAP_BUTT, BasicStroke.JOIN_MITER, 10, new float[]{1, 2}, 0));
         for (int tick = 0; tick <= totalTicks; tick++) {
             // Skip lines that are already drawn as beat or bar lines
             if (tick % ticksPerBeat != 0) {
@@ -512,7 +500,7 @@ public class PlayerTimelinePanel extends PlayerAwarePanel implements IBusListene
         labelPanel.setBounds(0, 0, 40, rowHeight * TOTAL_ROWS);
 
         // Create labels
-        String[] labelTexts = { "Tick", "Ticks", "Beat", "Beats", "Bar", "Bars", "Part", "Parts" };
+        String[] labelTexts = {"Tick", "Ticks", "Beat", "Beats", "Bar", "Bars", "Part", "Parts"};
         for (int i = 0; i < TOTAL_ROWS; i++) {
             JLabel label = createRowLabel(labelTexts[i]);
             label.setBounds(0, i * rowHeight, 80, rowHeight);
@@ -724,7 +712,7 @@ public class PlayerTimelinePanel extends PlayerAwarePanel implements IBusListene
                 // Add labelWidth to x position to account for left panel
                 int x = labelWidth
                         + (bar * beatsPerBar * player.getSession().getTicksPerBeat()
-                                + beat * player.getSession().getTicksPerBeat()) * cellWidth
+                        + beat * player.getSession().getTicksPerBeat()) * cellWidth
                         + (player.getSession().getTicksPerBeat() * cellWidth / 2) - 3; // Center in beat
                 beatLabel.setBounds(x, 10, 10, 10);
 
@@ -771,7 +759,7 @@ public class PlayerTimelinePanel extends PlayerAwarePanel implements IBusListene
                 }
                 // Add handler for note changes
                 case Commands.NEW_VALUE_NOTE, Commands.PRESET_UP, Commands.PRESET_DOWN, Commands.PLAYER_ROW_REFRESH ->
-                    updateNameLabel();
+                        updateNameLabel();
 
                 case Commands.SESSION_CHANGED -> {
                     if (player != null) {
@@ -821,7 +809,7 @@ public class PlayerTimelinePanel extends PlayerAwarePanel implements IBusListene
                 Long presetNumber = player.getPreset().longValue();
 
                 // For channel 9 (MIDI channel 10), show drum name instead of preset
-                if (Objects.equals(player.getChannel(), Constants.MIDI_DRUM_CHANNEL)) {
+                if (Objects.equals(player.getChannel(), SequencerConstants.MIDI_DRUM_CHANNEL)) {
                     // Get drum name for the note
                     String drumName = InternalSynthManager.getInstance().getDrumName(player.getRootNote());
                     playerInfo.append(" - ").append(drumName);
@@ -918,7 +906,7 @@ public class PlayerTimelinePanel extends PlayerAwarePanel implements IBusListene
 
         // Draw vertical tick lines (thinner)
         g2d.setColor(new Color(220, 220, 220)); // Very light gray
-        g2d.setStroke(new BasicStroke(1, BasicStroke.CAP_BUTT, BasicStroke.JOIN_MITER, 10, new float[] { 1, 2 }, 0));
+        g2d.setStroke(new BasicStroke(1, BasicStroke.CAP_BUTT, BasicStroke.JOIN_MITER, 10, new float[]{1, 2}, 0));
         for (int tick = 0; tick <= totalTicks; tick++) {
             // Skip lines that are already drawn as beat or bar lines
             if (tick % ticksPerBeat != 0) {

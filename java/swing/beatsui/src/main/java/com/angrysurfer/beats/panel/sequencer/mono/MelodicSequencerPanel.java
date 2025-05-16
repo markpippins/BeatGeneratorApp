@@ -90,7 +90,23 @@ public class MelodicSequencerPanel extends JPanel implements IBusListener {
         loadFirstSequenceIfExists();
 
         // Register with command bus for other UI updates (not step highlighting)
-        CommandBus.getInstance().register(this);
+        CommandBus.getInstance().register(this, new String[] {
+            Commands.MELODIC_SEQUENCE_LOADED,
+            Commands.MELODIC_SEQUENCE_CREATED,
+            Commands.MELODIC_SEQUENCE_SELECTED,
+            Commands.MELODIC_SEQUENCE_UPDATED,
+            Commands.SCALE_SELECTED,
+            Commands.PATTERN_UPDATED,
+            Commands.PLAYER_UPDATED,
+            Commands.INSTRUMENT_CHANGED,
+            Commands.DRUM_PAD_SELECTED,
+            Commands.DRUM_STEP_SELECTED,
+            Commands.DRUM_INSTRUMENTS_UPDATED,
+            Commands.HIGHLIGHT_STEP
+        });
+
+        logger.info("MelodicSequencerPanel registered for specific sequencer events");
+
 
         logger.info("Created MelodicSequencerPanel with index {}", index);
     }
@@ -316,8 +332,12 @@ public class MelodicSequencerPanel extends JPanel implements IBusListener {
         // Add the button to the bottom panel
         //westPanel.add(buttonPanel, BorderLayout.WEST);
 
-        // Register for command updates
-        CommandBus.getInstance().register(this);
+        CommandBus.getInstance().register(this, new String[]{
+                Commands.DRUM_PAD_SELECTED,
+                Commands.DRUM_STEP_SELECTED,
+                Commands.DRUM_INSTRUMENTS_UPDATED,
+                Commands.HIGHLIGHT_STEP
+        });
     }
 
     // Add this as a new method:

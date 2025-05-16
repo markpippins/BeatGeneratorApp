@@ -270,4 +270,20 @@ public class MelodicSequenceParametersPanel extends JPanel {
         }
     }
 
+    /**
+     * Register for command bus events
+     */
+//    private void registerForEvents() {
+//        // Register only for events we actually handle
+//        CommandBus.getInstance().register(this, new String[] {
+//            Commands.PATTERN_UPDATED,
+//            Commands.MELODIC_SEQUENCE_UPDATED,
+//            Commands.MELODIC_SEQUENCE_LOADED,
+//            Commands.MELODIC_SEQUENCE_CREATED,
+//            Commands.PLAYER_UPDATED,
+//            Commands.PLAYER_ACTIVATED
+//        });
+//
+//        logger.debug("MelodicSequenceParametersPanel registered for specific events");
+//    }
 }

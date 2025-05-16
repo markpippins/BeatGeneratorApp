@@ -1,16 +1,17 @@
 package com.angrysurfer.core.service;
 
-import com.angrysurfer.core.Constants;
 import com.angrysurfer.core.api.Command;
 import com.angrysurfer.core.api.CommandBus;
 import com.angrysurfer.core.api.Commands;
 import com.angrysurfer.core.api.IBusListener;
+import com.angrysurfer.core.api.midi.MidiControlMessageEnum;
 import com.angrysurfer.core.event.*;
 import com.angrysurfer.core.model.InstrumentWrapper;
 import com.angrysurfer.core.model.Player;
 import com.angrysurfer.core.model.Rule;
 import com.angrysurfer.core.model.Session;
 import com.angrysurfer.core.redis.RedisService;
+import com.angrysurfer.core.sequencer.SequencerConstants;
 import lombok.Getter;
 import lombok.Setter;
 import org.slf4j.Logger;
@@ -27,15 +28,14 @@ import java.util.Set;
 @Getter
 @Setter
 public class PlayerManager implements IBusListener {
+
     private static final Logger logger = LoggerFactory.getLogger(PlayerManager.class);
     private static PlayerManager instance;
     private final Map<Long, Player> playerCache = new HashMap<>();
     private final RedisService redisService;
-    private final CommandBus commandBus;
 
     private PlayerManager() {
         this.redisService = RedisService.getInstance();
-        this.commandBus = CommandBus.getInstance();
         registerForEvents();
     }
 
@@ -47,10 +47,25 @@ public class PlayerManager implements IBusListener {
     }
 
     /**
-     * Register for all player-related events
+     * Register for specific player-related events only
      */
     private void registerForEvents() {
-        commandBus.register(this);
+        // Register only for commands we actually handle
+        CommandBus.getInstance().register(this, new String[]{
+                Commands.PLAYER_SELECTION_EVENT,
+                Commands.PLAYER_UPDATE_EVENT,
+                Commands.PLAYER_PRESET_CHANGE_EVENT,
+                Commands.PLAYER_INSTRUMENT_CHANGE_EVENT,
+                Commands.PLAYER_REFRESH_EVENT,
+                // Legacy commands still supported
+                Commands.PLAYER_ACTIVATION_REQUEST,
+                Commands.PLAYER_UPDATE_REQUEST,
+                Commands.PLAYER_PRESET_CHANGE_REQUEST,
+                Commands.PLAYER_INSTRUMENT_CHANGE_REQUEST,
+                Commands.REFRESH_ALL_INSTRUMENTS
+        });
+
+        logger.info("PlayerManager registered for specific events");
     }
 
     /**
@@ -110,12 +125,13 @@ public class PlayerManager implements IBusListener {
         if (action.getData() instanceof PlayerSelectionEvent event && event.getPlayer() != null) {
             logger.info("Player selected for UI: {} (ID: {})",
                     event.getPlayer().getName(), event.getPlayerId());
-            commandBus.publish(Commands.PLAYER_ACTIVATED, this, event.getPlayer());
+            CommandBus.getInstance().publish(Commands.PLAYER_ACTIVATED, this, event.getPlayer());
         }
     }
 
     /**
-     * Handle player preset change events with special handling for default players
+     * Handle player preset change events with special handling for default
+     * players
      */
     private void handlePlayerPresetChangeEvent(PlayerPresetChangeEvent event) {
         Player player = event.getPlayer();
@@ -127,16 +143,31 @@ public class PlayerManager implements IBusListener {
             return;
         }
 
+        // Update the instrument preset
         InstrumentWrapper instrument = player.getInstrument();
+        logger.info("Processing preset change for {} - bank:{}, preset:{}, soundbank:{}",
+                player.getName(), bankIndex, presetNumber, instrument.getSoundbankName());
+
+        // Apply soundbank first if it's an internal synth instrument
+        if (InternalSynthManager.getInstance().isInternalSynthInstrument(instrument)
+                && instrument.getSoundbankName() != null) {
+            boolean soundbankApplied = SoundbankManager.getInstance().applySoundbank(
+                    instrument, instrument.getSoundbankName());
+            logger.info("Applied soundbank {}: {}",
+                    instrument.getSoundbankName(), soundbankApplied ? "SUCCESS" : "FAILED");
+        }
 
         // Update the instrument preset
         if (bankIndex != null) {
             instrument.setBankIndex(bankIndex);
         }
-        instrument.setPreset(presetNumber);
+        if (presetNumber != null) {
+            instrument.setPreset(presetNumber);
+        }
 
-        // Apply the preset change
+        // Apply the preset change with additional log output
         boolean success = applyInstrumentPreset(player);
+        logger.info("Applied preset change: {}", success ? "SUCCESS" : "FAILED");
 
         if (success) {
             // If this is a default player, update in UserConfig
@@ -157,8 +188,8 @@ public class PlayerManager implements IBusListener {
             }
 
             // Notify listeners
-            commandBus.publish(Commands.PLAYER_PRESET_CHANGED, this, player);
-            commandBus.publish(Commands.PLAYER_UPDATED, this, player);
+            CommandBus.getInstance().publish(Commands.PLAYER_PRESET_CHANGED, this, player);
+            CommandBus.getInstance().publish(Commands.PLAYER_UPDATED, this, player);
         }
     }
 
@@ -168,43 +199,43 @@ public class PlayerManager implements IBusListener {
     private void handlePlayerInstrumentChangeEvent(PlayerInstrumentChangeEvent event) {
         Player player = event.getPlayer();
         InstrumentWrapper instrument = event.getInstrument();
-        
+
         if (player == null || instrument == null) {
             logger.warn("Invalid instrument change event - missing player or instrument");
             return;
         }
-        
+
         // Capture the original values for logging
         Long oldInstrumentId = player.getInstrumentId();
         String oldInstrumentName = player.getInstrument() != null ? player.getInstrument().getName() : "none";
-        
+
         // Update player with new instrument
         player.setInstrument(instrument);
         player.setInstrumentId(instrument.getId());
-        
+
         // Apply the instrument preset
         boolean presetApplied = applyInstrumentPreset(player);
-        
+
         // Check if this is a default player that needs special handling
         if (Boolean.TRUE.equals(player.getIsDefault())) {
             logger.info("Updating default player instrument: {} -> {} (success: {})",
-                       player.getName(), instrument.getName(), presetApplied);
-            
+                    player.getName(), instrument.getName(), presetApplied);
+
             // Get the UserConfigManager instance directly
             UserConfigManager configManager = UserConfigManager.getInstance();
-            
+
             // Create a clean copy to avoid reference issues
             Player playerCopy = player.deepCopy();
-            
+
             // Update in UserConfig and verify success
             boolean updated = configManager.updateDefaultPlayer(playerCopy);
-            
+
             if (!updated) {
                 logger.error("Failed to update default player in UserConfig: {}", player.getName());
             } else {
                 logger.info("Successfully updated default player in UserConfig: {}", player.getName());
             }
-            
+
             // Also update default instrument if it's a default instrument
             if (Boolean.TRUE.equals(instrument.getIsDefault())) {
                 boolean instrumentUpdated = configManager.updateDefaultInstrument(instrument);
@@ -216,16 +247,16 @@ public class PlayerManager implements IBusListener {
             // Regular player - save to player storage
             savePlayerProperties(player);
         }
-        
+
         // Log change details for debugging
-        logger.info("Player instrument changed: {} - {} ({}) -> {} ({})", 
-                    player.getId(), oldInstrumentName, oldInstrumentId,
-                    instrument.getName(), instrument.getId());
-        
+        logger.info("Player instrument changed: {} - {} ({}) -> {} ({})",
+                player.getId(), oldInstrumentName, oldInstrumentId,
+                instrument.getName(), instrument.getId());
+
         // Notify listeners about the change
-        commandBus.publish(Commands.PLAYER_INSTRUMENT_CHANGED, this, 
-                          new Object[]{player.getId(), instrument.getId()});
-        commandBus.publish(Commands.PLAYER_UPDATED, this, player);
+        CommandBus.getInstance().publish(Commands.PLAYER_INSTRUMENT_CHANGED, this,
+                new Object[]{player.getId(), instrument.getId()});
+        CommandBus.getInstance().publish(Commands.PLAYER_UPDATED, this, player);
     }
 
     private void handlePlayerRefreshEvent(Command action) {
@@ -245,12 +276,12 @@ public class PlayerManager implements IBusListener {
     private void handleLegacyPlayerActivationRequest(Command action) {
         if (action.getData() instanceof Player player) {
             PlayerSelectionEvent event = new PlayerSelectionEvent(player);
-            commandBus.publish(Commands.PLAYER_SELECTION_EVENT, this, event);
+            CommandBus.getInstance().publish(Commands.PLAYER_SELECTION_EVENT, this, event);
         } else if (action.getData() instanceof Long playerId) {
             Player player = getPlayerById(playerId);
             if (player != null) {
                 PlayerSelectionEvent event = new PlayerSelectionEvent(player);
-                commandBus.publish(Commands.PLAYER_SELECTION_EVENT, this, event);
+                CommandBus.getInstance().publish(Commands.PLAYER_SELECTION_EVENT, this, event);
             }
         }
     }
@@ -259,7 +290,7 @@ public class PlayerManager implements IBusListener {
     private void handleLegacyPlayerUpdateRequest(Command action) {
         if (action.getData() instanceof Player player) {
             PlayerUpdateEvent event = new PlayerUpdateEvent(player);
-            commandBus.publish(Commands.PLAYER_UPDATE_EVENT, this, event);
+            CommandBus.getInstance().publish(Commands.PLAYER_UPDATE_EVENT, this, event);
         }
     }
 
@@ -277,7 +308,7 @@ public class PlayerManager implements IBusListener {
             Player player = getPlayerById(playerId);
             if (player != null) {
                 PlayerPresetChangeEvent event = new PlayerPresetChangeEvent(player, bankIndex, presetNumber);
-                commandBus.publish(Commands.PLAYER_PRESET_CHANGE_EVENT, this, event);
+                CommandBus.getInstance().publish(Commands.PLAYER_PRESET_CHANGE_EVENT, this, event);
             }
         }
     }
@@ -291,7 +322,7 @@ public class PlayerManager implements IBusListener {
             Player player = getPlayerById(playerId);
             if (player != null && instrument != null) {
                 PlayerInstrumentChangeEvent event = new PlayerInstrumentChangeEvent(player, instrument);
-                commandBus.publish(Commands.PLAYER_INSTRUMENT_CHANGE_EVENT, this, event);
+                CommandBus.getInstance().publish(Commands.PLAYER_INSTRUMENT_CHANGE_EVENT, this, event);
             }
         }
     }
@@ -300,13 +331,14 @@ public class PlayerManager implements IBusListener {
     private void handleLegacyRefreshRequest(Command action) {
         if (action.getData() instanceof Player player) {
             PlayerRefreshEvent event = new PlayerRefreshEvent(player);
-            commandBus.publish(Commands.PLAYER_REFRESH_EVENT, this, event);
+            CommandBus.getInstance().publish(Commands.PLAYER_REFRESH_EVENT, this, event);
         }
     }
 
     public Player getPlayerById(Long id) {
-        if (id == null)
+        if (id == null) {
             return null;
+        }
 
         Player player = playerCache.get(id);
 
@@ -418,8 +450,8 @@ public class PlayerManager implements IBusListener {
 
                         javax.sound.midi.MidiChannel[] channels = synth.getChannels();
                         if (channels != null && channel < channels.length) {
-                            channels[channel].controlChange(0, (bankIndex >> 7) & 0x7F);
-                            channels[channel].controlChange(32, bankIndex & 0x7F);
+                            channels[channel].controlChange(0, (bankIndex >> 7) & MidiControlMessageEnum.POLY_MODE_ON);
+                            channels[channel].controlChange(32, bankIndex & MidiControlMessageEnum.POLY_MODE_ON);
                             channels[channel].programChange(preset);
 
                             logger.info("Directly applied program change to synth channel {}: bank={}, program={}",
@@ -439,18 +471,18 @@ public class PlayerManager implements IBusListener {
                 boolean success = false;
 
                 try {
-                    instrument.controlChange(0, (bankIndex >> 7) & 0x7F);
-                    instrument.controlChange(32, bankIndex & 0x7F);
+                    instrument.controlChange(0, (bankIndex >> 7) & MidiControlMessageEnum.POLY_MODE_ON);
+                    instrument.controlChange(32, bankIndex & MidiControlMessageEnum.POLY_MODE_ON);
                     instrument.programChange(preset, 0);
                     success = true;
 
                     if (instrument.getReceiver() != null) {
                         javax.sound.midi.ShortMessage bankMSB = new javax.sound.midi.ShortMessage();
-                        bankMSB.setMessage(0xB0 | channel, 0, (bankIndex >> 7) & 0x7F);
+                        bankMSB.setMessage(0xB0 | channel, 0, (bankIndex >> 7) & MidiControlMessageEnum.POLY_MODE_ON);
                         instrument.getReceiver().send(bankMSB, -1);
 
                         javax.sound.midi.ShortMessage bankLSB = new javax.sound.midi.ShortMessage();
-                        bankLSB.setMessage(0xB0 | channel, 32, bankIndex & 0x7F);
+                        bankLSB.setMessage(0xB0 | channel, 32, bankIndex & MidiControlMessageEnum.POLY_MODE_ON);
                         instrument.getReceiver().send(bankLSB, -1);
 
                         javax.sound.midi.ShortMessage pc = new javax.sound.midi.ShortMessage();
@@ -492,8 +524,8 @@ public class PlayerManager implements IBusListener {
             } else {
                 // Use standard method for external instruments
                 if (instrument.getBankIndex() != null && instrument.getPreset() != null) {
-                    instrument.controlChange(0, (instrument.getBankIndex() >> 7) & 0x7F);
-                    instrument.controlChange(32, instrument.getBankIndex() & 0x7F);
+                    instrument.controlChange(0, (instrument.getBankIndex() >> 7) & MidiControlMessageEnum.POLY_MODE_ON);
+                    instrument.controlChange(32, instrument.getBankIndex() & MidiControlMessageEnum.POLY_MODE_ON);
                     instrument.programChange(instrument.getPreset(), 0);
                 }
             }
@@ -589,8 +621,8 @@ public class PlayerManager implements IBusListener {
                         javax.sound.midi.MidiChannel[] channels = synth.getChannels();
                         if (channels != null && channel < channels.length) {
                             // Send bank select and program change directly to the MidiChannel
-                            channels[channel].controlChange(0, (bankIndex >> 7) & 0x7F); // Bank MSB
-                            channels[channel].controlChange(32, bankIndex & 0x7F); // Bank LSB
+                            channels[channel].controlChange(0, (bankIndex >> 7) & MidiControlMessageEnum.POLY_MODE_ON); // Bank MSB
+                            channels[channel].controlChange(32, bankIndex & MidiControlMessageEnum.POLY_MODE_ON); // Bank LSB
                             channels[channel].programChange(preset);
 
                             logger.info("Directly applied program change to synth channel {}: bank={}, program={}",
@@ -608,20 +640,20 @@ public class PlayerManager implements IBusListener {
 
                 try {
                     // Apply bank and program changes through the instrument
-                    instrument.controlChange(0, (bankIndex >> 7) & 0x7F); // Bank MSB
-                    instrument.controlChange(32, bankIndex & 0x7F); // Bank LSB
+                    instrument.controlChange(0, (bankIndex >> 7) & MidiControlMessageEnum.POLY_MODE_ON); // Bank MSB
+                    instrument.controlChange(32, bankIndex & MidiControlMessageEnum.POLY_MODE_ON); // Bank LSB
                     instrument.programChange(preset, 0);
 
                     // Also try alternate way with raw MIDI messages if available
                     if (instrument.getReceiver() != null) {
                         // Bank select MSB
                         javax.sound.midi.ShortMessage bankMSB = new javax.sound.midi.ShortMessage();
-                        bankMSB.setMessage(0xB0 | channel, 0, (bankIndex >> 7) & 0x7F);
+                        bankMSB.setMessage(0xB0 | channel, 0, (bankIndex >> 7) & MidiControlMessageEnum.POLY_MODE_ON);
                         instrument.getReceiver().send(bankMSB, -1);
 
                         // Bank select LSB
                         javax.sound.midi.ShortMessage bankLSB = new javax.sound.midi.ShortMessage();
-                        bankLSB.setMessage(0xB0 | channel, 32, bankIndex & 0x7F);
+                        bankLSB.setMessage(0xB0 | channel, 32, bankIndex & MidiControlMessageEnum.POLY_MODE_ON);
                         instrument.getReceiver().send(bankLSB, -1);
 
                         // Program change
@@ -643,8 +675,8 @@ public class PlayerManager implements IBusListener {
     }
 
     /**
-     * Ensures that all players have consistent channel assignments
-     * and resolves any potential channel conflicts
+     * Ensures that all players have consistent channel assignments and resolves
+     * any potential channel conflicts
      */
     public void ensureChannelConsistency() {
         logger.info("Ensuring channel consistency across all players");
@@ -662,8 +694,9 @@ public class PlayerManager implements IBusListener {
                 Integer channel = player.getChannel();
 
                 // Skip drum channel 9 which can have multiple assignments
-                if (channel == Constants.MIDI_DRUM_CHANNEL)
+                if (channel == SequencerConstants.MIDI_DRUM_CHANNEL) {
                     continue;
+                }
 
                 if (channelToPlayerId.containsKey(channel)) {
                     // Conflict detected - track it
@@ -689,8 +722,9 @@ public class PlayerManager implements IBusListener {
                     Integer channel = player.getChannel();
 
                     // Skip drum channel
-                    if (channel == Constants.MIDI_DRUM_CHANNEL)
+                    if (channel == SequencerConstants.MIDI_DRUM_CHANNEL) {
                         continue;
+                    }
 
                     // If this player's channel has a conflict
                     if (channelConflicts.containsKey(channel)) {
@@ -719,8 +753,8 @@ public class PlayerManager implements IBusListener {
 
         // Final pass: ensure all players have valid channels
         for (Player player : playerCache.values()) {
-            if (player != null && (player.getChannel() == null ||
-                    (!player.isDrumPlayer() && player.getChannel() == Constants.MIDI_DRUM_CHANNEL))) {
+            if (player != null && (player.getChannel() == null
+                    || (!player.isDrumPlayer() && player.getChannel() == SequencerConstants.MIDI_DRUM_CHANNEL))) {
                 // Assign an appropriate channel
                 int newChannel = player.isDrumPlayer() ? 9 : channelManager.getNextAvailableMelodicChannel();
 
@@ -776,7 +810,8 @@ public class PlayerManager implements IBusListener {
      * Handle a rule update and broadcast an event
      *
      * @param player     The player whose rules are updated
-     * @param rule       The specific rule that was modified (can be null for bulk operations)
+     * @param rule       The specific rule that was modified (can be null for bulk
+     *                   operations)
      * @param updateType The type of update that occurred
      */
     public void handleRuleUpdate(Player player, Rule rule, PlayerRuleUpdateEvent.RuleUpdateType updateType) {

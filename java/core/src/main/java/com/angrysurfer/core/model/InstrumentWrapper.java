@@ -1,127 +1,35 @@
 package com.angrysurfer.core.model;
 
-import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Random;
-import java.util.Set;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicReference;
-
-import javax.sound.midi.InvalidMidiDataException;
-import javax.sound.midi.MidiDevice;
-import javax.sound.midi.MidiMessage;
-import javax.sound.midi.MidiUnavailableException;
-import javax.sound.midi.Receiver;
-import javax.sound.midi.ShortMessage;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
+import com.angrysurfer.core.api.midi.MidiControlMessageEnum;
 import com.angrysurfer.core.model.feature.Pad;
+import com.angrysurfer.core.sequencer.SequencerConstants;
 import com.angrysurfer.core.service.ReceiverManager;
 import com.angrysurfer.core.util.IntegerArrayConverter;
 import com.fasterxml.jackson.annotation.JsonIgnore;
-
 import jakarta.persistence.Column;
 import jakarta.persistence.Convert;
 import lombok.Getter;
 import lombok.Setter;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import javax.sound.midi.*;
+import java.io.Serializable;
+import java.util.*;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
 @Getter
 @Setter
 public final class InstrumentWrapper implements Serializable {
 
-    static Logger logger = LoggerFactory.getLogger(InstrumentWrapper.class.getCanonicalName());
-
-    static final Random rand = new Random();
-
     public static final Integer DEFAULT_CHANNEL = 0;
-
-    public static final Integer[] DEFAULT_CHANNELS = new Integer[] { DEFAULT_CHANNEL };
-
-    public static final Integer[] ALL_CHANNELS = new Integer[] { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15 };
-
-    private Long id;
-
-    @JsonIgnore
-    private transient MidiDevice.Info deviceInfo = null;
-
-    private Boolean internal;
-
-    private int bankMSB = 0; // Bank MSB (CC 0)
-    private int bankLSB = 0; // Bank LSB (CC 32)
-
-    private Boolean assignedToPlayer = false;
-
-    private Boolean isDefault = false;
-    
-    private List<ControlCode> controlCodes = new ArrayList<>();
-
-    private Set<Pad> pads = new HashSet<>();
-
-    @JsonIgnore
-    private transient Map<Integer, String> assignments = new HashMap<>();
-
-    @JsonIgnore
-    private Map<Integer, Integer[]> boundaries = new HashMap<>();
-
-    @JsonIgnore
-    private Map<Integer, Map<Long, String>> captions = new HashMap<>();
-
-    // Primary change: Receiver becomes the primary MIDI output mechanism
-    @JsonIgnore
-    private Receiver receiver;  // Direct reference for faster access
-    
-    // Keep device as a backup and for metadata
-    @JsonIgnore
-    private MidiDevice device;
-
-    @Column(name = "name", unique = true)
-    private String name;
-
-    private String deviceName = "Gervill";
-
-    @JsonIgnore
-    private int defaultChannel = 0;
-
-    private boolean internalSynth;
-
-    private String description;
-
-    @Convert(converter = IntegerArrayConverter.class)
-    private Integer[] receivedChannels = ALL_CHANNELS;
-
-    private Integer channel;
-
-    private Integer lowestNote = 0;
-
-    private Integer highestNote = 127;
-
-    private Integer highestPreset;
-
-    private Integer preferredPreset;
-
-    private Boolean hasAssignments;
-
-    private String playerClassName;
-
-    private Boolean available = true;
-
-    private Set<Pattern> patterns;
-
-    private Integer preset = 1;
-
-    private String soundbankName;
-    private Integer bankIndex;
-
+    public static final Integer[] DEFAULT_CHANNELS = new Integer[]{DEFAULT_CHANNEL};
+    public static final Integer[] ALL_CHANNELS = new Integer[]{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15};
+    static final Random rand = new Random();
+    static Logger logger = LoggerFactory.getLogger(InstrumentWrapper.class.getCanonicalName());
+    private static ScheduledExecutorService NOTE_OFF_SCHEDULER;
     // Cached ShortMessages for better performance
     @JsonIgnore
     private final ShortMessage cachedNoteOn = new ShortMessage();
@@ -129,9 +37,49 @@ public final class InstrumentWrapper implements Serializable {
     private final ShortMessage cachedNoteOff = new ShortMessage();
     @JsonIgnore
     private final ShortMessage cachedControlChange = new ShortMessage();
-
-    private static ScheduledExecutorService NOTE_OFF_SCHEDULER;
-
+    private Long id;
+    @JsonIgnore
+    private transient MidiDevice.Info deviceInfo = null;
+    private Boolean internal;
+    private int bankMSB = 0; // Bank MSB (CC 0)
+    private int bankLSB = 0; // Bank LSB (CC 32)
+    private Boolean assignedToPlayer = false;
+    private Boolean isDefault = false;
+    private List<ControlCode> controlCodes = new ArrayList<>();
+    private Set<Pad> pads = new HashSet<>();
+    @JsonIgnore
+    private transient Map<Integer, String> assignments = new HashMap<>();
+    @JsonIgnore
+    private Map<Integer, Integer[]> boundaries = new HashMap<>();
+    @JsonIgnore
+    private Map<Integer, Map<Long, String>> captions = new HashMap<>();
+    // Primary change: Receiver becomes the primary MIDI output mechanism
+    @JsonIgnore
+    private Receiver receiver;  // Direct reference for faster access
+    // Keep device as a backup and for metadata
+    @JsonIgnore
+    private MidiDevice device;
+    @Column(name = "name", unique = true)
+    private String name;
+    private String deviceName = SequencerConstants.GERVILL;
+    @JsonIgnore
+    private int defaultChannel = 0;
+    private boolean internalSynth;
+    private String description;
+    @Convert(converter = IntegerArrayConverter.class)
+    private Integer[] receivedChannels = ALL_CHANNELS;
+    private Integer channel;
+    private Integer lowestNote = 0;
+    private Integer highestNote = 127;
+    private Integer highestPreset;
+    private Integer preferredPreset;
+    private Boolean hasAssignments;
+    private String playerClassName;
+    private Boolean available = true;
+    private Set<Pattern> patterns;
+    private Integer preset = 1;
+    private String soundbankName;
+    private Integer bankIndex;
     // Add flag to track initialization state
     private boolean initialized = false;
 
@@ -168,7 +116,7 @@ public final class InstrumentWrapper implements Serializable {
         if (device != null) {
             this.deviceInfo = device.getDeviceInfo();
             this.deviceName = deviceInfo.getName();
-            
+
             // Try to get a receiver from the device
             try {
                 if (!device.isOpen()) {
@@ -192,7 +140,7 @@ public final class InstrumentWrapper implements Serializable {
         setDevice(device);
         setDeviceName(device.getDeviceInfo().getName());
         setReceivedChannels(channels);
-        
+
         // Try to get a receiver from the device
         try {
             if (device != null && !device.isOpen()) {
@@ -204,16 +152,33 @@ public final class InstrumentWrapper implements Serializable {
         } catch (MidiUnavailableException e) {
             logger.warn("Could not get receiver from device: {}", e.getMessage());
         }
-        
+
         logger.info("Created instrument {} with channels: {}", getName(), Arrays.toString(channels));
+    }
+
+    /**
+     * Shutdown the scheduler when needed
+     */
+    public static void shutdownScheduler() {
+        if (NOTE_OFF_SCHEDULER != null) {
+            NOTE_OFF_SCHEDULER.shutdown();
+            try {
+                if (!NOTE_OFF_SCHEDULER.awaitTermination(500, TimeUnit.MILLISECONDS)) {
+                    NOTE_OFF_SCHEDULER.shutdownNow();
+                }
+            } catch (InterruptedException e) {
+                NOTE_OFF_SCHEDULER.shutdownNow();
+                Thread.currentThread().interrupt();
+            }
+        }
     }
 
     public void setName(String name) {
         this.name = name;
         if (name != null) {
-            if (name.toLowerCase().contains("gervill") || 
-                name.toLowerCase().contains("synth") || 
-                name.toLowerCase().contains("drum")) {
+            if (name.toLowerCase().contains(SequencerConstants.GERVILL) ||
+                    name.toLowerCase().contains("synth") ||
+                    name.toLowerCase().contains("drum")) {
                 this.internal = true;
             }
         }
@@ -257,6 +222,7 @@ public final class InstrumentWrapper implements Serializable {
 
     /**
      * Send MIDI message directly to the receiver
+     *
      * @param message The MIDI message to send
      */
     public void sendMessage(MidiMessage message) {
@@ -266,7 +232,7 @@ public final class InstrumentWrapper implements Serializable {
 //                receiver.send(message, -1);
 //                return;
 //            }
-            
+
             // If receiver is null but we have a device, try to get a receiver
             if (device != null) {
                 ensureDeviceOpen();
@@ -276,11 +242,11 @@ public final class InstrumentWrapper implements Serializable {
                     return;
                 }
             }
-            
+
             // Last resort: try ReceiverManager
             if (deviceName != null) {
                 Receiver managedReceiver = ReceiverManager.getInstance()
-                    .getOrCreateReceiver(deviceName, device);
+                        .getOrCreateReceiver(deviceName, device);
                 if (managedReceiver != null) {
                     managedReceiver.send(message, -1);
                     // Save for future use
@@ -288,17 +254,17 @@ public final class InstrumentWrapper implements Serializable {
                     return;
                 }
             }
-            
+
             // If we get here, we couldn't send the message
             logger.warn("Could not send MIDI message - no receiver available");
         } catch (Exception e) {
             logger.error("Error sending MIDI message: {}", e.getMessage());
-            
+
             // Try recovery if needed
             tryRecoverReceiver();
         }
     }
-    
+
     /**
      * Try to recover a working receiver if our current one has failed
      */
@@ -311,18 +277,18 @@ public final class InstrumentWrapper implements Serializable {
                 logger.info("Recovered receiver from device");
                 return;
             }
-            
+
             // If we have a device name, try ReceiverManager
             if (deviceName != null) {
                 this.receiver = ReceiverManager.getInstance()
-                    .getOrCreateReceiver(deviceName, device);
+                        .getOrCreateReceiver(deviceName, device);
                 logger.info("Recovered receiver from ReceiverManager");
             }
         } catch (Exception e) {
             logger.error("Failed to recover receiver: {}", e.getMessage());
         }
     }
-    
+
     /**
      * Ensure device is open if it exists
      */
@@ -358,7 +324,7 @@ public final class InstrumentWrapper implements Serializable {
         try {
             synchronized (cachedNoteOn) {
                 cachedNoteOn.setMessage(ShortMessage.NOTE_ON, channel, note, velocity);
-                 sendMessage(cachedNoteOn);
+                sendMessage(cachedNoteOn);
             }
         } catch (InvalidMidiDataException e) {
             logger.error("Invalid MIDI data for note on: {}", e.getMessage());
@@ -418,7 +384,7 @@ public final class InstrumentWrapper implements Serializable {
     public void playMidiNote(int note, int velocity, int decay) {
         // Send note on
         noteOn(note, velocity);
-        
+
         // Schedule note off
         scheduleNoteOff(note, 0, decay);
     }
@@ -440,23 +406,6 @@ public final class InstrumentWrapper implements Serializable {
         NOTE_OFF_SCHEDULER.schedule(() -> {
             noteOff(note, velocity);
         }, delayMs, TimeUnit.MILLISECONDS);
-    }
-
-    /**
-     * Shutdown the scheduler when needed
-     */
-    public static void shutdownScheduler() {
-        if (NOTE_OFF_SCHEDULER != null) {
-            NOTE_OFF_SCHEDULER.shutdown();
-            try {
-                if (!NOTE_OFF_SCHEDULER.awaitTermination(500, TimeUnit.MILLISECONDS)) {
-                    NOTE_OFF_SCHEDULER.shutdownNow();
-                }
-            } catch (InterruptedException e) {
-                NOTE_OFF_SCHEDULER.shutdownNow();
-                Thread.currentThread().interrupt();
-            }
-        }
     }
 
     /**
@@ -483,7 +432,7 @@ public final class InstrumentWrapper implements Serializable {
                 logger.warn("Error closing device: {}", e.getMessage());
             }
         }
-        
+
         // Also tell the ReceiverManager to clean up
         if (deviceName != null) {
             ReceiverManager.getInstance().closeReceiver(deviceName);
@@ -517,23 +466,6 @@ public final class InstrumentWrapper implements Serializable {
     }
 
     /**
-     * Set the receiver directly (preferred approach)
-     */
-    public void setReceiver(Receiver receiver) {
-        // Clean up old receiver if exists
-        if (this.receiver != null && this.receiver != receiver) {
-            try {
-                this.receiver.close();
-            } catch (Exception e) {
-                logger.warn("Error closing old receiver: {}", e.getMessage());
-            }
-        }
-        
-        this.receiver = receiver;
-        logger.debug("Set receiver for instrument: {}", getName());
-    }
-
-    /**
      * Apply current bank and program settings
      */
     public void applyBankAndProgram() {
@@ -556,6 +488,7 @@ public final class InstrumentWrapper implements Serializable {
 
     /**
      * Get a receiver for this instrument, creating one if needed
+     *
      * @return The instrument's receiver
      */
     public Receiver getReceiver() {
@@ -563,7 +496,7 @@ public final class InstrumentWrapper implements Serializable {
         if (receiver != null) {
             return receiver;
         }
-        
+
         // If we have a device, try to get a receiver from it
         if (device != null) {
             try {
@@ -576,12 +509,12 @@ public final class InstrumentWrapper implements Serializable {
                 logger.warn("Could not get receiver from device: {}", e.getMessage());
             }
         }
-        
+
         // Last resort: try ReceiverManager
         if (deviceName != null) {
             try {
                 receiver = ReceiverManager.getInstance()
-                    .getOrCreateReceiver(deviceName, device);
+                        .getOrCreateReceiver(deviceName, device);
                 if (receiver != null) {
                     return receiver;
                 }
@@ -589,9 +522,26 @@ public final class InstrumentWrapper implements Serializable {
                 logger.warn("Could not get receiver from ReceiverManager: {}", e.getMessage());
             }
         }
-        
+
         logger.error("Failed to get a receiver for instrument: {}", getName());
         return null;
+    }
+
+    /**
+     * Set the receiver directly (preferred approach)
+     */
+    public void setReceiver(Receiver receiver) {
+        // Clean up old receiver if exists
+        if (this.receiver != null && this.receiver != receiver) {
+            try {
+                this.receiver.close();
+            } catch (Exception e) {
+                logger.warn("Error closing old receiver: {}", e.getMessage());
+            }
+        }
+
+        this.receiver = receiver;
+        logger.debug("Set receiver for instrument: {}", getName());
     }
 
     /**
@@ -628,12 +578,24 @@ public final class InstrumentWrapper implements Serializable {
     }
 
     public void setBounds(int cc, int lowerBound, int upperBound) {
-        getBoundaries().put(cc, new Integer[] { lowerBound, upperBound });
+        getBoundaries().put(cc, new Integer[]{lowerBound, upperBound});
     }
 
     @JsonIgnore
     public Integer getAssignmentCount() {
         return getAssignments().size();
+    }
+
+    /**
+     * Get the bank index from MSB/LSB
+     */
+    public Integer getBankIndex() {
+        // If we have MSB/LSB values set, calculate the combined index
+        if (bankMSB != 0 || bankLSB != 0) {
+            return (bankMSB << 7) | bankLSB;
+        }
+        // Otherwise return the stored bankIndex field
+        return bankIndex;
     }
 
     /**
@@ -647,23 +609,11 @@ public final class InstrumentWrapper implements Serializable {
             this.bankLSB = 0;
         } else {
             // Use upper/lower bytes of the integer for MSB/LSB
-            this.bankMSB = (bankIndex >> 7) & 0x7F; // Upper 7 bits
-            this.bankLSB = bankIndex & 0x7F; // Lower 7 bits
+            this.bankMSB = (bankIndex >> 7) & MidiControlMessageEnum.POLY_MODE_ON; // Upper 7 bits
+            this.bankLSB = bankIndex & MidiControlMessageEnum.POLY_MODE_ON; // Lower 7 bits
         }
 
         logger.info("Set bank index to: {} (MSB: {}, LSB: {})",
                 bankIndex, bankMSB, bankLSB);
-    }
-
-    /**
-     * Get the bank index from MSB/LSB
-     */
-    public Integer getBankIndex() {
-        // If we have MSB/LSB values set, calculate the combined index
-        if (bankMSB != 0 || bankLSB != 0) {
-            return (bankMSB << 7) | bankLSB;
-        }
-        // Otherwise return the stored bankIndex field
-        return bankIndex;
     }
 }

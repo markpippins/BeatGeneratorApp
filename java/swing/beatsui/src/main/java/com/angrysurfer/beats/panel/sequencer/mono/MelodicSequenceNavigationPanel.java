@@ -22,8 +22,7 @@ public class MelodicSequenceNavigationPanel extends JPanel {
 
     private static final Logger logger = LoggerFactory.getLogger(MelodicSequenceNavigationPanel.class);
     private final MelodicSequencer sequencer;
-    private final RedisService redisService;
-    private final MelodicSequencerManager manager;
+
     private JLabel sequenceIdLabel;
     private JButton firstButton;
     private JButton prevButton;
@@ -34,11 +33,8 @@ public class MelodicSequenceNavigationPanel extends JPanel {
     public MelodicSequenceNavigationPanel(MelodicSequencer sequencer) {
         this.sequencer = sequencer;
 
-        // Rest of constructor remains the same
-        this.redisService = RedisService.getInstance();
-        this.manager = MelodicSequencerManager.getInstance();
-
         initializeUI();
+        // registerForEvents();
     }
 
     private void initializeUI() {
@@ -126,11 +122,11 @@ public class MelodicSequenceNavigationPanel extends JPanel {
         }
 
         long currentId = sequencer.getSequenceData().getId();
-        boolean hasSequences = manager.hasSequences(sequencer.getId());
+        boolean hasSequences = MelodicSequencerManager.getInstance().hasSequences(sequencer.getId());
 
         // Get first/last sequence IDs
-        Long firstId = manager.getFirstSequenceId(sequencer.getId());
-        Long lastId = manager.getLastSequenceId(sequencer.getId());
+        Long firstId = MelodicSequencerManager.getInstance().getFirstSequenceId(sequencer.getId());
+        Long lastId = MelodicSequencerManager.getInstance().getLastSequenceId(sequencer.getId());
 
         // First/Previous buttons - enabled if we're not at the first sequence
         boolean isFirst = !hasSequences || (firstId != null && currentId <= firstId);
@@ -194,8 +190,8 @@ public class MelodicSequenceNavigationPanel extends JPanel {
      */
     private void loadSequence(Long sequenceId) {
         if (sequenceId != null && sequencer.getId() != null) {
-            redisService.applyMelodicSequenceToSequencer(
-                    redisService.findMelodicSequenceById(sequenceId, sequencer.getId()),
+            RedisService.getInstance().applyMelodicSequenceToSequencer(
+                    RedisService.getInstance().findMelodicSequenceById(sequenceId, sequencer.getId()),
                     sequencer);
 
             // Update display
@@ -222,7 +218,7 @@ public class MelodicSequenceNavigationPanel extends JPanel {
             return;
         }
 
-        Long firstId = manager.getFirstSequenceId(sequencer.getId());
+        Long firstId = MelodicSequencerManager.getInstance().getFirstSequenceId(sequencer.getId());
         if (firstId != null) {
             loadSequence(firstId);
         }
@@ -234,7 +230,7 @@ public class MelodicSequenceNavigationPanel extends JPanel {
             return;
         }
 
-        Long prevId = manager.getPreviousSequenceId(
+        Long prevId = MelodicSequencerManager.getInstance().getPreviousSequenceId(
                 sequencer.getId(),
                 sequencer.getSequenceData().getId());
 
@@ -249,7 +245,7 @@ public class MelodicSequenceNavigationPanel extends JPanel {
             return;
         }
 
-        Long nextId = manager.getNextSequenceId(
+        Long nextId = MelodicSequencerManager.getInstance().getNextSequenceId(
                 sequencer.getId(),
                 sequencer.getSequenceData().getId());
 
@@ -264,7 +260,7 @@ public class MelodicSequenceNavigationPanel extends JPanel {
             return;
         }
 
-        Long lastId = manager.getLastSequenceId(sequencer.getId());
+        Long lastId = MelodicSequencerManager.getInstance().getLastSequenceId(sequencer.getId());
         if (lastId != null) {
             loadSequence(lastId);
         }
@@ -277,7 +273,7 @@ public class MelodicSequenceNavigationPanel extends JPanel {
         }
 
         // Save the sequence
-        manager.saveSequence(sequencer);
+        MelodicSequencerManager.getInstance().saveSequence(sequencer);
 
         // Update display and button states
         updateSequenceIdDisplay();
@@ -294,4 +290,18 @@ public class MelodicSequenceNavigationPanel extends JPanel {
                 sequencer.getSequenceData().getId(), sequencer.getId());
     }
 
+    /**
+     * Register for command bus events
+     */
+//    private void registerForEvents() {
+//        // Register only for sequence navigation related events
+//        CommandBus.getInstance().register(this, new String[] {
+//            Commands.MELODIC_SEQUENCE_LOADED,
+//            Commands.MELODIC_SEQUENCE_CREATED,
+//            Commands.MELODIC_SEQUENCE_DELETED,
+//            Commands.MELODIC_SEQUENCE_SAVED
+//        });
+//
+//        logger.debug("MelodicSequenceNavigationPanel registered for specific events");
+//    }
 }

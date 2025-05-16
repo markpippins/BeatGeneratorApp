@@ -37,8 +37,8 @@ public class MiniLaunchPanel extends PlayerAwarePanel implements IBusListener {
     public MiniLaunchPanel() {
         super();
         setLayout(new BorderLayout());
-        CommandBus commandBus = CommandBus.getInstance();
-        commandBus.register(this);
+        CommandBus.getInstance().register(this, new String[]{Commands.CHANGE_THEME,
+                Commands.MINI_NOTE_SELECTED});
         setup();
     }
 

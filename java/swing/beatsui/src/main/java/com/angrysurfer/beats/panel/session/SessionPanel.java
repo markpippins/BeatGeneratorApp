@@ -56,7 +56,13 @@ public class SessionPanel extends JPanel implements IBusListener {
         this.playerTimelinePanel = new PlayerTimelinePanel();
         setupComponents();
 
-        CommandBus.getInstance().register(this);
+        // Register for specific events only
+        CommandBus.getInstance().register(this, new String[] {
+            Commands.PLAYER_ACTIVATED,
+            Commands.SESSION_UPDATED,
+            Commands.SESSION_CHANGED,
+            Commands.SESSION_SELECTED
+        });
     }
 
     private void setupComponents() {

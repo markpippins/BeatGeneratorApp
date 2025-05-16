@@ -1,46 +1,35 @@
 package com.angrysurfer.core.service;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.stream.Collectors;
-
-import javax.sound.midi.InvalidMidiDataException;
-import javax.sound.midi.MidiDevice;
-import javax.sound.midi.MidiSystem;
-import javax.sound.midi.MidiUnavailableException;
-import javax.sound.midi.Receiver;
-import javax.sound.midi.ShortMessage;
-import javax.sound.midi.Synthesizer;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import com.angrysurfer.core.api.Command;
 import com.angrysurfer.core.api.CommandBus;
+import com.angrysurfer.core.api.Commands;
 import com.angrysurfer.core.api.IBusListener;
 import com.angrysurfer.core.exception.MidiDeviceException;
 import com.angrysurfer.core.model.InstrumentWrapper;
+import com.angrysurfer.core.sequencer.SequencerConstants;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import javax.sound.midi.*;
+import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Collectors;
 
 public class DeviceManager implements IBusListener {
 
     private static final Logger logger = LoggerFactory.getLogger(DeviceManager.class);
+    private static final Map<String, MidiDevice> deviceCache = new ConcurrentHashMap<>();
+    // Add this static field to disable excessive validation
+    private static final boolean disableExcessiveValidation = true;
     private static DeviceManager instance;
     private final List<MidiDevice> availableOutputDevices = new ArrayList<>();
-    private final CommandBus commandBus = CommandBus.getInstance();
-    private final Map<String, MidiDevice> activeDevices = new ConcurrentHashMap<>();
-    private static final Map<String, MidiDevice> deviceCache = new ConcurrentHashMap<>();
 
-    // Add this static field to disable excessive validation
-    private static boolean disableExcessiveValidation = true;
+    private final Map<String, MidiDevice> activeDevices = new ConcurrentHashMap<>();
 
     // Private constructor for singleton
     private DeviceManager() {
         refreshDeviceList();
-        commandBus.register(this);
+        CommandBus.getInstance().register(this, new String[]{Commands.REFRESH_MIDI_DEVICES});
     }
 
     // Singleton accessor
@@ -49,73 +38,6 @@ public class DeviceManager implements IBusListener {
             instance = new DeviceManager();
         }
         return instance;
-    }
-
-    // CommandListener implementation
-    @Override
-    public void onAction(Command action) {
-        if (action.getCommand() == null)
-            return;
-
-        switch (action.getCommand()) {
-            case "REFRESH_MIDI_DEVICES" -> refreshDeviceList();
-        }
-    }
-
-    // Update the device list
-    public void refreshDeviceList() {
-        logger.info("Refreshing MIDI device list");
-        availableOutputDevices.clear();
-        availableOutputDevices.addAll(getMidiOutDevices());
-    }
-
-    // Get names of available output devices
-    public List<String> getAvailableOutputDeviceNames() {
-        if (availableOutputDevices.isEmpty()) {
-            refreshDeviceList();
-        }
-
-        return availableOutputDevices.stream()
-                .map(device -> device.getDeviceInfo().getName())
-                .collect(Collectors.toList());
-    }
-
-    /**
-     * Get all available MIDI output devices
-     * @return List of available MIDI output devices
-     * @throws MidiUnavailableException if the MIDI system is unavailable
-     */
-    public List<MidiDevice> getAvailableOutputDevices() throws MidiUnavailableException {
-        List<MidiDevice> outputDevices = new ArrayList<>();
-        
-        // Get all MIDI device info objects
-        MidiDevice.Info[] infos = MidiSystem.getMidiDeviceInfo();
-        
-        // Log found devices
-        logger.debug("Found {} MIDI devices", infos.length);
-        
-        // Try to open each device and check if it's an output device
-        for (MidiDevice.Info info : infos) {
-            try {
-                MidiDevice device = MidiSystem.getMidiDevice(info);
-                
-                // Check if device has transmitter ports (is an output device)
-                if (device.getMaxReceivers() != 0) {
-                    // This is an output device
-                    outputDevices.add(device);
-                    logger.debug("Found output device: {}", info.getName());
-                }
-            } catch (MidiUnavailableException e) {
-                logger.warn("Could not open MIDI device {}: {}", 
-                    info.getName(), e.getMessage());
-                // Continue to next device
-            }
-        }
-        
-        // Log summary
-        logger.info("Found {} available output devices", outputDevices.size());
-        
-        return outputDevices;
     }
 
     // Existing static methods can remain for backwards compatibility
@@ -145,7 +67,7 @@ public class DeviceManager implements IBusListener {
         if (cachedDevice != null && cachedDevice.isOpen()) {
             return cachedDevice;
         }
-        
+
         MidiDevice.Info[] infos = MidiSystem.getMidiDeviceInfo();
         for (MidiDevice.Info info : infos) {
             if (info.getName().contains(name)) {
@@ -242,12 +164,6 @@ public class DeviceManager implements IBusListener {
         return device != null && select(device);
     }
 
-    // Add proper cleanup
-    // @Override
-    // public void finalize() {
-    // reset();
-    // }
-
     // Improved message sending with validation
     @SuppressWarnings("unused")
     public static void sendMessage(InstrumentWrapper instrument, int channel, int messageType, int data1, int data2) {
@@ -276,6 +192,80 @@ public class DeviceManager implements IBusListener {
             throw new IllegalArgumentException("MIDI data must be between 0 and 126");
         }
         return data;
+    }
+
+    // CommandListener implementation
+    @Override
+    public void onAction(Command action) {
+        if (action.getCommand() == null)
+            return;
+
+        switch (action.getCommand()) {
+            case Commands.REFRESH_MIDI_DEVICES -> refreshDeviceList();
+        }
+    }
+
+    // Update the device list
+    public void refreshDeviceList() {
+        logger.info("Refreshing MIDI device list");
+        availableOutputDevices.clear();
+        availableOutputDevices.addAll(getMidiOutDevices());
+    }
+
+    // Add proper cleanup
+    // @Override
+    // public void finalize() {
+    // reset();
+    // }
+
+    // Get names of available output devices
+    public List<String> getAvailableOutputDeviceNames() {
+        if (availableOutputDevices.isEmpty()) {
+            refreshDeviceList();
+        }
+
+        return availableOutputDevices.stream()
+                .map(device -> device.getDeviceInfo().getName())
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * Get all available MIDI output devices
+     *
+     * @return List of available MIDI output devices
+     * @throws MidiUnavailableException if the MIDI system is unavailable
+     */
+    public List<MidiDevice> getAvailableOutputDevices() throws MidiUnavailableException {
+        List<MidiDevice> outputDevices = new ArrayList<>();
+
+        // Get all MIDI device info objects
+        MidiDevice.Info[] infos = MidiSystem.getMidiDeviceInfo();
+
+        // Log found devices
+        logger.debug("Found {} MIDI devices", infos.length);
+
+        // Try to open each device and check if it's an output device
+        for (MidiDevice.Info info : infos) {
+            try {
+                MidiDevice device = MidiSystem.getMidiDevice(info);
+
+                // Check if device has transmitter ports (is an output device)
+                if (device.getMaxReceivers() != 0) {
+                    // This is an output device
+                    outputDevices.add(device);
+                    logger.debug("Found output device: {}", info.getName());
+                }
+            } catch (MidiUnavailableException e) {
+                logger.warn("Could not open MIDI device {}: {}",
+                        info.getName(), e.getMessage());
+                // Continue to next device
+            }
+        }
+
+        // Log summary
+        logger.info("Found {} available output devices", outputDevices.size());
+
+        return outputDevices;
     }
 
     // Controlled acquisition and release of devices
@@ -311,24 +301,25 @@ public class DeviceManager implements IBusListener {
 
     /**
      * Try to ensure the Gervill synthesizer is available
+     *
      * @return true if Gervill is available and open
      */
     public boolean ensureGervillAvailable() {
         logger.info("Ensuring Gervill synthesizer is available");
         try {
-            MidiDevice gervill = getMidiDevice("Gervill");
+            MidiDevice gervill = getMidiDevice(SequencerConstants.GERVILL);
             if (gervill == null) {
                 // Try to create the Gervill synthesizer
                 try {
                     MidiSystem.getSynthesizer().open();
-                    gervill = getMidiDevice("Gervill");
+                    gervill = getMidiDevice(SequencerConstants.GERVILL);
                     logger.info("Initialized Gervill synthesizer");
                 } catch (Exception e) {
                     logger.error("Failed to initialize Gervill synthesizer: {}", e.getMessage());
                     return false;
                 }
             }
-            
+
             if (gervill != null && !gervill.isOpen()) {
                 try {
                     gervill.open();
@@ -338,7 +329,7 @@ public class DeviceManager implements IBusListener {
                     return false;
                 }
             }
-            
+
             return gervill != null && gervill.isOpen();
         } catch (Exception e) {
             logger.error("Error ensuring Gervill is available: {}", e.getMessage());
@@ -348,12 +339,13 @@ public class DeviceManager implements IBusListener {
 
     /**
      * Gets a default MIDI output device, with preference for Gervill.
+     *
      * @return A MIDI device, or null if none available
      */
     public MidiDevice getDefaultOutputDevice() {
         try {
             // First, try to get Gervill
-            MidiDevice device = getMidiDevice("Gervill");
+            MidiDevice device = getMidiDevice(SequencerConstants.GERVILL);
             if (device != null) {
                 if (!device.isOpen()) {
                     try {
@@ -366,20 +358,20 @@ public class DeviceManager implements IBusListener {
                     return device;
                 }
             }
-            
+
             // If Gervill not available, try any other device
             List<String> devices = getAvailableOutputDeviceNames();
             for (String name : devices) {
                 try {
                     device = getMidiDevice(name);
-                    if (device != null && 
-                        device.getMaxReceivers() != 0 &&
-                        !name.contains("Real Time Sequencer")) {
-                        
+                    if (device != null &&
+                            device.getMaxReceivers() != 0 &&
+                            !name.contains("Real Time Sequencer")) {
+
                         if (!device.isOpen()) {
                             device.open();
                         }
-                        
+
                         if (device.isOpen()) {
                             logger.info("Using {} as default MIDI device", name);
                             return device;
@@ -389,7 +381,7 @@ public class DeviceManager implements IBusListener {
                     logger.debug("Failed to open device {}: {}", name, e.getMessage());
                 }
             }
-            
+
             // Last resort - try to get the Java Synthesizer
             try {
                 Synthesizer synth = MidiSystem.getSynthesizer();
@@ -401,7 +393,7 @@ public class DeviceManager implements IBusListener {
             } catch (Exception e) {
                 logger.error("Could not open Java Synthesizer: {}", e.getMessage());
             }
-            
+
             return null;
         } catch (Exception e) {
             logger.error("Error getting default output device: {}", e.getMessage());

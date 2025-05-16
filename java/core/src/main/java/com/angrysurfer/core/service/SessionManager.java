@@ -54,33 +54,34 @@ public class SessionManager {
         if (Objects.nonNull(getActiveSession()))
             CommandBus.getInstance().publish(Commands.SESSION_SELECTED, this, getActiveSession());
     }
-/**
+
+    /**
      * Updates tempo settings in all sequencers to match the active session
      */
     private void updateSequencerTempoSettings() {
         if (activeSession == null) {
             return;
         }
-        
+
         // Get tempo settings from session
         float tempoInBPM = activeSession.getTempoInBPM();
         int ticksPerBeat = activeSession.getTicksPerBeat();
-        
+
         // Update all drum sequencers
         DrumSequencerManager.getInstance().updateTempoSettings(tempoInBPM, ticksPerBeat);
-        
+
         // Update all melodic sequencers
         MelodicSequencerManager.getInstance().updateTempoSettings(tempoInBPM, ticksPerBeat);
-        
-        logger.info("Updated all sequencers with tempo: " + tempoInBPM + " BPM, " + 
-                   ticksPerBeat + " ticks per beat");
+
+        logger.info("Updated all sequencers with tempo: " + tempoInBPM + " BPM, " +
+                ticksPerBeat + " ticks per beat");
     }
 
     // Modify setActiveSession method to update sequencer settings
     public void setActiveSession(Session session) {
         if (session != null && !session.equals(this.activeSession)) {
             this.activeSession = session;
-            
+
             // Update sequencers with session tempo settings
             updateSequencerTempoSettings();
 
@@ -100,7 +101,7 @@ public class SessionManager {
         if (activeSession != null) {
             System.out.println("SessionManager: Session details:");
             System.out.println(" - Players: " + (activeSession.getPlayers() != null ?
-            activeSession.getPlayers().size() : 0));
+                    activeSession.getPlayers().size() : 0));
         }
 
         logSessionState(getActiveSession());
@@ -118,92 +119,92 @@ public class SessionManager {
                 try {
                     switch (cmd) {
 
-                    case Commands.SAVE_SESSION -> handleSessionSaveRequest();
-                    case Commands.SESSION_REQUEST -> handleSessionRequest();
-                    case Commands.TRANSPORT_REWIND -> moveBack();
-                    case Commands.TRANSPORT_FORWARD -> moveForward();
-                    case Commands.TRANSPORT_START -> {
-                        // System.out.println("SessionManager: Received TRANSPORT_START command");
-                        if (activeSession != null) {
-                            // System.out.println("Starting session: " + activeSession.getId());
-                            activeSession.play();
+                        case Commands.SAVE_SESSION -> handleSessionSaveRequest();
+                        case Commands.SESSION_REQUEST -> handleSessionRequest();
+                        case Commands.TRANSPORT_REWIND -> moveBack();
+                        case Commands.TRANSPORT_FORWARD -> moveForward();
+                        case Commands.TRANSPORT_START -> {
+                            // System.out.println("SessionManager: Received TRANSPORT_START command");
+                            if (activeSession != null) {
+                                // System.out.println("Starting session: " + activeSession.getId());
+                                activeSession.play();
+                            }
                         }
-                    }
-                    case Commands.TRANSPORT_STOP -> {
-                        // Direct control of transport
-                        if (activeSession != null) {
-                            getActiveSession().stop();
+                        case Commands.TRANSPORT_STOP -> {
+                            // Direct control of transport
+                            if (activeSession != null) {
+                                getActiveSession().stop();
+                            }
+                            // Also stop recording when transport stops
+                            if (isRecording()) {
+                                setRecording(false);
+                                CommandBus.getInstance().publish(Commands.RECORDING_STOPPED, this);
+                            }
                         }
-                        // Also stop recording when transport stops
-                        if (isRecording()) {
+                        case Commands.TRANSPORT_RECORD -> {
+                            if (activeSession != null) {
+                                redisService.saveSession(activeSession);
+                            }
+                        }
+                        case Commands.SHOW_PLAYER_EDITOR_OK -> processPlayerEdit((Player) action.getData());
+                        // case Commands.SHOW_RULE_EDITOR_OK -> processRuleEdit((Rule) action.getData());
+                        case Commands.PLAYER_DELETE_REQUEST -> {
+                            if (action.getData() instanceof Long[] playerIds) {
+                                processPlayerDeleteByIds(playerIds);
+                            } else if (action.getData() instanceof Player[] players) {
+                                // Support legacy code that sends Player[] instead of Long[]
+                                processPlayerDelete(players);
+                            }
+                        }
+                        // Handle recording commands
+                        case Commands.TRANSPORT_RECORD_START -> {
+                            setRecording(true);
+                            // Optionally notify UI or start recording-specific behaviors
+                            CommandBus.getInstance().publish(Commands.RECORDING_STARTED, this);
+                        }
+                        case Commands.TRANSPORT_RECORD_STOP -> {
                             setRecording(false);
+                            // Optionally finalize recording or perform cleanup
                             CommandBus.getInstance().publish(Commands.RECORDING_STOPPED, this);
                         }
-                    }
-                    case Commands.TRANSPORT_RECORD -> {
-                        if (activeSession != null) {
-                            redisService.saveSession(activeSession);
-                        }
-                    }
-                    case Commands.SHOW_PLAYER_EDITOR_OK -> processPlayerEdit((Player) action.getData());
-                    // case Commands.SHOW_RULE_EDITOR_OK -> processRuleEdit((Rule) action.getData());
-                    case Commands.PLAYER_DELETE_REQUEST -> {
-                        if (action.getData() instanceof Long[] playerIds) {
-                            processPlayerDeleteByIds(playerIds);
-                        } else if (action.getData() instanceof Player[] players) {
-                            // Support legacy code that sends Player[] instead of Long[]
-                            processPlayerDelete(players);
-                        }
-                    }
-                    // Handle recording commands
-                    case Commands.TRANSPORT_RECORD_START -> {
-                        setRecording(true);
-                        // Optionally notify UI or start recording-specific behaviors
-                        CommandBus.getInstance().publish(Commands.RECORDING_STARTED, this);
-                    }
-                    case Commands.TRANSPORT_RECORD_STOP -> {
-                        setRecording(false);
-                        // Optionally finalize recording or perform cleanup
-                        CommandBus.getInstance().publish(Commands.RECORDING_STOPPED, this);
-                    }
-                    case Commands.TRANSPOSE_UP -> {
-                        if (getActiveSession() != null) {
-                            Integer currentOffset = getActiveSession().getNoteOffset();
-                            // Limit to reasonable range (-12 to 12)
-                            if (currentOffset < 12) {
-                                getActiveSession().setNoteOffset(currentOffset + 1);
-                                logger.info("Transposed up: new offset = " + getActiveSession().getNoteOffset());
-                                CommandBus.getInstance().publish(Commands.SESSION_UPDATED, this, getActiveSession());
+                        case Commands.TRANSPOSE_UP -> {
+                            if (getActiveSession() != null) {
+                                Integer currentOffset = getActiveSession().getNoteOffset();
+                                // Limit to reasonable range (-12 to 12)
+                                if (currentOffset < 12) {
+                                    getActiveSession().setNoteOffset(currentOffset + 1);
+                                    logger.info("Transposed up: new offset = " + getActiveSession().getNoteOffset());
+                                    CommandBus.getInstance().publish(Commands.SESSION_UPDATED, this, getActiveSession());
+                                }
                             }
                         }
-                    }
-                    case Commands.TRANSPOSE_DOWN -> {
-                        if (getActiveSession() != null) {
-                            Integer currentOffset = getActiveSession().getNoteOffset();
-                            // Limit to reasonable range (-12 to 12)
-                            if (currentOffset > -12) {
-                                getActiveSession().setNoteOffset(currentOffset - 1);
-                                logger.info("Transposed down: new offset = " + getActiveSession().getNoteOffset());
-                                CommandBus.getInstance().publish(Commands.SESSION_UPDATED, this, getActiveSession());
+                        case Commands.TRANSPOSE_DOWN -> {
+                            if (getActiveSession() != null) {
+                                Integer currentOffset = getActiveSession().getNoteOffset();
+                                // Limit to reasonable range (-12 to 12)
+                                if (currentOffset > -12) {
+                                    getActiveSession().setNoteOffset(currentOffset - 1);
+                                    logger.info("Transposed down: new offset = " + getActiveSession().getNoteOffset());
+                                    CommandBus.getInstance().publish(Commands.SESSION_UPDATED, this, getActiveSession());
+                                }
                             }
                         }
-                    }
-                    // Add this case to the existing switch statement in the command bus listener
-                    case Commands.ALL_NOTES_OFF -> {
-                        if (getActiveSession() != null) {
-                            logger.info("Stopping all notes for all players");
-                            // Call the stopAllNotes method on the session
-                            getActiveSession().stopAllNotes();
+                        // Add this case to the existing switch statement in the command bus listener
+                        case Commands.ALL_NOTES_OFF -> {
+                            if (getActiveSession() != null) {
+                                logger.info("Stopping all notes for all players");
+                                // Call the stopAllNotes method on the session
+                                getActiveSession().stopAllNotes();
+                            }
                         }
-                    }
-                    // Add this case to the existing switch statement in SessionManager's command bus listener
-                    case Commands.SESSION_TEMPO_CHANGED -> {
-                        if (getActiveSession() != null) {
-                            // The session tempo was already updated by whoever sent this command
-                            // Now propagate to all sequencers
-                            updateSequencerTempoSettings();
+                        // Add this case to the existing switch statement in SessionManager's command bus listener
+                        case Commands.SESSION_TEMPO_CHANGED -> {
+                            if (getActiveSession() != null) {
+                                // The session tempo was already updated by whoever sent this command
+                                // Now propagate to all sequencers
+                                updateSequencerTempoSettings();
+                            }
                         }
-                    }
                     }
                 } catch (Exception e) {
                     e.printStackTrace();
@@ -237,6 +238,22 @@ public class SessionManager {
                     }
                 }
             }
+        }, new String[]{
+                Commands.SAVE_SESSION,
+                Commands.SESSION_REQUEST,
+                Commands.TRANSPORT_REWIND,
+                Commands.TRANSPORT_FORWARD,
+                Commands.TRANSPORT_START,
+                Commands.TRANSPORT_STOP,
+                Commands.TRANSPORT_RECORD,
+                Commands.SHOW_PLAYER_EDITOR_OK,
+                Commands.PLAYER_DELETE_REQUEST,
+                Commands.TRANSPORT_RECORD_START,
+                Commands.TRANSPORT_RECORD_STOP,
+                Commands.TRANSPOSE_UP,
+                Commands.TRANSPOSE_DOWN,
+                Commands.ALL_NOTES_OFF,
+                Commands.SESSION_TEMPO_CHANGED
         });
     }
 
@@ -330,33 +347,33 @@ public class SessionManager {
             if (session == null) {
                 session = redisService.newSession();
             }
-            
+
             // Load all instruments using InstrumentManager
             InstrumentManager instrumentManager = InstrumentManager.getInstance();
             List<InstrumentWrapper> instruments = instrumentManager.getCachedInstruments();
-            
+
             // No need to manually update each instrument in InstrumentManager
             // since getAllInstruments() should already have populated the cache
-            
+
             // Load all players using PlayerManager
             PlayerManager playerManager = PlayerManager.getInstance();
             Set<Player> players = SessionManager.getInstance().getActiveSession().getPlayers();
-            
+
             // Link players to their instruments and add to session
             for (Player player : players) {
                 // Link player to its instrument if available
                 if (player.getInstrumentId() != null) {
-                    InstrumentWrapper instrument = 
-                        instrumentManager.getInstrumentById(player.getInstrumentId());
+                    InstrumentWrapper instrument =
+                            instrumentManager.getInstrumentById(player.getInstrumentId());
                     if (instrument != null) {
                         player.setInstrument(instrument);
                     }
                 }
-                
+
                 // Add player to session
                 session.addOrUpdatePlayer(player);
             }
-            
+
             // Set the active session
             this.activeSession = session;
         } catch (Exception e) {
@@ -396,7 +413,7 @@ public class SessionManager {
             getActiveSession().getPlayers().add(player);
 
             // Register for event buses
-            CommandBus.getInstance().register(player);
+            // CommandBus.getInstance().register(player);
             TimingBus.getInstance().register(player);
 
             logger.info("Added new player and updated session");
@@ -450,7 +467,7 @@ public class SessionManager {
 
     /**
      * Updates a player in the active session and saves changes to Redis
-     * 
+     *
      * @param player The player to update
      */
     public void updatePlayer(Player player) {
@@ -472,7 +489,7 @@ public class SessionManager {
 
     /**
      * Gets the current recording state
-     * 
+     *
      * @return true if recording is active, false otherwise
      */
     public boolean isRecording() {
@@ -481,7 +498,7 @@ public class SessionManager {
 
     /**
      * Sets the recording state
-     * 
+     *
      * @param recording the new recording state
      */
     public void setRecording(boolean recording) {

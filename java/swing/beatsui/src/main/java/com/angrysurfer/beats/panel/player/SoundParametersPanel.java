@@ -3,13 +3,14 @@ package com.angrysurfer.beats.panel.player;
 import com.angrysurfer.beats.Symbols;
 import com.angrysurfer.beats.panel.PlayerAwarePanel;
 import com.angrysurfer.beats.util.UIHelper;
-import com.angrysurfer.core.Constants;
 import com.angrysurfer.core.api.CommandBus;
 import com.angrysurfer.core.api.Commands;
+import com.angrysurfer.core.event.PlayerPresetChangeEvent;
 import com.angrysurfer.core.model.Player;
 import com.angrysurfer.core.model.preset.BankItem;
 import com.angrysurfer.core.model.preset.PresetItem;
 import com.angrysurfer.core.model.preset.SoundbankItem;
+import com.angrysurfer.core.sequencer.SequencerConstants;
 import com.angrysurfer.core.service.InternalSynthManager;
 import com.angrysurfer.core.service.SoundbankManager;
 import org.slf4j.Logger;
@@ -17,6 +18,7 @@ import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
@@ -56,7 +58,7 @@ public class SoundParametersPanel extends PlayerAwarePanel {
         JPanel horizontalPanel = new JPanel();
         horizontalPanel.setLayout(new BoxLayout(horizontalPanel, BoxLayout.X_AXIS));
         horizontalPanel.setBorder(BorderFactory.createEmptyBorder(2, 2, 2, 2));
-        
+
         Player player = getTargetPlayer();
         if (player != null)
             requestPlayerUpdate();
@@ -65,25 +67,49 @@ public class SoundParametersPanel extends PlayerAwarePanel {
         ChannelComboPanel channelComboPanel = new ChannelComboPanel();
         channelComboPanel.setMaximumSize(new Dimension(channelComboPanel.getPreferredSize().width,
                 channelComboPanel.getPreferredSize().height));
-        
+
         // Soundbank panel
         soundbankPanel = new JPanel(new BorderLayout(5, 0));
         soundbankPanel.setBorder(BorderFactory.createCompoundBorder(
                 BorderFactory.createTitledBorder("Soundbank"),
                 BorderFactory.createEmptyBorder(2, 2, 2, 2)));
         soundbankCombo = new JComboBox<>();
-        
-        // 2. Restore soundbank action listener
+
+        // Update the soundbank action listener to properly apply changes
         soundbankCombo.addActionListener(e -> {
             if (!isInitializing && soundbankCombo.getSelectedItem() != null) {
                 Player currentPlayer = getTargetPlayer();
                 if (currentPlayer != null && currentPlayer.getInstrument() != null) {
                     SoundbankItem item = (SoundbankItem) soundbankCombo.getSelectedItem();
-                    currentPlayer.getInstrument().setSoundbankName(item.getName());
-                    
+                    String soundbankName = item.getName();
+
+                    logger.info("Soundbank selected: {}", soundbankName);
+
+                    // Update the instrument property
+                    currentPlayer.getInstrument().setSoundbankName(soundbankName);
+
+                    // IMPORTANT: Actively apply the soundbank using SoundbankManager
+                    boolean applied = SoundbankManager.getInstance().applySoundbank(
+                            currentPlayer.getInstrument(), soundbankName);
+
+                    logger.info("Applied soundbank {} to instrument: {}",
+                            soundbankName, applied ? "SUCCESS" : "FAILED");
+
                     // Update bank and preset UI
                     updateBankCombo();
-                    
+
+                    // Create and publish a PresetChangeEvent to ensure the change is applied
+                    CommandBus.getInstance().publish(
+                            Commands.PLAYER_PRESET_CHANGE_EVENT,
+                            this,
+                            new PlayerPresetChangeEvent(
+                                    currentPlayer,
+                                    currentPlayer.getInstrument().getBankIndex(),
+                                    currentPlayer.getInstrument().getPreset()
+                            )
+                    );
+
+                    // Request UI update
                     requestPlayerUpdate();
                 }
             }
@@ -91,72 +117,100 @@ public class SoundParametersPanel extends PlayerAwarePanel {
 
         soundbankPanel.add(soundbankCombo, BorderLayout.CENTER);
         soundbankPanel.setMaximumSize(new Dimension(Integer.MAX_VALUE, soundbankPanel.getPreferredSize().height));
-        
+
         // Bank panel
         bankPanel = new JPanel(new BorderLayout(5, 0));
         bankPanel.setBorder(BorderFactory.createCompoundBorder(
                 BorderFactory.createTitledBorder("Bank"),
                 BorderFactory.createEmptyBorder(2, 2, 2, 2)));
         bankCombo = new JComboBox<>();
-        
-        // 2. Restore bank action listener
+
+        // Update the bank action listener to properly apply changes
         bankCombo.addActionListener(e -> {
             if (!isInitializing && bankCombo.getSelectedItem() != null) {
                 Player currentPlayer = getTargetPlayer();
                 if (currentPlayer != null && currentPlayer.getInstrument() != null) {
                     BankItem item = (BankItem) bankCombo.getSelectedItem();
-                    currentPlayer.getInstrument().setBankIndex(item.getIndex());
+                    Integer bankIndex = item.getIndex();
+
+                    logger.info("Bank selected: {}", bankIndex);
+
+                    // Update instrument bank index
+                    currentPlayer.getInstrument().setBankIndex(bankIndex);
                     currentBank = item;
-                    
+
                     // Update preset UI based on new bank
                     updatePresetCombo();
-                    
+
+                    // Get the current preset (or default to 0 if none)
+                    Integer presetNumber = currentPlayer.getInstrument().getPreset();
+                    if (presetNumber == null) {
+                        presetNumber = 0;
+                        currentPlayer.getInstrument().setPreset(presetNumber);
+                    }
+
+                    // Create and publish a PresetChangeEvent to ensure the change is applied
+                    CommandBus.getInstance().publish(
+                            Commands.PLAYER_PRESET_CHANGE_EVENT,
+                            this,
+                            new PlayerPresetChangeEvent(
+                                    currentPlayer,
+                                    bankIndex,
+                                    presetNumber
+                            )
+                    );
+
+                    // Request UI update
                     requestPlayerUpdate();
                 }
             }
         });
-        
+
         bankPanel.add(bankCombo, BorderLayout.CENTER);
         bankPanel.setMaximumSize(new Dimension(Integer.MAX_VALUE, bankPanel.getPreferredSize().height));
-        
+
         // Preset panel
         presetPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 4, 0));
         UIHelper.setWidgetPanelBorder(presetPanel, "Preset");
         presetCombo = new JComboBox<>();
-        
-        // 2. Restore preset action listener
+
+        // Update the preset action listener for better logging and consistency
         presetCombo.addActionListener(e -> {
             if (!isInitializing && presetCombo.getSelectedItem() != null) {
                 PresetItem item = (PresetItem) presetCombo.getSelectedItem();
                 if (item != null && currentPreset != null && item.getNumber() == currentPreset.getNumber()) {
                     return; // No change
                 }
-                
+
                 currentPreset = item;
                 Player currentPlayer = getTargetPlayer();
-                
+
+                logger.info("Preset selected: {} - {}", item.getNumber(), item.getName());
+
                 if (currentPlayer != null && currentPlayer.getInstrument() != null) {
                     // Use SoundbankManager to update player sound
                     SoundbankItem sbItem = (SoundbankItem) soundbankCombo.getSelectedItem();
                     BankItem bankItem = (BankItem) bankCombo.getSelectedItem();
-                    
+
                     String soundbankName = sbItem != null ? sbItem.getName() : null;
                     Integer bankIndex = bankItem != null ? bankItem.getIndex() : null;
 
                     // For drum channel, update root note
-                    if (Objects.equals(currentPlayer.getChannel(), Constants.MIDI_DRUM_CHANNEL)) {
+                    if (Objects.equals(currentPlayer.getChannel(), SequencerConstants.MIDI_DRUM_CHANNEL)) {
                         currentPlayer.setRootNote(item.getNumber());
                     }
 
-                    SoundbankManager.getInstance().updatePlayerSound(
-                        currentPlayer, soundbankName, bankIndex, item.getNumber());
+                    boolean success = SoundbankManager.getInstance().updatePlayerSound(
+                            currentPlayer, soundbankName, bankIndex, item.getNumber());
+
+                    logger.info("Applied preset to player: {}", success ? "SUCCESS" : "FAILED");
 
                     // Request update
                     requestPlayerUpdate();
                 }
             }
         });
-        
+
         JButton editButton = new JButton(Symbols.get(Symbols.MIDI));
         editButton.setMaximumSize(new Dimension(UIHelper.SMALL_CONTROL_WIDTH, UIHelper.CONTROL_HEIGHT));
         editButton.setToolTipText("Edit player properties");
@@ -165,17 +219,17 @@ public class SoundParametersPanel extends PlayerAwarePanel {
             if (currentPlayer != null) {
                 // Request player edit dialog
                 CommandBus.getInstance().publish(
-                    com.angrysurfer.core.api.Commands.PLAYER_EDIT_REQUEST, 
-                    this, 
-                    currentPlayer);
+                        com.angrysurfer.core.api.Commands.PLAYER_EDIT_REQUEST,
+                        this,
+                        currentPlayer);
             }
         });
 
         JButton refreshButton = UIHelper.createPlayerRefreshButton(null, null);
         refreshButton.setMaximumSize(new Dimension(UIHelper.SMALL_CONTROL_WIDTH, UIHelper.CONTROL_HEIGHT));
-        refreshButton.setToolTipText("Refresh player"); 
-        
-        
+        refreshButton.setToolTipText("Refresh player");
+
+
         drumPresetsButton = new JButton(Symbols.get(Symbols.SETTINGS));
         drumPresetsButton.setToolTipText("Select preset instruments for each drum");
         drumPresetsButton.setPreferredSize(new Dimension(24, 24));
@@ -186,7 +240,7 @@ public class SoundParametersPanel extends PlayerAwarePanel {
                     this,
                     getTargetPlayer().getOwner());
         });
-        
+
         drumPresetsButton.setPreferredSize(new Dimension(24, 24));
         drumPresetsButton.setMaximumSize(new Dimension(UIHelper.SMALL_CONTROL_WIDTH, UIHelper.CONTROL_HEIGHT));
         drumPresetsButton.addActionListener(e -> {
@@ -199,7 +253,7 @@ public class SoundParametersPanel extends PlayerAwarePanel {
         JButton playNoteButton = new JButton(Symbols.get(Symbols.AUDIO));
         playNoteButton.setMaximumSize(new Dimension(UIHelper.SMALL_CONTROL_WIDTH, UIHelper.CONTROL_HEIGHT));
         playNoteButton.addActionListener(e -> {
-            getTargetPlayer().noteOn(60,100);
+            getTargetPlayer().noteOn(60, 100);
             // getTargetPlayer().noteOn(60,100);
 
 //            CommandBus.getInstance().publish(
@@ -208,8 +262,7 @@ public class SoundParametersPanel extends PlayerAwarePanel {
 //                    getTargetPlayer().getOwner());
         });
 
-        
-        
+
         presetPanel.add(presetCombo);
         presetPanel.add(refreshButton);
         presetPanel.add(editButton);
@@ -222,7 +275,7 @@ public class SoundParametersPanel extends PlayerAwarePanel {
         // UIHelper.setWidgetPanelBorder(editButtonPanel, "Action");
 
 
-         horizontalPanel.add(channelComboPanel);
+        horizontalPanel.add(channelComboPanel);
 
         InstrumentComboPanel instrumentComboPanel = new InstrumentComboPanel();
         instrumentComboPanel.setMaximumSize(new Dimension(instrumentComboPanel.getPreferredSize().width, instrumentComboPanel.getPreferredSize().height));
@@ -244,7 +297,7 @@ public class SoundParametersPanel extends PlayerAwarePanel {
     private void updateControlVisibility(boolean isInternalSynth, boolean isDrumChannel) {
         soundbankPanel.setVisible(isInternalSynth && !isDrumChannel);
         bankPanel.setVisible(isInternalSynth && !isDrumChannel);
-        drumPresetsButton.setEnabled(isDrumChannel); 
+        drumPresetsButton.setEnabled(isDrumChannel);
     }
 
     /**
@@ -262,8 +315,7 @@ public class SoundParametersPanel extends PlayerAwarePanel {
         // Update the refresh button with this player
         Component[] components = ((JPanel) getComponent(0)).getComponents();
         for (Component c : components) {
-            if (c instanceof JButton) {
-                JButton refreshButton = (JButton) c;
+            if (c instanceof JButton refreshButton) {
                 refreshButton.removeActionListener(refreshButton.getActionListeners()[0]);
                 refreshButton.addActionListener(e -> requestPlayerRefresh());
             }
@@ -297,7 +349,7 @@ public class SoundParametersPanel extends PlayerAwarePanel {
         try {
             // UIHelper.setWidgetPanelBorder(this, getTargetPlayer().getName());
 
-            boolean isDrumChannel = player.getChannel() == Constants.MIDI_DRUM_CHANNEL;
+            boolean isDrumChannel = player.getChannel() == SequencerConstants.MIDI_DRUM_CHANNEL;
             boolean isInternalSynth = player.getInstrument() != null &&
                     InternalSynthManager.getInstance().isInternalSynthInstrument(player.getInstrument());
 
@@ -341,8 +393,18 @@ public class SoundParametersPanel extends PlayerAwarePanel {
         if (player == null)
             return;
 
+        // Create a list to hold the preset items so we can sort them
+        List<PresetItem> presetItems = new ArrayList<>();
         for (int i = 0; i < 128; i++) {
-            presetCombo.addItem(new PresetItem(i, "Program " + i));
+            presetItems.add(new PresetItem(i, "Program " + i));
+        }
+
+        // Sort alphabetically by name
+        presetItems.sort((a, b) -> a.getName().compareToIgnoreCase(b.getName()));
+
+        // Add sorted items to combo box
+        for (PresetItem item : presetItems) {
+            presetCombo.addItem(item);
         }
 
         // Select current preset if possible
@@ -462,6 +524,9 @@ public class SoundParametersPanel extends PlayerAwarePanel {
             List<PresetItem> presets = SoundbankManager.getInstance().getPlayerPresets(
                     player, soundbankName, bankIndex);
 
+            // Sort alphabetically by name
+            presets.sort((a, b) -> a.getName().compareToIgnoreCase(b.getName()));
+
             for (PresetItem item : presets) {
                 presetCombo.addItem(item);
             }
@@ -500,10 +565,13 @@ public class SoundParametersPanel extends PlayerAwarePanel {
 
             // Use new helper method
             List<PresetItem> drumPresets = SoundbankManager.getInstance().getDrumPresets();
+
+            // Sort alphabetically by name
+            drumPresets.sort((a, b) -> a.getName().compareToIgnoreCase(b.getName()));
+
             for (PresetItem item : drumPresets) {
                 presetCombo.addItem(item);
             }
-
 
             // Select current preset if possible
             if (player.getInstrument() != null) {
@@ -524,5 +592,4 @@ public class SoundParametersPanel extends PlayerAwarePanel {
             isInitializing = false;
         }
     }
-
 }

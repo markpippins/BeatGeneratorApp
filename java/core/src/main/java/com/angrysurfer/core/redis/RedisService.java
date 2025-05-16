@@ -41,7 +41,6 @@ public class RedisService implements IBusListener {
     private static RedisService instance;
     private final JedisPool jedisPool;
     private final ObjectMapper objectMapper;
-    private final CommandBus commandBus = CommandBus.getInstance();
 
     // Helper classes as implementation details
     private final PlayerHelper playerHelper;
@@ -73,7 +72,7 @@ public class RedisService implements IBusListener {
         this.melodicSequencerHelper = new MelodicSequenceDataHelper(jedisPool);
         // this.configHelper = new RedisConfigHelper(jedisPool, objectMapper);
 
-        commandBus.register(this);
+        CommandBus.getInstance().register(this, new String[]{Commands.CLEAR_DATABASE});
     }
 
     // Singleton access
@@ -367,7 +366,7 @@ public class RedisService implements IBusListener {
             jedis.flushDB();
             logger.info("Database cleared");
             Session session = sessionHelper.newSession();
-            commandBus.publish(Commands.SESSION_LOADED, this, session);
+            CommandBus.getInstance().publish(Commands.SESSION_LOADED, this, session);
         }
     }
 
@@ -541,7 +540,7 @@ public class RedisService implements IBusListener {
     }
 
     public void applyDrumSequenceToSequencer(DrumSequenceData data, DrumSequencer sequencer) {
-        sequencer.setData(data);
+        sequencer.setSequenceData(data);
         //drumSequenceHelper.applyToSequencer(data, sequencer);
     }
 
@@ -664,7 +663,7 @@ public class RedisService implements IBusListener {
             }
 
             // Notify that pattern has been updated
-            commandBus.publish(Commands.MELODIC_SEQUENCE_UPDATED, this,
+            CommandBus.getInstance().publish(Commands.MELODIC_SEQUENCE_UPDATED, this,
                     Map.of("sequencerId", sequencer.getId(), "sequenceId", data.getId()));
 
         } catch (Exception e) {

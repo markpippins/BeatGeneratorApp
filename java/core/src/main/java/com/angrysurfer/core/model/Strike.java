@@ -1,14 +1,13 @@
 package com.angrysurfer.core.model;
 
+import com.angrysurfer.core.sequencer.SequencerConstants;
+import com.angrysurfer.core.sequencer.TimingUpdate;
+import lombok.Getter;
+import lombok.Setter;
+
 import java.util.HashSet;
 import java.util.List;
 import java.util.stream.LongStream;
-
-import com.angrysurfer.core.Constants;
-import com.angrysurfer.core.sequencer.TimingUpdate;
-
-import lombok.Getter;
-import lombok.Setter;
 
 @Getter
 @Setter
@@ -36,7 +35,7 @@ public class Strike extends Player {
      * Main constructor for Strike with basic parameters
      */
     public Strike(String name, Session session, InstrumentWrapper instrument, int note,
-            List<Integer> allowedControlMessages) {
+                  List<Integer> allowedControlMessages) {
         initialize(name, session, instrument, allowedControlMessages);
         setRootNote(note);
         setDrumPlayer(true);
@@ -47,7 +46,7 @@ public class Strike extends Player {
      * Extended constructor with velocity parameters
      */
     public Strike(String name, Session session, InstrumentWrapper instrument, int note,
-            List<Integer> allowableControlMessages, int minVelocity, int maxVelocity) {
+                  List<Integer> allowableControlMessages, int minVelocity, int maxVelocity) {
         initialize(name, session, instrument, allowableControlMessages);
         setRootNote(note);
         setMinVelocity(minVelocity);
@@ -57,7 +56,7 @@ public class Strike extends Player {
 
     @Override
     public Integer getDefaultChannel() {
-        return Constants.MIDI_DRUM_CHANNEL;
+        return SequencerConstants.MIDI_DRUM_CHANNEL;
     }
 
     @Override
@@ -119,24 +118,24 @@ public class Strike extends Player {
     public Object[] toRow() {
         logger.debug("Converting Strike to row - ID: {}, Name: {}", getId(), getName());
         return new Object[]{
-            getName(),
-            getChannel(),
-            getSwing(),
-            getLevel(),
-            getRootNote(),
-            getMinVelocity(),
-            getMaxVelocity(),
-            getPreset(),
-            getStickyPreset(),
-            getProbability(),
-            getRandomDegree(),
-            getRatchetCount(),
-            getRatchetInterval(),
-            getUseInternalBeats(),
-            getUseInternalBars(),
-            getPanPosition(),
-            getPreserveOnPurge(),
-            getSparse()
+                getName(),
+                getChannel(),
+                getSwing(),
+                getLevel(),
+                getRootNote(),
+                getMinVelocity(),
+                getMaxVelocity(),
+                getPreset(),
+                getStickyPreset(),
+                getProbability(),
+                getRandomDegree(),
+                getRatchetCount(),
+                getRatchetInterval(),
+                getUseInternalBeats(),
+                getUseInternalBars(),
+                getPanPosition(),
+                getPreserveOnPurge(),
+                getSparse()
         };
     }
 

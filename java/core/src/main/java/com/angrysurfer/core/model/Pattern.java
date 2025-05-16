@@ -1,33 +1,19 @@
 package com.angrysurfer.core.model;
 
-import java.util.HashSet;
-import java.util.Set;
-import java.util.Stack;
-
+import com.angrysurfer.core.sequencer.Quantizer;
+import com.angrysurfer.core.sequencer.Scale;
+import com.angrysurfer.core.sequencer.SequencerConstants;
+import com.angrysurfer.core.util.Cycler;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import jakarta.persistence.*;
+import lombok.Getter;
+import lombok.Setter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.angrysurfer.core.Constants;
-import com.angrysurfer.core.sequencer.Quantizer;
-import com.angrysurfer.core.sequencer.Scale;
-import com.angrysurfer.core.util.Cycler;
-import com.fasterxml.jackson.annotation.JsonIgnore;
-
-import jakarta.persistence.CascadeType;
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.FetchType;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
-import jakarta.persistence.OneToMany;
-import jakarta.persistence.Table;
-import jakarta.persistence.Transient;
-
-import lombok.Getter;
-import lombok.Setter;
+import java.util.HashSet;
+import java.util.Set;
+import java.util.Stack;
 
 @Entity
 @Getter
@@ -84,7 +70,7 @@ public class Pattern {
     @Column(name = "auto_repeat")
     private Boolean loop = true;
 
-    private Integer beatDivider = Constants.DEFAULT_BEAT_DIVIDER;
+    private Integer beatDivider = SequencerConstants.DEFAULT_BEAT_DIVIDER;
 
     @JsonIgnore
     @Transient

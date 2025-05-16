@@ -1,26 +1,24 @@
 package com.angrysurfer.spring.service;
 
-import java.util.List;
-import java.util.Objects;
-import java.util.stream.Collectors;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.stereotype.Service;
-
 import com.angrysurfer.core.api.Command;
 import com.angrysurfer.core.api.CommandBus;
-import com.angrysurfer.core.api.IBusListener;
 import com.angrysurfer.core.api.Commands;
+import com.angrysurfer.core.api.IBusListener;
 import com.angrysurfer.core.model.Session;
 import com.angrysurfer.core.redis.RedisService;
 import com.angrysurfer.core.service.PlayerManager;
 import com.angrysurfer.core.service.SessionManager;
 import com.angrysurfer.core.util.update.SessionUpdateType;
 import com.angrysurfer.spring.dao.SessionStatus;
-
 import lombok.Getter;
 import lombok.Setter;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.stereotype.Service;
+
+import java.util.List;
+import java.util.Objects;
+import java.util.stream.Collectors;
 
 @Getter
 @Setter
@@ -36,7 +34,8 @@ public class SessionService implements IBusListener {
     public SessionService(SongService songService, InstrumentService instrumentService) {
         this.songService = songService;
         this.instrumentService = instrumentService;
-        CommandBus.getInstance().register(this); // Register for command events
+        CommandBus.getInstance().register(this, new String[]{
+                Commands.TRANSPORT_START, Commands.TRANSPORT_STOP, Commands.TRANSPORT_PAUSE});
     }
 
     @Override
@@ -88,7 +87,7 @@ public class SessionService implements IBusListener {
                     // session.getPartCycler().reset();
                 }
                 case SessionUpdateType.BASE_NOTE_OFFSET ->
-                    session.setNoteOffset((int) (session.getNoteOffset() + updateValue));
+                        session.setNoteOffset((int) (session.getNoteOffset() + updateValue));
                 case SessionUpdateType.BARS -> session.setBars((int) updateValue);
                 case SessionUpdateType.PART_LENGTH -> session.setPartLength((int) updateValue);
                 case SessionUpdateType.MAX_TRACKS -> session.setMaxTracks((int) updateValue);
@@ -127,7 +126,7 @@ public class SessionService implements IBusListener {
         }
         return session;
     }
-    
+
     public void pause() {
         SessionManager.getInstance().getActiveSession().setPaused(true);
     }

@@ -4,6 +4,7 @@ import com.angrysurfer.beats.Symbols;
 import com.angrysurfer.beats.panel.instrument.InstrumentsPanel;
 import com.angrysurfer.beats.panel.internalsynth.InternalSynthControlPanel;
 import com.angrysurfer.beats.panel.modulation.QuadXYPadPanel;
+import com.angrysurfer.beats.panel.modulation.TuringMachinePanel;
 import com.angrysurfer.beats.panel.modulation.oscillator.LFOPanel;
 import com.angrysurfer.beats.panel.sample.SampleBrowserPanel;
 import com.angrysurfer.beats.panel.sequencer.SongPanel;
@@ -16,11 +17,11 @@ import com.angrysurfer.core.api.Command;
 import com.angrysurfer.core.api.CommandBus;
 import com.angrysurfer.core.api.Commands;
 import com.angrysurfer.core.api.IBusListener;
-import com.angrysurfer.core.api.midi.MIDIConstants;
 import com.angrysurfer.core.event.StepUpdateEvent;
 import com.angrysurfer.core.model.Player;
 import com.angrysurfer.core.sequencer.DrumSequencer;
 import com.angrysurfer.core.sequencer.MelodicSequencer;
+import com.angrysurfer.core.sequencer.SequencerConstants;
 import com.angrysurfer.core.service.ChannelManager;
 import com.angrysurfer.core.service.InternalSynthManager;
 import com.angrysurfer.core.service.SessionManager;
@@ -45,16 +46,11 @@ public class MainPanel extends PlayerAwarePanel implements AutoCloseable, IBusLi
         System.setProperty("org.slf4j.simpleLogger.log.com.angrysurfer.core.api.CommandBus", "debug");
     }
 
-    private static final int DEFAULT_MONO_SEQUENCERS = 8;
-
+    private final MelodicSequencerPanel[] melodicPanels = new MelodicSequencerPanel[SequencerConstants.SEQUENCER_CHANNELS.length];
     private JTabbedPane tabbedPane;
-
     private DrumSequencerPanel drumSequencerPanel;
     private DrumParamsSequencerPanel drumParamsSequencerPanel;
     private DrumEffectsSequencerPanel drumEffectsSequencerPanel;
-
-    private MelodicSequencerPanel[] melodicPanels = new MelodicSequencerPanel[MIDIConstants.SEQUENCER_CHANNELS.length];
-
     private GlobalMuteButtonsPanel muteButtonsPanel;
 
     private JTabbedPane drumsTabbedPane;
@@ -66,9 +62,29 @@ public class MainPanel extends PlayerAwarePanel implements AutoCloseable, IBusLi
     public MainPanel() {
         super();
         setLayout(new BorderLayout());
-        CommandBus.getInstance().register(this);
+        CommandBus.getInstance().register(this, new String[]{
+                Commands.SEQUENCER_STEP_UPDATE, Commands.SCALE_SELECTED, Commands.TOGGLE_TRANSPORT, Commands.ROOT_NOTE_SELECTED,
+                Commands.SESSION_UPDATED, Commands.TRANSPORT_STOP, Commands.TRANSPORT_START
+        });
         setupTabbedPane();
         add(tabbedPane, BorderLayout.CENTER);
+    }
+
+    private static JSplitPane createSplitPane(InstrumentsPanel instrumentsPanel, SystemsPanel systemsPanel) {
+        JSplitPane splitPane = new JSplitPane(JSplitPane.VERTICAL_SPLIT);
+        splitPane.setTopComponent(instrumentsPanel);
+        splitPane.setBottomComponent(systemsPanel);
+
+        // Set initial divider position (70% for instruments, 30% for systems)
+        splitPane.setDividerLocation(0.7);
+        splitPane.setResizeWeight(0.7); // Keep 70% proportion on resize
+
+        // Make the divider slightly more visible
+        splitPane.setDividerSize(8);
+
+        // Remove any borders from the split pane itself
+        splitPane.setBorder(null);
+        return splitPane;
     }
 
     private void setupTabbedPane() {
@@ -84,16 +100,15 @@ public class MainPanel extends PlayerAwarePanel implements AutoCloseable, IBusLi
         tabbedPane.addTab("Synth", internalSynthControlPanel);
         tabbedPane.addTab("Matrix", createModulationMatrixPanel());
         tabbedPane.addTab("Players", new SessionPanel());
-       
+
         tabbedPane.addTab("Launch", new LaunchPanel());
 
         tabbedPane.addTab("Samples", createSampleBrowserPanel());
         tabbedPane.addTab("Instruments", createCombinedInstrumentsSystemPanel());
 
-        LoggingPanel loggingPanel = new LoggingPanel();
-        tabbedPane.addTab("Logs", loggingPanel);
+        tabbedPane.addTab("Logs", new LoggingPanel());
         // tabbedPane.addTab("Visualizer", new GridPanel());
-        
+
         tabbedPane.setBorder(BorderFactory.createEmptyBorder(0, 4, 0, 4));
 
         JPanel tabToolbar = new JPanel();
@@ -169,7 +184,7 @@ public class MainPanel extends PlayerAwarePanel implements AutoCloseable, IBusLi
     /**
      * Recursively adds listeners to all tabbedPanes and their nested components
      * to ensure focus handling and player activation work correctly
-     * 
+     *
      * @param component The component to process (starts with main tabbedPane)
      */
     private void addListenersRecursive(Component component) {
@@ -202,7 +217,7 @@ public class MainPanel extends PlayerAwarePanel implements AutoCloseable, IBusLi
 
     /**
      * Unified method to handle component selection in any tabbed pane
-     * 
+     *
      * @param selectedComponent The component that was selected
      * @param sourceTabbedPane  The tabbed pane where selection occurred
      */
@@ -267,8 +282,25 @@ public class MainPanel extends PlayerAwarePanel implements AutoCloseable, IBusLi
             MelodicSequencerPanel melodicPanel = findMelodicSequencerPanel(selectedMelodicTab);
 
             if (melodicPanel != null && melodicPanel.getSequencer() != null) {
+                // Activate player as before
                 Player player = melodicPanel.getSequencer().getPlayer();
                 activatePlayer(player, "melodic tabbed pane");
+
+                // Force UI refresh for the selected melodic tab
+                // SwingUtilities.invokeLater(() -> {
+                //     // Invalidate and repaint the entire panel
+                //     melodicPanel.invalidate();
+                //     melodicPanel.validate();
+                //     melodicPanel.repaint();
+
+                //     // Also refresh specific components that might need it
+                //     if (melodicPanel.getSequenceNavigationPanel() != null) {
+                //         melodicPanel.getSequenceNavigationPanel().invalidate();
+                //         melodicPanel.getSequenceNavigationPanel().repaint();
+                //     }
+
+                //     logger.debug("Refreshed UI for melodic tab: {}", player.getName());
+                // });
             }
         }
 
@@ -285,7 +317,7 @@ public class MainPanel extends PlayerAwarePanel implements AutoCloseable, IBusLi
 
     /**
      * Helper method to activate a player and publish event
-     * 
+     *
      * @param player The player to activate
      * @param source Description of the source for logging
      */
@@ -324,7 +356,7 @@ public class MainPanel extends PlayerAwarePanel implements AutoCloseable, IBusLi
         // melodicTabbedPane.setTabPlacement(JTabbedPane.BOTTOM);
 
         // Initialize all melodic sequencer panels with proper channel distribution
-        for (int i = 0; i < DEFAULT_MONO_SEQUENCERS; i++) {
+        for (int i = 0; i < SequencerConstants.SEQUENCER_CHANNELS.length; i++) {
             melodicPanels[i] = createMelodicSequencerPanel(i);
             melodicTabbedPane.addTab("Melo " + (i + 1), melodicPanels[i]);
         }
@@ -404,23 +436,6 @@ public class MainPanel extends PlayerAwarePanel implements AutoCloseable, IBusLi
         combinedPanel.add(splitPane, BorderLayout.CENTER);
 
         return combinedPanel;
-    }
-
-    private static JSplitPane createSplitPane(InstrumentsPanel instrumentsPanel, SystemsPanel systemsPanel) {
-        JSplitPane splitPane = new JSplitPane(JSplitPane.VERTICAL_SPLIT);
-        splitPane.setTopComponent(instrumentsPanel);
-        splitPane.setBottomComponent(systemsPanel);
-
-        // Set initial divider position (70% for instruments, 30% for systems)
-        splitPane.setDividerLocation(0.7);
-        splitPane.setResizeWeight(0.7); // Keep 70% proportion on resize
-
-        // Make the divider slightly more visible
-        splitPane.setDividerSize(8);
-
-        // Remove any borders from the split pane itself
-        splitPane.setBorder(null);
-        return splitPane;
     }
 
     private Component createDrumPanel() {
@@ -505,6 +520,9 @@ public class MainPanel extends PlayerAwarePanel implements AutoCloseable, IBusLi
         modulationTabbedPane.addTab("LFOs", lfoPanel);
         modulationTabbedPane.addTab("Complex LFO", new ComplexLFOPanel());
         modulationTabbedPane.addTab("XY Pad", createXYPadPanel());
+
+        // Add the new Turing Machine panel
+        modulationTabbedPane.addTab("Turing Machine", new TuringMachinePanel());
 
         return modulationTabbedPane;
     }
@@ -592,22 +610,19 @@ public class MainPanel extends PlayerAwarePanel implements AutoCloseable, IBusLi
             }
 
             case Commands.ROOT_NOTE_SELECTED -> {
-                if (action.getData() instanceof String) {
-                    String rootNote = (String) action.getData();
+                if (action.getData() instanceof String rootNote) {
                     // Handle root note selection if needed
                 }
             }
 
             case Commands.SCALE_SELECTED -> {
-                if (action.getData() instanceof String) {
-                    String scaleName = (String) action.getData();
+                if (action.getData() instanceof String scaleName) {
                     // Handle scale selection if needed
                 }
             }
 
             case Commands.SEQUENCER_STEP_UPDATE -> {
-                if (action.getData() instanceof StepUpdateEvent) {
-                    StepUpdateEvent stepUpdateEvent = (StepUpdateEvent) action.getData();
+                if (action.getData() instanceof StepUpdateEvent stepUpdateEvent) {
                     int step = stepUpdateEvent.getNewStep();
                     // Handle step update if needed
                 }
@@ -694,7 +709,7 @@ public class MainPanel extends PlayerAwarePanel implements AutoCloseable, IBusLi
                     });
                     break;
             }
-        });
+        }, new String[]{Commands.METRONOME_STARTED, Commands.METRONOME_STOPPED});
 
         return metronomeButton;
     }
@@ -911,8 +926,7 @@ public class MainPanel extends PlayerAwarePanel implements AutoCloseable, IBusLi
             for (Component comp : tabbedPane.getComponents()) {
                 if (comp instanceof LoggingPanel) {
                     ((LoggingPanel) comp).cleanup();
-                }
-                else if (comp instanceof AutoCloseable) {
+                } else if (comp instanceof AutoCloseable) {
                     try {
                         ((AutoCloseable) comp).close();
                     } catch (Exception e) {

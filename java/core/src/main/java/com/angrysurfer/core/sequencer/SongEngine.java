@@ -26,7 +26,6 @@ public class SongEngine {
     private static final Logger logger = LoggerFactory.getLogger(SongEngine.class);
 
     private Song activeSong;
-    private CommandBus commandBus = CommandBus.getInstance();
     private Map<Integer, Map<Integer, Pattern>> songStepsMap = new ConcurrentHashMap<>();
 
     public SongEngine() {
@@ -60,7 +59,7 @@ public class SongEngine {
             case PatternUpdateType.TRANSPOSE -> pattern.setTranspose(updateValue);
         }
 
-        commandBus.publish(Commands.PATTERN_UPDATED, this, pattern);
+        CommandBus.getInstance().publish(Commands.PATTERN_UPDATED, this, pattern);
         return pattern;
     }
 
@@ -83,7 +82,7 @@ public class SongEngine {
             case StepUpdateType.VELOCITY -> step.setVelocity(updateValue);
         }
 
-        commandBus.publish(Commands.STEP_UPDATED, this, step);
+        CommandBus.getInstance().publish(Commands.STEP_UPDATED, this, step);
         return step;
     }
 
@@ -91,13 +90,13 @@ public class SongEngine {
         pattern.setPosition(activeSong.getPatterns().size());
         pattern.setSong(activeSong);
         activeSong.getPatterns().add(pattern);
-        commandBus.publish(Commands.PATTERN_ADDED, this, pattern);
+        CommandBus.getInstance().publish(Commands.PATTERN_ADDED, this, pattern);
         return pattern;
     }
 
     public Set<Pattern> removePattern(Pattern pattern) {
         activeSong.getPatterns().remove(pattern);
-        commandBus.publish(Commands.PATTERN_REMOVED, this, pattern);
+        CommandBus.getInstance().publish(Commands.PATTERN_REMOVED, this, pattern);
         return activeSong.getPatterns();
     }
 
@@ -109,7 +108,7 @@ public class SongEngine {
 
                 return pattern.getQuantize()
                         ? pattern.getQuantizer().quantizeNote(pattern.getRootNote() + step.getPitch() +
-                                (12 * pattern.getTranspose()))
+                        (12 * pattern.getTranspose()))
                         : pattern.getRootNote() + step.getPitch() + (12 * pattern.getTranspose());
             }
         }
@@ -117,7 +116,7 @@ public class SongEngine {
     }
 
     private void setupCommandBusListener() {
-        commandBus.register(new IBusListener() {
+        CommandBus.getInstance().register(new IBusListener() {
             @Override
             public void onAction(Command action) {
                 switch (action.getCommand()) {
@@ -133,20 +132,20 @@ public class SongEngine {
                     }
                 }
             }
-        });
+        }, new String[]{Commands.SONG_SELECTED, Commands.SONG_UPDATED});
     }
 
     public void songSelected(Song song) {
         if (!Objects.equals(activeSong, song)) {
             this.activeSong = song;
-            commandBus.publish(Commands.SONG_CHANGED, this, song);
+            CommandBus.getInstance().publish(Commands.SONG_CHANGED, this, song);
         }
     }
 
     public void songUpdated(Song song) {
         if (Objects.equals(activeSong.getId(), song.getId())) {
             this.activeSong = song;
-            commandBus.publish(Commands.SONG_CHANGED, this, song);
+            CommandBus.getInstance().publish(Commands.SONG_CHANGED, this, song);
         }
     }
 

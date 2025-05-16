@@ -1,44 +1,36 @@
 package com.angrysurfer.core.redis;
 
+import com.angrysurfer.core.api.CommandBus;
+import com.angrysurfer.core.api.Commands;
+import com.angrysurfer.core.event.MelodicSequencerEvent;
+import com.angrysurfer.core.model.InstrumentWrapper;
+import com.angrysurfer.core.model.Player;
+import com.angrysurfer.core.sequencer.*;
+import com.angrysurfer.core.service.PlayerManager;
+import com.angrysurfer.core.util.MelodicSequenceDataDeserializer;
+import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.module.SimpleModule;
+import lombok.Getter;
+import lombok.Setter;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import redis.clients.jedis.Jedis;
+import redis.clients.jedis.JedisPool;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import com.angrysurfer.core.util.MelodicSequenceDataDeserializer;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import com.angrysurfer.core.api.CommandBus;
-import com.angrysurfer.core.api.Commands;
-import com.angrysurfer.core.event.MelodicSequencerEvent;
-import com.angrysurfer.core.sequencer.Direction;
-import com.angrysurfer.core.model.InstrumentWrapper;
-import com.angrysurfer.core.model.Player;
-import com.angrysurfer.core.sequencer.MelodicSequenceData;
-import com.angrysurfer.core.sequencer.MelodicSequencer;
-import com.angrysurfer.core.sequencer.Scale;
-import com.angrysurfer.core.sequencer.TimingDivision;
-import com.angrysurfer.core.service.PlayerManager;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.DeserializationFeature;
-import com.fasterxml.jackson.databind.module.SimpleModule;
-
-import lombok.Getter;
-import lombok.Setter;
-import redis.clients.jedis.Jedis;
-import redis.clients.jedis.JedisPool;
-
 @Getter
 @Setter
 public class MelodicSequenceDataHelper {
     private static final Logger logger = LoggerFactory.getLogger(MelodicSequenceDataHelper.class);
-    private final JedisPool jedisPool;
-    private final ObjectMapper objectMapper;
-    private final CommandBus commandBus = CommandBus.getInstance();
-
     // Constants
     private static final int MAX_STEPS = 16;
+    private final JedisPool jedisPool;
+    private final ObjectMapper objectMapper;
 
     public MelodicSequenceDataHelper(JedisPool jedisPool) {
         this.jedisPool = jedisPool;
@@ -51,68 +43,68 @@ public class MelodicSequenceDataHelper {
         SimpleModule module = new SimpleModule();
         module.addDeserializer(MelodicSequenceData.class, new MelodicSequenceDataDeserializer());
         this.objectMapper.registerModule(module);
-        
+
         // Enable more tolerant deserialization
         this.objectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
         this.objectMapper.configure(DeserializationFeature.READ_UNKNOWN_ENUM_VALUES_AS_NULL, true);
     }
 
     /**
- * Find a melodic sequence by ID and sequencer ID
- * 
- * @param id          The sequence ID
- * @param sequencerId The sequencer instance ID
- * @return The melodic sequence data or null if not found
- */
-public MelodicSequenceData findMelodicSequenceById(Long id, Integer sequencerId) {
-    try (Jedis jedis = jedisPool.getResource()) {
-        String json = null;
-        String source = "unknown";
-        
-        // Try first with the newer key format
-        json = jedis.get("melodicseq:" + sequencerId + ":" + id);
-        if (json != null) source = "melodicseq key";
-        
-        // If not found, try the older key format
-        if (json == null) {
-            json = jedis.get("melseq:" + sequencerId + ":" + id);
-            if (json != null) source = "melseq key";
-        }
-        
-        // If still not found, try looking up in the hash for faster lookup
-        if (json == null) {
-            json = jedis.hget("melodic-sequences:" + sequencerId, String.valueOf(id));
-            if (json != null) source = "hash table";
-        }
-        
-        if (json != null) {
-            // Log a portion of the JSON to debug
-            logger.debug("Found melodic sequence from {}, JSON excerpt: {}", 
-                    source, json.length() > 100 ? json.substring(0, 100) + "..." : json);
-            
-            try {
-                MelodicSequenceData data = objectMapper.readValue(json, MelodicSequenceData.class);
-                logger.info("Loaded melodic sequence {} for sequencer {} with instrument: {} ({})", 
-                        id, sequencerId, 
-                        data.getInstrumentName(), 
-                        data.getPreset() != null ? "Preset " + data.getPreset() : "No preset");
-                return data;
-            } catch (Exception e) {
-                logger.error("Error deserializing melodic sequence: " + e.getMessage(), e);
-                // Return null instead of throwing to make the API more robust
-                return null;
+     * Find a melodic sequence by ID and sequencer ID
+     *
+     * @param id          The sequence ID
+     * @param sequencerId The sequencer instance ID
+     * @return The melodic sequence data or null if not found
+     */
+    public MelodicSequenceData findMelodicSequenceById(Long id, Integer sequencerId) {
+        try (Jedis jedis = jedisPool.getResource()) {
+            String json = null;
+            String source = "unknown";
+
+            // Try first with the newer key format
+            json = jedis.get("melodicseq:" + sequencerId + ":" + id);
+            if (json != null) source = "melodicseq key";
+
+            // If not found, try the older key format
+            if (json == null) {
+                json = jedis.get("melseq:" + sequencerId + ":" + id);
+                if (json != null) source = "melseq key";
             }
+
+            // If still not found, try looking up in the hash for faster lookup
+            if (json == null) {
+                json = jedis.hget("melodic-sequences:" + sequencerId, String.valueOf(id));
+                if (json != null) source = "hash table";
+            }
+
+            if (json != null) {
+                // Log a portion of the JSON to debug
+                logger.debug("Found melodic sequence from {}, JSON excerpt: {}",
+                        source, json.length() > 100 ? json.substring(0, 100) + "..." : json);
+
+                try {
+                    MelodicSequenceData data = objectMapper.readValue(json, MelodicSequenceData.class);
+                    logger.info("Loaded melodic sequence {} for sequencer {} with instrument: {} ({})",
+                            id, sequencerId,
+                            data.getInstrumentName(),
+                            data.getPreset() != null ? "Preset " + data.getPreset() : "No preset");
+                    return data;
+                } catch (Exception e) {
+                    logger.error("Error deserializing melodic sequence: " + e.getMessage(), e);
+                    // Return null instead of throwing to make the API more robust
+                    return null;
+                }
+            }
+
+            // If no sequence was found, return null instead of throwing an exception
+            logger.warn("No melodic sequence found for id {} and sequencer {}", id, sequencerId);
+            return null;
+        } catch (Exception e) {
+            logger.error("Error finding melodic sequence: " + e.getMessage(), e);
+            // Consider returning null instead of throwing to make the API more robust
+            return null;
         }
-        
-        // If no sequence was found, return null instead of throwing an exception
-        logger.warn("No melodic sequence found for id {} and sequencer {}", id, sequencerId);
-        return null;
-    } catch (Exception e) {
-        logger.error("Error finding melodic sequence: " + e.getMessage(), e);
-        // Consider returning null instead of throwing to make the API more robust
-        return null;
     }
-}
 
     /**
      * Apply loaded data to a MelodicSequencer including instrument settings
@@ -184,21 +176,21 @@ public MelodicSequenceData findMelodicSequenceById(Long id, Integer sequencerId)
             // Apply instrument settings to the player with better error handling
             if (sequencer.getPlayer() != null) {
                 Player player = sequencer.getPlayer();
-                
+
                 if (player.getInstrument() != null) {
                     InstrumentWrapper instrument = player.getInstrument();
 
                     // Log the before state
                     logger.info("Before applying - Instrument settings: soundbank='{}', bank={}, preset={}",
                             instrument.getSoundbankName(), instrument.getBankIndex(), instrument.getPreset());
-                    
+
                     // Log what we're loading from saved data
                     logger.info("Loaded values from data: soundbank='{}', bank={}, preset={}",
                             data.getSoundbankName(), data.getBankIndex(), data.getPreset());
 
                     // Only apply if values are present and valid
                     boolean settingsChanged = false;
-                    
+
                     if (data.getSoundbankName() != null && !data.getSoundbankName().isEmpty()) {
                         instrument.setSoundbankName(data.getSoundbankName());
                         settingsChanged = true;
@@ -218,7 +210,7 @@ public MelodicSequenceData findMelodicSequenceById(Long id, Integer sequencerId)
                     if (data.getDeviceName() != null && !data.getDeviceName().isEmpty()) {
                         instrument.setDeviceName(data.getDeviceName());
                     }
-                    
+
                     if (data.getInstrumentName() != null && !data.getInstrumentName().isEmpty()) {
                         instrument.setName(data.getInstrumentName());
                     }
@@ -231,13 +223,13 @@ public MelodicSequenceData findMelodicSequenceById(Long id, Integer sequencerId)
                         try {
                             logger.info("Applying instrument preset changes to MIDI device");
                             PlayerManager.getInstance().applyInstrumentPreset(player);
-                            
+
                             // Verify the changes were applied
                             logger.info("Verified final settings: soundbank='{}', bank={}, preset={}",
-                                    player.getInstrument().getSoundbankName(), 
-                                    player.getInstrument().getBankIndex(), 
+                                    player.getInstrument().getSoundbankName(),
+                                    player.getInstrument().getBankIndex(),
                                     player.getInstrument().getPreset());
-                            
+
                         } catch (Exception e) {
                             logger.error("Error applying program change: {}", e.getMessage(), e);
                         }
@@ -252,7 +244,7 @@ public MelodicSequenceData findMelodicSequenceById(Long id, Integer sequencerId)
             }
 
             // Notify that pattern has updated
-            commandBus.publish(
+            CommandBus.getInstance().publish(
                     Commands.MELODIC_SEQUENCE_LOADED,
                     this,
                     new MelodicSequencerEvent(sequencer.getId(), data.getId()));
@@ -279,7 +271,7 @@ public MelodicSequenceData findMelodicSequenceById(Long id, Integer sequencerId)
             Player player = sequencer.getPlayer();
             if (player != null && player.getInstrument() != null) {
                 InstrumentWrapper instrument = player.getInstrument();
-                
+
                 // Store all instrument information
                 data.setSoundbankName(instrument.getSoundbankName());
                 data.setPreset(instrument.getPreset());
@@ -287,11 +279,11 @@ public MelodicSequenceData findMelodicSequenceById(Long id, Integer sequencerId)
                 data.setDeviceName(instrument.getDeviceName());
                 data.setInstrumentId(instrument.getId());
                 data.setInstrumentName(instrument.getName());
-                
+
                 // Detailed logging to confirm values are set
                 logger.info("Saving instrument settings: soundbank='{}', bank={}, preset={}, device='{}', name='{}'",
-                        data.getSoundbankName(), 
-                        data.getBankIndex(), 
+                        data.getSoundbankName(),
+                        data.getBankIndex(),
                         data.getPreset(),
                         data.getDeviceName(),
                         data.getInstrumentName());
@@ -301,11 +293,11 @@ public MelodicSequenceData findMelodicSequenceById(Long id, Integer sequencerId)
 
             // Save to Redis
             String json = objectMapper.writeValueAsString(data);
-            
+
             // Debug log the JSON to see if instrument data is included
-            logger.debug("Saving melodic sequence JSON (excerpt): {}", 
+            logger.debug("Saving melodic sequence JSON (excerpt): {}",
                     json.length() > 300 ? json.substring(0, 300) + "..." : json);
-            
+
             // Save to both storage formats
             jedis.set("melodicseq:" + sequencer.getId() + ":" + data.getId(), json);
             jedis.hset("melodic-sequences:" + sequencer.getId(), String.valueOf(data.getId()), json);
@@ -314,7 +306,7 @@ public MelodicSequenceData findMelodicSequenceById(Long id, Integer sequencerId)
                     data.getId(), sequencer.getId());
 
             // Notify listeners
-            commandBus.publish(Commands.MELODIC_SEQUENCE_SAVED, this,
+            CommandBus.getInstance().publish(Commands.MELODIC_SEQUENCE_SAVED, this,
                     Map.of("sequencerId", sequencer.getId(), "sequenceId", data.getId()));
 
         } catch (Exception e) {
@@ -376,7 +368,7 @@ public MelodicSequenceData findMelodicSequenceById(Long id, Integer sequencerId)
             logger.info("Deleted melodic sequence {} for sequencer {}", melSequenceId, sequencerId);
 
             // Notify listeners
-            commandBus.publish(
+            CommandBus.getInstance().publish(
                     Commands.MELODIC_SEQUENCE_REMOVED,
                     this,
                     new MelodicSequencerEvent(sequencerId, melSequenceId));

@@ -1,9 +1,13 @@
 package com.angrysurfer.core.service;
 
+import com.angrysurfer.core.sequencer.SequencerConstants;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.sound.midi.*;
+import javax.sound.midi.MidiDevice;
+import javax.sound.midi.MidiSystem;
+import javax.sound.midi.Receiver;
+import javax.sound.midi.ShortMessage;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -13,27 +17,26 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 public class ReceiverManager {
     private static final Logger logger = LoggerFactory.getLogger(ReceiverManager.class);
+    private static final long VALIDATION_INTERVAL_MS = 5000; // Only validate every 5 seconds
     private static ReceiverManager instance;
-    
     // Cache receivers by device name for reuse
     private final Map<String, Receiver> receiverCache = new ConcurrentHashMap<>();
     // Track if devices are being reconnected to avoid duplicate attempts
     private final Map<String, Boolean> reconnectionInProgress = new ConcurrentHashMap<>();
     // Add a timestamp map for validation
     private final Map<String, Long> lastValidationTime = new ConcurrentHashMap<>();
-    private static final long VALIDATION_INTERVAL_MS = 5000; // Only validate every 5 seconds
-    
+
     private ReceiverManager() {
         // Private constructor for singleton pattern
     }
-    
+
     public static synchronized ReceiverManager getInstance() {
         if (instance == null) {
             instance = new ReceiverManager();
         }
         return instance;
     }
-    
+
     /**
      * Add an improved version of getOrCreateReceiver that handles
      * error cases better
@@ -43,7 +46,7 @@ public class ReceiverManager {
             logger.warn("Cannot get receiver for null or empty device name");
             return null;
         }
-        
+
         // Check if we already have a receiver for this device
         Receiver receiver = receiverCache.get(deviceName);
         if (receiver != null) {
@@ -60,17 +63,17 @@ public class ReceiverManager {
                 closeReceiver(deviceName);
             }
         }
-        
+
         // If device wasn't provided, try to get it
         if (device == null) {
             device = DeviceManager.getMidiDevice(deviceName);
         }
-        
+
         if (device == null) {
             logger.warn("Could not find device: {}", deviceName);
             return null;
         }
-        
+
         // Make sure device is open
         try {
             if (!device.isOpen()) {
@@ -80,7 +83,7 @@ public class ReceiverManager {
             logger.error("Failed to open device {}: {}", deviceName, e.getMessage());
             return null;
         }
-        
+
         // Get receiver from device
         try {
             if (device.getMaxReceivers() != 0) {
@@ -97,10 +100,10 @@ public class ReceiverManager {
             return null;
         }
     }
-    
+
     /**
      * Close and remove a receiver from the cache
-     * 
+     *
      * @param deviceName The device name
      */
     public synchronized void closeReceiver(String deviceName) {
@@ -109,7 +112,7 @@ public class ReceiverManager {
             logger.warn("Attempted to close receiver with null device name");
             return;
         }
-        
+
         Receiver receiver = receiverCache.remove(deviceName);
         if (receiver != null) {
             try {
@@ -120,15 +123,15 @@ public class ReceiverManager {
             }
         }
     }
-    
+
     /**
      * Check if receiver is valid by sending a test message
      */
     private boolean isReceiverValid(Receiver receiver) {
-        if (receiver == null) return false;
-        
+        return receiver != null;
+
         // Skip actual validation test most of the time
-        return true; // Assume valid to improve performance
+// Assume valid to improve performance
         
         /* Original validation code - too expensive for real-time
         try {
@@ -140,31 +143,31 @@ public class ReceiverManager {
         }
         */
     }
-    
+
     /**
      * Special handling for Gervill synthesizer
      */
     private Receiver handleGervillReconnection() {
         try {
             logger.info("Attempting Gervill reconnection");
-            
+
             // Clean up devices first
             DeviceManager.cleanupMidiDevices();
-            
+
             // Try to find and open Gervill
             MidiDevice.Info[] infos = MidiSystem.getMidiDeviceInfo();
             for (MidiDevice.Info info : infos) {
-                if (info.getName().contains("Gervill")) {
+                if (info.getName().contains(SequencerConstants.GERVILL)) {
                     try {
                         MidiDevice gervillDevice = MidiSystem.getMidiDevice(info);
                         if (!gervillDevice.isOpen()) {
                             gervillDevice.open();
                         }
-                        
+
                         Receiver gervillReceiver = gervillDevice.getReceiver();
                         if (isReceiverValid(gervillReceiver)) {
                             logger.info("Successfully reconnected to Gervill");
-                            receiverCache.put("Gervill", gervillReceiver);
+                            receiverCache.put(SequencerConstants.GERVILL, gervillReceiver);
                             return gervillReceiver;
                         }
                     } catch (Exception e) {
@@ -177,7 +180,7 @@ public class ReceiverManager {
         }
         return null;
     }
-    
+
     /**
      * Clear all receivers (useful during shutdown)
      */

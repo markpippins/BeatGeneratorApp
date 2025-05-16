@@ -13,9 +13,7 @@ import com.angrysurfer.core.event.NoteEvent;
 import com.angrysurfer.core.model.Player;
 import com.angrysurfer.core.sequencer.DrumSequencer;
 import com.angrysurfer.core.sequencer.TimingUpdate;
-import com.angrysurfer.core.service.DeviceManager;
 import com.angrysurfer.core.service.DrumSequencerManager;
-import com.angrysurfer.core.service.PlayerManager;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -98,8 +96,15 @@ public class DrumParamsSequencerPanel extends JPanel implements IBusListener {
         navigationPanel = new DrumSequenceNavigationPanel(sequencer);
         drumPadPanel = new DrumButtonsPanel(sequencer, this::handleDrumPadSelected);
 
-        // Register with CommandBus for updates
-        CommandBus.getInstance().register(this);
+        CommandBus.getInstance().register(this, new String[]{
+                Commands.DRUM_PAD_SELECTED,
+                Commands.DRUM_STEP_SELECTED,
+                Commands.DRUM_INSTRUMENTS_UPDATED,
+                Commands.HIGHLIGHT_STEP
+        });
+
+        logger.info("DrumParamsSequencerPanel registered for specific events");
+
         TimingBus.getInstance().register(this);
 
         // Initialize UI components
@@ -275,7 +280,22 @@ public class DrumParamsSequencerPanel extends JPanel implements IBusListener {
                     velocityDials.add(dial);
                     dial.addChangeListener(e -> {
                         if (!updatingControls && selectedPadIndex >= 0) {
-                            sequencer.setStepVelocity(selectedPadIndex, index, dial.getValue());
+                            int value = ((Dial) e.getSource()).getValue();
+                            sequencer.setStepVelocity(selectedPadIndex, index, value);
+
+                            // Publish an event for parameter change
+                            CommandBus.getInstance().publish(
+                                    Commands.DRUM_STEP_PARAMETERS_CHANGED,
+                                    this,
+                                    new Object[]{
+                                            selectedPadIndex,
+                                            index,
+                                            value,
+                                            sequencer.getStepDecay(selectedPadIndex, index),
+                                            sequencer.getStepProbability(selectedPadIndex, index),
+                                            sequencer.getStepNudge(selectedPadIndex, index)
+                                    }
+                            );
                         }
                     });
                     break;
@@ -289,7 +309,22 @@ public class DrumParamsSequencerPanel extends JPanel implements IBusListener {
                     decayDials.add(dial);
                     dial.addChangeListener(e -> {
                         if (!updatingControls && selectedPadIndex >= 0) {
-                            sequencer.setStepDecay(selectedPadIndex, index, dial.getValue());
+                            int value = ((Dial) e.getSource()).getValue();
+                            sequencer.setStepDecay(selectedPadIndex, index, value);
+
+                            // Publish an event for parameter change
+                            CommandBus.getInstance().publish(
+                                    Commands.DRUM_STEP_PARAMETERS_CHANGED,
+                                    this,
+                                    new Object[]{
+                                            selectedPadIndex,
+                                            index,
+                                            sequencer.getStepVelocity(selectedPadIndex, index),
+                                            value,
+                                            sequencer.getStepProbability(selectedPadIndex, index),
+                                            sequencer.getStepNudge(selectedPadIndex, index)
+                                    }
+                            );
                         }
                     });
                     break;
@@ -303,7 +338,22 @@ public class DrumParamsSequencerPanel extends JPanel implements IBusListener {
                     probabilityDials.add(dial);
                     dial.addChangeListener(e -> {
                         if (!updatingControls && selectedPadIndex >= 0) {
-                            sequencer.setStepProbability(selectedPadIndex, index, dial.getValue());
+                            int value = ((Dial) e.getSource()).getValue();
+                            sequencer.setStepProbability(selectedPadIndex, index, value);
+
+                            // Publish an event for parameter change
+                            CommandBus.getInstance().publish(
+                                    Commands.DRUM_STEP_PARAMETERS_CHANGED,
+                                    this,
+                                    new Object[]{
+                                            selectedPadIndex,
+                                            index,
+                                            sequencer.getStepVelocity(selectedPadIndex, index),
+                                            sequencer.getStepDecay(selectedPadIndex, index),
+                                            value,
+                                            sequencer.getStepNudge(selectedPadIndex, index)
+                                    }
+                            );
                         }
                     });
                     break;
@@ -313,12 +363,27 @@ public class DrumParamsSequencerPanel extends JPanel implements IBusListener {
                     dial.setMaximum(50);
                     dial.setValue(0); // Default value
                     dial.setKnobColor(UIHelper.getDialColor("nudge")); // Set knob color
-                    // Color.WHITE);
+
                     // Add to collection and event listener
                     nudgeDials.add(dial);
                     dial.addChangeListener(e -> {
                         if (!updatingControls && selectedPadIndex >= 0) {
-                            sequencer.setStepNudge(selectedPadIndex, index, dial.getValue());
+                            int value = ((Dial) e.getSource()).getValue();
+                            sequencer.setStepNudge(selectedPadIndex, index, value);
+
+                            // Publish an event for parameter change
+                            CommandBus.getInstance().publish(
+                                    Commands.DRUM_STEP_PARAMETERS_CHANGED,
+                                    this,
+                                    new Object[]{
+                                            selectedPadIndex,
+                                            index,
+                                            sequencer.getStepVelocity(selectedPadIndex, index),
+                                            sequencer.getStepDecay(selectedPadIndex, index),
+                                            sequencer.getStepProbability(selectedPadIndex, index),
+                                            value
+                                    }
+                            );
                         }
                     });
                     break;
@@ -338,9 +403,7 @@ public class DrumParamsSequencerPanel extends JPanel implements IBusListener {
         triggerButton.setName("TriggerButton-" + index);
         triggerButton.setToolTipText("Step " + (index + 1));
         triggerButton.setEnabled(selectedPadIndex >= 0);
-        triggerButton.addActionListener(e -> {
-            toggleStepForActivePad(index);
-        });
+        triggerButton.addActionListener(e -> toggleStepForActivePad(index));
 
         selectorButtons.add(triggerButton);
 
@@ -377,8 +440,7 @@ public class DrumParamsSequencerPanel extends JPanel implements IBusListener {
      */
     public void reset() {
         // Clear all highlighting
-        for (int i = 0; i < selectorButtons.size(); i++) {
-            TriggerButton button = selectorButtons.get(i);
+        for (TriggerButton button : selectorButtons) {
             if (button != null) {
                 button.setHighlighted(false);
                 button.repaint();
@@ -400,7 +462,7 @@ public class DrumParamsSequencerPanel extends JPanel implements IBusListener {
         return sequencer.isLooping(selectedPadIndex);
     }
 
-     /**
+    /**
      * Get the knob label for a specific index
      */
     private String getKnobLabel(int i) {
@@ -442,7 +504,7 @@ public class DrumParamsSequencerPanel extends JPanel implements IBusListener {
 
             // Highlight current step if playing
             if (sequencer.isPlaying()) {
-                int[] steps = sequencer.getData().getCurrentStep();
+                int[] steps = sequencer.getSequenceData().getCurrentStep();
                 if (padIndex < steps.length) {
                     button.setHighlighted(i == steps[padIndex]);
                 }
@@ -543,10 +605,10 @@ public class DrumParamsSequencerPanel extends JPanel implements IBusListener {
                     dial.setValue(sequencer.getStepNudge(selectedPadIndex, step));
                 }
             }
-            
+
             // Also update trigger buttons to reflect active steps
             refreshTriggerButtonsForPad(selectedPadIndex);
-            
+
         } finally {
             updatingControls = false;
         }
@@ -610,7 +672,7 @@ public class DrumParamsSequencerPanel extends JPanel implements IBusListener {
                 // Only update if we have a drum selected and are playing
                 if (selectedPadIndex >= 0 && sequencer.isPlaying() && action.getData() instanceof TimingUpdate) {
                     // Get the current sequencer state
-                    int[] steps = sequencer.getData().getCurrentStep();
+                    int[] steps = sequencer.getSequenceData().getCurrentStep();
 
                     // Safety check for array bounds
                     if (selectedPadIndex < steps.length) {
@@ -677,23 +739,19 @@ public class DrumParamsSequencerPanel extends JPanel implements IBusListener {
 
                         // Update UI without triggering further events
                         SwingUtilities.invokeLater(() -> {
-                            // Just visually select without callbacks
                             drumPadPanel.selectDrumPadNoCallback(newSelection);
-
-                            // Update minimal UI elements
-                            updateInstrumentInfoLabel();
                             refreshTriggerButtonsForPad(newSelection);
                         });
                     }
                 }
             }
 
-            case Commands.PLAYER_UPDATED, Commands.INSTRUMENT_CHANGED -> {
-                // Update the info label if this affects our selected pad
-                if (selectedPadIndex >= 0) {
-                    SwingUtilities.invokeLater(this::updateInstrumentInfoLabel);
-                }
-            }
+//            case Commands.PLAYER_UPDATED, Commands.INSTRUMENT_CHANGED -> {
+//                // Update the info label if this affects our selected pad
+//                if (selectedPadIndex >= 0) {
+//                    SwingUtilities.invokeLater(this::updateInstrumentInfoLabel);
+//                }
+//            }
         }
     }
 
@@ -771,12 +829,12 @@ public class DrumParamsSequencerPanel extends JPanel implements IBusListener {
                 Player player = sequencer.getPlayers()[padIndex];
 
                 if (player != null && player.getInstrument() != null) {
-                    player.getInstrument().setDevice(DeviceManager.getMidiDevice(player.getInstrument().getDeviceName()));
-                    PlayerManager.getInstance().ensureChannelConsistency();
-                    PlayerManager.getInstance().applyPlayerPreset(player);
+                    // player.getInstrument().setDevice(DeviceManager.getMidiDevice(player.getInstrument().getDeviceName()));
+                    // PlayerManager.getInstance().ensureChannelConsistency();
+                    // PlayerManager.getInstance().applyPlayerPreset(player);
 
-                    player.drumNoteOn(player.getRootNote());
-                    
+                    // player.drumNoteOn(player.getRootNote());
+
                     CommandBus.getInstance().publish(
                             Commands.STATUS_UPDATE,
                             this,
@@ -790,7 +848,6 @@ public class DrumParamsSequencerPanel extends JPanel implements IBusListener {
             }
 
             // Update UI in a specific order
-            updateInstrumentInfoLabel();
             setTriggerButtonsEnabled(true);
             refreshTriggerButtonsForPad(selectedPadIndex);
             updateDialsForSelectedPad();
@@ -799,7 +856,6 @@ public class DrumParamsSequencerPanel extends JPanel implements IBusListener {
             if (sequenceParamsPanel != null) {
                 sequenceParamsPanel.updateControls(padIndex);
             }
-            updateSoundParametersPanel();
 
             // Publish drum pad event LAST and only if we're handling a direct user
             // selection
@@ -828,23 +884,7 @@ public class DrumParamsSequencerPanel extends JPanel implements IBusListener {
     // Update the initializeDrumPads method to delegate to the panel
     private void initializeDrumPads() {
         // Select the first pad after initialization
-        SwingUtilities.invokeLater(() -> {
-            drumPadPanel.selectDrumPad(0);
-        });
+        SwingUtilities.invokeLater(() -> drumPadPanel.selectDrumPad(0));
     }
 
-    /**
-     * Updates the sound parameters panel when a drum is selected
-     */
-    private void updateSoundParametersPanel() {
-
-    }
-
-    /**
-     * Update the instrument info label with current player and instrument
-     * information
-     */
-    private void updateInstrumentInfoLabel() {
-
-    }
 }

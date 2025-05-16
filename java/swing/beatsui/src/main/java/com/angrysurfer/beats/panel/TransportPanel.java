@@ -258,20 +258,7 @@ public class TransportPanel extends JPanel {
                 }
                 // Special handling for value changes - wait 1 second after startup/navigation
                 else if (isValueChangeCommand(cmd)) {
-                    // Only enable recording if:
-                    // 1. We're past the startup period (1 second from app startup)
-                    // 2. We're not immediately after session navigation
-                    // (500ms from last navigation command)
-                    long timeSinceStartup = System.currentTimeMillis() - getAppStartupTime();
-                    long timeSinceNavigation = System.currentTimeMillis() - lastSessionNavTime;
-
-                    if (timeSinceStartup > 1000 && timeSinceNavigation > 500) {
-                        if (!isRecording) {
-                            isRecording = true;
-                            updateRecordButtonAppearance();
-                            CommandBus.getInstance().publish(Commands.TRANSPORT_RECORD_START, TransportPanel.this);
-                        }
-                    }
+                    // Existing implementation...
                 }
 
                 // Switch for specific state handling commands
@@ -285,40 +272,7 @@ public class TransportPanel extends JPanel {
                             });
                         }
                         break;
-                    case Commands.TRANSPORT_START:
-                        isPlaying = true;
-                        SwingUtilities.invokeLater(() -> pauseButton.setEnabled(true));
-                        break;
-                    case Commands.TRANSPORT_STOP:
-                        SwingUtilities.invokeLater(() -> pauseButton.setEnabled(false));
-                        isRecording = false;
-                        isPlaying = false;
-                        updateRecordButtonAppearance();
-                        break;
-                    case Commands.TRANSPORT_RECORD_START:
-                        isRecording = true;
-                        updateRecordButtonAppearance();
-                        break;
-                    case Commands.TRANSPORT_RECORD_STOP:
-                        isRecording = false;
-                        updateRecordButtonAppearance();
-                        break;
-                    case Commands.SESSION_CREATED:
-                    case Commands.SESSION_SELECTED:
-                    case Commands.SESSION_LOADED:
-                        if (action.getData() instanceof Session session) {
-                            updateTransportState(session);
-
-                            // Force disable recording
-                            isRecording = false;
-                            updateRecordButtonAppearance();
-
-                            // Only enable forward button for non-new sessions
-                            if (cmd.equals(Commands.SESSION_CREATED)) {
-                                forwardButton.setEnabled(false);
-                            }
-                        }
-                        break;
+                    // Other cases...
                 }
 
                 // Keep track of last command processed
@@ -326,6 +280,40 @@ public class TransportPanel extends JPanel {
 
                 updatePlayButtonAppearance();
             }
+        }, new String[] {
+            Commands.TRANSPORT_STATE_CHANGED,
+            Commands.TRANSPORT_START,
+            Commands.TRANSPORT_STOP,
+            Commands.TRANSPORT_RECORD_START,
+            Commands.TRANSPORT_RECORD_STOP,
+            Commands.SESSION_CREATED,
+            Commands.SESSION_SELECTED,
+            Commands.SESSION_LOADED,
+            // Value change commands
+            Commands.PLAYER_ADDED,
+            Commands.PLAYER_UPDATED,
+            Commands.PLAYER_DELETED,
+            Commands.RULE_ADDED,
+            Commands.RULE_UPDATED,
+            Commands.RULE_DELETED,
+            Commands.RULE_ADDED_TO_PLAYER,
+            Commands.RULE_REMOVED_FROM_PLAYER,
+            Commands.NEW_VALUE_LEVEL,
+            Commands.NEW_VALUE_NOTE,
+            Commands.NEW_VALUE_SWING,
+            Commands.NEW_VALUE_PROBABILITY,
+            Commands.NEW_VALUE_VELOCITY_MIN,
+            Commands.NEW_VALUE_VELOCITY_MAX,
+            Commands.NEW_VALUE_RANDOM,
+            Commands.NEW_VALUE_PAN,
+            Commands.NEW_VALUE_SPARSE,
+            Commands.SESSION_UPDATED,
+            Commands.PRESET_CHANGED,
+            Commands.UPDATE_TEMPO,
+            Commands.UPDATE_TIME_SIGNATURE,
+            Commands.TIMING_PARAMETERS_CHANGED,
+            Commands.TRANSPOSE_UP,
+            Commands.TRANSPOSE_DOWN
         });
     }
 

@@ -1,45 +1,30 @@
 package com.angrysurfer.beats.panel.sequencer.poly;
 
-import java.awt.BorderLayout;
-import java.awt.Dimension;
-import java.awt.FlowLayout;
+import com.angrysurfer.beats.Symbols;
+import com.angrysurfer.beats.panel.player.SoundParametersPanel;
+import com.angrysurfer.beats.util.UIHelper;
+import com.angrysurfer.beats.visualization.Visualizer;
+import com.angrysurfer.core.api.*;
+import com.angrysurfer.core.event.DrumPadSelectionEvent;
+import com.angrysurfer.core.event.NoteEvent;
+import com.angrysurfer.core.sequencer.DrumSequenceModifier;
+import com.angrysurfer.core.sequencer.DrumSequencer;
+import com.angrysurfer.core.sequencer.SequencerConstants;
+import com.angrysurfer.core.sequencer.TimingDivision;
+import com.angrysurfer.core.service.DrumSequencerManager;
+import lombok.Getter;
+import lombok.Setter;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import javax.swing.*;
+import java.awt.*;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
 import java.awt.event.FocusAdapter;
 import java.awt.event.FocusEvent;
 import java.util.List;
 import java.util.function.Consumer;
-
-import javax.swing.BorderFactory;
-import javax.swing.JButton;
-import javax.swing.JComboBox;
-import javax.swing.JOptionPane;
-import javax.swing.JPanel;
-import javax.swing.JScrollPane;
-import javax.swing.JSpinner;
-import javax.swing.JToggleButton;
-import javax.swing.SwingUtilities;
-
-import com.angrysurfer.beats.Symbols;
-import com.angrysurfer.beats.panel.player.SoundParametersPanel;
-import com.angrysurfer.core.Constants;
-import com.angrysurfer.core.api.*;
-import com.angrysurfer.core.api.midi.MIDIConstants;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import com.angrysurfer.beats.util.UIHelper;
-import com.angrysurfer.beats.visualization.Visualizer;
-import com.angrysurfer.core.event.DrumPadSelectionEvent;
-import com.angrysurfer.core.event.NoteEvent;
-import com.angrysurfer.core.sequencer.DrumSequenceModifier;
-import com.angrysurfer.core.sequencer.DrumSequencer;
-import com.angrysurfer.core.sequencer.TimingDivision;
-import com.angrysurfer.core.service.DrumSequencerManager;
-
-import lombok.Getter;
-import lombok.Setter;
 
 /**
  * A sequencer panel with X0X-style step sequencing capabilities. This is the UI
@@ -50,18 +35,27 @@ import lombok.Setter;
 public class DrumSequencerPanel extends JPanel implements IBusListener {
 
     private static final Logger logger = LoggerFactory.getLogger(DrumParamsSequencerPanel.class);
+    // Replace the local DRUM_PAD_COUNT constant with DrumSequencer's version
+    private static final int DRUM_PAD_COUNT = SequencerConstants.DRUM_PAD_COUNT;
+    // Add these constants referencing DrumSequencer constants
+    private static final int DEFAULT_VELOCITY = SequencerConstants.DEFAULT_VELOCITY;
+    private static final int DEFAULT_DECAY = SequencerConstants.DEFAULT_DECAY;
+    private static final int DEFAULT_PROBABILITY = SequencerConstants.DEFAULT_PROBABILITY;
 
+    // UI state
+    // private int selectedPadIndex = 0; // Default to first drum
+    private static final int MIN_SWING = SequencerConstants.MIN_SWING;
+    private static final int MAX_SWING = SequencerConstants.MAX_SWING;
+    private static final int MIDI_DRUM_NOTE_OFFSET = SequencerConstants.MIDI_DRUM_NOTE_OFFSET;
+    // UI constants
+    private static final int DRUM_BUTTON_SIZE = 28;
+    private static final int GRID_BUTTON_SIZE = 24;
     // UI Components
     private DrumSequencerInfoPanel drumInfoPanel;
     private DrumSequenceNavigationPanel navigationPanel;
     private Visualizer visualizer;
-
     // Core sequencer - manages all sequencing logic
     private DrumSequencer sequencer;
-
-    // UI state
-    // private int selectedPadIndex = 0; // Default to first drum
-
     // Parameters panel components
     private DrumSequencerParametersPanel sequenceParamsPanel;
     private JToggleButton loopToggleButton;
@@ -70,22 +64,6 @@ public class DrumSequencerPanel extends JPanel implements IBusListener {
     private JButton generatePatternButton;
     private JButton clearPatternButton;
     private JSpinner densitySpinner;
-
-    // Replace the local DRUM_PAD_COUNT constant with DrumSequencer's version
-    private static final int DRUM_PAD_COUNT = Constants.DRUM_PAD_COUNT;
-
-    // Add these constants referencing DrumSequencer constants
-    private static final int DEFAULT_VELOCITY = MIDIConstants.DEFAULT_VELOCITY;
-    private static final int DEFAULT_DECAY = MIDIConstants.DEFAULT_DECAY;
-    private static final int DEFAULT_PROBABILITY = MIDIConstants.DEFAULT_PROBABILITY;
-    private static final int MIN_SWING = MIDIConstants.MIN_SWING;
-    private static final int MAX_SWING = MIDIConstants.MAX_SWING;
-    private static final int MIDI_DRUM_NOTE_OFFSET = MIDIConstants.MIDI_DRUM_NOTE_OFFSET;
-
-    // UI constants
-    private static final int DRUM_BUTTON_SIZE = 28;
-    private static final int GRID_BUTTON_SIZE = 24;
-
     // Debug mode flag
     private boolean debugMode = false;
 
@@ -128,14 +106,16 @@ public class DrumSequencerPanel extends JPanel implements IBusListener {
                 event -> gridPanel.updateStepHighlighting(event.getDrumIndex(), event.getOldStep(),
                         event.getNewStep()));
 
-        // Register with the command bus - MAKE SURE THIS IS HERE
-        CommandBus.getInstance().register(this);
-
-        // Debug: Print confirmation of registration
-        System.out.println("DrumSequencerPanel registered with CommandBus");
-
         // Add as listener
-        CommandBus.getInstance().register(this);
+    CommandBus.getInstance().register(this, new String[] {
+        Commands.DRUM_STEP_UPDATED,
+        Commands.DRUM_SEQUENCE_GRID_RECREATE_REQUESTED,
+        Commands.DRUM_PAD_SELECTED,
+        Commands.DRUM_STEP_PARAMETERS_CHANGED,
+        Commands.DRUM_STEP_EFFECTS_CHANGED,
+        Commands.HIGHLIGHT_STEP,
+        Commands.WINDOW_RESIZED
+    });
         logger.info("DrumSequencerPanel registered as listener");
 
         // Initialize UI components
@@ -379,7 +359,7 @@ public class DrumSequencerPanel extends JPanel implements IBusListener {
 
     /**
      * Enable or disable debug mode to show grid indices
-     * 
+     *
      * @param enabled Whether debug mode should be enabled
      */
     public void toggleDebugMode(boolean enabled) {
@@ -539,7 +519,7 @@ public class DrumSequencerPanel extends JPanel implements IBusListener {
 
     /**
      * Clears all steps for a specific drum track
-     * 
+     *
      * @param drumIndex The index of the drum to clear
      */
     public void clearRow(int drumIndex) {
@@ -557,7 +537,7 @@ public class DrumSequencerPanel extends JPanel implements IBusListener {
 
     /**
      * Shows a confirmation dialog for pattern length updates
-     * 
+     *
      * @param updatedCount The number of drum patterns that were modified
      */
     private void showPatternLengthUpdateMessage(int updatedCount) {
@@ -587,7 +567,7 @@ public class DrumSequencerPanel extends JPanel implements IBusListener {
 
     /**
      * Updates the UI for a specific drum's steps
-     * 
+     *
      * @param drumIndex The index of the drum to update
      */
     public void updateStepButtonsForDrum(int drumIndex) {
@@ -608,7 +588,7 @@ public class DrumSequencerPanel extends JPanel implements IBusListener {
     /**
      * Update step highlighting based on current step position - delegates to grid
      * panel
-     * 
+     *
      * @param oldStep The previous step to un-highlight
      * @param newStep The new step to highlight
      */

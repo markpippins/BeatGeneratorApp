@@ -1,8 +1,8 @@
 package com.angrysurfer.core.model;
 
-import com.angrysurfer.core.Constants;
 import com.angrysurfer.core.api.*;
 import com.angrysurfer.core.sequencer.Scale;
+import com.angrysurfer.core.sequencer.SequencerConstants;
 import com.angrysurfer.core.sequencer.TimingUpdate;
 import com.angrysurfer.core.service.DeviceManager;
 import com.angrysurfer.core.service.InstrumentManager;
@@ -28,113 +28,86 @@ import java.util.stream.IntStream;
 public class Session implements Serializable, IBusListener {
 
     @JsonIgnore
-    private Object soloLock;
-
-    @JsonIgnore
     @Transient
     static Logger logger = LoggerFactory.getLogger(Session.class.getCanonicalName());
-
-    private Long id;
-
+    @JsonIgnore
+    @Transient
+    private final MidiClockSource sequencerManager = new MidiClockSource();
     @JsonIgnore
     @Transient
     public boolean isActive = false;
-
     @JsonIgnore
     @Transient
     public boolean modified = false;
-
+    @Transient
+    Set<Long> activePlayerIds = new HashSet<>();
+    @JsonIgnore
+    private Object soloLock;
+    private Long id;
     @JsonIgnore
     @Transient
     private Set<Player> addList = new HashSet<>();
-
     @JsonIgnore
     @Transient
     private Set<Player> removeList = new HashSet<>();
-
     // Replace Cyclers with simple variables initialized to 1 instead of 0
     @JsonIgnore
     @Transient
     private long tick = 1;
-
     @JsonIgnore
     @Transient
     private double beat = 1.0;
-
     @JsonIgnore
     @Transient
     private int bar = 1;
-
     @JsonIgnore
     @Transient
     private int part = 1;
-
     @JsonIgnore
     @Transient
     private long tickCount = 0;
-
     @JsonIgnore
     @Transient
     private int beatCount = 0;
-
     @JsonIgnore
     @Transient
     private int barCount = 0;
-
     @JsonIgnore
     @Transient
     private int partCount = 0;
-
     @Transient
     private boolean done = false;
-
     @JsonIgnore
     private transient Set<Player> players = new HashSet<>();
-
-    @Transient
-    Set<Long> activePlayerIds = new HashSet<>();
-
     @Transient
     private double granularBeat = 0.0;
-
-    private Integer bars = Constants.DEFAULT_BAR_COUNT;
-    private Integer beatsPerBar = Constants.DEFAULT_BEATS_PER_BAR;
-    private Integer beatDivider = Constants.DEFAULT_BEAT_DIVIDER;
-    private Integer partLength = Constants.DEFAULT_PART_LENGTH;
-    private Integer maxTracks = Constants.DEFAULT_MAX_TRACKS;
-    private Long songLength = Constants.DEFAULT_SONG_LENGTH;
-    private Integer swing = Constants.DEFAULT_SWING;
-    private Integer ticksPerBeat = Constants.DEFAULT_PPQ;
-    private Float tempoInBPM = Constants.DEFAULT_BPM;
-    private Integer loopCount = Constants.DEFAULT_LOOP_COUNT;
-    private Integer parts = Constants.DEFAULT_PART_COUNT;
+    private Integer bars = SequencerConstants.DEFAULT_BAR_COUNT;
+    private Integer beatsPerBar = SequencerConstants.DEFAULT_BEATS_PER_BAR;
+    private Integer beatDivider = SequencerConstants.DEFAULT_BEAT_DIVIDER;
+    private Integer partLength = SequencerConstants.DEFAULT_PART_LENGTH;
+    private Integer maxTracks = SequencerConstants.DEFAULT_MAX_TRACKS;
+    private Long songLength = SequencerConstants.DEFAULT_SONG_LENGTH;
+    private Integer swing = SequencerConstants.DEFAULT_SWING;
+    private Integer ticksPerBeat = SequencerConstants.DEFAULT_PPQ;
+    private Float tempoInBPM = SequencerConstants.DEFAULT_BPM;
+    private Integer loopCount = SequencerConstants.DEFAULT_LOOP_COUNT;
+    private Integer parts = SequencerConstants.DEFAULT_PART_COUNT;
     private Integer noteOffset = 0;
-
     private String name;
     private String notes = "Session Notes";
-
     private String scale = Scale.SCALE_CHROMATIC;
     private String rootNote = Scale.SCALE_NOTES[0]; // Default to C
-
     @Transient
     private boolean paused = false;
-
     @Transient
     @JsonIgnore
     private Set<MuteGroup> muteGroups = new HashSet<>();
-
     @JsonIgnore
     @Transient
     private CommandBus commandBus = CommandBus.getInstance();
-
     @JsonIgnore
     @Transient
     private TimingBus timingBus = TimingBus.getInstance(); // Add this
-
-    @JsonIgnore
-    @Transient
-    private final MidiClockSource sequencerManager = new MidiClockSource();
-
     @JsonIgnore
     @Transient
     private Set<IBusListener> tickListeners = new HashSet<>();
@@ -146,6 +119,36 @@ public class Session implements Serializable, IBusListener {
 
     @JsonIgnore
     private transient ConcurrentLinkedQueue<IBusListener> timingListeners;
+    private LowLatencyMidiClock lowLatencyMidiClock;
+
+    // Add this to Session constructor to ensure proper registration
+    public Session() {
+        setSongLength(Long.MAX_VALUE);
+
+        // Initialize timing fields first
+        if (timingListeners == null) {
+            timingListeners = new ConcurrentLinkedQueue<>();
+        }
+
+        // Register with buses after fields are initialized
+        CommandBus.getInstance().register(this, new String[]{Commands.TIMING_PARAMETERS_CHANGED});
+        timingBus.register(this);
+    }
+
+    public Session(float tempoInBPM, int bars, int beatsPerBar, int ticksPerBeat, int parts, int partLength) {
+        this.tempoInBPM = tempoInBPM;
+        this.bars = bars;
+        this.beatsPerBar = beatsPerBar;
+        this.ticksPerBeat = ticksPerBeat;
+        this.parts = parts;
+        this.partLength = partLength > 0 ? partLength : 1; // Ensure partLength is at least 1
+
+        // Initialize counters
+        tick = 1;
+        beat = 1.0;
+        bar = 1;
+        part = 1;
+    }
 
     // Add this method for proper initialization during deserialization
     @JsonIgnore
@@ -170,37 +173,6 @@ public class Session implements Serializable, IBusListener {
         }
     }
 
-    private LowLatencyMidiClock lowLatencyMidiClock;
-
-    // Add this to Session constructor to ensure proper registration
-    public Session() {
-        setSongLength(Long.MAX_VALUE);
-
-        // Initialize timing fields first
-        if (timingListeners == null) {
-            timingListeners = new ConcurrentLinkedQueue<>();
-        }
-
-        // Register with buses after fields are initialized
-        commandBus.register(this);
-        timingBus.register(this);
-    }
-
-    public Session(float tempoInBPM, int bars, int beatsPerBar, int ticksPerBeat, int parts, int partLength) {
-        this.tempoInBPM = tempoInBPM;
-        this.bars = bars;
-        this.beatsPerBar = beatsPerBar;
-        this.ticksPerBeat = ticksPerBeat;
-        this.parts = parts;
-        this.partLength = partLength > 0 ? partLength : 1; // Ensure partLength is at least 1
-
-        // Initialize counters
-        tick = 1;
-        beat = 1.0;
-        bar = 1;
-        part = 1;
-    }
-
     public int getMetronomChannel() {
         return 9;
     }
@@ -211,7 +183,7 @@ public class Session implements Serializable, IBusListener {
             logger.info("Skipping default player: {}", player);
             return;
         }
-        
+
         logger.info("addPlayer() - adding player: {}", player);
         if (isRunning())
             synchronized (getAddList()) {
@@ -222,7 +194,7 @@ public class Session implements Serializable, IBusListener {
         }
 
         player.setSession(this);
-        commandBus.publish(Commands.PLAYER_ADDED, this, player);
+        CommandBus.getInstance().publish(Commands.PLAYER_ADDED, this, player);
 
         // Auto-register as tick listener if session is running
         if (isRunning() && player.getEnabled()) {
@@ -241,7 +213,7 @@ public class Session implements Serializable, IBusListener {
         }
 
         player.setSession(null);
-        commandBus.publish(Commands.PLAYER_ADDED, this, player);
+        CommandBus.getInstance().publish(Commands.PLAYER_ADDED, this, player);
 
         // Unregister from tick listeners
         unregisterTickListener(player);
@@ -390,14 +362,14 @@ public class Session implements Serializable, IBusListener {
         System.out.println("Session: Registered with timing bus");
 
         // Notify about tempo to all sequencers
-        commandBus.publish(Commands.UPDATE_TEMPO, this, ticksPerBeat);
+        CommandBus.getInstance().publish(Commands.UPDATE_TEMPO, this, ticksPerBeat);
 
         // Set active state
         isActive = true;
         System.out.println("Session: Session marked as active");
 
         // Publish session starting event
-        commandBus.publish(Commands.SESSION_STARTING, this);
+        CommandBus.getInstance().publish(Commands.SESSION_STARTING, this);
         System.out.println("Session: Published SESSION_STARTING event");
     }
 
@@ -441,7 +413,7 @@ public class Session implements Serializable, IBusListener {
     public synchronized boolean isValid() {
         return (Objects.nonNull(getPlayers()) && !getPlayers().isEmpty()
                 && getPlayers().stream().
-                    anyMatch(p -> Objects.nonNull(p.getRules()) && !p.getRules().isEmpty()));
+                anyMatch(p -> Objects.nonNull(p.getRules()) && !p.getRules().isEmpty()));
     }
 
     public void play() {
@@ -484,7 +456,7 @@ public class Session implements Serializable, IBusListener {
 
     /**
      * Initialize a player's MIDI device connection
-     * 
+     *
      * @param player  The player to initialize
      * @param devices List of available MIDI output devices
      */
@@ -662,9 +634,8 @@ public class Session implements Serializable, IBusListener {
         if (action.getCommand() != null) {
             // // System.out.println("Session received action: " + action.getCommand());
             switch (action.getCommand()) {
-                case Commands.TIMING_PARAMETERS_CHANGED ->
-                    sequencerManager.updateTimingParameters(getTempoInBPM(),
-                            getTicksPerBeat(), getBeatsPerBar());
+                case Commands.TIMING_PARAMETERS_CHANGED -> sequencerManager.updateTimingParameters(getTempoInBPM(),
+                        getTicksPerBeat(), getBeatsPerBar());
             }
         }
     }
@@ -738,7 +709,7 @@ public class Session implements Serializable, IBusListener {
     public void setTicksPerBeat(int ticksPerBeat) {
         this.ticksPerBeat = ticksPerBeat;
         // Notify about tempo change
-        commandBus.publish(Commands.UPDATE_TEMPO, this, ticksPerBeat);
+        CommandBus.getInstance().publish(Commands.UPDATE_TEMPO, this, ticksPerBeat);
 
         if (isRunning()) {
             syncToSequencer();
@@ -853,7 +824,7 @@ public class Session implements Serializable, IBusListener {
 
     /**
      * Add or update a player in the session
-     * 
+     *
      * @param player The player to add or update
      */
     public void addOrUpdatePlayer(Player player) {
@@ -861,7 +832,7 @@ public class Session implements Serializable, IBusListener {
             logger.warn("Cannot add null player or player without ID");
             return;
         }
-        
+
         // Skip default players - they should not be stored in sessions
         if (Boolean.TRUE.equals(player.getIsDefault())) {
             logger.debug("Skipping default player {} - not storing in session", player.getId());

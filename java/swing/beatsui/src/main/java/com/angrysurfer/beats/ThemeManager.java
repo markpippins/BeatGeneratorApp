@@ -1,14 +1,5 @@
 package com.angrysurfer.beats;
 
-import java.util.Arrays;
-
-import javax.swing.JFrame;
-import javax.swing.JMenu;
-import javax.swing.JMenuItem;
-import javax.swing.LookAndFeel;
-import javax.swing.SwingUtilities;
-import javax.swing.UIManager;
-
 import com.angrysurfer.core.api.CommandBus;
 import com.angrysurfer.core.api.Commands;
 import com.formdev.flatlaf.FlatDarculaLaf;
@@ -19,9 +10,11 @@ import com.formdev.flatlaf.intellijthemes.FlatAllIJThemes;
 import com.formdev.flatlaf.themes.FlatMacDarkLaf;
 import com.formdev.flatlaf.themes.FlatMacLightLaf;
 
+import javax.swing.*;
+import java.util.Arrays;
+
 public class ThemeManager {
     private static ThemeManager instance;
-    private final CommandBus commandBus = CommandBus.getInstance();
     private final JFrame mainFrame;
 
     private ThemeManager(JFrame mainFrame) {
@@ -62,7 +55,7 @@ public class ThemeManager {
         // Sort and add all IntelliJ themes
         FlatAllIJThemes.FlatIJLookAndFeelInfo[] sortedThemes = FlatAllIJThemes.INFOS.clone();
         Arrays.sort(sortedThemes, (a, b) -> a.getName().compareToIgnoreCase(b.getName()));
-        
+
         // for themes that do not contain the word "Material" in their name, add to flatThemes  
         for (FlatAllIJThemes.FlatIJLookAndFeelInfo info : sortedThemes) {
             if (!info.getName().toLowerCase().contains("material")) {
@@ -119,7 +112,7 @@ public class ThemeManager {
     }
 
     private void notifyThemeChange(String themeName) {
-        commandBus.publish(Commands.CHANGE_THEME, this, themeName);
+        CommandBus.getInstance().publish(Commands.CHANGE_THEME, this, themeName);
     }
 
     @FunctionalInterface

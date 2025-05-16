@@ -1,15 +1,5 @@
 package com.angrysurfer.beats.diagnostic.suite;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
-
-import javax.sound.midi.Receiver;
-import javax.sound.midi.ShortMessage;
-import javax.swing.JOptionPane;
-
 import com.angrysurfer.beats.diagnostic.DiagnosticLogBuilder;
 import com.angrysurfer.core.api.CommandBus;
 import com.angrysurfer.core.config.UserConfig;
@@ -17,8 +7,18 @@ import com.angrysurfer.core.model.InstrumentWrapper;
 import com.angrysurfer.core.model.Note;
 import com.angrysurfer.core.model.Player;
 import com.angrysurfer.core.redis.RedisService;
+import com.angrysurfer.core.sequencer.SequencerConstants;
 import com.angrysurfer.core.service.InternalSynthManager;
 import com.angrysurfer.core.service.UserConfigManager;
+
+import javax.sound.midi.Receiver;
+import javax.sound.midi.ShortMessage;
+import javax.swing.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * Diagnostic helper for UserConfigManager
@@ -410,9 +410,9 @@ public class UserConfigManagerDiagnostics {
 
             // Define a short musical phrase, centered around the root note
             // A little arpeggio in C major
-            int[] notes = { baseNote, baseNote + 4, baseNote + 7, baseNote + 12,
-                    baseNote + 7, baseNote + 4, baseNote };
-            int[] durations = { 200, 200, 200, 400, 200, 200, 400 };
+            int[] notes = {baseNote, baseNote + 4, baseNote + 7, baseNote + 12,
+                    baseNote + 7, baseNote + 4, baseNote};
+            int[] durations = {200, 200, 200, 400, 200, 200, 400};
 
             Receiver receiver = player.getInstrument().getReceiver();
 
@@ -466,7 +466,7 @@ public class UserConfigManagerDiagnostics {
                 deviceCount.put(deviceType, deviceCount.getOrDefault(deviceType, 0) + 1);
 
                 // Count internal instruments
-                if (deviceType.contains("Gervill") || deviceType.contains("Internal")) {
+                if (deviceType.contains(SequencerConstants.GERVILL) || deviceType.contains("Internal")) {
                     internalInstruments++;
                 }
 

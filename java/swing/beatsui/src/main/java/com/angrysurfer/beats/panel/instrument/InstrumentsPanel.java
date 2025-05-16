@@ -1,48 +1,5 @@
 package com.angrysurfer.beats.panel.instrument;
 
-import java.awt.BorderLayout;
-import java.awt.Dimension;
-import java.awt.FlowLayout;
-import java.awt.Insets;
-import java.awt.event.ActionEvent;
-import java.awt.event.KeyEvent;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
-import java.util.*;
-
-import javax.sound.midi.Instrument;
-import javax.sound.midi.MidiDevice;
-import javax.sound.midi.Receiver;
-import javax.sound.midi.ShortMessage;
-import javax.swing.AbstractAction;
-import javax.swing.BorderFactory;
-import javax.swing.Box;
-import javax.swing.JButton;
-import javax.swing.JComponent;
-import javax.swing.JLabel;
-import javax.swing.JOptionPane;
-import javax.swing.JPanel;
-import javax.swing.JScrollPane;
-import javax.swing.JSpinner;
-import javax.swing.JSplitPane;
-import javax.swing.JTable;
-import javax.swing.KeyStroke;
-import javax.swing.ListSelectionModel;
-import javax.swing.RowSorter;
-import javax.swing.SortOrder;
-import javax.swing.SpinnerNumberModel;
-import javax.swing.SwingUtilities;
-import javax.swing.table.DefaultTableCellRenderer;
-import javax.swing.table.DefaultTableModel;
-import javax.swing.table.TableModel;
-
-import com.angrysurfer.core.model.Player;
-import com.angrysurfer.core.sequencer.DrumSequencer;
-import com.angrysurfer.core.sequencer.MelodicSequencer;
-import com.angrysurfer.core.service.*;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import com.angrysurfer.beats.Dialog;
 import com.angrysurfer.beats.panel.ContextMenuHelper;
 import com.angrysurfer.core.api.CommandBus;
@@ -52,16 +9,37 @@ import com.angrysurfer.core.config.UserConfig;
 import com.angrysurfer.core.model.ControlCode;
 import com.angrysurfer.core.model.ControlCodeCaption;
 import com.angrysurfer.core.model.InstrumentWrapper;
+import com.angrysurfer.core.model.Player;
 import com.angrysurfer.core.redis.RedisService;
-
+import com.angrysurfer.core.sequencer.DrumSequencer;
+import com.angrysurfer.core.sequencer.MelodicSequencer;
+import com.angrysurfer.core.service.*;
 import lombok.Getter;
 import lombok.Setter;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import javax.sound.midi.MidiDevice;
+import javax.sound.midi.Receiver;
+import javax.sound.midi.ShortMessage;
+import javax.swing.*;
+import javax.swing.table.DefaultTableCellRenderer;
+import javax.swing.table.DefaultTableModel;
+import javax.swing.table.TableModel;
+import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.KeyEvent;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
+import java.util.List;
+import java.util.Timer;
+import java.util.*;
 
 @Getter
 @Setter
 public class InstrumentsPanel extends JPanel {
 
-    private final CommandBus commandBus = CommandBus.getInstance();
+    private static final Logger logger = LoggerFactory.getLogger(InstrumentsPanel.class.getName());
     private JTable instrumentsTable;
     private JTable controlCodesTable;
     private JTable captionsTable;
@@ -74,7 +52,6 @@ public class InstrumentsPanel extends JPanel {
     private JButton editInstrumentButton;
     private JButton deleteInstrumentButton;
     private JButton enableInstrumentButton;
-    private static final Logger logger = LoggerFactory.getLogger(InstrumentsPanel.class.getName());
     private ContextMenuHelper instrumentsContextMenu;
     private ContextMenuHelper controlCodesContextMenu;
     private ContextMenuHelper captionsContextMenu;
@@ -112,11 +89,11 @@ public class InstrumentsPanel extends JPanel {
     }
 
     private void registerCommandListener() {
-        commandBus.register(command -> {
+        CommandBus.getInstance().register(command -> {
             if (Commands.LOAD_CONFIG.equals(command.getCommand())) {
                 // SwingUtilities.invokeLater(() -> showConfigFileChooserDialog());
             }
-        });
+        }, new String[] { Commands.LOAD_CONFIG });
     }
 
     private JPanel createOptionsPanel() {
@@ -319,7 +296,8 @@ public class InstrumentsPanel extends JPanel {
             // Get selected output device from device selection
             MidiDevice device = getSelectedInstrument().getDevice();
             if (device == null) {
-                device = DeviceManager.getInstance().getMidiDevice(getSelectedInstrument().getDeviceName());
+                DeviceManager.getInstance();
+                device = DeviceManager.getMidiDevice(getSelectedInstrument().getDeviceName());
             }
             if (device == null) {
                 CommandBus.getInstance().publish(
@@ -500,8 +478,8 @@ public class InstrumentsPanel extends JPanel {
 
     private JTable createInstrumentsTable() {
         // Update the columns array to include Owner at the end
-        String[] columns = { "ID", "Name", "Device Name", "Channel", "Available", "Low", "High", "Initialized",
-                "Owner" };
+        String[] columns = {"ID", "Name", "Device Name", "Channel", "Available", "Low", "High", "Initialized",
+                "Owner"};
 
         DefaultTableModel model = new DefaultTableModel(columns, 0) {
             @Override
@@ -531,7 +509,7 @@ public class InstrumentsPanel extends JPanel {
         // Load data from Redis
         List<InstrumentWrapper> instruments = RedisService.getInstance().findAllInstruments();
         for (InstrumentWrapper instrument : instruments) {
-            model.addRow(new Object[] {
+            model.addRow(new Object[]{
                     instrument.getId(),
                     instrument.getName(),
                     instrument.getDeviceName(),
@@ -592,7 +570,7 @@ public class InstrumentsPanel extends JPanel {
     }
 
     private JTable createControlCodesTable() {
-        String[] columns = { "Name", "Code", "Min", "Max" };
+        String[] columns = {"Name", "Code", "Min", "Max"};
 
         DefaultTableModel model = new DefaultTableModel(columns, 0) {
             @Override
@@ -672,7 +650,7 @@ public class InstrumentsPanel extends JPanel {
     }
 
     private JTable createCaptionsTable() {
-        String[] columns = { "Code", "Description" };
+        String[] columns = {"Code", "Description"};
 
         DefaultTableModel model = new DefaultTableModel(columns, 0) {
             @Override
@@ -739,7 +717,7 @@ public class InstrumentsPanel extends JPanel {
                     + selectedInstrument.getControlCodes().size() + " codes");
 
             for (ControlCode cc : selectedInstrument.getControlCodes()) {
-                model.addRow(new Object[] { cc.getName(), cc.getCode(), cc.getLowerBound(), cc.getUpperBound() });
+                model.addRow(new Object[]{cc.getName(), cc.getCode(), cc.getLowerBound(), cc.getUpperBound()});
                 logger.info("Added control code to table: " + cc.getName());
             }
         } else {
@@ -757,7 +735,7 @@ public class InstrumentsPanel extends JPanel {
                     + selectedControlCode.getCaptions().size() + " captions");
 
             for (ControlCodeCaption caption : selectedControlCode.getCaptions()) {
-                model.addRow(new Object[] { caption.getCode(), caption.getDescription() });
+                model.addRow(new Object[]{caption.getCode(), caption.getDescription()});
                 logger.info("Added caption to table: " + caption.getDescription());
             }
         } else {
@@ -912,7 +890,7 @@ public class InstrumentsPanel extends JPanel {
         try {
             boolean isNew = (instrument == null);
             logger.info("Showing instrument dialog: {}", isNew ? "new instrument" : instrument.getName());
-    
+
             // Create a deep copy to avoid modifying original until save is confirmed
             InstrumentWrapper instrumentCopy;
             if (isNew) {
@@ -936,46 +914,46 @@ public class InstrumentsPanel extends JPanel {
                 instrumentCopy.setReceivedChannels(instrument.getReceivedChannels());
                 // Copy any other fields you need to preserve
             }
-    
+
             // Create and configure dialog
             InstrumentEditPanel editorPanel = new InstrumentEditPanel(instrumentCopy);
             Dialog<InstrumentWrapper> dialog = new Dialog<>(instrumentCopy, editorPanel);
             dialog.setTitle(isNew ? "Add Instrument" : "Edit Instrument: " + instrumentCopy.getName());
             dialog.setLocationRelativeTo(this);
-    
+
             logger.info("Showing dialog for instrument...");
             boolean result = dialog.showDialog();
             logger.info("Dialog result: {}", result);
-    
+
             if (result) {
                 // Get the updated instrument from the editor panel
                 InstrumentWrapper updatedInstrument = editorPanel.getUpdatedInstrument();
                 logger.info("Saving updated instrument: {} (ID: {})", updatedInstrument.getName(), updatedInstrument.getId());
-    
+
                 // First save to Redis
                 RedisService.getInstance().saveInstrument(updatedInstrument);
-                
+
                 // Then explicitly update in UserConfigManager to ensure persistence
                 updateInstrumentInUserConfig(updatedInstrument);
-                
+
                 // Now update the InstrumentManager's cache
                 InstrumentManager.getInstance().updateInstrument(updatedInstrument);
-    
+
                 // Always publish the update event
                 CommandBus.getInstance().publish(Commands.INSTRUMENT_UPDATED, this, updatedInstrument);
-    
+
                 // Refresh the UI
                 refreshInstrumentsTable();
-    
+
                 // If this was the selected instrument, update selected instrument reference
-                if (selectedInstrument != null && 
+                if (selectedInstrument != null &&
                         updatedInstrument.getId() != null &&
                         updatedInstrument.getId().equals(selectedInstrument.getId())) {
                     selectedInstrument = updatedInstrument;
                     updateControlCodesTable();
                     updateCaptionsTable();
                 }
-    
+
                 // Show status message
                 CommandBus.getInstance().publish(
                         Commands.STATUS_UPDATE,
@@ -994,7 +972,7 @@ public class InstrumentsPanel extends JPanel {
                             "Error editing instrument: " + e.getMessage()));
         }
     }
-    
+
 
     /**
      * Delete selected instruments with validation checks
@@ -1112,7 +1090,7 @@ public class InstrumentsPanel extends JPanel {
                     Commands.STATUS_UPDATE,
                     this,
                     new StatusUpdate("InstrumentsPanel", "Success",
-                            "Deleted: " + statusMsg.toString()));
+                            "Deleted: " + statusMsg));
 
             // Refresh the table after deletions
             refreshInstrumentsTable();
@@ -1181,40 +1159,40 @@ public class InstrumentsPanel extends JPanel {
         }
     }
 
-/**
- * Fixed version of refreshInstrumentsTable that properly updates the model
- */
-private void refreshInstrumentsTable() {
-    DefaultTableModel model = (DefaultTableModel) instrumentsTable.getModel();
-    model.setRowCount(0);
+    /**
+     * Fixed version of refreshInstrumentsTable that properly updates the model
+     */
+    private void refreshInstrumentsTable() {
+        DefaultTableModel model = (DefaultTableModel) instrumentsTable.getModel();
+        model.setRowCount(0);
 
-    // Get fresh data DIRECTLY from Redis instead of using the potentially stale cache
-    List<InstrumentWrapper> instruments = RedisService.getInstance().findAllInstruments();
-    logger.info("Refreshing instruments table with " + instruments.size() + " instruments from Redis");
-    
-    // Also refresh the InstrumentManager's cache to keep it in sync
-    InstrumentManager.getInstance().refreshCache(instruments);
+        // Get fresh data DIRECTLY from Redis instead of using the potentially stale cache
+        List<InstrumentWrapper> instruments = RedisService.getInstance().findAllInstruments();
+        logger.info("Refreshing instruments table with " + instruments.size() + " instruments from Redis");
 
-    // Add each instrument to the table
-    for (InstrumentWrapper instrument : instruments) {
-        if (instrument != null) {
-            model.addRow(new Object[] {
-                    instrument.getId(),
-                    instrument.getName(),
-                    instrument.getDeviceName(),
-                    instrument.getChannel() != null ? instrument.getChannel() + 1 : null, // Convert to 1-based
-                    instrument.getAvailable() != null ? instrument.getAvailable() : false,
-                    instrument.getLowestNote(),
-                    instrument.getHighestNote(),
-                    instrument.isInitialized(),
-                    InstrumentManager.getInstance().determineInstrumentOwner(instrument) // Add owner column
-            });
+        // Also refresh the InstrumentManager's cache to keep it in sync
+        InstrumentManager.getInstance().refreshCache(instruments);
+
+        // Add each instrument to the table
+        for (InstrumentWrapper instrument : instruments) {
+            if (instrument != null) {
+                model.addRow(new Object[]{
+                        instrument.getId(),
+                        instrument.getName(),
+                        instrument.getDeviceName(),
+                        instrument.getChannel() != null ? instrument.getChannel() + 1 : null, // Convert to 1-based
+                        instrument.getAvailable() != null ? instrument.getAvailable() : false,
+                        instrument.getLowestNote(),
+                        instrument.getHighestNote(),
+                        instrument.isInitialized(),
+                        InstrumentManager.getInstance().determineInstrumentOwner(instrument) // Add owner column
+                });
+            }
         }
-    }
 
-    // Force a repaint to ensure UI is updated
-    instrumentsTable.repaint();
-}
+        // Force a repaint to ensure UI is updated
+        instrumentsTable.repaint();
+    }
 
     private void setupContextMenus() {
         // Create context menus
@@ -1244,23 +1222,17 @@ private void refreshInstrumentsTable() {
 
         controlCodesContextMenu.addActionListener(e -> {
             switch (e.getActionCommand()) {
-                case "ADD_CONTROL_CODE" ->
-                    showControlCodeDialog(null);
-                case "EDIT_CONTROL_CODE" ->
-                    editSelectedControlCode();
-                case "DELETE_CONTROL_CODE" ->
-                    deleteSelectedControlCode();
+                case "ADD_CONTROL_CODE" -> showControlCodeDialog(null);
+                case "EDIT_CONTROL_CODE" -> editSelectedControlCode();
+                case "DELETE_CONTROL_CODE" -> deleteSelectedControlCode();
             }
         });
 
         captionsContextMenu.addActionListener(e -> {
             switch (e.getActionCommand()) {
-                case "ADD_CAPTION" ->
-                    showCaptionDialog(null);
-                case "EDIT_CAPTION" ->
-                    editSelectedCaption();
-                case "DELETE_CAPTION" ->
-                    deleteSelectedCaption();
+                case "ADD_CAPTION" -> showCaptionDialog(null);
+                case "EDIT_CAPTION" -> editSelectedCaption();
+                case "DELETE_CAPTION" -> deleteSelectedCaption();
             }
         });
     }
@@ -1458,7 +1430,7 @@ private void refreshInstrumentsTable() {
     }
 
     private void updateInstrumentInUserConfig(InstrumentWrapper instrument) {
-        UserConfig config =  UserConfigManager.getInstance().getCurrentConfig();
+        UserConfig config = UserConfigManager.getInstance().getCurrentConfig();
 
         // Update existing or add new
         boolean found = false;

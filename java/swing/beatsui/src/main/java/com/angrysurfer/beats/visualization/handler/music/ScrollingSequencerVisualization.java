@@ -91,7 +91,24 @@ public class ScrollingSequencerVisualization extends LockHandler implements IVis
     public ScrollingSequencerVisualization() {
         // Register for timing events
         TimingBus.getInstance().register(this);
-        CommandBus.getInstance().register(this);
+        CommandBus.getInstance().register(this, new String[] {
+            Commands.TRANSPORT_START,
+            Commands.TRANSPORT_STOP,
+            Commands.METRONOME_START,
+            Commands.METRONOME_STOP,
+            Commands.TRANSPORT_STATE_CHANGED,
+            Commands.TIMING_UPDATE,
+            Commands.UPDATE_TEMPO,
+            Commands.TIMING_PARAMETERS_CHANGED,
+            Commands.SESSION_CHANGED,
+            Commands.PLAYER_ADDED,
+            Commands.PLAYER_DELETED,
+            Commands.RULE_ADDED,
+            Commands.RULE_EDITED,
+            Commands.RULE_DELETED,
+            Commands.SESSION_UPDATED,
+            Commands.PLAYER_UPDATED
+        });
         
         // Initialize with current state
         Session activeSession = SessionManager.getInstance().getActiveSession();

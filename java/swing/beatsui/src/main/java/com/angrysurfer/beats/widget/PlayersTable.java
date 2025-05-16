@@ -356,7 +356,17 @@ public class PlayersTable extends JTable {
                         break;
                 }
             }
-        });
+        }, new String[] {
+        Commands.PLAYER_ADDED,
+        Commands.PLAYER_DELETED,
+        Commands.PLAYER_ROW_REFRESH,
+        Commands.SESSION_UPDATED,
+        Commands.SESSION_SELECTED,
+        Commands.SESSION_LOADED,
+        Commands.NEW_VALUE_VELOCITY_MIN,
+        Commands.NEW_VALUE_VELOCITY_MAX,
+        Commands.PLAYER_ACTIVATED
+    });
     }
 
     private void updateTableFromSession(Session session) {

@@ -1,75 +1,54 @@
 package com.angrysurfer.core.util;
 
-import java.util.Objects;
-import java.util.logging.Logger;
-
-import javax.sound.midi.InvalidMidiDataException;
-import javax.sound.midi.MidiEvent;
-import javax.sound.midi.MidiMessage;
-import javax.sound.midi.MidiSystem;
-import javax.sound.midi.MidiUnavailableException;
-import javax.sound.midi.Receiver;
-import javax.sound.midi.Sequence;
-import javax.sound.midi.Sequencer;
-import javax.sound.midi.ShortMessage;
-import javax.sound.midi.Synthesizer;
-import javax.sound.midi.Track;
-import javax.sound.midi.Transmitter;
-
-import com.angrysurfer.core.Constants;
-import com.angrysurfer.core.api.Command;
-import com.angrysurfer.core.api.CommandBus;
-import com.angrysurfer.core.api.Commands;
-import com.angrysurfer.core.api.IBusListener;
-import com.angrysurfer.core.api.TimingBus;
+import com.angrysurfer.core.api.*;
 import com.angrysurfer.core.model.Session;
+import com.angrysurfer.core.sequencer.SequencerConstants;
 import com.angrysurfer.core.service.SessionManager;
-
 import lombok.Getter;
 import lombok.Setter;
+
+import javax.sound.midi.*;
+import java.util.Objects;
+import java.util.logging.Logger;
 
 @Getter
 @Setter
 public class MidiClockSource implements IBusListener {
 
     private static final Logger logger = Logger.getLogger(MidiClockSource.class.getName());
-
-    private boolean metronomeAudible = false;
-    public int metronomeChannel = Constants.MIDI_DRUM_CHANNEL;
-    private int metronomeNote = 60;
-    private int metronomeVelocity = 100;
-
+    static boolean isInitialized = false;
     // Use singletons directly instead of constructor injection
     // private final LogManager logManager = LogManager.getInstance();
     private final TimingBus timingBus = TimingBus.getInstance();
     private final CommandBus commandBus = CommandBus.getInstance();
-
+    public int metronomeChannel = SequencerConstants.MIDI_DRUM_CHANNEL;
+    private boolean metronomeAudible = false;
+    private int metronomeNote = 60;
+    private int metronomeVelocity = 100;
     private Sequence sequence;
     private Sequencer sequencer;
     private Synthesizer synthesizer;
 
-    static boolean isInitialized = false;
-
     private synchronized void initialize() {
         // if (!isInitialized)
-            try {
-                // System.out.println("SequencerManager: Initializing...");
-                setupSequencer();
-                // System.out.println("SequencerManager: Sequencer setup complete");
-                setupSynthesizer();
-                // System.out.println("SequencerManager: Synthesizer setup complete");
-                createSequence();
-                // System.out.println("SequencerManager: Sequence created");
-                connectDevices();
-                // System.out.println("SequencerManager: Devices connected");
-            } catch (Exception e) {
-                System.err.println("SequencerManager: Error initializing MIDI: " + e.getMessage());
-                e.printStackTrace();
-            }
+        try {
+            // System.out.println("SequencerManager: Initializing...");
+            setupSequencer();
+            // System.out.println("SequencerManager: Sequencer setup complete");
+            setupSynthesizer();
+            // System.out.println("SequencerManager: Synthesizer setup complete");
+            createSequence();
+            // System.out.println("SequencerManager: Sequence created");
+            connectDevices();
+            // System.out.println("SequencerManager: Devices connected");
+        } catch (Exception e) {
+            System.err.println("SequencerManager: Error initializing MIDI: " + e.getMessage());
+            e.printStackTrace();
+        }
 
-        CommandBus.getInstance().register(this);
-        // System.out.println("SequencerManager: Initialization complete");
-        // isInitialized = true;
+        CommandBus.getInstance().register(this, new String[]{
+                Commands.SESSION_SELECTED, Commands.METRONOME_START, Commands.METRONOME_STOP
+        });
     }
 
     // Optimize buffer size and latency settings
@@ -79,7 +58,7 @@ public class MidiClockSource implements IBusListener {
         if (sequencer == null) {
             throw new MidiUnavailableException("Could not obtain MIDI sequencer");
         }
-        
+
         // Configure sequencer for low latency before opening
         try {
             // Set system properties for better timing - works with most JVM implementations
@@ -88,23 +67,23 @@ public class MidiClockSource implements IBusListener {
         } catch (Exception e) {
             System.err.println("Could not set sequencer properties: " + e.getMessage());
         }
-        
+
         sequencer.open();
-        
+
         // Try to optimize the sequencer after opening
         try {
             // These are general properties that might work across implementations
             // if (sequencer instanceof javax.sound.midi.RealTimeSequencer) {
             //     // System.out.println("Using real-time sequencer");
             // }
-            
+
             // Additional sequencer tuning
             sequencer.setMicrosecondPosition(0);
             sequencer.setTickPosition(0);
         } catch (Exception e) {
             System.err.println("Warning: Could not optimize sequencer: " + e.getMessage());
         }
-        
+
         // System.out.println("SequencerManager: Sequencer opened successfully");
     }
 
@@ -127,15 +106,15 @@ public class MidiClockSource implements IBusListener {
         for (int beat = 0; beat < beatsPerBar; beat++) {
             // Add timing clocks
             for (int clock = 0; clock < getActiveSession().getTicksPerBeat(); clock++) {
-                track.add(new MidiEvent(new ShortMessage(0xF8), beat * getActiveSession().getTicksPerBeat() + clock));
+                track.add(new MidiEvent(new ShortMessage(0xF8), (long) beat * getActiveSession().getTicksPerBeat() + clock));
             }
 
             // Add metronome notes
             track.add(new MidiEvent(
                     new ShortMessage(ShortMessage.NOTE_ON, metronomeChannel, metronomeNote, metronomeVelocity),
-                    beat * getActiveSession().getTicksPerBeat()));
+                    (long) beat * getActiveSession().getTicksPerBeat()));
             track.add(new MidiEvent(new ShortMessage(ShortMessage.NOTE_OFF, metronomeChannel, metronomeNote, 0),
-                    beat * getActiveSession().getTicksPerBeat() + getActiveSession().getTicksPerBeat() / 2));
+                    (long) beat * getActiveSession().getTicksPerBeat() + getActiveSession().getTicksPerBeat() / 2));
         }
 
         sequencer.setSequence(sequence);
@@ -197,7 +176,7 @@ public class MidiClockSource implements IBusListener {
                 // System.out.println("SequencerManager: Sequencer started");
 
                 // Publish state change - CRITICAL for UI updates
-                commandBus.publish(Commands.TRANSPORT_STATE_CHANGED, this, true);
+                CommandBus.getInstance().publish(Commands.TRANSPORT_STATE_CHANGED, this, true);
                 // System.out.println("SequencerManager: Published TRANSPORT_STATE_CHANGED event");
             } else {
                 // System.out.println("SequencerManager: Cannot start - sequencer is null or already running");
@@ -221,7 +200,7 @@ public class MidiClockSource implements IBusListener {
                 sequencer.setMicrosecondPosition(0);
 
                 // Publish state change - CRITICAL for UI updates
-                commandBus.publish(Commands.TRANSPORT_STATE_CHANGED, this, false);
+                CommandBus.getInstance().publish(Commands.TRANSPORT_STATE_CHANGED, this, false);
                 // System.out.println("SequencerManager: Stopped sequencer, publishing state change event");
             }
         } catch (Exception e) {
