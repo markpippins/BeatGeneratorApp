@@ -18,6 +18,7 @@ import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
@@ -392,8 +393,18 @@ public class SoundParametersPanel extends PlayerAwarePanel {
         if (player == null)
             return;
 
+        // Create a list to hold the preset items so we can sort them
+        List<PresetItem> presetItems = new ArrayList<>();
         for (int i = 0; i < 128; i++) {
-            presetCombo.addItem(new PresetItem(i, "Program " + i));
+            presetItems.add(new PresetItem(i, "Program " + i));
+        }
+
+        // Sort alphabetically by name
+        presetItems.sort((a, b) -> a.getName().compareToIgnoreCase(b.getName()));
+
+        // Add sorted items to combo box
+        for (PresetItem item : presetItems) {
+            presetCombo.addItem(item);
         }
 
         // Select current preset if possible
@@ -513,6 +524,9 @@ public class SoundParametersPanel extends PlayerAwarePanel {
             List<PresetItem> presets = SoundbankManager.getInstance().getPlayerPresets(
                     player, soundbankName, bankIndex);
 
+            // Sort alphabetically by name
+            presets.sort((a, b) -> a.getName().compareToIgnoreCase(b.getName()));
+
             for (PresetItem item : presets) {
                 presetCombo.addItem(item);
             }
@@ -551,10 +565,13 @@ public class SoundParametersPanel extends PlayerAwarePanel {
 
             // Use new helper method
             List<PresetItem> drumPresets = SoundbankManager.getInstance().getDrumPresets();
+
+            // Sort alphabetically by name
+            drumPresets.sort((a, b) -> a.getName().compareToIgnoreCase(b.getName()));
+
             for (PresetItem item : drumPresets) {
                 presetCombo.addItem(item);
             }
-
 
             // Select current preset if possible
             if (player.getInstrument() != null) {
@@ -575,5 +592,4 @@ public class SoundParametersPanel extends PlayerAwarePanel {
             isInitializing = false;
         }
     }
-
 }

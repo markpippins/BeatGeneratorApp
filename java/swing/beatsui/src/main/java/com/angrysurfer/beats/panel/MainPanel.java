@@ -4,6 +4,7 @@ import com.angrysurfer.beats.Symbols;
 import com.angrysurfer.beats.panel.instrument.InstrumentsPanel;
 import com.angrysurfer.beats.panel.internalsynth.InternalSynthControlPanel;
 import com.angrysurfer.beats.panel.modulation.QuadXYPadPanel;
+import com.angrysurfer.beats.panel.modulation.TuringMachinePanel;
 import com.angrysurfer.beats.panel.modulation.oscillator.LFOPanel;
 import com.angrysurfer.beats.panel.sample.SampleBrowserPanel;
 import com.angrysurfer.beats.panel.sequencer.SongPanel;
@@ -519,6 +520,9 @@ public class MainPanel extends PlayerAwarePanel implements AutoCloseable, IBusLi
         modulationTabbedPane.addTab("LFOs", lfoPanel);
         modulationTabbedPane.addTab("Complex LFO", new ComplexLFOPanel());
         modulationTabbedPane.addTab("XY Pad", createXYPadPanel());
+
+        // Add the new Turing Machine panel
+        modulationTabbedPane.addTab("Turing Machine", new TuringMachinePanel());
 
         return modulationTabbedPane;
     }

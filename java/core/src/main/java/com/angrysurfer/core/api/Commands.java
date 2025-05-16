@@ -403,4 +403,5 @@ public class Commands {
     public static final String HIGHLIGHT_STEP = "HIGHLIGHT_STEP";
     public static final String MELODIC_SEQUENCE_DELETED = "MELODIC_SEQUENCE_DELETED";
     public static final String HIGHLIGHT_SCALE_NOTE = "HIGHLIGHT_SCALE_NOTE";
+    public static final String MODULATION_VALUE_CHANGED = "MODULATION_VALUE_CHANGED";
 }
