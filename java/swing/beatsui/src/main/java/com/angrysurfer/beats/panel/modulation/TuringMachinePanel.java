@@ -1,7 +1,6 @@
 package com.angrysurfer.beats.panel.modulation;
 
 import com.angrysurfer.beats.widget.Dial;
-import com.angrysurfer.beats.widget.LEDIndicator;
 import com.angrysurfer.core.api.*;
 import com.angrysurfer.core.sequencer.TimingUpdate;
 import org.slf4j.Logger;
@@ -22,7 +21,7 @@ public class TuringMachinePanel extends JPanel implements IBusListener {
 
     // Shift register state
     private final boolean[] register = new boolean[8];
-    private final LEDIndicator[] leds = new LEDIndicator[8];
+    private final TuringMachineLED[] leds = new TuringMachineLED[8];
     private final Random random = new Random();
     private final long lastClockTime = 0;
     private int numSteps = 8;
@@ -81,7 +80,7 @@ public class TuringMachinePanel extends JPanel implements IBusListener {
 
         // Create LEDs for each bit
         for (int i = 0; i < 8; i++) {
-            leds[i] = new LEDIndicator(new Color(0, 220, 0), Integer.toString(i + 1));
+            leds[i] = new TuringMachineLED(Integer.toString(i + 1));
             registerPanel.add(leds[i]);
         }
 
@@ -273,22 +272,17 @@ public class TuringMachinePanel extends JPanel implements IBusListener {
             register[i] = random.nextBoolean();
             updateLED(i);
         }
-        // Update output value based on current step
+        // Update output value based on current register state
         updateOutputValue();
     }
 
     /**
-     * Update LED display for a specific bit
+     * Update LED display for a specific bit with color based on value
      */
     private void updateLED(int position) {
         if (position >= 0 && position < 8) {
-            leds[position].setOn(register[position]);
-            // Highlight current step
-            if (position == currentStep) {
-                leds[position].setOnColor(new Color(0, 220, 0)); // Bright green for active step
-            } else {
-                leds[position].setOnColor(new Color(0, 180, 0)); // Normal green for other bits
-            }
+            leds[position].setBitValue(register[position]);
+            leds[position].setActivePosition(position == currentStep);
         }
     }
 
