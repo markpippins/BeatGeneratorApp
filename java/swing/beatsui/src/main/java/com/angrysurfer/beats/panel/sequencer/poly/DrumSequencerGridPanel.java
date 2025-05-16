@@ -7,6 +7,7 @@ import com.angrysurfer.core.api.*;
 import com.angrysurfer.core.event.DrumStepUpdateEvent;
 import com.angrysurfer.core.sequencer.DrumSequencer;
 import com.angrysurfer.core.sequencer.SequencerConstants;
+import com.angrysurfer.core.sequencer.TimingUpdate;
 import com.angrysurfer.core.service.DrumSequencerManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -59,8 +60,13 @@ public class DrumSequencerGridPanel extends JPanel implements IBusListener {
         createGridButtons();
         // Visualizer gridSaver = new Visualizer(this, gridButtons);
         TimingBus.getInstance().register(this);
-        CommandBus.getInstance().register(this, new String[]{Commands.DRUM_STEP_UPDATED,
-                Commands.DRUM_STEP_PARAMETERS_CHANGED, Commands.DRUM_STEP_EFFECTS_CHANGED});
+        CommandBus.getInstance().register(this, new String[]{
+                Commands.DRUM_STEP_UPDATED,
+                Commands.DRUM_STEP_PARAMETERS_CHANGED,
+                Commands.DRUM_STEP_EFFECTS_CHANGED,
+                Commands.TRANSPORT_START,
+                Commands.TRANSPORT_STOP
+        });
 //        TimingBus.getInstance().register(this, new String[]{Commands.DRUM_STEP_UPDATED,
 //                Commands.DRUM_STEP_PARAMETERS_CHANGED, Commands.DRUM_STEP_EFFECTS_CHANGED});
 
@@ -402,9 +408,34 @@ public class DrumSequencerGridPanel extends JPanel implements IBusListener {
      */
     @Override
     public void onAction(Command action) {
-        // Existing code...
+        if (action.getCommand() == null) return;
 
         switch (action.getCommand()) {
+            case Commands.TIMING_UPDATE:
+                // Handle timing updates for position indicator
+                if (isPlaying && action.getData() instanceof TimingUpdate update) {
+                    // Calculate current step position
+                    long tickCount = update.tickCount();
+
+                    // Get timing settings from sequencer
+                    int patternLength = sequencer.getDefaultPatternLength();
+                    int ticksPerBeat = 96; // Default PPQN, adjust if needed
+
+                    // Default to 4 steps per beat (16th notes in 4/4)
+                    int stepsPerBeat = 4;
+                    int ticksPerStep = ticksPerBeat / stepsPerBeat;
+
+                    // Calculate current step and previous step
+                    int currentStep = (int) ((tickCount / ticksPerStep) % patternLength);
+                    int previousStep = (currentStep == 0) ?
+                            patternLength - 1 : currentStep - 1;
+
+                    // Update position indicators in all drum rows
+                    for (int drumIndex = 0; drumIndex < DRUM_PAD_COUNT; drumIndex++) {
+                        updateStepHighlighting(drumIndex, previousStep, currentStep);
+                    }
+                }
+                break;
 
             case Commands.DRUM_STEP_UPDATED:
                 if (action.getData() instanceof DrumStepUpdateEvent event) {
@@ -412,7 +443,7 @@ public class DrumSequencerGridPanel extends JPanel implements IBusListener {
                 }
                 break;
 
-            // Add these new cases to handle parameter changes
+            // Existing cases for parameters and effects
             case Commands.DRUM_STEP_PARAMETERS_CHANGED:
                 if (action.getData() instanceof Object[] data && data.length >= 5) {
                     int drumIndex = (Integer) data[0];
@@ -438,6 +469,15 @@ public class DrumSequencerGridPanel extends JPanel implements IBusListener {
                     // Update the button effects visuals
                     updateStepButtonEffects(drumIndex, stepIndex, pan, chorus, reverb);
                 }
+                break;
+
+            // Handle transport commands to update playing state
+            case Commands.TRANSPORT_START:
+                setPlayingState(true);
+                break;
+
+            case Commands.TRANSPORT_STOP:
+                setPlayingState(false);
                 break;
         }
     }
