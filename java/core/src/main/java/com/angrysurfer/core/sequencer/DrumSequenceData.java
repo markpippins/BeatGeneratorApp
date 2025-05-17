@@ -599,4 +599,25 @@ public class DrumSequenceData {
             }
         }
     }
+
+    /**
+     * Get the default timing division (when no drum is specified)
+     * @return The default timing division
+     */
+    public TimingDivision getTimingDivision() {
+        // Return a default timing division when no specific drum is requested
+        return TimingDivision.NORMAL;
+    }
+
+    /**
+     * Get the timing division for a specific drum
+     * @param drumIndex The index of the drum
+     * @return The timing division for that drum
+     */
+    public TimingDivision getTimingDivision(int drumIndex) {
+        if (drumIndex >= 0 && drumIndex < timingDivisions.length) {
+            return timingDivisions[drumIndex];
+        }
+        return TimingDivision.NORMAL; // Default fallback
+    }
 }
