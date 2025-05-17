@@ -352,7 +352,8 @@ public class DrumGridButton extends JButton {
             if (showDecay) {
                 // Calculate width based on decay (normalized to reasonable range)
                 int decayWidth = Math.min(width-2, (int)(width * (decay / 500.0)));
-                g2d.setColor(new Color(0, 200, 0, 100)); // Semi-transparent green
+                g2d.setColor( Color.BLUE); // Semi-transparent green
+                // g2d.setColor(new Color(0, 200, 0, 100)); // Semi-transparent green
                 g2d.fillRect(width/4, height/2, decayWidth, height/4);
             }
             

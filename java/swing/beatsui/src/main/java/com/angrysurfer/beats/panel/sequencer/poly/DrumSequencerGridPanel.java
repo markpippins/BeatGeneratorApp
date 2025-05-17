@@ -276,6 +276,55 @@ public class DrumSequencerGridPanel extends JPanel implements IBusListener {
     }
 
     /**
+     * Special version of step highlighting for backward playback to prevent trails
+     */
+    public void updateBackwardStepHighlighting(int drumIndex, int oldStep, int newStep) {
+        // Ensure we're on the EDT for UI updates
+        if (!SwingUtilities.isEventDispatchThread()) {
+            SwingUtilities.invokeLater(() -> updateBackwardStepHighlighting(drumIndex, oldStep, newStep));
+            return;
+        }
+
+        if (drumIndex >= 0 && drumIndex < DRUM_PAD_COUNT) {
+            // For backward direction, first clear ALL highlights in this row
+            for (int step = 0; step < sequencer.getDefaultPatternLength(); step++) {
+                DrumGridButton button = gridButtons[drumIndex][step];
+                if (button != null) {
+                    button.setHighlighted(false);
+                }
+            }
+
+            // Then highlight ONLY the new step
+            if (isPlaying && newStep >= 0 && newStep < sequencer.getDefaultPatternLength()) {
+                DrumGridButton newButton = gridButtons[drumIndex][newStep];
+                if (newButton != null) {
+                    // Choose color based on step position in the pattern
+                    Color highlightColor;
+                    if (newStep < 16) {
+                        highlightColor = UIHelper.fadedOrange;
+                    } else if (newStep < 32) {
+                        highlightColor = UIHelper.coolBlue;
+                    } else if (newStep < 48) {
+                        highlightColor = UIHelper.deepNavy;
+                    } else {
+                        highlightColor = UIHelper.mutedOlive;
+                    }
+
+                    newButton.setHighlighted(true);
+                    newButton.setHighlightColor(highlightColor);
+                }
+            }
+            
+            // Repaint the entire row to avoid partial update issues
+            for (int step = 0; step < sequencer.getDefaultPatternLength(); step++) {
+                if (gridButtons[drumIndex][step] != null) {
+                    gridButtons[drumIndex][step].repaint();
+                }
+            }
+        }
+    }
+
+    /**
      * Clear all step highlighting across all drum rows
      */
     public void clearAllStepHighlighting() {
@@ -483,23 +532,24 @@ public class DrumSequencerGridPanel extends JPanel implements IBusListener {
                             drumCurrentStep = (drumPatternLength - 1) - (absoluteStep % drumPatternLength);
 
                             // Fix for the previous step calculation in backward mode
-                            // We need to be more careful with the edge case when we wrap around
                             if (drumCurrentStep == 0) {
                                 // If we're at the first step, previous was the last step
                                 drumPreviousStep = drumPatternLength - 1;
                             } else {
-                                // Otherwise, previous step is one step forward (not backward)
+                                // Otherwise, previous step is one step forward (not backward) 
                                 drumPreviousStep = drumCurrentStep - 1;
                             }
+                            
+                            // **** THIS IS THE CRITICAL CHANGE ****
+                            // Use the special backward highlighting method instead of the regular one
+                            updateBackwardStepHighlighting(drumIndex, drumPreviousStep, drumCurrentStep);
                         } else {
-                            // Default forward mode
+                            // Default forward mode (and bounce) continue to use the regular method
                             drumCurrentStep = absoluteStep % drumPatternLength;
                             drumPreviousStep = (drumCurrentStep == 0)
                                     ? drumPatternLength - 1 : drumCurrentStep - 1;
+                            updateStepHighlighting(drumIndex, drumPreviousStep, drumCurrentStep);
                         }
-
-                        // Update just this drum's position indicator
-                        updateStepHighlighting(drumIndex, drumPreviousStep, drumCurrentStep);
                     }
                 }
                 break;
