@@ -37,6 +37,8 @@ public final class InstrumentWrapper implements Serializable {
     private final ShortMessage cachedNoteOff = new ShortMessage();
     @JsonIgnore
     private final ShortMessage cachedControlChange = new ShortMessage();
+    @JsonIgnore
+    private final Map<String, Object> properties = new HashMap<>();
     private Long id;
     @JsonIgnore
     private transient MidiDevice.Info deviceInfo = null;
@@ -615,5 +617,9 @@ public final class InstrumentWrapper implements Serializable {
 
         logger.info("Set bank index to: {} (MSB: {}, LSB: {})",
                 bankIndex, bankMSB, bankLSB);
+    }
+
+    public Map<String, Object> getProperties() {
+        return properties;
     }
 }

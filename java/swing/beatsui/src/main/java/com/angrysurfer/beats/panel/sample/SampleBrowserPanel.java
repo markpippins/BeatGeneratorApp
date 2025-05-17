@@ -32,6 +32,9 @@ public class SampleBrowserPanel extends JPanel implements IBusListener {
         fileBrowserPanel = new FileBrowserPanel(this::onFileSelected);
         sampleViewerPanel = new SampleViewerPanel();
 
+        // Make sure to disable the create player button initially
+        sampleViewerPanel.getControlsPanel().setCreatePlayerEnabled(false);
+
         // Create split pane with file browser on left and sample viewer on right
         JSplitPane splitPane = new JSplitPane(
                 JSplitPane.HORIZONTAL_SPLIT,
