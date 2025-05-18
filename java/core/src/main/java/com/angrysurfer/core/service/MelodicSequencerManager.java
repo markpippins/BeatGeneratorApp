@@ -49,7 +49,7 @@ public class MelodicSequencerManager {
         // Create a new sequencer with the specified ID and channel
         MelodicSequencer sequencer = new MelodicSequencer(id);
         sequencer.setSequenceData(new MelodicSequenceData());
-        sequencer.getPlayer().noteOn(60, 100);
+        // sequencer.getPlayer().noteOn(60, 100);
         sequencers.add(sequencer);
 
         CommandBus.getInstance().publish(Commands.MELODIC_SEQUENCER_ADDED, this, sequencer);

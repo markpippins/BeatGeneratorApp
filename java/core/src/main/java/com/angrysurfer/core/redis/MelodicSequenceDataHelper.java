@@ -63,6 +63,8 @@ public class MelodicSequenceDataHelper {
 
             // Try first with the newer key format
             json = jedis.get("melodicseq:" + sequencerId + ":" + id);
+            logger.info("findMelodicSequenceById(id: {}, sequencerId: {})", id, sequencerId);
+            logger.info(json);
             if (json != null) source = "melodicseq key";
 
             // If not found, try the older key format
@@ -341,6 +343,8 @@ public class MelodicSequenceDataHelper {
             logger.info("Saved melodic sequence {} for sequencer {} with instrument settings",
                     data.getId(), sequencer.getId());
 
+            logger.info(json);
+            
             // Notify listeners
             CommandBus.getInstance().publish(Commands.MELODIC_SEQUENCE_SAVED, this,
                     Map.of("sequencerId", sequencer.getId(), "sequenceId", data.getId()));
@@ -426,7 +430,7 @@ public class MelodicSequenceDataHelper {
 
             // Try to get the player ID from the current sequencer
             MelodicSequencer sequencer = com.angrysurfer.core.service.MelodicSequencerManager
-                .getInstance().getSequencer(sequencerId);
+                    .getInstance().getSequencer(sequencerId);
             if (sequencer != null && sequencer.getPlayer() != null) {
                 data.setPlayerId(sequencer.getPlayer().getId());
                 logger.info("Set player ID: {} on new melodic sequence", sequencer.getPlayer().getId());
