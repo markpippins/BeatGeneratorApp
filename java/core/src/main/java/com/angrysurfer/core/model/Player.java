@@ -2,6 +2,7 @@ package com.angrysurfer.core.model;
 
 import com.angrysurfer.core.api.*;
 import com.angrysurfer.core.model.feature.Pad;
+import com.angrysurfer.core.sequencer.Scale;
 import com.angrysurfer.core.sequencer.SequencerConstants;
 import com.angrysurfer.core.sequencer.TimingUpdate;
 import com.angrysurfer.core.service.InternalSynthManager;
@@ -104,7 +105,7 @@ public abstract class Player implements Callable<Boolean>, Serializable, IBusLis
     private Integer fadeOut = 0;
     private Integer fadeIn = 0;
     private Boolean accent = false;
-    private String scale = "Chromatic";
+    private String scale = Scale.SCALE_CHROMATIC;
     private double duration = 100.0;
     @JsonIgnore
     private Boolean enabled = false;

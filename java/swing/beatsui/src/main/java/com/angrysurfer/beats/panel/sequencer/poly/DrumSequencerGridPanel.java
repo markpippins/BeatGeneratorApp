@@ -67,7 +67,8 @@ public class DrumSequencerGridPanel extends JPanel implements IBusListener {
             Commands.DRUM_STEP_PARAMETERS_CHANGED,
             Commands.DRUM_STEP_EFFECTS_CHANGED,
             Commands.TRANSPORT_START,
-            Commands.TRANSPORT_STOP
+            Commands.TRANSPORT_STOP,
+            Commands.DRUM_GRID_REFRESH_REQUESTED  // Add this line
         });
 //        TimingBus.getInstance().register(this, new String[]{Commands.DRUM_STEP_UPDATED,
 //                Commands.DRUM_STEP_PARAMETERS_CHANGED, Commands.DRUM_STEP_EFFECTS_CHANGED});
@@ -595,6 +596,12 @@ public class DrumSequencerGridPanel extends JPanel implements IBusListener {
 
             case Commands.TRANSPORT_STOP:
                 setPlayingState(false);
+                break;
+
+            // Add this case to the switch statement in onAction
+            case Commands.DRUM_GRID_REFRESH_REQUESTED:
+                // Use existing method to refresh the entire grid UI
+                refreshGridUI();
                 break;
         }
     }

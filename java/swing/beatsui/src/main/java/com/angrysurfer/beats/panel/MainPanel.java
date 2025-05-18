@@ -111,7 +111,7 @@ public class MainPanel extends PlayerAwarePanel implements AutoCloseable, IBusLi
         tabbedPane.addTab("Instruments", createCombinedInstrumentsSystemPanel());
 
         tabbedPane.addTab("Logs", new LoggingPanel());
-        // tabbedPane.addTab("Visualizer", new GridPanel());
+        tabbedPane.addTab("Visualizer", new GridPanel());
 
         tabbedPane.setBorder(BorderFactory.createEmptyBorder(0, 4, 0, 4));
 
