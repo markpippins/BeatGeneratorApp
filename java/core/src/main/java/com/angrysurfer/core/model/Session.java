@@ -652,7 +652,7 @@ public class Session implements Serializable, IBusListener {
                 beat = (beat % beatsPerBar) + 1; // This cycles from 1 to parts
                 beatCount = newBeat;
                 timingBus.publish(Commands.TIMING_BEAT, this,
-                        new TimingUpdate(tick, beat, bar, part, tickCount, beatCount, barCount, partCount));
+                        new TimingUpdate(null, beat, bar, part, tickCount, beatCount, barCount, partCount));
             } else if (tick == 1) {
                 timingBus.publish(Commands.TIMING_BEAT, this,
                         new TimingUpdate(tick, beat, bar, part, tickCount, beatCount, barCount, partCount));
@@ -664,10 +664,10 @@ public class Session implements Serializable, IBusListener {
                 bar = (bar % bars) + 1; // This cycles from 1 to parts
                 barCount = newBar;
                 timingBus.publish(Commands.TIMING_BAR, this,
-                        new TimingUpdate(tick, beat, bar, part, tickCount, beatCount, barCount, partCount));
+                        new TimingUpdate(null, null, bar, part, tickCount, beatCount, barCount, partCount));
             } else if (tick == 1) {
                 timingBus.publish(Commands.TIMING_BAR, this,
-                        new TimingUpdate(tick, beat, bar, part, tickCount, beatCount, barCount, partCount));
+                        new TimingUpdate(null, null, bar, part, tickCount, beatCount, barCount, partCount));
             }
 
             // Part calculations on bar change - fix to only increment at partLength
@@ -678,10 +678,10 @@ public class Session implements Serializable, IBusListener {
                 partCount++;
                 logger.debug("Part changed to {} (partCount={}) at bar {}", part, partCount, barCount);
                 timingBus.publish(Commands.TIMING_PART, this,
-                        new TimingUpdate(tick, beat, bar, part, tickCount, beatCount, barCount, partCount));
+                        new TimingUpdate(null, null, null, part, tickCount, beatCount, barCount, partCount));
             } else if (tick == 1) {
                 timingBus.publish(Commands.TIMING_PART, this,
-                        new TimingUpdate(tick, beat, bar, part, tickCount, beatCount, barCount, partCount));
+                        new TimingUpdate(null, null, null, part, tickCount, beatCount, barCount, partCount));
             }
         } catch (Exception e) {
             logger.error("Error in onTick", e);

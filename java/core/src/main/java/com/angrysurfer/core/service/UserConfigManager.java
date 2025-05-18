@@ -83,11 +83,11 @@ public class UserConfigManager {
         return meloInst;
     }
 
-    private static InstrumentWrapper createDrumInstrument(int i) throws MidiUnavailableException {
+    private static InstrumentWrapper createDrumInstrument() throws MidiUnavailableException {
         InstrumentWrapper drumInst = new InstrumentWrapper();
 
         // Basic properties
-        String name = "Default Drum " + (i + 1);
+        String name = "Gervill Drums";
         drumInst.setName(name);
         drumInst.setId(RedisService.getInstance().getInstrumentHelper().getNextInstrumentId());
         drumInst.setChannel(9);  // MIDI channel 10 (indexed from 0)
@@ -109,7 +109,7 @@ public class UserConfigManager {
         drumInst.setHighestNote(50);
 
         // Additional properties
-        drumInst.setDescription("Default drum instrument " + i);
+        drumInst.setDescription("Default drum instrument.");
         drumInst.setAvailable(true);
         return drumInst;
     }
@@ -695,7 +695,7 @@ public class UserConfigManager {
 
             // Create 16 Strike (drum) players with specific root notes
             createDefaultDrumPlayers(defaultDrumPlayers);
-            defaultDrumPlayers.forEach(player -> getInstruments().add(player.getInstrument()));
+            // defaultDrumPlayers.forEach(player -> getInstruments().add(player.getInstrument()));
 
             // Create 12 Note (melodic) players with different presets
             createDefaultMelodicPlayers(defaultMelodicPlayers);
@@ -730,22 +730,25 @@ public class UserConfigManager {
         InternalSynthManager synthManager = InternalSynthManager.getInstance();
 
         // Standard GM drum kit starts at note 35/36
-        for (int i = 0; i < 16; i++) {
-            // Calculate root note (36 = bass drum, 38 = snare, etc.)
-            int rootNote = 36 + i;
-            String drumName = synthManager.getDrumName(rootNote) != null ? synthManager.getDrumName(rootNote) :
-                    "Drum " + rootNote;
+        try {
+            InstrumentWrapper drums = createDrumInstrument();
+            getInstruments().add(drums);
 
-            try {
-                InstrumentWrapper instrument = createDrumInstrument(i);
-                Strike player = createStrike(rootNote, instrument);
-                initializeDrumPlayerInstrument(player);
+            for (int i = 0; i < 16; i++) {
+                // Calculate root note (36 = bass drum, 38 = snare, etc.)
+                int rootNote = 36 + i;
+//                    String drumName = synthManager.getDrumName(rootNote) != null ? synthManager.getDrumName(rootNote) :
+//                        "Drum " + rootNote;
+
+                Strike player = createStrike(rootNote, drums);
+                if (i == 0)
+                    initializeDrumPlayerInstrument(player);
                 playerList.add(player);
 
                 logger.debug("Created default drum player: {} (note: {})", player.getName(), rootNote);
-            } catch (MidiUnavailableException | InvalidMidiDataException e) {
-                throw new RuntimeException(e);
             }
+        } catch (MidiUnavailableException | InvalidMidiDataException e) {
+            throw new RuntimeException(e);
         }
     }
 
@@ -1074,7 +1077,7 @@ public class UserConfigManager {
         boolean hasPlayers = config.getDefaultStrikes() != null && !config.getDefaultStrikes().isEmpty() &&
                 config.getDefaultNotes() != null && !config.getDefaultNotes().isEmpty();
 
-        return hasPlayers && config.getDefaultStrikes().size() == 16 &&
+        return hasPlayers && config.getDefaultStrikes().size() > 0 &&
                 config.getDefaultNotes().size() == SequencerConstants.SEQUENCER_CHANNELS.length;
     }
 
