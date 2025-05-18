@@ -1,43 +1,26 @@
 package com.angrysurfer.beats.util;
 
-import java.awt.BorderLayout;
-import java.awt.Color;
-import java.awt.Component;
-import java.awt.Container;
-import java.awt.Dimension;
-import java.awt.GridLayout;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.function.Consumer;
-
-import javax.swing.BorderFactory;
-import javax.swing.JButton;
-import javax.swing.JLabel;
-import javax.swing.JPanel;
-import javax.swing.JTable;
-import javax.swing.JTextField;
-
 import com.angrysurfer.beats.Symbols;
 import com.angrysurfer.beats.panel.PlayerAwarePanel;
 import com.angrysurfer.beats.widget.Dial;
-import com.angrysurfer.core.model.Player;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import com.angrysurfer.core.api.CommandBus;
 import com.angrysurfer.core.api.Commands;
 import com.angrysurfer.core.config.TableState;
+import com.angrysurfer.core.model.Player;
 import com.angrysurfer.core.redis.RedisService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import javax.swing.*;
+import java.awt.*;
+import java.util.List;
+import java.util.*;
+import java.util.function.Consumer;
 
 /**
  * Utility class providing static UI helper methods
  */
 public class UIHelper {
-
-    private static final Logger logger = LoggerFactory.getLogger(UIHelper.class.getName());
 
     // UI constants - Optional size adjustments
     public static final int CONTROL_HEIGHT = 24; // UPDATED from 22 to 24
@@ -46,24 +29,25 @@ public class UIHelper {
     public static final int MEDIUM_CONTROL_WIDTH = 60; // UPDATED from 55 to 60
     public static final int LARGE_CONTROL_WIDTH = 120; // UPDATED from 85 to 120
     public static final int ID_LABEL_WIDTH = 85;
-
+    // Add standard dial size constants
+    public static final int STANDARD_DIAL_SIZE = 40;
+    // Add these constants to the UIHelper class
+    public static final Color FIELD_BACKGROUND = new Color(240, 240, 240);
+    public static final Color FIELD_FOREGROUND = new Color(20, 20, 20);
+    private static final Logger logger = LoggerFactory.getLogger(UIHelper.class.getName());
     // Greys & Dark Blues
     public static Color charcoalGray = new Color(40, 40, 40); // Deep console casing
     public static Color slateGray = new Color(70, 80, 90); // Cool metallic panel
     public static Color deepNavy = new Color(20, 50, 90); // Darker Neve-style blue
-
     public static Color mutedOlive = new Color(85, 110, 60); // Vintage military-style green
     public static Color fadedLime = new Color(140, 160, 80); // Aged LED green
-
     // Yellows & Oranges
     public static Color dustyAmber = new Color(200, 140, 60); // Classic VU meter glow
     public static Color warmMustard = new Color(180, 140, 50); // Retro knob indicator
     public static Color deepOrange = new Color(190, 90, 40); // Vintage warning light
-
     // Accents
     public static Color agedOffWhite = new Color(225, 215, 190); // Worn plastic knobs
     public static Color deepTeal = new Color(30, 80, 90); // Tascam-inspired accent
-
     public static Color darkGray = new Color(50, 50, 50); // Deep charcoal (console casing)
     public static Color warmGray = new Color(120, 120, 120); // Aged metal panel
     public static Color mutedRed = new Color(180, 60, 60); // Classic button color
@@ -79,6 +63,7 @@ public class UIHelper {
             case "velocity":
                 return slateGray;
             case "probability":
+                return deepTeal;
             case "reverb":
                 return deepNavy;
             case "random":
@@ -124,17 +109,17 @@ public class UIHelper {
     }
 
     public static Color[] getColors() {
-        return new Color[] { coolBlue, darkGray, warmGray, charcoalGray, slateGray, deepNavy, dustyAmber, warmMustard,
-                deepOrange, mutedRed, fadedOrange, mutedOlive, fadedLime };
+        return new Color[]{coolBlue, darkGray, warmGray, charcoalGray, slateGray, deepNavy, dustyAmber, warmMustard,
+                deepOrange, mutedRed, fadedOrange, mutedOlive, fadedLime};
     }
 
     public static Color[] getAccentColors() {
-        return new Color[] { agedOffWhite, deepTeal, warmOffWhite };
+        return new Color[]{agedOffWhite, deepTeal, warmOffWhite};
     }
 
     /**
      * Safely adds a component to a container with error handling
-     * 
+     *
      * @param container   The container to add the component to
      * @param component   The component to add
      * @param constraints Layout constraints (if applicable)
@@ -183,13 +168,6 @@ public class UIHelper {
     public static void setPanelBorder(JPanel panel) {
         panel.setBorder(BorderFactory.createEmptyBorder(1, 2, 1, 2));
     }
-
-    // Add standard dial size constants
-    public static final int STANDARD_DIAL_SIZE = 40;
-
-    // Add these constants to the UIHelper class
-    public static final Color FIELD_BACKGROUND = new Color(240, 240, 240);
-    public static final Color FIELD_FOREGROUND = new Color(20, 20, 20);
 
     /**
      * Saves the column order of a table
@@ -265,7 +243,7 @@ public class UIHelper {
      * Creates a standardized text field with customizable properties
      */
     public static JTextField createTextField(String initialValue, int columns, boolean editable, boolean enabled,
-            boolean centered, Color backgroundColor) {
+                                             boolean centered, Color backgroundColor) {
         JTextField field;
 
         // Create with initial text or columns
@@ -318,7 +296,7 @@ public class UIHelper {
 
     /**
      * Creates a disabled status field with consistent sizing
-     * 
+     *
      * @param initialValue Initial text value
      * @return Configured text field
      */
@@ -331,7 +309,7 @@ public class UIHelper {
 
     /**
      * Creates a disabled status field with inverse display (custom colors)
-     * 
+     *
      * @param initialValue Initial text value
      * @param foreground   Text color
      * @param background   Background color
@@ -407,7 +385,7 @@ public class UIHelper {
      * an action
      */
     public static <T extends Component> void findComponentsByType(Container container,
-            Class<T> componentClass, Consumer<Component> action) {
+                                                                  Class<T> componentClass, Consumer<Component> action) {
 
         // Check all components in the container
         for (Component component : container.getComponents()) {
@@ -490,159 +468,159 @@ public class UIHelper {
 
     /**
      * Create a player refresh button
-     * 
-     * @param player The player to refresh
+     *
+     * @param player     The player to refresh
      * @param buttonText Optional button text (if null, uses refresh symbol)
      * @return A configured JButton
      */
     public static JButton createPlayerRefreshButton(Player player, String buttonText) {
         JButton refreshButton;
-        
+
         if (buttonText != null) {
             refreshButton = new JButton(buttonText);
         } else {
             refreshButton = new JButton(Symbols.get(Symbols.REFRESH));
         }
-        
+
         refreshButton.setToolTipText("Refresh instrument sound");
         refreshButton.setPreferredSize(new Dimension(SMALL_CONTROL_WIDTH, CONTROL_HEIGHT));
-        
+
         refreshButton.addActionListener(e -> {
             if (player != null && player.getInstrument() != null) {
                 // Create a refresh event for this specific player
-                com.angrysurfer.core.event.PlayerRefreshEvent event = 
-                    new com.angrysurfer.core.event.PlayerRefreshEvent(player);
-                
+                com.angrysurfer.core.event.PlayerRefreshEvent event =
+                        new com.angrysurfer.core.event.PlayerRefreshEvent(player);
+
                 // Send the event
                 CommandBus.getInstance().publish(
-                    Commands.PLAYER_REFRESH_EVENT,
-                    refreshButton,
-                    event
+                        Commands.PLAYER_REFRESH_EVENT,
+                        refreshButton,
+                        event
                 );
-                
+
                 // Show status update
                 CommandBus.getInstance().publish(
-                    Commands.STATUS_UPDATE,
-                    refreshButton,
-                    new com.angrysurfer.core.api.StatusUpdate(
-                        "Sound Refresh", "Info", 
-                        "Refreshed instrument for " + player.getName())
+                        Commands.STATUS_UPDATE,
+                        refreshButton,
+                        new com.angrysurfer.core.api.StatusUpdate(
+                                "Sound Refresh", "Info",
+                                "Refreshed instrument for " + player.getName())
                 );
             }
         });
-        
+
         return refreshButton;
     }
 
     /**
      * Create a player selection button
-     * 
-     * @param player The player to select
+     *
+     * @param player     The player to select
      * @param buttonText Optional button text
      * @return A configured JButton
      */
     public static JButton createPlayerSelectButton(Player player, String buttonText) {
         String text = buttonText != null ? buttonText : "Select " + player.getName();
         JButton selectButton = new JButton(text);
-        
+
         selectButton.setToolTipText("Select " + player.getName() + " for editing");
         selectButton.setPreferredSize(new Dimension(CONTROL_WIDTH, CONTROL_HEIGHT));
-        
+
         selectButton.addActionListener(e -> {
             if (player != null) {
                 // Create a selection event for this specific player
-                com.angrysurfer.core.event.PlayerSelectionEvent event = 
-                    new com.angrysurfer.core.event.PlayerSelectionEvent(player);
-                
+                com.angrysurfer.core.event.PlayerSelectionEvent event =
+                        new com.angrysurfer.core.event.PlayerSelectionEvent(player);
+
                 // Send the event
                 CommandBus.getInstance().publish(
-                    Commands.PLAYER_SELECTION_EVENT,
-                    selectButton,
-                    event
+                        Commands.PLAYER_SELECTION_EVENT,
+                        selectButton,
+                        event
                 );
             }
         });
-        
+
         return selectButton;
     }
 
     /**
      * Create a player-aware labeled control panel with title
-     * 
-     * @param title The panel title
-     * @param player The player this panel works with
+     *
+     * @param title            The panel title
+     * @param player           The player this panel works with
      * @param hasRefreshButton Whether to include a refresh button
      * @return A configured JPanel with BorderLayout
      */
     public static JPanel createPlayerAwareControlPanel(String title, Player player, boolean hasRefreshButton) {
         JPanel panel = new JPanel(new BorderLayout(5, 5));
         panel.setBorder(BorderFactory.createCompoundBorder(
-            BorderFactory.createTitledBorder(title),
-            BorderFactory.createEmptyBorder(5, 5, 5, 5)
+                BorderFactory.createTitledBorder(title),
+                BorderFactory.createEmptyBorder(5, 5, 5, 5)
         ));
-        
+
         if (hasRefreshButton && player != null) {
             JPanel headerPanel = new JPanel(new BorderLayout());
-            
+
             // Add refresh button to the right side
             JButton refreshButton = createPlayerRefreshButton(player, null);
             headerPanel.add(refreshButton, BorderLayout.EAST);
-            
+
             panel.add(headerPanel, BorderLayout.NORTH);
         }
-        
+
         return panel;
     }
 
     /**
      * Create a dial panel for a player parameter
-     * 
-     * @param label The parameter label
-     * @param player The player this dial affects
-     * @param min Minimum value
-     * @param max Maximum value
-     * @param initialValue Initial value
+     *
+     * @param label           The parameter label
+     * @param player          The player this dial affects
+     * @param min             Minimum value
+     * @param max             Maximum value
+     * @param initialValue    Initial value
      * @param propertyUpdater Function that updates the player property
      * @return A configured dial panel
      */
     public static JPanel createPlayerParameterDialPanel(
-        String label, 
-        Player player, 
-        int min, 
-        int max, 
-        int initialValue,
-        Consumer<Integer> propertyUpdater
+            String label,
+            Player player,
+            int min,
+            int max,
+            int initialValue,
+            Consumer<Integer> propertyUpdater
     ) {
         JPanel panel = new JPanel(new BorderLayout(5, 0));
         panel.setBorder(BorderFactory.createEmptyBorder(2, 2, 2, 2));
-        
+
         JLabel nameLabel = new JLabel(label, JLabel.CENTER);
         panel.add(nameLabel, BorderLayout.NORTH);
-        
+
         Dial dial = new Dial(min, max, initialValue);
         dial.setPreferredSize(new Dimension(50, 50));
-        
+
         dial.addChangeListener(e -> {
             int value = dial.getValue();
             if (player != null && propertyUpdater != null) {
                 // Update the property
                 propertyUpdater.accept(value);
-                
+
                 // Send a player update event
                 CommandBus.getInstance().publish(
-                    Commands.PLAYER_UPDATE_EVENT,
-                    dial,
-                    new com.angrysurfer.core.event.PlayerUpdateEvent(player)
+                        Commands.PLAYER_UPDATE_EVENT,
+                        dial,
+                        new com.angrysurfer.core.event.PlayerUpdateEvent(player)
                 );
             }
         });
-        
+
         panel.add(dial, BorderLayout.CENTER);
-        
+
         JLabel valueLabel = new JLabel(String.valueOf(initialValue), JLabel.CENTER);
         dial.addChangeListener(e -> valueLabel.setText(String.valueOf(dial.getValue())));
         panel.add(valueLabel, BorderLayout.SOUTH);
-        
+
         return panel;
     }
 }
