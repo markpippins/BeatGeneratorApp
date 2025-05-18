@@ -34,6 +34,8 @@ import javax.sound.midi.Receiver;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.HashSet;
+import java.util.ArrayList;
 
 @Getter
 public class RedisService implements IBusListener {
@@ -684,8 +686,47 @@ public class RedisService implements IBusListener {
         melodicSequencerHelper.saveMelodicSequence(sequencer);
     }
 
+    /**
+     * Get all melodic sequence IDs for a specific sequencer
+     */
     public List<Long> getAllMelodicSequenceIds(Integer sequencerId) {
-        return melodicSequencerHelper.getAllMelodicSequenceIds(sequencerId);
+        try (Jedis jedis = jedisPool.getResource()) {
+            // Use a Set to avoid duplicate IDs
+            Set<Long> uniqueIds = new HashSet<>();
+            
+            // Check older key format
+            Set<String> oldKeys = jedis.keys("melseq:" + sequencerId + ":*");
+            for (String key : oldKeys) {
+                try {
+                    uniqueIds.add(Long.parseLong(key.split(":")[2]));
+                } catch (NumberFormatException e) {
+                    logger.error("Invalid melodic sequence key: " + key);
+                }
+            }
+            
+            // Check newer key format
+            Set<String> newKeys = jedis.keys("melodicseq:" + sequencerId + ":*");
+            for (String key : newKeys) {
+                try {
+                    uniqueIds.add(Long.parseLong(key.split(":")[2]));
+                } catch (NumberFormatException e) {
+                    logger.error("Invalid melodic sequence key: " + key);
+                }
+            }
+            
+            // Check hash storage
+            Map<String, String> hashEntries = jedis.hgetAll("melodic-sequences:" + sequencerId);
+            for (String idStr : hashEntries.keySet()) {
+                try {
+                    uniqueIds.add(Long.parseLong(idStr));
+                } catch (NumberFormatException e) {
+                    logger.error("Invalid melodic sequence hash key: " + idStr);
+                }
+            }
+            
+            logger.info("Found {} melodic sequences for sequencer {}", uniqueIds.size(), sequencerId);
+            return new ArrayList<>(uniqueIds);
+        }
     }
 
     public Long getMinimumMelodicSequenceId(Integer sequencerId) {

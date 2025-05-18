@@ -102,7 +102,7 @@ public class MelodicSequencerGridPanel extends JPanel implements IBusListener {
             Dial dial = i == 4 ? new NoteSelectionDial() : new Dial();
 
             // Set default sizes - we'll update these in updateDialSizes()
-            dial.setPreferredSize(new Dimension(50, 50));
+            // dial.setPreferredSize(new Dimension(60, 60));
 
             // Store the dial in the appropriate collection based on its type
             switch (i) {

@@ -17,10 +17,10 @@ import javax.swing.*;
 /**
  * Base class for panels that work with a specific player
  */
-
 @Getter
 @Setter
 public abstract class PlayerAwarePanel extends JPanel implements IBusListener {
+
     private static final long serialVersionUID = 1L;
     private static final Logger logger = LoggerFactory.getLogger(PlayerAwarePanel.class);
     // Flag to prevent recursive calls during initialization
@@ -33,9 +33,12 @@ public abstract class PlayerAwarePanel extends JPanel implements IBusListener {
      */
     public PlayerAwarePanel() {
         super();
-        CommandBus.getInstance().register(this, new String[]{Commands.PLAYER_SELECTION_EVENT});
-//        CommandBus.getInstance().register(this, new String[]{Commands.PLAYER_ACTIVATED,
-//                Commands.PLAYER_UPDATED, Commands.PLAYER_SELECTION_EVENT, Commands.PLAYER_UPDATE_EVENT});
+        CommandBus.getInstance().register(this, new String[]{
+                Commands.PLAYER_SELECTION_EVENT,
+                Commands.PLAYER_UPDATE_EVENT,
+                Commands.PLAYER_ACTIVATED,
+                Commands.PLAYER_UPDATED
+        });
     }
 
     /**
@@ -56,6 +59,8 @@ public abstract class PlayerAwarePanel extends JPanel implements IBusListener {
                 case Commands.PLAYER_SELECTION_EVENT -> {
                     if (action.getData() instanceof PlayerSelectionEvent event) {
                         handlePlayerSelectionEvent(event);
+                    } else if (action.getData() instanceof Player player) {
+                        handleLegacyPlayerActivated(player);
                     }
                 }
 

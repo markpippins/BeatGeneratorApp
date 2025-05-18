@@ -1,5 +1,6 @@
 package com.angrysurfer.beats.panel.sequencer.mono;
 
+import com.angrysurfer.beats.panel.PlayerAwarePanel;
 import com.angrysurfer.beats.util.UIHelper;
 import com.angrysurfer.core.api.CommandBus;
 import com.angrysurfer.core.api.Commands;
@@ -9,6 +10,8 @@ import com.angrysurfer.core.sequencer.Direction;
 import com.angrysurfer.core.sequencer.MelodicSequencer;
 import com.angrysurfer.core.sequencer.TimingDivision;
 import com.angrysurfer.core.service.MelodicSequencerManager;
+import lombok.Getter;
+import lombok.Setter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -18,10 +21,12 @@ import java.awt.*;
 /**
  * Panel providing navigation controls for melodic sequences
  */
-public class MelodicSequenceNavigationPanel extends JPanel {
+@Getter
+@Setter
+public class MelodicSequenceNavigationPanel extends PlayerAwarePanel {
 
     private static final Logger logger = LoggerFactory.getLogger(MelodicSequenceNavigationPanel.class);
-    private final MelodicSequencer sequencer;
+    private MelodicSequencer sequencer;
 
     private JLabel sequenceIdLabel;
     private JButton firstButton;
@@ -288,6 +293,22 @@ public class MelodicSequenceNavigationPanel extends JPanel {
 
         logger.info("Saved melodic sequence: {} for sequencer {}",
                 sequencer.getSequenceData().getId(), sequencer.getId());
+    }
+
+    @Override
+    public void handlePlayerActivated() {
+        if (getTargetPlayer().isMelodicPlayer()) {
+            setSequencer(((MelodicSequencer) getTargetPlayer().getOwner()));
+            updateSequenceIdDisplay();
+        }
+    }
+
+    @Override
+    public void handlePlayerUpdated() {
+        if (getTargetPlayer().isMelodicPlayer()) {
+            setSequencer(((MelodicSequencer) getTargetPlayer().getOwner()));
+            updateSequenceIdDisplay();
+        }
     }
 
     /**

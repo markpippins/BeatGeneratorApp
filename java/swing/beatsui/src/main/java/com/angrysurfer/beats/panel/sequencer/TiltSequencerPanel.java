@@ -1,21 +1,6 @@
 package com.angrysurfer.beats.panel.sequencer;
 
-import java.awt.BorderLayout;
-import java.awt.Color;
-import java.awt.Dimension;
-import java.awt.FlowLayout;
-import java.awt.GridLayout;
-import java.util.ArrayList;
-import java.util.List;
-
-import javax.swing.BorderFactory;
-import javax.swing.JPanel;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import com.angrysurfer.beats.util.UIHelper;
-import com.angrysurfer.beats.widget.Dial;
 import com.angrysurfer.beats.widget.ScaleDegreeSelectionDial;
 import com.angrysurfer.core.api.Command;
 import com.angrysurfer.core.api.IBusListener;
@@ -23,6 +8,13 @@ import com.angrysurfer.core.api.TimingBus;
 import com.angrysurfer.core.sequencer.MelodicSequencer;
 import com.angrysurfer.core.sequencer.TimingUpdate;
 import com.angrysurfer.core.service.MelodicSequencerManager;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import javax.swing.*;
+import java.awt.*;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * A panel with 16 tilt dials that respond to bar changes via TimingBus
@@ -35,10 +27,10 @@ public class TiltSequencerPanel extends JPanel implements IBusListener {
     private static final int MAX_VALUE = 7;
     private static final int DEFAULT_VALUE = 0;
 
-    private List<ScaleDegreeSelectionDial> tiltDials = new ArrayList<>(DIAL_COUNT);
-    private List<JPanel> dialContainers = new ArrayList<>(DIAL_COUNT);
+    private final List<ScaleDegreeSelectionDial> tiltDials = new ArrayList<>(DIAL_COUNT);
+    private final List<JPanel> dialContainers = new ArrayList<>(DIAL_COUNT);
+    private final MelodicSequencer sequencer;
     private int currentBar = 0;
-    private MelodicSequencer sequencer;
 
     public TiltSequencerPanel(MelodicSequencer sequencer) {
         this.sequencer = sequencer;
@@ -103,6 +95,7 @@ public class TiltSequencerPanel extends JPanel implements IBusListener {
             // Store the tilt value in the sequencer
             if (sequencer != null) {
                 sequencer.getSequenceData().getHarmonicTiltValuesRaw()[index] = tiltValue;
+                sequencer.getSequenceData().setTiltValue(index, tiltValue);
                 MelodicSequencerManager.getInstance().saveSequence(sequencer);
             }
 
@@ -200,34 +193,34 @@ public class TiltSequencerPanel extends JPanel implements IBusListener {
             logger.warn("Cannot sync TiltSequencerPanel - sequencer is null");
             return;
         }
-        
+
         logger.debug("Syncing tilt panel with sequencer values");
-        
+
         // Use more direct access to harmonic tilt values for debugging
         List<Integer> tiltValues = sequencer.getHarmonicTiltValues();
-        
+
         // Log details about what we got
         if (tiltValues != null) {
-            logger.info("Received {} tilt values from sequencer: {}", 
-                        tiltValues.size(), tiltValues);
-            
+            logger.info("Received {} tilt values from sequencer: {}",
+                    tiltValues.size(), tiltValues);
+
             // Loop through and update dial values
             for (int i = 0; i < Math.min(tiltDials.size(), tiltValues.size()); i++) {
                 int tiltValue = tiltValues.get(i);
-                
+
                 // Ensure the value is in range
                 int safeValue = Math.max(MIN_VALUE, Math.min(MAX_VALUE, tiltValue));
-                
+
                 // Set the value without triggering change listeners
                 tiltDials.get(i).setValue(safeValue, false);
-                
+
                 // Force immediate repaint of this dial
                 tiltDials.get(i).repaint();
             }
         } else {
             logger.warn("No harmonic tilt values available from sequencer");
         }
-        
+
         // Force complete panel repaint
         revalidate();
         repaint();

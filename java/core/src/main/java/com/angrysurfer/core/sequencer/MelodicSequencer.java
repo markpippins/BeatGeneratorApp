@@ -53,24 +53,24 @@ public class MelodicSequencer implements IBusListener {
         setId(id);
         //setChannel(SEQUENCER_CHANNELS[id]);
         initializePlayer(SequencerConstants.SEQUENCER_CHANNELS[id]);
-        CommandBus.getInstance().register(this, new String[] {
-            Commands.REPAIR_MIDI_CONNECTIONS,
-            Commands.TIMING_UPDATE,
-            Commands.TRANSPORT_START,
-            Commands.TRANSPORT_STOP,
-            Commands.REFRESH_ALL_INSTRUMENTS,
-            Commands.PLAYER_PRESET_CHANGE_EVENT,
-            Commands.PLAYER_PRESET_CHANGED,
-            Commands.PLAYER_INSTRUMENT_CHANGE_EVENT,
-            Commands.PLAYER_UPDATED,
-            Commands.REFRESH_PLAYER_INSTRUMENT
+        CommandBus.getInstance().register(this, new String[]{
+                Commands.REPAIR_MIDI_CONNECTIONS,
+                Commands.TIMING_UPDATE,
+                Commands.TRANSPORT_START,
+                Commands.TRANSPORT_STOP,
+                Commands.REFRESH_ALL_INSTRUMENTS,
+                Commands.PLAYER_PRESET_CHANGE_EVENT,
+                Commands.PLAYER_PRESET_CHANGED,
+                Commands.PLAYER_INSTRUMENT_CHANGE_EVENT,
+                Commands.PLAYER_UPDATED,
+                Commands.REFRESH_PLAYER_INSTRUMENT
         });
-        
+
         TimingBus.getInstance().register(this);
 
         updateQuantizer();
 
-        logger.info("MelodicSequencer initialized and registered with CommandBus");
+        logger.info("MelodicSequencer {} initialized and registered with CommandBus", id);
     }
 
     public MelodicSequenceData getSequenceData() {
@@ -85,7 +85,6 @@ public class MelodicSequencer implements IBusListener {
     public void updateQuantizer() {
         scaleNotes = sequenceData.createScaleArray(sequenceData.getRootNote(), sequenceData.getScale());
         quantizer = new Quantizer(scaleNotes);
-
         logger.info("Quantizer updated with root note {} and scale {}",
                 sequenceData.getRootNote(), sequenceData.getScale());
     }
@@ -882,37 +881,37 @@ public class MelodicSequencer implements IBusListener {
         }
     }
 
-public void updateInstrumentSettingsInSequenceData() {
-    if (player == null || player.getInstrument() == null || sequenceData == null) {
-        logger.warn("Cannot update sequence data - missing player, instrument or sequenceData");
-        return;
+    public void updateInstrumentSettingsInSequenceData() {
+        if (player == null || player.getInstrument() == null || sequenceData == null) {
+            logger.warn("Cannot update sequence data - missing player, instrument or sequenceData");
+            return;
+        }
+
+        InstrumentWrapper instrument = player.getInstrument();
+
+        // Save previous values for logging
+        Integer prevBankIndex = sequenceData.getBankIndex();
+        Integer prevPreset = sequenceData.getPreset();
+        String prevSoundbankName = sequenceData.getSoundbankName();
+
+        // Update with current instrument data
+        sequenceData.setSoundbankName(instrument.getSoundbankName());
+        sequenceData.setBankIndex(instrument.getBankIndex());
+        sequenceData.setPreset(instrument.getPreset());
+        sequenceData.setDeviceName(instrument.getDeviceName());
+        sequenceData.setInstrumentId(instrument.getId());
+        sequenceData.setInstrumentName(instrument.getName());
+
+        // Log only if there were actual changes
+        if (!Objects.equals(prevBankIndex, instrument.getBankIndex()) ||
+                !Objects.equals(prevPreset, instrument.getPreset()) ||
+                !Objects.equals(prevSoundbankName, instrument.getSoundbankName())) {
+
+            logger.info("Updated sequence data for {} with instrument settings changed from {}/{}/{} to {}/{}/{}",
+                    player.getName(),
+                    prevBankIndex, prevPreset, prevSoundbankName,
+                    instrument.getBankIndex(), instrument.getPreset(), instrument.getSoundbankName());
+        }
     }
-
-    InstrumentWrapper instrument = player.getInstrument();
-
-    // Save previous values for logging
-    Integer prevBankIndex = sequenceData.getBankIndex();
-    Integer prevPreset = sequenceData.getPreset();
-    String prevSoundbankName = sequenceData.getSoundbankName();
-    
-    // Update with current instrument data
-    sequenceData.setSoundbankName(instrument.getSoundbankName());
-    sequenceData.setBankIndex(instrument.getBankIndex());
-    sequenceData.setPreset(instrument.getPreset());
-    sequenceData.setDeviceName(instrument.getDeviceName());
-    sequenceData.setInstrumentId(instrument.getId());
-    sequenceData.setInstrumentName(instrument.getName());
-
-    // Log only if there were actual changes
-    if (!Objects.equals(prevBankIndex, instrument.getBankIndex()) ||
-        !Objects.equals(prevPreset, instrument.getPreset()) ||
-        !Objects.equals(prevSoundbankName, instrument.getSoundbankName())) {
-        
-        logger.info("Updated sequence data for {} with instrument settings changed from {}/{}/{} to {}/{}/{}",
-                player.getName(),
-                prevBankIndex, prevPreset, prevSoundbankName,
-                instrument.getBankIndex(), instrument.getPreset(), instrument.getSoundbankName());
-    }
-}
 }
 

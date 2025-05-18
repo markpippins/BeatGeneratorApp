@@ -1,42 +1,28 @@
 package com.angrysurfer.beats.panel;
 
-import java.awt.BorderLayout;
-import java.awt.Component;
-import java.awt.Container;
-import java.awt.Dimension;
-import java.awt.FlowLayout;
-import java.awt.GridLayout;
-
-import javax.swing.BorderFactory;
-import javax.swing.Box;
-import javax.swing.BoxLayout;
-import javax.swing.JButton;
-import javax.swing.JLabel;
-import javax.swing.JPanel;
-import javax.swing.SwingUtilities;
-import javax.swing.event.ChangeEvent;
-import javax.swing.event.ChangeListener;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
+import com.angrysurfer.beats.util.UIHelper;
 import com.angrysurfer.beats.widget.Dial;
 import com.angrysurfer.beats.widget.NoteSelectionDial;
-import com.angrysurfer.beats.util.UIHelper;
-import com.angrysurfer.beats.util.UIHelper;
 import com.angrysurfer.core.api.Command;
 import com.angrysurfer.core.api.CommandBus;
 import com.angrysurfer.core.api.Commands;
 import com.angrysurfer.core.api.IBusListener;
 import com.angrysurfer.core.model.Player;
 import com.angrysurfer.core.sequencer.Scale;
-import com.angrysurfer.core.service.PlayerManager;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import javax.swing.*;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
+import java.awt.*;
 
 public class ControlPanel extends PlayerAwarePanel {
     private static final Logger logger = LoggerFactory.getLogger(ControlPanel.class.getName());
     private static final int BUTTON_SIZE = 30;
     private static final int PANEL_HEIGHT = 100; // Increased from 90 to 100px
-
+    private static final String PLAYER_PANEL = "PLAYER_PANEL";
+    private static final String SESSION_PANEL = "SESSION_PANEL";
     // Dials
     private Dial levelDial;
     private NoteSelectionDial noteSelectionDial;
@@ -47,16 +33,13 @@ public class ControlPanel extends PlayerAwarePanel {
     private Dial randomDial;
     private Dial panDial;
     private Dial sparseDial;
-
     private JButton nextScaleButton;
     private JButton prevScaleButton;
     // Current active player
     private Player activePlayer;
-
     // Octave buttons
     private JButton octaveUpButton;
     private JButton octaveDownButton;
-
     // Helper flag to prevent feedback when programmatically updating controls
     private boolean listenersEnabled = true;
 
@@ -76,7 +59,7 @@ public class ControlPanel extends PlayerAwarePanel {
 
         // Create the MiniLaunchPanel that will be positioned on the right
         MiniLaunchPanel launchPanel = new MiniLaunchPanel();
-        
+
         // Add all standard components to the left wrapper
         initComponents(leftControlsWrapper);
 
@@ -96,18 +79,18 @@ public class ControlPanel extends PlayerAwarePanel {
         JPanel rightPanel = new JPanel();
         rightPanel.setLayout(new BoxLayout(rightPanel, BoxLayout.Y_AXIS));
         rightPanel.setOpaque(false);
-        
+
         // Add equal glue above and below to ensure perfect vertical centering
         rightPanel.add(Box.createVerticalGlue());
-        
+
         // Center the launch panel horizontally within its container
         JPanel launchCenterPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 0, 0));
         launchCenterPanel.setOpaque(false);
         launchCenterPanel.add(launchPanel);
-        
+
         rightPanel.add(launchCenterPanel);
         rightPanel.add(Box.createVerticalGlue());
-        
+
         // Add both panels to the main panel
         add(centeringPanel, BorderLayout.CENTER);
         add(rightPanel, BorderLayout.EAST);
@@ -117,16 +100,13 @@ public class ControlPanel extends PlayerAwarePanel {
 
     @Override
     public void handlePlayerActivated() {
-        
+
     }
 
     @Override
     public void handlePlayerUpdated() {
 
     }
-
-    private static final String PLAYER_PANEL = "PLAYER_PANEL";
-    private static final String SESSION_PANEL = "SESSION_PANEL";
 
     private void initComponents(JPanel controlsWrapper) {
         // Add vertical adjust panels
@@ -164,12 +144,12 @@ public class ControlPanel extends PlayerAwarePanel {
         // Create note selection dial with special sizing
         noteSelectionDial = new NoteSelectionDial();
         // Make slightly smaller to fit better in the panel - from 90x90 to 70x70
-        var noteDialSize = new Dimension(90, 90);
+        var noteDialSize = new Dimension(70, 70);
         noteSelectionDial.setPreferredSize(noteDialSize);
         noteSelectionDial.setMinimumSize(noteDialSize);
         noteSelectionDial.setMaximumSize(noteDialSize);
         noteSelectionDial.setCommand(Commands.NEW_VALUE_NOTE);
-        
+
         // Regular dials
         levelDial = createDial("level", 100, 0, 127, 1);
         levelDial.setCommand(Commands.NEW_VALUE_LEVEL);
@@ -179,13 +159,13 @@ public class ControlPanel extends PlayerAwarePanel {
         panDial.setKnobColor(UIHelper.mutedRed);
         panDial.setGradientStartColor(panDial.getKnobColor().brighter());
         panDial.setGradientEndColor(panDial.getKnobColor().darker());
-        
+
         velocityMinDial = createDial("minVelocity", 64, 0, 127, 1);
         velocityMinDial.setCommand(Commands.NEW_VALUE_VELOCITY_MIN);
         velocityMinDial.setKnobColor(UIHelper.warmGray);
         velocityMinDial.setGradientStartColor(velocityMinDial.getKnobColor().brighter());
         velocityMinDial.setGradientEndColor(velocityMinDial.getKnobColor().darker());
-        
+
         velocityMaxDial = createDial("maxVelocity", 127, 0, 127, 1);
         velocityMaxDial.setCommand(Commands.NEW_VALUE_VELOCITY_MAX);
         velocityMaxDial.setKnobColor(UIHelper.warmGray);
@@ -218,7 +198,7 @@ public class ControlPanel extends PlayerAwarePanel {
 
         // Add note selection dial with special panel width (80px vs 60px)
         controlsWrapper.add(noteSelectionDial);
-        
+
         // Add regular dials with standard panel width (60px)
         controlsWrapper.add(createLabeledControl("Level", levelDial));
         controlsWrapper.add(createLabeledControl("Pan", panDial));
@@ -407,18 +387,18 @@ public class ControlPanel extends PlayerAwarePanel {
                     return;
                 }
                 switch (action.getCommand()) {
-                case Commands.FIRST_SCALE_SELECTED -> prevScaleButton.setEnabled(false);
-                case Commands.LAST_SCALE_SELECTED -> nextScaleButton.setEnabled(false);
-                case Commands.SCALE_SELECTED -> {
-                    prevScaleButton.setEnabled(true);
-                    nextScaleButton.setEnabled(true);
-                }
+                    case Commands.FIRST_SCALE_SELECTED -> prevScaleButton.setEnabled(false);
+                    case Commands.LAST_SCALE_SELECTED -> nextScaleButton.setEnabled(false);
+                    case Commands.SCALE_SELECTED -> {
+                        prevScaleButton.setEnabled(true);
+                        nextScaleButton.setEnabled(true);
+                    }
                 }
             }
-        }, new String[] {
-            Commands.FIRST_SCALE_SELECTED,
-            Commands.LAST_SCALE_SELECTED,
-            Commands.SCALE_SELECTED
+        }, new String[]{
+                Commands.FIRST_SCALE_SELECTED,
+                Commands.LAST_SCALE_SELECTED,
+                Commands.SCALE_SELECTED
         });
 
         // Layout buttons vertically
@@ -462,10 +442,10 @@ public class ControlPanel extends PlayerAwarePanel {
                     return;
 
                 switch (action.getCommand()) {
-                case Commands.PLAYER_ACTIVATED -> dial.setEnabled(true);
+                    case Commands.PLAYER_ACTIVATED -> dial.setEnabled(true);
                 }
             }
-        }, new String[] { Commands.PLAYER_ACTIVATED });
+        }, new String[]{Commands.PLAYER_ACTIVATED});
         return dial;
     }
 
@@ -536,9 +516,9 @@ public class ControlPanel extends PlayerAwarePanel {
                     e.printStackTrace();
                 }
             }
-        }, new String[] {
-            Commands.PLAYER_ACTIVATED
-            // Add other commands if needed
+        }, new String[]{
+                Commands.PLAYER_ACTIVATED
+                // Add other commands if needed
         });
     }
 
@@ -610,12 +590,12 @@ public class ControlPanel extends PlayerAwarePanel {
                 listenersEnabled = false; // Prevent feedback loop
                 velocityMaxDial.setValue(minValue);
                 activePlayer.setMaxVelocity(minValue);
-                
+
                 // Force immediate visual update of the max dial
                 velocityMaxDial.repaint();
-                
+
                 listenersEnabled = true;
-                
+
                 // Log the adjustment
                 logger.info("Auto-adjusted max velocity to match: " + minValue);
             }
@@ -646,12 +626,12 @@ public class ControlPanel extends PlayerAwarePanel {
                 listenersEnabled = false; // Prevent feedback loop
                 velocityMinDial.setValue(maxValue);
                 activePlayer.setMinVelocity(maxValue);
-                
+
                 // Force immediate visual update of the min dial
                 velocityMinDial.repaint();
-                
+
                 listenersEnabled = true;
-                
+
                 // Log the adjustment
                 logger.info("Auto-adjusted min velocity to match: " + maxValue);
             }
