@@ -30,7 +30,7 @@ public class Dial extends JComponent {
     private String label;
     private List<ChangeListener> changeListeners = new ArrayList<>();
 
-    private int minSize = 35;
+    private int minSize = 60;
     private int maxSize = 60;
 
     private Color gradientStartColor = new Color(60, 130, 255);
@@ -40,7 +40,10 @@ public class Dial extends JComponent {
 
     public Dial() {
         this.command = null;
-        updateSize();
+        // updateSize();
+        setMinimumSize(new Dimension(60, 60));
+        setPreferredSize(new Dimension(60, 60));
+        setMaximumSize(new Dimension(60, 60));
 
         // Register for ancestor window resize events
         addAncestorListener(new javax.swing.event.AncestorListener() {
@@ -49,7 +52,7 @@ public class Dial extends JComponent {
                 if (window != null) {
                     window.addComponentListener(new java.awt.event.ComponentAdapter() {
                         public void componentResized(java.awt.event.ComponentEvent e) {
-                            updateSize();
+                            // updateSize();
                         }
                     });
                 }
