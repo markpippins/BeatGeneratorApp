@@ -38,6 +38,9 @@ public class Dial extends JComponent {
     private Color knobColor = new Color(30, 100, 255);
     private boolean updateOnResize = false;
 
+    private Integer sequencerId = -1;
+    private Integer mixerChanel = -1;
+
     public Dial() {
         this.command = null;
         // updateSize();

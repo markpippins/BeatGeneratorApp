@@ -178,8 +178,46 @@ public class PlayerHelper {
     // }
     // }
 
+    /**
+     * Save player to Redis
+     * This handles instrument references and session updates
+     */
     public void savePlayer(Player player) {
         try (Jedis jedis = jedisPool.getResource()) {
+            if (player == null) {
+                logger.warn("Cannot save null player");
+                return;
+            }
+
+            // Skip saving default players
+            if (Boolean.TRUE.equals(player.getIsDefault())) {
+                logger.debug("Skipping Redis save for default player: {}", player.getName());
+                return;
+            }
+
+            logger.debug("Saving player ID: {} with name: {}", player.getId(), player.getName());
+
+            // Save the instrument first if it exists and is not default
+            if (player.getInstrument() != null && !Boolean.TRUE.equals(player.getInstrument().getIsDefault())) {
+                InstrumentHelper instrumentHelper = new InstrumentHelper(jedisPool, objectMapper);
+                instrumentHelper.saveInstrument(player.getInstrument());
+
+                // Ensure the player's instrumentId is set correctly
+                player.setInstrumentId(player.getInstrument().getId());
+
+                logger.debug("Associated instrument ID: {} with name: {}",
+                        player.getInstrumentId(), player.getInstrument().getName());
+            }
+
+            // If the player belongs to a session, update the session as well
+            Session session = player.getSession();
+            if (session != null) {
+                String playersKey = String.format("session:%d:players:%s", 
+                        session.getId(), player.getPlayerClassName());
+                jedis.sadd(playersKey, player.getId().toString());
+            }
+
+            // Now proceed with existing player saving logic...
             if (player.getId() == null) {
                 player.setId(jedis.incr("seq:player"));
             }
@@ -203,8 +241,7 @@ public class PlayerHelper {
 
             // Store references before removing
             Set<Rule> rules = new HashSet<>(player.getRules() != null ? player.getRules() : new HashSet<>());
-            Session session = player.getSession();
-
+            
             // Temporarily remove circular references
             player.setSession(null);
             player.setRules(null);
@@ -218,10 +255,10 @@ public class PlayerHelper {
             player.setSession(session);
             player.setRules(rules);
 
-            logger.info(String.format("Saved player %d with %d rules", player.getId(), rules.size()));
+            logger.info("Saved player {} with {} rules", player.getId(), rules.size());
         } catch (Exception e) {
-            logger.error("Error saving player: " + e.getMessage());
-            throw new RuntimeException("Failed to save player", e);
+            logger.error("Error saving player: {}", e.getMessage(), e);
+            ErrorHandler.logError("PlayerHelper", "Failed to save player", e);
         }
     }
 

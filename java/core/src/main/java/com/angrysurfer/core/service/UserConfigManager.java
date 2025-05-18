@@ -58,7 +58,7 @@ public class UserConfigManager {
         String name = "Default Melo " + (i + 1);
         meloInst.setName(name);
         meloInst.setId(RedisService.getInstance().getPlayerHelper().getNextPlayerId());
-        meloInst.setChannel(SequencerConstants.SEQUENCER_CHANNELS[i % SequencerConstants.SEQUENCER_CHANNELS.length]);
+        meloInst.setChannel(SequencerConstants.MELODIC_CHANNELS[i % SequencerConstants.MELODIC_CHANNELS.length]);
         meloInst.setInternal(true);
         meloInst.setInternalSynth(true);
         meloInst.setIsDefault(true);
@@ -776,10 +776,10 @@ public class UserConfigManager {
 
 
         // Create 12 melodic players with distinctive sounds
-        for (int i = 0; i < SequencerConstants.SEQUENCER_CHANNELS.length; i++) {
+        for (int i = 0; i < SequencerConstants.MELODIC_CHANNELS.length; i++) {
             // Always use middle C (60) as the root note
             int rootNote = 60;
-            int channel = SequencerConstants.SEQUENCER_CHANNELS[i % SequencerConstants.SEQUENCER_CHANNELS.length];
+            int channel = SequencerConstants.MELODIC_CHANNELS[i % SequencerConstants.MELODIC_CHANNELS.length];
 
             // Make sure each player gets a unique preset/sound
             // Assign presets that make musical sense grouped by families:
@@ -1078,7 +1078,7 @@ public class UserConfigManager {
                 config.getDefaultNotes() != null && !config.getDefaultNotes().isEmpty();
 
         return hasPlayers && config.getDefaultStrikes().size() > 0 &&
-                config.getDefaultNotes().size() == SequencerConstants.SEQUENCER_CHANNELS.length;
+                config.getDefaultNotes().size() == SequencerConstants.MELODIC_CHANNELS.length;
     }
 
     public boolean defaultInstrumentsExist(UserConfig config) {
@@ -1102,7 +1102,7 @@ public class UserConfigManager {
                     .filter(i -> i.getIsDefault() && i.getName() != null && !Objects.equals(i.getChannel(), SequencerConstants.MIDI_DRUM_CHANNEL))
                     .count();
 
-            result = drumInstrumentCount == 16 && melodicInstrumentCount == SequencerConstants.SEQUENCER_CHANNELS.length;
+            result = drumInstrumentCount == 16 && melodicInstrumentCount == SequencerConstants.MELODIC_CHANNELS.length;
         }
 
         return result;

@@ -200,7 +200,8 @@ public abstract class Player implements Callable<Boolean>, Serializable, IBusLis
             return;
         }
         this.instrument = instrument;
-        this.instrument.setChannel(getDefaultChannel());
+        if (!instrument.getIsDefault())
+            this.instrument.setChannel(getDefaultChannel());
         this.instrumentId = instrument.getId();
         if (this.getInstrument().getDeviceName().contains(SequencerConstants.GERVILL))
             getInstrument().setInternal(true);

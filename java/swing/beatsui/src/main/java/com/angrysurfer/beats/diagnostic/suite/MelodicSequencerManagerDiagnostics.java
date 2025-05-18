@@ -267,17 +267,12 @@ public class MelodicSequencerManagerDiagnostics {
             log.addSection("2. Saving Sequence");
             
             try {
-                //boolean saved =
-
-                RedisService.getInstance().saveMelodicSequence(testSequencer);
+                // CRITICAL FIX: Apply the test sequence to the sequencer before saving
+                testSequencer.setSequenceData(testSequence);
                 
-//                if (saved) {
-//                    log.addIndentedLine("Successfully saved test sequence", 1);
-//                } else {
-//                    log.addError("Failed to save test sequence");
-//                    return log;
-//                }
-
+                // Now save (the sequencer contains the test sequence)
+                RedisService.getInstance().saveMelodicSequence(testSequencer);
+                log.addIndentedLine("Successfully saved test sequence", 1);
             } catch (Exception e) {
                 log.addError("Error saving test sequence: " + e.getMessage());
                 return log;
