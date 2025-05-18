@@ -173,6 +173,36 @@ public class MelodicSequenceDataHelper {
                 logger.info("Initialized default tilt values");
             }
 
+            // Handle player association using the stored player ID
+            if (data.getPlayerId() != null) {
+                Player existingPlayer = sequencer.getPlayer();
+
+                // If the stored player ID is different from the current player
+                if (existingPlayer == null || !data.getPlayerId().equals(existingPlayer.getId())) {
+                    logger.info("Sequence data has player ID: {} which differs from current: {}",
+                            data.getPlayerId(),
+                            existingPlayer != null ? existingPlayer.getId() : "none");
+
+                    // Try to find and use the player with the stored ID
+                    Player storedPlayer = PlayerManager.getInstance().getPlayerById(data.getPlayerId());
+                    if (storedPlayer != null) {
+                        logger.info("Found player with ID: {}, applying to sequencer", data.getPlayerId());
+                        sequencer.setPlayer(storedPlayer); // Assuming there's a setPlayer method or similar
+                    } else {
+                        logger.warn("Player with ID {} not found, keeping current player", data.getPlayerId());
+                        // Keep using the current player, but update the stored ID for consistency
+                        if (existingPlayer != null) {
+                            data.setPlayerId(existingPlayer.getId());
+                        }
+                    }
+                }
+            } else if (sequencer.getPlayer() != null) {
+                // If no player ID in data but sequencer has a player, update the data
+                data.setPlayerId(sequencer.getPlayer().getId());
+                logger.info("Updated sequence data with current player ID: {}",
+                        sequencer.getPlayer().getId());
+            }
+
             // Apply instrument settings to the player with better error handling
             if (sequencer.getPlayer() != null) {
                 Player player = sequencer.getPlayer();
@@ -269,26 +299,32 @@ public class MelodicSequenceDataHelper {
 
             // Save instrument settings with improved logging
             Player player = sequencer.getPlayer();
-            if (player != null && player.getInstrument() != null) {
-                InstrumentWrapper instrument = player.getInstrument();
+            if (player != null) {
+                // Store player ID
+                data.setPlayerId(player.getId());
+                logger.info("Saving player ID: {} with melodic sequence", player.getId());
 
-                // Store all instrument information
-                data.setSoundbankName(instrument.getSoundbankName());
-                data.setPreset(instrument.getPreset());
-                data.setBankIndex(instrument.getBankIndex());
-                data.setDeviceName(instrument.getDeviceName());
-                data.setInstrumentId(instrument.getId());
-                data.setInstrumentName(instrument.getName());
+                if (player.getInstrument() != null) {
+                    InstrumentWrapper instrument = player.getInstrument();
 
-                // Detailed logging to confirm values are set
-                logger.info("Saving instrument settings: soundbank='{}', bank={}, preset={}, device='{}', name='{}'",
-                        data.getSoundbankName(),
-                        data.getBankIndex(),
-                        data.getPreset(),
-                        data.getDeviceName(),
-                        data.getInstrumentName());
-            } else {
-                logger.warn("No instrument available to save for sequence {}", data.getId());
+                    // Store all instrument information
+                    data.setSoundbankName(instrument.getSoundbankName());
+                    data.setPreset(instrument.getPreset());
+                    data.setBankIndex(instrument.getBankIndex());
+                    data.setDeviceName(instrument.getDeviceName());
+                    data.setInstrumentId(instrument.getId());
+                    data.setInstrumentName(instrument.getName());
+
+                    // Detailed logging to confirm values are set
+                    logger.info("Saving instrument settings: soundbank='{}', bank={}, preset={}, device='{}', name='{}'",
+                            data.getSoundbankName(),
+                            data.getBankIndex(),
+                            data.getPreset(),
+                            data.getDeviceName(),
+                            data.getInstrumentName());
+                } else {
+                    logger.warn("No instrument available to save for sequence {}", data.getId());
+                }
             }
 
             // Save to Redis
@@ -387,6 +423,14 @@ public class MelodicSequenceDataHelper {
             MelodicSequenceData data = new MelodicSequenceData();
             data.setId(jedis.incr("seq:melsequence:" + sequencerId));
             data.setSequencerId(sequencerId);
+
+            // Try to get the player ID from the current sequencer
+            MelodicSequencer sequencer = com.angrysurfer.core.service.MelodicSequencerManager
+                .getInstance().getSequencer(sequencerId);
+            if (sequencer != null && sequencer.getPlayer() != null) {
+                data.setPlayerId(sequencer.getPlayer().getId());
+                logger.info("Set player ID: {} on new melodic sequence", sequencer.getPlayer().getId());
+            }
 
             // Set default values
             data.setPatternLength(16);

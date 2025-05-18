@@ -3,13 +3,12 @@ package com.angrysurfer.beats.panel.sequencer.poly;
 import com.angrysurfer.beats.util.UIHelper;
 import com.angrysurfer.beats.widget.DrumGridButton;
 import com.angrysurfer.beats.widget.DrumSequencerGridPanelContextHandler;
-import com.angrysurfer.core.api.Command;
-import com.angrysurfer.core.api.CommandBus;
-import com.angrysurfer.core.api.Commands;
-import com.angrysurfer.core.api.IBusListener;
+import com.angrysurfer.core.api.*;
 import com.angrysurfer.core.event.DrumStepUpdateEvent;
+import com.angrysurfer.core.sequencer.Direction;
 import com.angrysurfer.core.sequencer.DrumSequencer;
 import com.angrysurfer.core.sequencer.SequencerConstants;
+import com.angrysurfer.core.sequencer.TimingUpdate;
 import com.angrysurfer.core.service.DrumSequencerManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -23,6 +22,7 @@ import java.util.List;
  * Panel containing the drum sequencing grid buttons
  */
 public class DrumSequencerGridPanel extends JPanel implements IBusListener {
+
     private static final Logger logger = LoggerFactory.getLogger(DrumSequencerGridPanel.class);
     // UI constants
     private static final int DRUM_PAD_COUNT = SequencerConstants.DRUM_PAD_COUNT;
@@ -40,7 +40,7 @@ public class DrumSequencerGridPanel extends JPanel implements IBusListener {
     /**
      * Create a new DrumSequencerGridPanel
      *
-     * @param sequencer   The drum sequencer
+     * @param sequencer The drum sequencer
      * @param parentPanel The parent panel for callbacks
      */
     public DrumSequencerGridPanel(DrumSequencer sequencer, DrumSequencerPanel parentPanel) {
@@ -61,7 +61,18 @@ public class DrumSequencerGridPanel extends JPanel implements IBusListener {
         // Create the grid buttons
         createGridButtons();
         // Visualizer gridSaver = new Visualizer(this, gridButtons);
-        CommandBus.getInstance().register(this, new String[]{"*"});
+        TimingBus.getInstance().register(this);
+        CommandBus.getInstance().register(this, new String[]{
+            Commands.DRUM_STEP_UPDATED,
+            Commands.DRUM_STEP_PARAMETERS_CHANGED,
+            Commands.DRUM_STEP_EFFECTS_CHANGED,
+            Commands.TRANSPORT_START,
+            Commands.TRANSPORT_STOP,
+            Commands.DRUM_GRID_REFRESH_REQUESTED  // Add this line
+        });
+//        TimingBus.getInstance().register(this, new String[]{Commands.DRUM_STEP_UPDATED,
+//                Commands.DRUM_STEP_PARAMETERS_CHANGED, Commands.DRUM_STEP_EFFECTS_CHANGED});
+
     }
 
     /**
@@ -229,43 +240,87 @@ public class DrumSequencerGridPanel extends JPanel implements IBusListener {
             return;
         }
 
-        // Calculate button indices based on the drum and step
-        int oldButtonIndex = drumIndex * sequencer.getDefaultPatternLength() + oldStep;
-        int newButtonIndex = drumIndex * sequencer.getDefaultPatternLength() + newStep;
+        // Use the 2D array for more direct access to buttons by coordinates
+        // This is more reliable than calculating indices in the flattened list
+        if (drumIndex >= 0 && drumIndex < DRUM_PAD_COUNT) {
+            // Un-highlight old step if valid
+            if (oldStep >= 0 && oldStep < sequencer.getDefaultPatternLength()) {
+                DrumGridButton oldButton = gridButtons[drumIndex][oldStep];
+                if (oldButton != null) {
+                    oldButton.setHighlighted(false);
+                    oldButton.repaint();
+                }
+            }
 
-        // Un-highlight old step
-        if (oldButtonIndex >= 0 && oldButtonIndex < triggerButtons.size()) {
-            DrumGridButton oldButton = triggerButtons.get(oldButtonIndex);
-            if (oldButton != null) {
-                oldButton.setHighlighted(false);
-                oldButton.repaint();
+            // Highlight new step if valid and we're playing
+            if (isPlaying && newStep >= 0 && newStep < sequencer.getDefaultPatternLength()) {
+                DrumGridButton newButton = gridButtons[drumIndex][newStep];
+                if (newButton != null) {
+                    // Choose color based on step position in the pattern
+                    Color highlightColor;
+                    if (newStep < 16) {
+                        highlightColor = UIHelper.fadedOrange;
+                    } else if (newStep < 32) {
+                        highlightColor = UIHelper.coolBlue;
+                    } else if (newStep < 48) {
+                        highlightColor = UIHelper.deepNavy;
+                    } else {
+                        highlightColor = UIHelper.mutedOlive;
+                    }
+
+                    newButton.setHighlighted(true);
+                    newButton.setHighlightColor(highlightColor);
+                    newButton.repaint();
+                }
             }
         }
+    }
 
-        // Highlight new step if valid and we're playing
-        if (isPlaying && newButtonIndex >= 0 && newButtonIndex < triggerButtons.size()) {
-            DrumGridButton newButton = triggerButtons.get(newButtonIndex);
-            if (newButton != null) {
-                // Choose color based on step position in the pattern
-                Color highlightColor;
+    /**
+     * Special version of step highlighting for backward playback to prevent trails
+     */
+    public void updateBackwardStepHighlighting(int drumIndex, int oldStep, int newStep) {
+        // Ensure we're on the EDT for UI updates
+        if (!SwingUtilities.isEventDispatchThread()) {
+            SwingUtilities.invokeLater(() -> updateBackwardStepHighlighting(drumIndex, oldStep, newStep));
+            return;
+        }
 
-                if (newStep < 16) {
-                    // First 16 steps - orange
-                    highlightColor = UIHelper.fadedOrange;
-                } else if (newStep < 32) {
-                    // Steps 17-32 - blue
-                    highlightColor = UIHelper.coolBlue;
-                } else if (newStep < 48) {
-                    // Steps 33-48 - navy
-                    highlightColor = UIHelper.deepNavy;
-                } else {
-                    // Steps 49-64 - olive
-                    highlightColor = UIHelper.mutedOlive;
+        if (drumIndex >= 0 && drumIndex < DRUM_PAD_COUNT) {
+            // For backward direction, first clear ALL highlights in this row
+            for (int step = 0; step < sequencer.getDefaultPatternLength(); step++) {
+                DrumGridButton button = gridButtons[drumIndex][step];
+                if (button != null) {
+                    button.setHighlighted(false);
                 }
+            }
 
-                newButton.setHighlighted(true);
-                newButton.setHighlightColor(highlightColor);
-                newButton.repaint();
+            // Then highlight ONLY the new step
+            if (isPlaying && newStep >= 0 && newStep < sequencer.getDefaultPatternLength()) {
+                DrumGridButton newButton = gridButtons[drumIndex][newStep];
+                if (newButton != null) {
+                    // Choose color based on step position in the pattern
+                    Color highlightColor;
+                    if (newStep < 16) {
+                        highlightColor = UIHelper.fadedOrange;
+                    } else if (newStep < 32) {
+                        highlightColor = UIHelper.coolBlue;
+                    } else if (newStep < 48) {
+                        highlightColor = UIHelper.deepNavy;
+                    } else {
+                        highlightColor = UIHelper.mutedOlive;
+                    }
+
+                    newButton.setHighlighted(true);
+                    newButton.setHighlightColor(highlightColor);
+                }
+            }
+            
+            // Repaint the entire row to avoid partial update issues
+            for (int step = 0; step < sequencer.getDefaultPatternLength(); step++) {
+                if (gridButtons[drumIndex][step] != null) {
+                    gridButtons[drumIndex][step].repaint();
+                }
             }
         }
     }
@@ -400,10 +455,105 @@ public class DrumSequencerGridPanel extends JPanel implements IBusListener {
      */
     @Override
     public void onAction(Command action) {
-        // Existing code...
+        if (action.getCommand() == null) {
+            return;
+        }
 
         switch (action.getCommand()) {
-            // Existing cases...
+            case Commands.TIMING_UPDATE:
+                // Handle timing updates for position indicator
+                if (isPlaying && action.getData() instanceof TimingUpdate update) {
+                    // Calculate current absolute tick position
+                    long tickCount = update.tickCount();
+
+                    // Get timing settings
+                    int ticksPerBeat = 96; // Default PPQN
+                    int stepsPerBeat = 4;  // 16th notes in 4/4
+                    int ticksPerStep = ticksPerBeat / stepsPerBeat;
+
+                    // Calculate the absolute step number (not wrapped)
+                    int absoluteStep = (int) (tickCount / ticksPerStep);
+
+                    // Update each drum row independently, using its own length for wrapping
+                    for (int drumIndex = 0; drumIndex < DRUM_PAD_COUNT; drumIndex++) {
+                        // Get this drum's pattern length
+                        int drumPatternLength = sequencer.getPatternLength(drumIndex);
+
+                        // Skip if the pattern has no length
+                        if (drumPatternLength <= 0) {
+                            continue;
+                        }
+
+                        // Get the direction for this drum
+                        Direction direction = sequencer.getSequenceData().getDirections()[drumIndex];
+
+                        // Calculate current step position based on direction mode
+                        int drumCurrentStep;
+                        int drumPreviousStep;
+
+                        if (direction == Direction.BOUNCE) {
+                            // For bounce mode, we need to calculate if we're in forward or backward phase
+                            // First calculate total cycle length (forward + backward - overlap at ends)
+                            int cycleLength = (drumPatternLength * 2) - 2;
+
+                            // Calculate position within cycle
+                            int positionInCycle = absoluteStep % cycleLength;
+
+                            // Determine whether we're in forward or backward phase
+                            if (positionInCycle < drumPatternLength) {
+                                // Forward phase
+                                drumCurrentStep = positionInCycle;
+                            } else {
+                                // Backward phase: map position from end back to start
+                                drumCurrentStep = cycleLength - positionInCycle;
+                            }
+
+                            // Calculate previous step based on direction in the cycle
+                            if (positionInCycle == 0) {
+                                // At start of forward phase, previous is first step
+                                drumPreviousStep = 0;
+                            } else if (positionInCycle == drumPatternLength - 1) {
+                                // At end of forward phase, previous is one step back
+                                drumPreviousStep = drumPatternLength - 2;
+                            } else if (positionInCycle == drumPatternLength) {
+                                // At start of backward phase, previous is last step
+                                drumPreviousStep = drumPatternLength - 1;
+                            } else if (positionInCycle == cycleLength - 1) {
+                                // At end of backward phase, previous is second step
+                                drumPreviousStep = 1;
+                            } else if (positionInCycle < drumPatternLength) {
+                                // In forward phase
+                                drumPreviousStep = drumCurrentStep - 1;
+                            } else {
+                                // In backward phase
+                                drumPreviousStep = drumCurrentStep + 1;
+                            }
+                        } else if (direction == Direction.BACKWARD) {
+                            // For backward mode, we count from the end back to the start
+                            drumCurrentStep = (drumPatternLength - 1) - (absoluteStep % drumPatternLength);
+
+                            // Fix for the previous step calculation in backward mode
+                            if (drumCurrentStep == 0) {
+                                // If we're at the first step, previous was the last step
+                                drumPreviousStep = drumPatternLength - 1;
+                            } else {
+                                // Otherwise, previous step is one step forward (not backward) 
+                                drumPreviousStep = drumCurrentStep - 1;
+                            }
+                            
+                            // **** THIS IS THE CRITICAL CHANGE ****
+                            // Use the special backward highlighting method instead of the regular one
+                            updateBackwardStepHighlighting(drumIndex, drumPreviousStep, drumCurrentStep);
+                        } else {
+                            // Default forward mode (and bounce) continue to use the regular method
+                            drumCurrentStep = absoluteStep % drumPatternLength;
+                            drumPreviousStep = (drumCurrentStep == 0)
+                                    ? drumPatternLength - 1 : drumCurrentStep - 1;
+                            updateStepHighlighting(drumIndex, drumPreviousStep, drumCurrentStep);
+                        }
+                    }
+                }
+                break;
 
             case Commands.DRUM_STEP_UPDATED:
                 if (action.getData() instanceof DrumStepUpdateEvent event) {
@@ -411,7 +561,7 @@ public class DrumSequencerGridPanel extends JPanel implements IBusListener {
                 }
                 break;
 
-            // Add these new cases to handle parameter changes
+            // Existing cases for parameters and effects
             case Commands.DRUM_STEP_PARAMETERS_CHANGED:
                 if (action.getData() instanceof Object[] data && data.length >= 5) {
                     int drumIndex = (Integer) data[0];
@@ -438,6 +588,21 @@ public class DrumSequencerGridPanel extends JPanel implements IBusListener {
                     updateStepButtonEffects(drumIndex, stepIndex, pan, chorus, reverb);
                 }
                 break;
+
+            // Handle transport commands to update playing state
+            case Commands.TRANSPORT_START:
+                setPlayingState(true);
+                break;
+
+            case Commands.TRANSPORT_STOP:
+                setPlayingState(false);
+                break;
+
+            // Add this case to the switch statement in onAction
+            case Commands.DRUM_GRID_REFRESH_REQUESTED:
+                // Use existing method to refresh the entire grid UI
+                refreshGridUI();
+                break;
         }
     }
 
@@ -445,7 +610,7 @@ public class DrumSequencerGridPanel extends JPanel implements IBusListener {
      * Update a step button's parameter visualizations
      */
     private void updateStepButtonParameters(int drumIndex, int stepIndex, int velocity, int decay,
-                                            int probability, int nudge) {
+            int probability, int nudge) {
         if (drumIndex >= 0 && drumIndex < gridButtons.length) {
             DrumGridButton[] row = gridButtons[drumIndex];
             if (stepIndex >= 0 && stepIndex < row.length) {

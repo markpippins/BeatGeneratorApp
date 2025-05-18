@@ -13,6 +13,7 @@ import javax.sound.sampled.*;
 import java.io.File;
 import java.io.IOException;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 
 @Getter
@@ -211,7 +212,7 @@ public class Sample extends Player {
         if (shouldPlayResult) {
             try {
                 // Get the note from root note (may be modified by scale/rules)
-                int noteToPlay = getRootNote() + getSession().getNoteOffset();
+                int noteToPlay = getRootNote() + (Objects.nonNull(getSession()) ? getSession().getNoteOffset() : 0);
 
                 // Play the sample
                 noteOn(noteToPlay, getLevel());

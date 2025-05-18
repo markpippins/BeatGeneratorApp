@@ -111,7 +111,7 @@ public class MainPanel extends PlayerAwarePanel implements AutoCloseable, IBusLi
         tabbedPane.addTab("Instruments", createCombinedInstrumentsSystemPanel());
 
         tabbedPane.addTab("Logs", new LoggingPanel());
-        // tabbedPane.addTab("Visualizer", new GridPanel());
+        tabbedPane.addTab("Visualizer", new GridPanel());
 
         tabbedPane.setBorder(BorderFactory.createEmptyBorder(0, 4, 0, 4));
 
@@ -233,11 +233,24 @@ public class MainPanel extends PlayerAwarePanel implements AutoCloseable, IBusLi
         SwingUtilities.invokeLater(selectedComponent::requestFocusInWindow);
 
         // Case 1: DrumSequencerPanel direct selection
-        if (selectedComponent == drumSequencerPanel &&
-                drumSequencerPanel.getDrumSelectorPanel().getSelectedDrumPadIndex() != null) {
-            Player player = drumSequencerPanel.getSequencer().getPlayer(
-                    drumSequencerPanel.getDrumSelectorPanel().getSelectedDrumPadIndex());
-            activatePlayer(player, "drum sequencer");
+        if (selectedComponent == drumSequencerPanel) {
+            // Add more comprehensive null checking
+            if (drumSequencerPanel.getDrumSelectorPanel() != null &&
+                    drumSequencerPanel.getDrumSelectorPanel().getSelectedDrumPadIndex() != null &&
+                    drumSequencerPanel.getSequencer() != null) {
+
+                int padIndex = drumSequencerPanel.getDrumSelectorPanel().getSelectedDrumPadIndex();
+                Player player = drumSequencerPanel.getSequencer().getPlayer(padIndex);
+
+                if (player != null) {
+                    activatePlayer(player, "drum sequencer");
+                } else {
+                    logger.warn("No player found for drum pad index: {}", padIndex);
+                }
+            } else {
+                // Handle the case when no pad is selected or sequencer isn't ready
+                logger.debug("DrumSequencerPanel selected but no pad selected or sequencer not ready");
+            }
         }
 
         // Case 2: DrumParamsSequencerPanel direct selection
@@ -265,19 +278,39 @@ public class MainPanel extends PlayerAwarePanel implements AutoCloseable, IBusLi
             Component selectedDrumsTab = drumsTabbedPane.getSelectedComponent();
             Player player = null;
 
-            if (selectedDrumsTab instanceof DrumSequencerPanel) {
-                int playerIndex = ((DrumSequencerPanel) selectedDrumsTab)
-                        .getDrumSelectorPanel().getSelectedDrumPadIndex();
-                player = ((DrumSequencerPanel) selectedDrumsTab).getSequencer().getPlayer(playerIndex);
-            } else if (selectedDrumsTab instanceof DrumEffectsSequencerPanel) {
-                int playerIndex = ((DrumEffectsSequencerPanel) selectedDrumsTab).getSelectedPadIndex();
-                player = ((DrumEffectsSequencerPanel) selectedDrumsTab).getSequencer().getPlayer(playerIndex);
-            } else if (selectedDrumsTab instanceof DrumParamsSequencerPanel) {
-                int playerIndex = ((DrumParamsSequencerPanel) selectedDrumsTab).getSelectedPadIndex();
-                player = ((DrumParamsSequencerPanel) selectedDrumsTab).getSequencer().getPlayer(playerIndex);
-            }
+            try {
+                if (selectedDrumsTab instanceof DrumSequencerPanel drumPanel) {
 
-            activatePlayer(player, "drums tabbed pane");
+                    if (drumPanel.getDrumSelectorPanel() != null &&
+                            drumPanel.getDrumSelectorPanel().getSelectedDrumPadIndex() != null &&
+                            drumPanel.getSequencer() != null) {
+
+                        int playerIndex = drumPanel.getDrumSelectorPanel().getSelectedDrumPadIndex();
+                        player = drumPanel.getSequencer().getPlayer(playerIndex);
+                    }
+                } else if (selectedDrumsTab instanceof DrumEffectsSequencerPanel effectsPanel) {
+                    // Add null checks for other panels too
+
+                    if (effectsPanel.getSelectedPadIndex() > -1 && effectsPanel.getSequencer() != null) {
+                        int playerIndex = effectsPanel.getSelectedPadIndex();
+                        player = effectsPanel.getSequencer().getPlayer(playerIndex);
+                    }
+                } else if (selectedDrumsTab instanceof DrumParamsSequencerPanel paramsPanel) {
+
+                    if (paramsPanel.getSelectedPadIndex() > -1 && paramsPanel.getSequencer() != null) {
+                        int playerIndex = paramsPanel.getSelectedPadIndex();
+                        player = paramsPanel.getSequencer().getPlayer(playerIndex);
+                    }
+                }
+
+                if (player != null) {
+                    activatePlayer(player, "drums tabbed pane");
+                } else {
+                    logger.debug("No player available for selected drums tab");
+                }
+            } catch (Exception e) {
+                logger.error("Error selecting drum tab: {}", e.getMessage(), e);
+            }
         }
 
         // Case 6: Melodic tabbed pane selection
@@ -328,7 +361,7 @@ public class MainPanel extends PlayerAwarePanel implements AutoCloseable, IBusLi
     private void activatePlayer(Player player, String source) {
         if (player != null) {
             CommandBus.getInstance().publish(
-                    Commands.PLAYER_ACTIVATION_REQUEST,
+                    Commands.PLAYER_SELECTION_EVENT,
                     this,
                     player);
             logger.debug("Tab switched to {} - set player '{}' as active",

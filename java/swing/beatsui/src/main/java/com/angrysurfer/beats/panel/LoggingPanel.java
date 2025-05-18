@@ -37,7 +37,7 @@ public class LoggingPanel extends JPanel {
     // Log buffering
     private final BlockingQueue<LogEntry> logQueue = new LinkedBlockingQueue<>();
     // UI Components
-    private final JTextPane logTextPane;
+    private JTextPane logTextPane;
     // Styling
     private final StyledDocument document;
     private JScrollPane scrollPane;
@@ -129,6 +129,26 @@ public class LoggingPanel extends JPanel {
     private void initializeUI() {
         // Main log display
         logTextPane.setFont(new Font("Monospaced", Font.PLAIN, 12));
+        
+        // Enable word wrapping
+        logTextPane.setEditable(false);
+        
+        // This makes the text pane fit the width of the scroll pane
+        JTextPane wrappedTextPane = new JTextPane() {
+            @Override
+            public boolean getScrollableTracksViewportWidth() {
+                return true;
+            }
+        };
+        
+        // Copy all properties and content from the existing text pane
+        wrappedTextPane.setDocument(logTextPane.getDocument());
+        wrappedTextPane.setEditable(false);
+        wrappedTextPane.setFont(logTextPane.getFont());
+        wrappedTextPane.setBackground(logTextPane.getBackground());
+        
+        // Replace the reference
+        logTextPane = wrappedTextPane;
 
         // Scroll pane
         scrollPane = new JScrollPane(logTextPane);
@@ -139,29 +159,29 @@ public class LoggingPanel extends JPanel {
                 e.getAdjustable().setValue(e.getAdjustable().getMaximum());
             }
         });
-        
+
         // Add mouse wheel listener for smooth scrolling
         logTextPane.addMouseWheelListener(e -> {
             JScrollBar verticalBar = scrollPane.getVerticalScrollBar();
-            int notches = e.getWheelRotation();
+            int notches = e.getWheelRotation() * 3;
             int scrollAmount = notches * verticalBar.getUnitIncrement();
-            
+
             // Calculate new position
             int newValue = verticalBar.getValue() + scrollAmount;
-            
+
             // Ensure value is within bounds
             if (newValue < verticalBar.getMinimum()) {
                 newValue = verticalBar.getMinimum();
             } else if (newValue > verticalBar.getMaximum() - verticalBar.getVisibleAmount()) {
                 newValue = verticalBar.getMaximum() - verticalBar.getVisibleAmount();
             }
-            
+
             // Set the scrollbar position and disable auto-scroll if scrolling up
             if (notches < 0) {
                 autoScroll = false;
                 autoScrollCheck.setSelected(false);
             }
-            
+
             verticalBar.setValue(newValue);
         });
 
@@ -175,7 +195,7 @@ public class LoggingPanel extends JPanel {
         // Log level selector
         leftControls.add(new JLabel("Level:"));
         logLevelCombo = new JComboBox<>(new String[]{"TRACE", "DEBUG", "INFO", "WARN", "ERROR"});
-        logLevelCombo.setSelectedItem("INFO");
+        logLevelCombo.setSelectedItem("DEBUG");
         logLevelCombo.addActionListener(e -> {
             logLevel = (String) logLevelCombo.getSelectedItem();
             logger.info("Log level set to {}", logLevel);

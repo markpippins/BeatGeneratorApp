@@ -1,7 +1,10 @@
 package com.angrysurfer.beats.visualization;
 
 import com.angrysurfer.beats.visualization.handler.music.ScrollingSequencerVisualization;
-import com.angrysurfer.core.api.*;
+import com.angrysurfer.core.api.Command;
+import com.angrysurfer.core.api.CommandBus;
+import com.angrysurfer.core.api.Commands;
+import com.angrysurfer.core.api.IBusListener;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -302,11 +305,11 @@ public class Visualizer implements IBusListener {
             return;
         }
 
-        CommandBus.getInstance().publish(
-                Commands.STATUS_UPDATE,
-                this,
-                new StatusUpdate("Visualizer", "", currentVisualization.getName())
-        );
+//        CommandBus.getInstance().publish(
+//                Commands.STATUS_UPDATE,
+//                this,
+//                new StatusUpdate("Visualizer", "", currentVisualization.getName())
+//        );
 
         try {
             currentVisualization.update(buttons);

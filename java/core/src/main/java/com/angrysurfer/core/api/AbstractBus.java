@@ -2,11 +2,15 @@ package com.angrysurfer.core.api;
 
 import com.angrysurfer.core.service.LogManager;
 
-import java.util.List;
+import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public abstract class AbstractBus {
+
+    public static String WILDCARD = "*";
+
+    private final Map<String, List<IBusListener>> listenerMap = new ConcurrentHashMap<>();
 
     private final List<IBusListener> listeners = new CopyOnWriteArrayList<>();
     private final LogManager logManager = LogManager.getInstance();
@@ -51,19 +55,22 @@ public abstract class AbstractBus {
     }
 
     public void register(IBusListener listener, String[] commands) {
-        if (listener != null && !listeners.contains(listener))
-            listeners.add(listener);
-    }
-
-    public void register(IBusListener listener) {
-        if (listener != null && !listeners.contains(listener))
-            listeners.add(listener);
+        for (String action : commands) {
+            listenerMap
+                    .computeIfAbsent(action, k -> new ArrayList<>())
+                    .add(listener);
+        }
     }
 
     public void unregister(IBusListener listener) {
-        // System.out.println("AbstractBus: Unregistering listener " +
-        // listener.getClass().getName());
-        listeners.remove(listener);
+        Iterator<Map.Entry<String, List<IBusListener>>> iterator = listenerMap.entrySet().iterator();
+        while (iterator.hasNext()) {
+            Map.Entry<String, List<IBusListener>> entry = iterator.next();
+            entry.getValue().remove(listener);
+            if (entry.getValue().isEmpty()) {
+                iterator.remove();
+            }
+        }
     }
 
     public void publish(String command) {
@@ -79,11 +86,26 @@ public abstract class AbstractBus {
         // System.out.println("AbstractBus: Publishing command " + command + " to " +
         // listeners.size() + " listeners");
         Command cmd = new Command(command, sender, data);
-        for (IBusListener listener : listeners) {
-            // System.out.println("AbstractBus: Sending " + command + " to " +  listener.getClass().getName());
-            if (listener != sender)
+
+        List<IBusListener> listeners = listenerMap.get(command);
+        if (listeners != null) {
+            for (IBusListener listener : listeners) {
                 listener.onAction(cmd);
+            }
         }
+
+        listeners = listenerMap.get("*");
+        if (listeners != null) {
+            for (IBusListener listener : listeners) {
+                listener.onAction(cmd);
+            }
+        }
+
+        // for (IBusListener listener : listeners) {
+        //     // System.out.println("AbstractBus: Sending " + command + " to " +  listener.getClass().getName());
+        //     if (listener != sender)
+        //         listener.onAction(cmd);
+        // }
     }
 
     /**
@@ -133,22 +155,61 @@ public abstract class AbstractBus {
      * Process the command by notifying all listeners
      */
     private void processCommand(Command action) {
-        System.out.println("CommandBus: processign " + action.toString() + ", listeners: " + listeners.size());
+        if (action == null || action.getCommand() == null) {
+            logManager.error("CommandBus", "Attempted to process null action or command");
+            return;
+        }
 
-        listeners.forEach(listener -> {
-            System.out.println("CommandBus: Sending " + action.getCommand() + " to " + listener.getClass().getName());
-            try {
-                if (listener != action.getSender())
-                    listener.onAction(action);
-            } catch (Exception e) {
-                logManager.error("CommandBus",
-                        String.format("Error in listener %s handling command %s: %s",
-                                listener.getClass().getSimpleName(),
-                                action.getCommand(),
-                                e.getMessage()));
-                e.printStackTrace();
+        // Get listeners for this specific command
+        List<IBusListener> listeners = new ArrayList<>();
+
+        List<IBusListener> commandListeners = listenerMap.get(action.getCommand());
+        if (Objects.nonNull(commandListeners))
+            listeners.addAll(commandListeners);
+
+        // Get listeners registered for all commands (wildcard)
+        List<IBusListener> wildcardListeners = listenerMap.get(WILDCARD);
+        if (Objects.nonNull(wildcardListeners))
+            listeners.addAll(wildcardListeners);
+
+        // Process specific command listeners
+        if (commandListeners != null) {
+            for (IBusListener listener : listeners) {
+                try {
+                    if (listener != action.getSender()) {
+                        listener.onAction(action);
+                    }
+                } catch (Exception e) {
+                    logManager.error("CommandBus",
+                            String.format("Error in listener %s handling command %s: %s",
+                                    listener.getClass().getSimpleName(),
+                                    action.getCommand(),
+                                    e.getMessage()));
+                    e.printStackTrace();
+                }
             }
-        });
+        }
+
+        // Process wildcard listeners
+        if (wildcardListeners != null) {
+            for (IBusListener listener : wildcardListeners) {
+                try {
+                    if (listener != action.getSender()) {
+                        listener.onAction(action);
+                    }
+                } catch (Exception e) {
+                    logManager.error("CommandBus",
+                            String.format("Error in wildcard listener %s handling command %s: %s",
+                                    listener.getClass().getSimpleName(),
+                                    action.getCommand(),
+                                    e.getMessage()));
+                    e.printStackTrace();
+                }
+            }
+        }
+
+        // Remove debug log that was causing console spam
+        // System.out.println("CommandBus: processing " + action.toString() + ", listeners: " + listeners.size());
     }
 
     /**
