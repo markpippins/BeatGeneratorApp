@@ -89,7 +89,7 @@ public class Dialog<T> extends JDialog {
         if (titleLabel != null) {
             titleLabel.setText(title);
         }
-   }
+    }
 
     private void setupTitlePanel() {
         titlePanel = new JPanel();
@@ -107,7 +107,7 @@ public class Dialog<T> extends JDialog {
         titlePanel.add(prevButton, BorderLayout.WEST);
         titlePanel.add(titleLabel, BorderLayout.CENTER);
         titlePanel.add(nextButton, BorderLayout.EAST);
-
+        titlePanel.setBorder(BorderFactory.createLoweredBevelBorder());
         add(titlePanel, BorderLayout.NORTH);
     }
 

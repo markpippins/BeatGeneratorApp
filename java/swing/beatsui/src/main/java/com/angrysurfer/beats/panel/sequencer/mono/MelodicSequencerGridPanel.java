@@ -42,6 +42,27 @@ public class MelodicSequencerGridPanel extends JPanel implements IBusListener {
     public MelodicSequencerGridPanel(MelodicSequencer sequencer) {
         this.sequencer = sequencer;
         initialize();
+        registerForEvents();
+        forceSync();  // Add this line to sync on panel creation
+    }
+
+    private static Color getHighlightColor(int newStep) {
+        Color highlightColor;
+
+        if (newStep < 16) {
+            // First 16 steps - orange highlight
+            highlightColor = UIHelper.fadedOrange;
+        } else if (newStep < 32) {
+            // Steps 17-32
+            highlightColor = UIHelper.coolBlue;
+        } else if (newStep < 48) {
+            // Steps 33-48
+            highlightColor = UIHelper.deepNavy;
+        } else {
+            // Steps 49-64
+            highlightColor = UIHelper.mutedOlive;
+        }
+        return highlightColor;
     }
 
     /**
@@ -100,7 +121,7 @@ public class MelodicSequencerGridPanel extends JPanel implements IBusListener {
 
             // Create dial - first one is always a NoteSelectionDial
             Dial dial = i == 4 ? new NoteSelectionDial() : new Dial();
-
+            dial.setSequencerId(sequencer.getId());
             // Set default sizes - we'll update these in updateDialSizes()
             // dial.setPreferredSize(new Dimension(60, 60));
 
@@ -114,7 +135,15 @@ public class MelodicSequencerGridPanel extends JPanel implements IBusListener {
                     gateDials.add(dial);
                     dial.setKnobColor(UIHelper.getDialColor("gate"));
                 }
-                case 4 -> noteDials.add(dial);
+                case 4 -> {
+                    NoteSelectionDial noteDial = (NoteSelectionDial) dial;
+                    // Set initial range and value
+                    noteDial.setMinimum(0);
+                    noteDial.setMaximum(127);  // MIDI note range
+                    noteDial.setValue(60);     // Middle C as default
+                    noteDial.setKnobColor(UIHelper.getDialColor("note"));
+                    noteDials.add(dial);
+                }
                 case 2 -> {
                     dial.setMinimum(0);
                     dial.setMaximum(100);
@@ -147,6 +176,18 @@ public class MelodicSequencerGridPanel extends JPanel implements IBusListener {
         column.add(Box.createRigidArea(new Dimension(0, 2)));
 
         // Make trigger button more compact
+        TriggerButton triggerButton = createTriggerButton(index);
+
+        triggerButtons.add(triggerButton);
+        // Compact panel for trigger button
+        JPanel buttonPanel1 = new JPanel(new FlowLayout(FlowLayout.CENTER, 0, 0));
+        buttonPanel1.add(triggerButton);
+        column.add(buttonPanel1);
+
+        return column;
+    }
+
+    private TriggerButton createTriggerButton(int index) {
         TriggerButton triggerButton = new TriggerButton("");
         triggerButton.setName("TriggerButton-" + index);
         triggerButton.setToolTipText("Step " + (index + 1));
@@ -166,14 +207,7 @@ public class MelodicSequencerGridPanel extends JPanel implements IBusListener {
             // Update sequencer pattern data
             sequencer.setStepData(index, isSelected, note, velocity, gate, probability, nudge);
         });
-
-        triggerButtons.add(triggerButton);
-        // Compact panel for trigger button
-        JPanel buttonPanel1 = new JPanel(new FlowLayout(FlowLayout.CENTER, 0, 0));
-        buttonPanel1.add(triggerButton);
-        column.add(buttonPanel1);
-
-        return column;
+        return triggerButton;
     }
 
     /**
@@ -301,21 +335,7 @@ public class MelodicSequencerGridPanel extends JPanel implements IBusListener {
 
         // Highlight new step with color based on position
         if (newStep >= 0 && newStep < triggerButtons.size()) {
-            Color highlightColor;
-
-            if (newStep < 16) {
-                // First 16 steps - orange highlight
-                highlightColor = UIHelper.fadedOrange;
-            } else if (newStep < 32) {
-                // Steps 17-32
-                highlightColor = UIHelper.coolBlue;
-            } else if (newStep < 48) {
-                // Steps 33-48
-                highlightColor = UIHelper.deepNavy;
-            } else {
-                // Steps 49-64
-                highlightColor = UIHelper.mutedOlive;
-            }
+            Color highlightColor = getHighlightColor(newStep);
 
             triggerButtons.get(newStep).setHighlighted(true);
             triggerButtons.get(newStep).setHighlightColor(highlightColor);
@@ -356,21 +376,50 @@ public class MelodicSequencerGridPanel extends JPanel implements IBusListener {
 
             // Log what we're syncing
             logger.info("Force syncing grid panel with sequencer - activeSteps:{} steps",
-                    sequencer.getSequenceData().getActiveSteps() != null ? sequencer.getSequenceData().getActiveSteps().size() : 0);
+                    sequencer.getSequenceData().getActiveSteps() != null ?
+                            sequencer.getSequenceData().getActiveSteps().size() : 0);
 
             // Update trigger buttons
             List<Boolean> activeSteps = sequencer.getSequenceData().getActiveSteps();
+
+            // Get all other step parameters from sequencer
+            List<Integer> notes = sequencer.getSequenceData().getNoteValues();
+            List<Integer> velocities = sequencer.getSequenceData().getVelocityValues();
+            List<Integer> gates = sequencer.getSequenceData().getGateValues();
+            List<Integer> probabilities = sequencer.getSequenceData().getProbabilityValues();
+            List<Integer> nudges = sequencer.getSequenceData().getNudgeValues();
+
             for (int i = 0; i < Math.min(triggerButtons.size(), activeSteps.size()); i++) {
+                // Update trigger button state
                 boolean active = activeSteps.get(i);
                 triggerButtons.get(i).setSelected(active);
-                // Force immediate visual update
-                triggerButtons.get(i).repaint();
 
-                logger.debug("Step {} set to {}", i, active);
+                // Update all dial values - make sure indexes are valid first
+                if (i < notes.size() && i < noteDials.size()) {
+                    noteDials.get(i).setValue(notes.get(i));
+                }
+
+                if (i < velocities.size() && i < velocityDials.size()) {
+                    velocityDials.get(i).setValue(velocities.get(i));
+                }
+
+                if (i < gates.size() && i < gateDials.size()) {
+                    gateDials.get(i).setValue(gates.get(i));
+                }
+
+                if (i < probabilities.size() && i < probabilityDials.size()) {
+                    probabilityDials.get(i).setValue(probabilities.get(i));
+                }
+
+                if (i < nudges.size() && i < nudgeDials.size()) {
+                    nudgeDials.get(i).setValue(nudges.get(i));
+                }
+
+                // Force immediate visual update for trigger button
+                triggerButtons.get(i).repaint();
             }
 
-            // Update other controls...
-
+            // Force immediate update for all components
             revalidate();
             repaint();
         } finally {

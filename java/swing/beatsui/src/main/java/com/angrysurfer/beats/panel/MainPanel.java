@@ -46,7 +46,7 @@ public class MainPanel extends PlayerAwarePanel implements AutoCloseable, IBusLi
         System.setProperty("org.slf4j.simpleLogger.log.com.angrysurfer.core.api.CommandBus", "debug");
     }
 
-    private final MelodicSequencerPanel[] melodicPanels = new MelodicSequencerPanel[SequencerConstants.SEQUENCER_CHANNELS.length];
+    private final MelodicSequencerPanel[] melodicPanels = new MelodicSequencerPanel[SequencerConstants.MELODIC_CHANNELS.length];
     private JTabbedPane tabbedPane;
     private DrumSequencerPanel drumSequencerPanel;
     private DrumParamsSequencerPanel drumParamsSequencerPanel;
@@ -111,7 +111,7 @@ public class MainPanel extends PlayerAwarePanel implements AutoCloseable, IBusLi
         tabbedPane.addTab("Instruments", createCombinedInstrumentsSystemPanel());
 
         tabbedPane.addTab("Logs", new LoggingPanel());
-        tabbedPane.addTab("Visualizer", new GridPanel());
+        // tabbedPane.addTab("Visualizer", new GridPanel());
 
         tabbedPane.setBorder(BorderFactory.createEmptyBorder(0, 4, 0, 4));
 
@@ -393,7 +393,7 @@ public class MainPanel extends PlayerAwarePanel implements AutoCloseable, IBusLi
         // melodicTabbedPane.setTabPlacement(JTabbedPane.BOTTOM);
 
         // Initialize all melodic sequencer panels with proper channel distribution
-        for (int i = 0; i < SequencerConstants.SEQUENCER_CHANNELS.length; i++) {
+        for (int i = 0; i < SequencerConstants.MELODIC_CHANNELS.length; i++) {
             melodicPanels[i] = createMelodicSequencerPanel(i);
             melodicTabbedPane.addTab("Melo " + (i + 1), melodicPanels[i]);
         }

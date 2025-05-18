@@ -1,31 +1,26 @@
 package com.angrysurfer.beats.widget;
 
-import java.awt.BasicStroke;
-import java.awt.Color;
-import java.awt.Dimension;
-import java.awt.Font;
-import java.awt.FontMetrics;
-import java.awt.Graphics;
-import java.awt.Graphics2D;
-import java.awt.Point;
-import java.awt.RenderingHints;
-import java.awt.geom.Point2D;
-
+import com.angrysurfer.core.api.Command;
+import com.angrysurfer.core.api.CommandBus;
+import com.angrysurfer.core.api.Commands;
+import com.angrysurfer.core.api.IBusListener;
+import com.angrysurfer.core.sequencer.Scale;
+import lombok.Getter;
+import lombok.Setter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.angrysurfer.core.sequencer.Scale;
+import java.awt.*;
+import java.awt.geom.Point2D;
+import java.awt.event.MouseEvent;
 
-import javax.sound.midi.MidiChannel;
-import javax.sound.midi.MidiDevice;
-import javax.sound.midi.MidiSystem;
-import javax.sound.midi.Synthesizer;
+@Getter
+@Setter
+public class NoteSelectionDial extends Dial implements IBusListener {
 
-public class NoteSelectionDial extends Dial {
+    private static final Logger logger = LoggerFactory.getLogger(NoteSelectionDial.class);
 
-    private static final Logger logger = LoggerFactory.getLogger(NoteSelectionDial.class.getName());
-
-    private static final String[] NOTE_NAMES = { "C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B" };
+    private static final String[] NOTE_NAMES = {"C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"};
     private static final int DETENT_COUNT = 12;
     private static final double SNAP_THRESHOLD = 0.2;
     private static final double START_ANGLE = -90; // Start at top (-90 degrees)
@@ -33,7 +28,6 @@ public class NoteSelectionDial extends Dial {
     private static final int NOTES_PER_OCTAVE = 12;
     private static final double DEGREES_PER_DETENT = 360.0 / DETENT_COUNT;
 
-    // Store both the note position (0-11) and the full MIDI note value
     private int currentDetent = 0; // Note within octave (0-11)
     private int midiNote = 60; // Full MIDI note (0-127)
     private int octave = 4; // Current octave (default to middle C = C4)
@@ -42,7 +36,12 @@ public class NoteSelectionDial extends Dial {
     private double startAngle = 0;
     private boolean infiniteTurn = true;
 
-    private Synthesizer synthesizer;
+    private int rootNoteIndex = 0; // Default to C (index 0)
+    private String[] rotatedNoteNames; // Will hold rotated note names based on root
+
+    private boolean followGlobal = true;
+
+    private Integer sequencerId;
 
     public NoteSelectionDial() {
         super();
@@ -53,6 +52,15 @@ public class NoteSelectionDial extends Dial {
         setPreferredSize(new Dimension(100, 100));
         setMinimumSize(new Dimension(100, 100));
 
+        // Initialize rotated note names
+        rotatedNoteNames = NOTE_NAMES.clone();
+
+        // Register for root note events
+        CommandBus.getInstance().register(this, new String[]{
+                Commands.ROOT_NOTE_SELECTED,
+                Commands.SEQUENCER_ROOT_NOTE_SELECTED
+        });
+
         addMouseListener(new java.awt.event.MouseAdapter() {
             public void mousePressed(java.awt.event.MouseEvent e) {
                 if (!isEnabled())
@@ -60,6 +68,11 @@ public class NoteSelectionDial extends Dial {
                 isDragging = true;
                 Point center = new Point(getWidth() / 2, getHeight() / 2);
                 startAngle = Math.atan2(e.getY() - center.y, e.getX() - center.x);
+
+                // Show note selection popup
+                if (e.getClickCount() == 2) {
+                    showNoteSelectionPopup(e);
+                }
             }
 
             public void mouseReleased(java.awt.event.MouseEvent e) {
@@ -94,8 +107,11 @@ public class NoteSelectionDial extends Dial {
                     if (newDetent != currentDetent) {
                         currentDetent = newDetent;
 
+                        // Calculate the actual note index considering root rotation
+                        int actualNoteIndex = (currentDetent + rootNoteIndex) % NOTES_PER_OCTAVE;
+
                         // Calculate new MIDI note preserving octave
-                        int newMidiNote = Scale.getMidiNote(NOTE_NAMES[currentDetent], octave);
+                        int newMidiNote = Scale.getMidiNote(NOTE_NAMES[actualNoteIndex], octave);
 
                         // Store old value for change detection
                         int oldValue = midiNote;
@@ -107,18 +123,20 @@ public class NoteSelectionDial extends Dial {
 
                         // Fire change events if value changed
                         if (oldValue != newMidiNote) {
-                            // Change this line:
-                            // super.setValue(newMidiNote, true);
-
-                            // To this:
                             NoteSelectionDial.this.setValue(newMidiNote, true);
-
-                            logger.debug("Note changed: {} (MIDI {})", NOTE_NAMES[currentDetent] + octave, newMidiNote);
+                            logger.debug("Note changed: {} (MIDI {}, detent {})",
+                                    NOTE_NAMES[actualNoteIndex] + octave, newMidiNote, currentDetent);
                         }
                     }
                 }
             }
         });
+    }
+
+    // Method for handling double-click to select note
+    private void showNoteSelectionPopup(MouseEvent e) {
+        // Implementation for a note selection popup
+        // (This can be implemented later if desired)
     }
 
     @Override
@@ -143,7 +161,6 @@ public class NoteSelectionDial extends Dial {
         double radius = (size - 2 * margin) / 2.0;
 
         // Draw dial background
-        // g2d.setColor(UIHelper.charcoalGray);
         g2d.setColor(getParent().getBackground());
         g2d.fillOval(x + margin, y + margin, size - 2 * margin, size - 2 * margin);
 
@@ -162,12 +179,17 @@ public class NoteSelectionDial extends Dial {
             // Calculate marker points
             Point2D p1 = new Point2D.Double(centerX + Math.cos(angle) * (radius - margin),
                     centerY + Math.sin(angle) * (radius - margin));
-            Point2D p2 = new Point2D.Double(centerX + Math.cos(angle) * radius, centerY + Math.sin(angle) * radius);
+            Point2D p2 = new Point2D.Double(centerX + Math.cos(angle) * radius,
+                    centerY + Math.sin(angle) * radius);
 
             // Highlight current note
             if (i == currentDetent) {
                 g2d.setColor(Color.YELLOW);
                 g2d.setStroke(new BasicStroke(2f));
+            } else if (rotatedNoteNames[i].equals(NOTE_NAMES[0])) {
+                // Subtle highlight for C note (musical reference)
+                g2d.setColor(new Color(120, 120, 180));
+                g2d.setStroke(new BasicStroke(1.5f));
             } else {
                 g2d.setColor(Color.LIGHT_GRAY);
                 g2d.setStroke(new BasicStroke(1f));
@@ -176,16 +198,17 @@ public class NoteSelectionDial extends Dial {
             // Draw marker line
             g2d.drawLine((int) p1.getX(), (int) p1.getY(), (int) p2.getX(), (int) p2.getY());
 
-            // Draw note name
+            // Draw note name - use rotatedNoteNames instead of NOTE_NAMES
             Point2D labelPos = new Point2D.Double(centerX + Math.cos(angle) * (radius + margin * 1.2),
                     centerY + Math.sin(angle) * (radius + margin * 1.2));
 
             FontMetrics fm = g2d.getFontMetrics();
-            String label = NOTE_NAMES[i];
+            String label = rotatedNoteNames[i];
             int labelW = fm.stringWidth(label);
             int labelH = fm.getHeight();
 
-            g2d.drawString(label, (int) (labelPos.getX() - labelW / 2), (int) (labelPos.getY() + labelH / 4));
+            g2d.drawString(label, (int) (labelPos.getX() - labelW / 2),
+                    (int) (labelPos.getY() + labelH / 4));
         }
 
         // Draw pointer
@@ -226,14 +249,14 @@ public class NoteSelectionDial extends Dial {
 
         // Extract octave and note information
         octave = Scale.getOctave(midiNoteValue);
-        currentDetent = midiNoteValue % NOTES_PER_OCTAVE;
+        int noteIndex = midiNoteValue % NOTES_PER_OCTAVE;
+
+        // Calculate detent position considering root rotation
+        currentDetent = (noteIndex - rootNoteIndex + NOTES_PER_OCTAVE) % NOTES_PER_OCTAVE;
         midiNote = midiNoteValue;
 
         // Set the base class value
         super.setValue(midiNoteValue, notify);
-
-        logger.debug("Set note: {} (MIDI {}, octave {}, position {})", NOTE_NAMES[currentDetent] + octave, midiNote,
-                octave, currentDetent);
 
         repaint();
     }
@@ -278,62 +301,113 @@ public class NoteSelectionDial extends Dial {
     }
 
     /**
-     * Gets the current note name without octave (e.g., "C#")
+     * Sets the root note for the dial, rotating the notes so the root appears at 12 o'clock
+     *
+     * @param rootNote The name of the root note (e.g. "C", "F#")
+     * @param notify   Whether to fire change events
      */
-    public String getCurrentNoteName() {
-        return NOTE_NAMES[currentDetent];
-    }
-
-    public void setInfiniteTurn(boolean infinite) {
-        this.infiniteTurn = infinite;
-    }
-
-    public boolean isInfiniteTurn() {
-        return infiniteTurn;
-    }
-
-    /**
-     * Play a note on the X0X synthesizer
-     * 
-     * @param note MIDI note number (0-127)
-     * @param velocity Velocity (0-127)
-     * @param durationMs Duration in milliseconds
-     */
-    public void playNote(int note, int velocity, int durationMs) {
-        if (synthesizer != null && synthesizer.isOpen()) {
-            try {
-                // Play on channel 16 (index 15)
-                MidiChannel channel = synthesizer.getChannels()[15];
-                
-                if (channel != null) {
-                    // Start the note
-                    channel.noteOn(note, velocity);
-                    
-                    // Schedule note off
-                    java.util.Timer timer = new java.util.Timer();
-                    timer.schedule(new java.util.TimerTask() {
-                        @Override
-                        public void run() {
-                            channel.noteOff(note);
-                            timer.cancel();
-                        }
-                    }, durationMs);
-                }
-            } catch (Exception e) {
-                System.err.println("Error playing note: " + e.getMessage());
+    public void setRootNote(String rootNote, boolean notify) {
+        // Find the index of the root note
+        int newRootIndex = -1;
+        for (int i = 0; i < NOTE_NAMES.length; i++) {
+            if (NOTE_NAMES[i].equals(rootNote)) {
+                newRootIndex = i;
+                break;
             }
         }
+
+        if (newRootIndex != -1 && newRootIndex != rootNoteIndex) {
+            // Get current MIDI note before changes
+            int oldMidiNote = midiNote;
+
+            // Update root note index
+            rootNoteIndex = newRootIndex;
+
+            // Rotate note names to place root at 12 o'clock
+            rotateNoteNames();
+
+            // Recalculate MIDI note based on current detent with new root
+            updateMidiNoteForRoot();
+
+            // Repaint with new layout
+            repaint();
+
+            // Fire change event if note changed
+            if (notify && oldMidiNote != midiNote) {
+                super.setValue(midiNote, true);
+            }
+
+            logger.debug("Root note changed to: {}, MIDI note now: {}", rootNote, midiNote);
+        }
     }
 
     /**
-     * Clean up resources
+     * Gets the current root note
      */
-    public void dispose() {
-        // Close synthesizer if open
-        if (synthesizer != null && synthesizer.isOpen()) {
-            synthesizer.close();
-            System.out.println("Closed synthesizer");
+    public String getRootNote() {
+        return NOTE_NAMES[rootNoteIndex];
+    }
+
+    /**
+     * Rotates the note names array so root appears at 12 o'clock position
+     */
+    private void rotateNoteNames() {
+        rotatedNoteNames = new String[NOTE_NAMES.length];
+
+        // Rotate note names to put root at 12 o'clock (0 position)
+        for (int i = 0; i < NOTE_NAMES.length; i++) {
+            int sourceIndex = (i + rootNoteIndex) % NOTE_NAMES.length;
+            rotatedNoteNames[i] = NOTE_NAMES[sourceIndex];
         }
-        
+    }
+
+    /**
+     * Updates the MIDI note based on current detent position and root note
+     */
+    private void updateMidiNoteForRoot() {
+        // Calculate actual note based on detent position and rotation
+        int actualNoteIndex = (currentDetent + rootNoteIndex) % NOTES_PER_OCTAVE;
+
+        // Update MIDI note while preserving octave
+        midiNote = Scale.getMidiNote(NOTE_NAMES[actualNoteIndex], octave);
+    }
+
+    /**
+     * Handle command bus events
+     */
+    @Override
+    public void onAction(Command action) {
+        if (action.getCommand() == null) return;
+
+        // Skip self-generated events
+        if (action.getSender() == this) return;
+
+        switch (action.getCommand()) {
+            case Commands.ROOT_NOTE_SELECTED:
+                // Handle global root note changes
+                if (followGlobal && action.getData() instanceof String) {
+                    String rootNote = (String) action.getData();
+                    setRootNote(rootNote, true);
+                    logger.debug("Following global root note change to: {}", rootNote);
+                }
+                break;
+
+            case Commands.SEQUENCER_ROOT_NOTE_SELECTED:
+                // Handle sequencer-specific root note changes
+                if (!followGlobal && action.getData() instanceof Object[] && sequencerId != null) {
+                    Object[] data = (Object[]) action.getData();
+                    if (data.length == 2 && data[0] instanceof Integer && data[1] instanceof String) {
+                        Integer targetSequencerId = (Integer) data[0];
+                        String rootNote = (String) data[1];
+
+                        // Only apply if targeting our sequencer
+                        if (sequencerId.equals(targetSequencerId)) {
+                            setRootNote(rootNote, true);
+                            logger.debug("Applied sequencer-specific root note change to: {}", rootNote);
+                        }
+                    }
+                }
+                break;
+        }
     }
 }

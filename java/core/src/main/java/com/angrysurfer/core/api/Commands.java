@@ -404,4 +404,7 @@ public class Commands {
     public static final String MELODIC_SEQUENCE_DELETED = "MELODIC_SEQUENCE_DELETED";
     public static final String HIGHLIGHT_SCALE_NOTE = "HIGHLIGHT_SCALE_NOTE";
     public static final String MODULATION_VALUE_CHANGED = "MODULATION_VALUE_CHANGED";
+
+    // Add this constant for sequencer-specific root note changes
+    public static final String SEQUENCER_ROOT_NOTE_SELECTED = "SEQUENCER_ROOT_NOTE_SELECTED";
 }

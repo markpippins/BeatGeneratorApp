@@ -5,7 +5,6 @@ import com.angrysurfer.beats.util.UIHelper;
 import com.angrysurfer.core.api.CommandBus;
 import com.angrysurfer.core.api.Commands;
 import com.angrysurfer.core.event.MelodicSequencerEvent;
-import com.angrysurfer.core.redis.RedisService;
 import com.angrysurfer.core.sequencer.Direction;
 import com.angrysurfer.core.sequencer.MelodicSequencer;
 import com.angrysurfer.core.sequencer.TimingDivision;
@@ -17,6 +16,8 @@ import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.Collections;
+import java.util.List;
 
 /**
  * Panel providing navigation controls for melodic sequences
@@ -110,11 +111,12 @@ public class MelodicSequenceNavigationPanel extends PlayerAwarePanel {
     public void updateSequenceIdDisplay() {
         sequenceIdLabel.setText(getFormattedIdText());
         updateButtonStates();
+        updateBorderTitle();
     }
 
     private String getFormattedIdText() {
-        return "Seq: " +
-                (sequencer.getSequenceData().getId() == 0 ? "New" : sequencer.getSequenceData().getId());
+        return "Seq: "
+                + (sequencer.getSequenceData().getId() == 0 ? "New" : sequencer.getSequenceData().getId());
     }
 
     /**
@@ -133,20 +135,55 @@ public class MelodicSequenceNavigationPanel extends PlayerAwarePanel {
         Long firstId = MelodicSequencerManager.getInstance().getFirstSequenceId(sequencer.getId());
         Long lastId = MelodicSequencerManager.getInstance().getLastSequenceId(sequencer.getId());
 
-        // First/Previous buttons - enabled if we're not at the first sequence
-        boolean isFirst = !hasSequences || (firstId != null && currentId <= firstId);
+        // Directly check if previous/next sequence exists
+        Long prevId = MelodicSequencerManager.getInstance().getPreviousSequenceId(
+                sequencer.getId(), currentId);
+        Long nextId = MelodicSequencerManager.getInstance().getNextSequenceId(
+                sequencer.getId(), currentId);
 
-        // Last button - only enabled if we're not at the last sequence
-        boolean isLast = !hasSequences || (lastId != null && currentId >= lastId);
+        // Enable/disable buttons based on direct availability
+        firstButton.setEnabled(hasSequences && prevId != null);
+        prevButton.setEnabled(hasSequences && prevId != null);
+        nextButton.setEnabled(hasSequences && nextId != null);
+        lastButton.setEnabled(hasSequences && nextId != null);
 
-        // Enable/disable buttons
-        firstButton.setEnabled(hasSequences && !isFirst);
-        prevButton.setEnabled(hasSequences && !isFirst && currentId > 0);
-        nextButton.setEnabled(currentId > 0); // Next enabled if we have a saved sequence
-        lastButton.setEnabled(hasSequences && !isLast);
+        // Log detailed state for debugging
+        logger.debug("Button states: currentId={}, firstId={}, lastId={}, prevId={}, nextId={}",
+                currentId, firstId, lastId, prevId, nextId);
+    }
 
-        logger.debug("Button states: currentId={}, firstId={}, lastId={}, isFirst={}, isLast={}",
-                currentId, firstId, lastId, isFirst, isLast);
+    /**
+     * Update the border to show current sequence position
+     */
+    private void updateBorderTitle() {
+        if (sequencer == null || sequencer.getId() == null) {
+            return;
+        }
+        
+        // Get all sequence IDs for this sequencer
+        List<Long> allIds = MelodicSequencerManager.getInstance()
+                .getAllMelodicSequenceIds(sequencer.getId());
+        
+        if (allIds == null || allIds.isEmpty()) {
+            UIHelper.setWidgetPanelBorder(this, "Sequence");
+            return;
+        }
+        
+        // Sort IDs for consistent ordering
+        Collections.sort(allIds);
+        
+        // Get current sequence ID
+        long currentId = sequencer.getSequenceData().getId();
+        
+        // Find index of current ID (0-based)
+        int currentIndex = allIds.indexOf(currentId);
+        
+        // Format title with 1-based index for user-friendliness
+        String title = String.format("Sequence %d of %d", 
+                currentIndex + 1, allIds.size());
+        
+        // Update border
+        UIHelper.setWidgetPanelBorder(this, title);
     }
 
     /**
@@ -185,6 +222,9 @@ public class MelodicSequenceNavigationPanel extends PlayerAwarePanel {
                     event);
 
             logger.info("Created new blank melodic sequence for sequencer {}", sequencer.getId());
+            
+            // Update border title
+            updateBorderTitle();
         } catch (Exception e) {
             logger.error("Error creating new melodic sequence", e);
         }
@@ -195,9 +235,15 @@ public class MelodicSequenceNavigationPanel extends PlayerAwarePanel {
      */
     private void loadSequence(Long sequenceId) {
         if (sequenceId != null && sequencer.getId() != null) {
-            RedisService.getInstance().applyMelodicSequenceToSequencer(
-                    RedisService.getInstance().findMelodicSequenceById(sequenceId, sequencer.getId()),
-                    sequencer);
+            // Replace direct RedisService call with manager call
+            boolean success = MelodicSequencerManager.getInstance()
+                    .applySequenceById(sequencer.getId(), sequenceId);
+
+            if (!success) {
+                logger.warn("Failed to load sequence {} for sequencer {}",
+                        sequenceId, sequencer.getId());
+                return;
+            }
 
             // Update display
             updateSequenceIdDisplay();
@@ -214,6 +260,9 @@ public class MelodicSequenceNavigationPanel extends PlayerAwarePanel {
                             sequencer.getSequenceData().getId()));
 
             logger.info("Loaded melodic sequence {} for sequencer {}", sequenceId, sequencer.getId());
+            
+            // Update border title
+            updateBorderTitle();
         }
     }
 
@@ -226,6 +275,9 @@ public class MelodicSequenceNavigationPanel extends PlayerAwarePanel {
         Long firstId = MelodicSequencerManager.getInstance().getFirstSequenceId(sequencer.getId());
         if (firstId != null) {
             loadSequence(firstId);
+        } else {
+            // No sequences available - create one
+            createAndSaveNewSequence();
         }
     }
 
@@ -272,27 +324,22 @@ public class MelodicSequenceNavigationPanel extends PlayerAwarePanel {
     }
 
     private void saveCurrentSequence() {
-        if (sequencer.getId() == null) {
-            logger.warn("Cannot save sequence - sequencer has no ID");
-            return;
-        }
-
-        // Save the sequence
+        // Before saving, make sure any changes are applied to the sequencer's data
         MelodicSequencerManager.getInstance().saveSequence(sequencer);
+        
+        // Update border after saving
+        updateBorderTitle();
+    }
 
-        // Update display and button states
-        updateSequenceIdDisplay();
+    // Add this new method to handle the case where no sequences exist
+    private void createAndSaveNewSequence() {
+        // Create a new sequence
+        createNewSequence();
 
-        // Publish event
-        CommandBus.getInstance().publish(
-                Commands.MELODIC_SEQUENCE_SAVED,
-                this,
-                new MelodicSequencerEvent(
-                        sequencer.getId(),
-                        sequencer.getSequenceData().getId()));
+        // Save it immediately
+        saveCurrentSequence();
 
-        logger.info("Saved melodic sequence: {} for sequencer {}",
-                sequencer.getSequenceData().getId(), sequencer.getId());
+        logger.info("Created and saved new default sequence for sequencer {}", sequencer.getId());
     }
 
     @Override
@@ -300,6 +347,7 @@ public class MelodicSequenceNavigationPanel extends PlayerAwarePanel {
         if (getTargetPlayer().isMelodicPlayer()) {
             setSequencer(((MelodicSequencer) getTargetPlayer().getOwner()));
             updateSequenceIdDisplay();
+            updateBorderTitle();
         }
     }
 
@@ -308,6 +356,7 @@ public class MelodicSequenceNavigationPanel extends PlayerAwarePanel {
         if (getTargetPlayer().isMelodicPlayer()) {
             setSequencer(((MelodicSequencer) getTargetPlayer().getOwner()));
             updateSequenceIdDisplay();
+            updateBorderTitle();
         }
     }
 

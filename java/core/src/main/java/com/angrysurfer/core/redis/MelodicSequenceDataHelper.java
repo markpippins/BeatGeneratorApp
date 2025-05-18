@@ -6,7 +6,10 @@ import com.angrysurfer.core.event.MelodicSequencerEvent;
 import com.angrysurfer.core.model.InstrumentWrapper;
 import com.angrysurfer.core.model.Player;
 import com.angrysurfer.core.sequencer.*;
+import com.angrysurfer.core.service.DeviceManager;
+import com.angrysurfer.core.service.InstrumentManager;
 import com.angrysurfer.core.service.PlayerManager;
+import com.angrysurfer.core.service.ReceiverManager;
 import com.angrysurfer.core.util.MelodicSequenceDataDeserializer;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -18,7 +21,10 @@ import org.slf4j.LoggerFactory;
 import redis.clients.jedis.Jedis;
 import redis.clients.jedis.JedisPool;
 
+import javax.sound.midi.MidiDevice;
+import javax.sound.midi.Receiver;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -287,6 +293,98 @@ public class MelodicSequenceDataHelper {
     }
 
     /**
+     * Apply melodic sequence data to a sequencer
+     *
+     * @param data      The melodic sequence data to apply
+     * @param sequencer The sequencer to apply the data to
+     */
+    public void applyMelodicSequenceToSequencer(MelodicSequenceData data, MelodicSequencer sequencer) {
+        if (data == null || sequencer == null) {
+            logger.warn("Cannot apply null data or sequencer");
+            return;
+        }
+
+        try {
+            // Store current playback state
+            boolean wasPlaying = sequencer.isPlaying();
+
+            // Apply the sequence data
+            sequencer.setSequenceData(data);
+
+            // Update instrument settings if possible
+            if (sequencer.getPlayer() != null) {
+                Player player = sequencer.getPlayer();
+                InstrumentWrapper instrument = player.getInstrument();
+
+                // If no instrument, try to get by ID
+                if (instrument == null && data.getInstrumentId() != null) {
+                    instrument = InstrumentManager.getInstance().getInstrumentById(data.getInstrumentId());
+                    if (instrument != null) {
+                        player.setInstrument(instrument);
+                        player.setInstrumentId(instrument.getId());
+                    }
+                }
+
+                // If we have an instrument, apply the saved settings
+                if (instrument != null) {
+                    // Update from saved data
+                    if (data.getPreset() != null) {
+                        instrument.setPreset(data.getPreset());
+                    }
+
+                    if (data.getBankIndex() != null) {
+                        instrument.setBankIndex(data.getBankIndex());
+                    }
+
+                    if (data.getSoundbankName() != null) {
+                        instrument.setSoundbankName(data.getSoundbankName());
+                    }
+
+                    if (data.getDeviceName() != null) {
+                        // Try to reconnect to saved device
+                        DeviceManager.getInstance();
+                        MidiDevice device = DeviceManager.getMidiDevice(data.getDeviceName());
+                        if (device != null) {
+                            try {
+                                if (!device.isOpen()) {
+                                    device.open();
+                                }
+                                instrument.setDevice(device);
+                                instrument.setDeviceName(data.getDeviceName());
+
+                                // Get a receiver
+                                Receiver receiver = ReceiverManager.getInstance()
+                                        .getOrCreateReceiver(data.getDeviceName(), device);
+                                if (receiver != null) {
+                                    instrument.setReceiver(receiver);
+                                }
+                            } catch (Exception e) {
+                                logger.warn("Could not connect to device {}: {}",
+                                        data.getDeviceName(), e.getMessage());
+                            }
+                        }
+                    }
+
+                    // Apply the instrument settings
+                    PlayerManager.getInstance().applyInstrumentPreset(player);
+                }
+            }
+
+            // Restore playback state
+            if (wasPlaying) {
+                sequencer.start();
+            }
+
+            // Notify that pattern has been updated
+            CommandBus.getInstance().publish(Commands.MELODIC_SEQUENCE_UPDATED, this,
+                    Map.of("sequencerId", sequencer.getId(), "sequenceId", data.getId()));
+
+        } catch (Exception e) {
+            logger.error("Error applying melodic sequence data: " + e.getMessage(), e);
+        }
+    }
+
+    /**
      * Save a melodic sequence
      */
     public void saveMelodicSequence(MelodicSequencer sequencer) {
@@ -344,7 +442,7 @@ public class MelodicSequenceDataHelper {
                     data.getId(), sequencer.getId());
 
             logger.info(json);
-            
+
             // Notify listeners
             CommandBus.getInstance().publish(Commands.MELODIC_SEQUENCE_SAVED, this,
                     Map.of("sequencerId", sequencer.getId(), "sequenceId", data.getId()));
@@ -357,19 +455,46 @@ public class MelodicSequenceDataHelper {
 
     /**
      * Get all melodic sequence IDs for a specific sequencer
+     * @param sequencerId The sequencer ID to get sequences for
+     * @return A list of sequence IDs
      */
     public List<Long> getAllMelodicSequenceIds(Integer sequencerId) {
         try (Jedis jedis = jedisPool.getResource()) {
-            Set<String> keys = jedis.keys("melseq:" + sequencerId + ":*");
-            List<Long> ids = new ArrayList<>();
-            for (String key : keys) {
+            // Use a Set to avoid duplicate IDs
+            Set<Long> uniqueIds = new HashSet<>();
+            
+            // Check older key format
+            Set<String> oldKeys = jedis.keys("melseq:" + sequencerId + ":*");
+            for (String key : oldKeys) {
                 try {
-                    ids.add(Long.parseLong(key.split(":")[2]));
+                    uniqueIds.add(Long.parseLong(key.split(":")[2]));
                 } catch (NumberFormatException e) {
                     logger.error("Invalid melodic sequence key: " + key);
                 }
             }
-            return ids;
+            
+            // Check newer key format
+            Set<String> newKeys = jedis.keys("melodicseq:" + sequencerId + ":*");
+            for (String key : newKeys) {
+                try {
+                    uniqueIds.add(Long.parseLong(key.split(":")[2]));
+                } catch (NumberFormatException e) {
+                    logger.error("Invalid melodic sequence key: " + key);
+                }
+            }
+            
+            // Check hash storage
+            Map<String, String> hashEntries = jedis.hgetAll("melodic-sequences:" + sequencerId);
+            for (String idStr : hashEntries.keySet()) {
+                try {
+                    uniqueIds.add(Long.parseLong(idStr));
+                } catch (NumberFormatException e) {
+                    logger.error("Invalid melodic sequence hash key: " + idStr);
+                }
+            }
+            
+            logger.info("Found {} melodic sequences for sequencer {}", uniqueIds.size(), sequencerId);
+            return new ArrayList<>(uniqueIds);
         }
     }
 
