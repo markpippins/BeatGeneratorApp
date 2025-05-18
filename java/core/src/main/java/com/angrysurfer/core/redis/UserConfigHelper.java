@@ -71,10 +71,10 @@ public class UserConfigHelper {
                             instrument.getIsDefault());
                 });
 
-                //config.setDefaultStrikes(new ArrayList<>());
-                //config.setDefaultNotes(new ArrayList<>());
-                //config.setInstruments(new ArrayList<>());
-                //config.setHasDefaults(false);
+                config.setDefaultStrikes(new ArrayList<>());
+                config.setDefaultNotes(new ArrayList<>());
+                config.setInstruments(new ArrayList<>());
+                config.setHasDefaults(false);
                 return config;
             } else {
                 logger.debug("No UserConfig found with ID {}", id);
