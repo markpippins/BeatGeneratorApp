@@ -1,5 +1,7 @@
 package com.angrysurfer.core.sequencer;
 
+import com.angrysurfer.core.api.CommandBus;
+import com.angrysurfer.core.api.Commands;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -29,12 +31,8 @@ public class DrumSequenceModifier {
         }
 
         try {
-            // Clear existing pattern for this drum
-            for (int step = 0; step < sequencer.getPatternLength(drumIndex); step++) {
-                if (sequencer.isStepActive(drumIndex, step)) {
-                    sequencer.toggleStep(drumIndex, step);
-                }
-            }
+            // First clear the track properly - this also resets all parameters
+            clearDrumTrack(sequencer, drumIndex);
 
             // Set the pattern length if needed
             int newLength = pattern.length;
@@ -44,17 +42,22 @@ public class DrumSequenceModifier {
             for (int step = 0; step < pattern.length; step++) {
                 if (pattern[step]) {
                     // Toggle the step to make it active
-                    if (!sequencer.isStepActive(drumIndex, step)) {
-                        sequencer.toggleStep(drumIndex, step);
-                    }
+                    sequencer.toggleStep(drumIndex, step);
 
-                    // Set default parameters for this step
+                    // Always set default parameters for active steps
                     sequencer.setStepVelocity(drumIndex, step, SequencerConstants.DEFAULT_VELOCITY);
                     sequencer.setStepDecay(drumIndex, step, SequencerConstants.DEFAULT_DECAY);
                     sequencer.setStepProbability(drumIndex, step, SequencerConstants.DEFAULT_PROBABILITY);
-                    sequencer.setStepNudge(drumIndex, step, 0);
+
+                    // Set default effect parameters too
+                    sequencer.setStepPan(drumIndex, step, 64); // Center
+                    sequencer.setStepChorus(drumIndex, step, 0);
+                    sequencer.setStepReverb(drumIndex, step, 0);
                 }
             }
+
+            // Use our helper method to notify pattern changed
+            notifyPatternChanged(sequencer, drumIndex);
 
             logger.info("Applied Euclidean pattern to drum {}, pattern length: {}", drumIndex, pattern.length);
             return true;
@@ -66,10 +69,6 @@ public class DrumSequenceModifier {
 
     /**
      * Clears all steps for a specific drum track
-     *
-     * @param sequencer The drum sequencer to modify
-     * @param drumIndex The index of the drum to clear
-     * @return True if operation was successful
      */
     public static boolean clearDrumTrack(DrumSequencer sequencer, int drumIndex) {
         try {
@@ -78,7 +77,20 @@ public class DrumSequenceModifier {
                 if (sequencer.isStepActive(drumIndex, step)) {
                     sequencer.toggleStep(drumIndex, step);
                 }
+
+                // Reset all parameters to defaults (important for clean state)
+                sequencer.setStepVelocity(drumIndex, step, SequencerConstants.DEFAULT_VELOCITY);
+                sequencer.setStepDecay(drumIndex, step, SequencerConstants.DEFAULT_DECAY);
+                sequencer.setStepProbability(drumIndex, step, SequencerConstants.DEFAULT_PROBABILITY);
+                sequencer.setStepNudge(drumIndex, step, 0);
+                sequencer.setStepPan(drumIndex, step, 64); // Center
+                sequencer.setStepChorus(drumIndex, step, 0);
+                sequencer.setStepReverb(drumIndex, step, 0);
             }
+
+            // Notify that the pattern has changed
+            notifyPatternChanged(sequencer, drumIndex);
+
             logger.info("Cleared track for drum {}", drumIndex);
             return true;
         } catch (Exception e) {
@@ -150,24 +162,43 @@ public class DrumSequenceModifier {
     }
 
     /**
-     * Shifts a pattern forward/right by one step
-     *
-     * @param sequencer The drum sequencer to modify
-     * @param drumIndex The index of the drum to update
-     * @return True if operation was successful
+     * Shifts a pattern forward/right by one step with parameter preservation
      */
     public static boolean pushPatternForward(DrumSequencer sequencer, int drumIndex) {
         try {
             int patternLength = sequencer.getPatternLength(drumIndex);
             boolean[] originalPattern = new boolean[patternLength];
 
-            // Save original pattern
+            // Arrays to store all step parameters
+            int[] originalVelocities = new int[patternLength];
+            int[] originalDecays = new int[patternLength];
+            int[] originalProbabilities = new int[patternLength];
+            int[] originalNudges = new int[patternLength];
+            int[] originalPans = new int[patternLength];
+            int[] originalChorus = new int[patternLength];
+            int[] originalReverb = new int[patternLength];
+
+            // Save original pattern with all parameters
             for (int i = 0; i < patternLength; i++) {
                 originalPattern[i] = sequencer.isStepActive(drumIndex, i);
+                originalVelocities[i] = sequencer.getStepVelocity(drumIndex, i);
+                originalDecays[i] = sequencer.getStepDecay(drumIndex, i);
+                originalProbabilities[i] = sequencer.getStepProbability(drumIndex, i);
+                originalNudges[i] = sequencer.getStepNudge(drumIndex, i);
+                originalPans[i] = sequencer.getStepPan(drumIndex, i);
+                originalChorus[i] = sequencer.getStepChorus(drumIndex, i);
+                originalReverb[i] = sequencer.getStepReverb(drumIndex, i);
             }
 
             // Shift pattern right (wrap around for last step)
             boolean lastStepState = originalPattern[patternLength - 1];
+            int lastVelocity = originalVelocities[patternLength - 1];
+            int lastDecay = originalDecays[patternLength - 1];
+            int lastProbability = originalProbabilities[patternLength - 1];
+            int lastNudge = originalNudges[patternLength - 1];
+            int lastPan = originalPans[patternLength - 1];
+            int lastChorus = originalChorus[patternLength - 1];
+            int lastReverb = originalReverb[patternLength - 1];
 
             // Clear current pattern
             clearDrumTrack(sequencer, drumIndex);
@@ -177,12 +208,33 @@ public class DrumSequenceModifier {
                 if (originalPattern[i]) {
                     sequencer.toggleStep(drumIndex, i + 1);
                 }
+
+                // Copy parameters regardless of step state
+                sequencer.setStepVelocity(drumIndex, i + 1, originalVelocities[i]);
+                sequencer.setStepDecay(drumIndex, i + 1, originalDecays[i]);
+                sequencer.setStepProbability(drumIndex, i + 1, originalProbabilities[i]);
+                sequencer.setStepNudge(drumIndex, i + 1, originalNudges[i]);
+                sequencer.setStepPan(drumIndex, i + 1, originalPans[i]);
+                sequencer.setStepChorus(drumIndex, i + 1, originalChorus[i]);
+                sequencer.setStepReverb(drumIndex, i + 1, originalReverb[i]);
             }
 
             // Wrap last step to first position
             if (lastStepState) {
                 sequencer.toggleStep(drumIndex, 0);
             }
+
+            // Wrap last step parameters to first position
+            sequencer.setStepVelocity(drumIndex, 0, lastVelocity);
+            sequencer.setStepDecay(drumIndex, 0, lastDecay);
+            sequencer.setStepProbability(drumIndex, 0, lastProbability);
+            sequencer.setStepNudge(drumIndex, 0, lastNudge);
+            sequencer.setStepPan(drumIndex, 0, lastPan);
+            sequencer.setStepChorus(drumIndex, 0, lastChorus);
+            sequencer.setStepReverb(drumIndex, 0, lastReverb);
+
+            // Notify that the pattern has changed
+            notifyPatternChanged(sequencer, drumIndex);
 
             logger.info("Pushed pattern forward for drum {}", drumIndex);
             return true;
@@ -193,24 +245,43 @@ public class DrumSequenceModifier {
     }
 
     /**
-     * Shifts a pattern backward/left by one step
-     *
-     * @param sequencer The drum sequencer to modify
-     * @param drumIndex The index of the drum to update
-     * @return True if operation was successful
+     * Shifts a pattern backward/left by one step with parameter preservation
      */
     public static boolean pullPatternBackward(DrumSequencer sequencer, int drumIndex) {
         try {
             int patternLength = sequencer.getPatternLength(drumIndex);
             boolean[] originalPattern = new boolean[patternLength];
 
-            // Save original pattern
+            // Arrays to store all step parameters
+            int[] originalVelocities = new int[patternLength];
+            int[] originalDecays = new int[patternLength];
+            int[] originalProbabilities = new int[patternLength];
+            int[] originalNudges = new int[patternLength];
+            int[] originalPans = new int[patternLength];
+            int[] originalChorus = new int[patternLength];
+            int[] originalReverb = new int[patternLength];
+
+            // Save original pattern with all parameters
             for (int i = 0; i < patternLength; i++) {
                 originalPattern[i] = sequencer.isStepActive(drumIndex, i);
+                originalVelocities[i] = sequencer.getStepVelocity(drumIndex, i);
+                originalDecays[i] = sequencer.getStepDecay(drumIndex, i);
+                originalProbabilities[i] = sequencer.getStepProbability(drumIndex, i);
+                originalNudges[i] = sequencer.getStepNudge(drumIndex, i);
+                originalPans[i] = sequencer.getStepPan(drumIndex, i);
+                originalChorus[i] = sequencer.getStepChorus(drumIndex, i);
+                originalReverb[i] = sequencer.getStepReverb(drumIndex, i);
             }
 
             // Shift pattern left (wrap around for first step)
             boolean firstStepState = originalPattern[0];
+            int firstVelocity = originalVelocities[0];
+            int firstDecay = originalDecays[0];
+            int firstProbability = originalProbabilities[0];
+            int firstNudge = originalNudges[0];
+            int firstPan = originalPans[0];
+            int firstChorus = originalChorus[0];
+            int firstReverb = originalReverb[0];
 
             // Clear current pattern
             clearDrumTrack(sequencer, drumIndex);
@@ -220,12 +291,33 @@ public class DrumSequenceModifier {
                 if (originalPattern[i]) {
                     sequencer.toggleStep(drumIndex, i - 1);
                 }
+
+                // Copy parameters regardless of step state
+                sequencer.setStepVelocity(drumIndex, i - 1, originalVelocities[i]);
+                sequencer.setStepDecay(drumIndex, i - 1, originalDecays[i]);
+                sequencer.setStepProbability(drumIndex, i - 1, originalProbabilities[i]);
+                sequencer.setStepNudge(drumIndex, i - 1, originalNudges[i]);
+                sequencer.setStepPan(drumIndex, i - 1, originalPans[i]);
+                sequencer.setStepChorus(drumIndex, i - 1, originalChorus[i]);
+                sequencer.setStepReverb(drumIndex, i - 1, originalReverb[i]);
             }
 
             // Wrap first step to last position
             if (firstStepState) {
                 sequencer.toggleStep(drumIndex, patternLength - 1);
             }
+
+            // Wrap first step parameters to last position
+            sequencer.setStepVelocity(drumIndex, patternLength - 1, firstVelocity);
+            sequencer.setStepDecay(drumIndex, patternLength - 1, firstDecay);
+            sequencer.setStepProbability(drumIndex, patternLength - 1, firstProbability);
+            sequencer.setStepNudge(drumIndex, patternLength - 1, firstNudge);
+            sequencer.setStepPan(drumIndex, patternLength - 1, firstPan);
+            sequencer.setStepChorus(drumIndex, patternLength - 1, firstChorus);
+            sequencer.setStepReverb(drumIndex, patternLength - 1, firstReverb);
+
+            // Notify that the pattern has changed
+            notifyPatternChanged(sequencer, drumIndex);
 
             logger.info("Pulled pattern backward for drum {}", drumIndex);
             return true;
@@ -237,11 +329,6 @@ public class DrumSequenceModifier {
 
     /**
      * Generates a random pattern with specified density
-     *
-     * @param sequencer The drum sequencer to modify
-     * @param drumIndex The index of the drum to update
-     * @param density   Percentage of steps that should be active (0-100)
-     * @return True if pattern was generated successfully
      */
     public static boolean generateRandomPattern(DrumSequencer sequencer, int drumIndex, int density) {
         try {
@@ -259,9 +346,21 @@ public class DrumSequenceModifier {
                 int step = random.nextInt(patternLength);
                 if (!sequencer.isStepActive(drumIndex, step)) {
                     sequencer.toggleStep(drumIndex, step);
+
+                    // Set slightly randomized parameters for variety
+                    sequencer.setStepVelocity(drumIndex, step,
+                            SequencerConstants.DEFAULT_VELOCITY - random.nextInt(20));
+                    sequencer.setStepDecay(drumIndex, step,
+                            SequencerConstants.DEFAULT_DECAY - random.nextInt(10));
+                    sequencer.setStepProbability(drumIndex, step,
+                            SequencerConstants.DEFAULT_PROBABILITY - random.nextInt(15));
+
                     currentActive++;
                 }
             }
+
+            // Notify that the pattern has changed
+            notifyPatternChanged(sequencer, drumIndex);
 
             logger.info("Generated random pattern with {}% density for drum {}", density, drumIndex);
             return true;
@@ -273,12 +372,6 @@ public class DrumSequenceModifier {
 
     /**
      * Applies a fill pattern starting from a specific step
-     *
-     * @param sequencer The drum sequencer to modify
-     * @param drumIndex The index of the drum to update
-     * @param startStep The step to start the fill from
-     * @param fillType  The type of fill to apply (all, everyOther, every4th, decay)
-     * @return True if fill was applied successfully
      */
     public static boolean applyFillPattern(DrumSequencer sequencer, int drumIndex, int startStep, String fillType) {
         try {
@@ -294,24 +387,42 @@ public class DrumSequenceModifier {
             // Apply the fill pattern
             for (int i = startStep; i < patternLength; i++) {
                 boolean shouldActivate = false;
+                int velocity = SequencerConstants.DEFAULT_VELOCITY;
+                int decay = SequencerConstants.DEFAULT_DECAY;
+                int probability = SequencerConstants.DEFAULT_PROBABILITY;
 
                 switch (fillType) {
-                    case "all" -> shouldActivate = true;
-                    case "everyOther" -> shouldActivate = ((i - startStep) % 2) == 0;
-                    case "every4th" -> shouldActivate = ((i - startStep) % 4) == 0;
+                    case "all" -> {
+                        shouldActivate = true;
+                    }
+                    case "everyOther" -> {
+                        shouldActivate = ((i - startStep) % 2) == 0;
+                    }
+                    case "every4th" -> {
+                        shouldActivate = ((i - startStep) % 4) == 0;
+                    }
                     case "decay" -> {
                         shouldActivate = true;
                         // Set decreasing velocity for decay pattern
-                        int velocity = Math.max(SequencerConstants.DEFAULT_VELOCITY / 2,
+                        velocity = Math.max(SequencerConstants.DEFAULT_VELOCITY / 2,
                                 SequencerConstants.DEFAULT_VELOCITY - ((i - startStep) * 8));
-                        sequencer.setStepVelocity(drumIndex, i, velocity);
+                        // Also reduce decay for later hits
+                        decay = Math.max(SequencerConstants.DEFAULT_DECAY / 2,
+                                SequencerConstants.DEFAULT_DECAY - ((i - startStep) * 4));
                     }
                 }
 
                 if (shouldActivate) {
                     sequencer.toggleStep(drumIndex, i);
+                    // Always set parameters - even if step was already active
+                    sequencer.setStepVelocity(drumIndex, i, velocity);
+                    sequencer.setStepDecay(drumIndex, i, decay);
+                    sequencer.setStepProbability(drumIndex, i, probability);
                 }
             }
+
+            // Notify that the pattern has changed - crucial for UI update
+            notifyPatternChanged(sequencer, drumIndex);
 
             logger.info("Applied {} fill pattern from step {} for drum {}", fillType, startStep, drumIndex);
             return true;
@@ -319,5 +430,31 @@ public class DrumSequenceModifier {
             logger.error("Error applying fill pattern for drum {}", drumIndex, e);
             return false;
         }
+    }
+
+    /**
+     * Make this method public so it can be called from other classes
+     */
+    public static void notifyPatternChanged(DrumSequencer sequencer, int drumIndex) {
+        // Send event to update UI
+        CommandBus.getInstance().publish(
+            Commands.DRUM_STEP_BUTTONS_UPDATE_REQUESTED, 
+            DrumSequenceModifier.class,
+            drumIndex
+        );
+        
+        // Also publish a pattern updated event
+        CommandBus.getInstance().publish(
+            Commands.PATTERN_UPDATED,
+            DrumSequenceModifier.class,
+            sequencer.getSequenceData()
+        );
+        
+        // Add a direct UI update event
+        CommandBus.getInstance().publish(
+            Commands.DRUM_SEQUENCE_UPDATED,
+            DrumSequenceModifier.class,
+            drumIndex
+        );
     }
 }

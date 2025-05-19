@@ -3,7 +3,8 @@ package com.angrysurfer.core.model;
 import com.angrysurfer.core.api.Command;
 import com.angrysurfer.core.api.CommandBus;
 import com.angrysurfer.core.api.Commands;
-import com.angrysurfer.core.sequencer.TimingUpdate;
+import com.angrysurfer.core.api.IBusListener;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Getter;
 import lombok.Setter;
 import org.slf4j.Logger;
@@ -13,20 +14,18 @@ import javax.sound.sampled.*;
 import java.io.File;
 import java.io.IOException;
 import java.util.Map;
-import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 
 @Getter
 @Setter
-public class Sample extends Player {
+public class Sample implements IBusListener {
 
     private static final Logger logger = LoggerFactory.getLogger(Sample.class);
 
     private static final float DEFAULT_SAMPLE_RATE = 44100.0f;
-
+    Long id;
     // Store active clips for note control
     private Map<Integer, ActiveSample> activeClips = new ConcurrentHashMap<>();
-
     private boolean started = false;
     private File audioFile;
     private Clip audioClip;
@@ -67,13 +66,17 @@ public class Sample extends Player {
     // Reference note (plays original sample)
     private int referenceNote = 60; // Middle C
 
+    private String name;
+    private Float duration;
+
+    @JsonIgnore
+    private boolean playing;
+
     /**
      * Default constructor
      */
     public Sample() {
         super();
-        setDrumPlayer(false);
-        setMelodicPlayer(true);
     }
 
     /**
@@ -85,8 +88,6 @@ public class Sample extends Player {
     public Sample(String name, File audioFile) {
         super();
         setName(name);
-        setDrumPlayer(false);
-        setMelodicPlayer(true);
         setAudioFile(audioFile);
         loadAudioFile(audioFile);
     }
@@ -204,31 +205,30 @@ public class Sample extends Player {
         }
     }
 
-    @Override
-    public void onTick(TimingUpdate timingUpdate) {
-        // Check if we should play based on timing rules
-        boolean shouldPlayResult = shouldPlay(timingUpdate);
-
-        if (shouldPlayResult) {
-            try {
-                // Get the note from root note (may be modified by scale/rules)
-                int noteToPlay = getRootNote() + (Objects.nonNull(getSession()) ? getSession().getNoteOffset() : 0);
-
-                // Play the sample
-                noteOn(noteToPlay, getLevel());
-
-                // Log the playback
-                logger.debug("Sample.onTick playing sample at note: {}", noteToPlay);
-            } catch (Exception e) {
-                logger.error("Error in Sample.onTick: {}", e.getMessage(), e);
-            }
-        }
-    }
+//    @Override
+//    public void onTick(TimingUpdate timingUpdate) {
+//        // Check if we should play based on timing rules
+//        boolean shouldPlayResult = shouldPlay(timingUpdate);
+//
+//        if (shouldPlayResult) {
+//            try {
+//                // Get the note from root note (may be modified by scale/rules)
+//                int noteToPlay = getRootNote() + (Objects.nonNull(getSession()) ? getSession().getNoteOffset() : 0);
+//
+//                // Play the sample
+//                noteOn(noteToPlay, getLevel());
+//
+//                // Log the playback
+//                logger.debug("Sample.onTick playing sample at note: {}", noteToPlay);
+//            } catch (Exception e) {
+//                logger.error("Error in Sample.onTick: {}", e.getMessage(), e);
+//            }
+//        }
+//    }
 
     /**
      * Play the sample at a specific pitch
      */
-    @Override
     public void noteOn(int note, int velocity) {
         if (audioData == null || audioFormat == null) {
             logger.warn("Cannot play sample - no audio data loaded");
@@ -304,7 +304,6 @@ public class Sample extends Player {
         }
     }
 
-    @Override
     public void noteOff(int note, int velocity) {
         // Find and stop the specific note
         ActiveSample activeSample = activeClips.remove(note);
@@ -324,7 +323,6 @@ public class Sample extends Player {
         }
     }
 
-    @Override
     public void allNotesOff() {
         // Stop all active samples
         for (ActiveSample sample : activeClips.values()) {
@@ -348,7 +346,7 @@ public class Sample extends Player {
     @Override
     public void onAction(Command action) {
         // Handle standard player commands
-        super.onAction(action);
+        // super.onAction(action);
 
         // Handle sample-specific commands
         if (action == null || action.getCommand() == null) {
@@ -382,12 +380,6 @@ public class Sample extends Player {
                 }
                 break;
         }
-    }
-
-    @Override
-    public Integer getDefaultChannel() {
-        // Use a melodic channel, not the drum channel
-        return 0; // Default to channel 1 (0-based)
     }
 
     /**

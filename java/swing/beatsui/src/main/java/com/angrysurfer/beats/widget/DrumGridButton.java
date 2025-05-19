@@ -389,7 +389,7 @@ public class DrumGridButton extends JButton {
             if (stepIndex >= 0) {
                 g2d.setColor(Color.WHITE);
                 g2d.setFont(new Font("Monospaced", Font.PLAIN, 9));
-                g2d.drawString(String.valueOf(stepIndex), width/2 - 3, height/2 + 3);
+                g2d.drawString(String.valueOf(stepIndex + 1), width/2 - 3, height/2 + 3);
             }
         }
         

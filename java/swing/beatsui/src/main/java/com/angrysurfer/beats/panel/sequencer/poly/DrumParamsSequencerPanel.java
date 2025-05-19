@@ -222,13 +222,13 @@ public class DrumParamsSequencerPanel extends JPanel implements IBusListener {
         // REDUCED: from 5,5 to 2,2
         JPanel bottomPanel = new JPanel(new BorderLayout(2, 2));
 
-        // Add MaxLengthPanel to the WEST position
-        maxLengthPanel = new DrumSequencerMaxLengthPanel(sequencer);
-        bottomPanel.add(maxLengthPanel, BorderLayout.WEST);
-
         // Add sequence parameters panel
         sequenceParamsPanel = new DrumSequencerParametersPanel(sequencer);
         bottomPanel.add(sequenceParamsPanel, BorderLayout.CENTER);
+
+        // Add MaxLengthPanel to the WEST position
+        maxLengthPanel = new DrumSequencerMaxLengthPanel(sequencer);
+        bottomPanel.add(maxLengthPanel, BorderLayout.WEST);
 
         // Create a container for the right-side panels
         // REDUCED: from 5,0 to 2,0

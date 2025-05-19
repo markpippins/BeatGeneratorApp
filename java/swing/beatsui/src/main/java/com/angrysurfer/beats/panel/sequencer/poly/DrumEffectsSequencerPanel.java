@@ -79,11 +79,11 @@ public class DrumEffectsSequencerPanel extends JPanel implements IBusListener {
         }
 
         // Register with CommandBus for updates
-        CommandBus.getInstance().register(this, new String[] {
-            Commands.DRUM_PAD_SELECTED,
-            Commands.DRUM_STEP_SELECTED,
-            Commands.DRUM_INSTRUMENTS_UPDATED,
-            Commands.HIGHLIGHT_STEP
+        CommandBus.getInstance().register(this, new String[]{
+                Commands.DRUM_PAD_SELECTED,
+                Commands.DRUM_STEP_SELECTED,
+                Commands.DRUM_INSTRUMENTS_UPDATED,
+                Commands.HIGHLIGHT_STEP
         });
         TimingBus.getInstance().register(this);
 
@@ -219,14 +219,15 @@ public class DrumEffectsSequencerPanel extends JPanel implements IBusListener {
         // REDUCED: from 5,5 to 2,2
         JPanel bottomPanel = new JPanel(new BorderLayout(2, 2));
 
+        // Add sequence parameters panel
+        sequenceParamsPanel = new DrumSequencerParametersPanel(sequencer);
+        bottomPanel.add(sequenceParamsPanel, BorderLayout.CENTER);
+
         // Add MaxLengthPanel to the WEST position
         // New field
         DrumSequencerMaxLengthPanel maxLengthPanel = new DrumSequencerMaxLengthPanel(sequencer);
         bottomPanel.add(maxLengthPanel, BorderLayout.WEST);
 
-        // Add sequence parameters panel
-        sequenceParamsPanel = new DrumSequencerParametersPanel(sequencer);
-        bottomPanel.add(sequenceParamsPanel, BorderLayout.CENTER);
 
         // Create a container for the right-side panels
         // REDUCED: from 5,0 to 2,0

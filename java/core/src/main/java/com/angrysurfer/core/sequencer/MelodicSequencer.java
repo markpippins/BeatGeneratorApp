@@ -150,7 +150,8 @@ public class MelodicSequencer implements IBusListener {
                 stepUpdateListener.accept(new StepUpdateEvent(prevStep, currentStep));
             }
 
-            triggerNote(currentStep);
+            if (player.getEnabled())
+                triggerNote(currentStep);
         }
     }
 
@@ -341,11 +342,6 @@ public class MelodicSequencer implements IBusListener {
             if (noteEventListener != null) {
                 noteEventListener.accept(event);
             }
-
-//            CommandBus.getInstance().publish(
-//                    Commands.MELODIC_NOTE_TRIGGERED,
-//                    this,
-//                    event);
 
 //            logger.debug("Triggered step {} - note:{} vel:{} gate:{} tilt:{}",
 //                    stepIndex, noteValue, velocity, gate, currentTilt);
@@ -602,24 +598,25 @@ public class MelodicSequencer implements IBusListener {
                     // Only update if mute state changes
                     if (shouldMute != muted) {
                         muted = shouldMute;
-
-                        // Apply mute state if player exists (for UI updates)
-                        if (player != null) {
-                            int originalLevel = player.getOriginalLevel() > 0 ?
-                                    player.getOriginalLevel() : 100;
-
-                            player.setLevel(shouldMute ? 0 : originalLevel);
-
-                            logger.debug("Bar {}: Player {} {}",
-                                    currentBar, player.getName(),
-                                    shouldMute ? "muted" : "unmuted");
-
-                            // Notify system of level change
-                            CommandBus.getInstance().publish(
-                                    Commands.PLAYER_UPDATED,
-                                    this,
-                                    player);
-                        }
+//
+//                        // Apply mute state if player exists (for UI updates)
+//                        if (player != null) {
+//                            int originalLevel = player.getOriginalLevel() > 0 ?
+//                                    player.getOriginalLevel() : 100;
+//
+//                            player.setLevel(shouldMute ? 0 : originalLevel);
+//
+                        player.setEnabled(!shouldMute);
+                        logger.debug("Bar {}: Player {} {}",
+                                currentBar, player.getName(),
+                                shouldMute ? "muted" : "unmuted");
+//
+//                            // Notify system of level change
+//                            CommandBus.getInstance().publish(
+//                                    Commands.PLAYER_UPDATED,
+//                                    this,
+//                                    player);
+//                        }
                     }
                 }
             }

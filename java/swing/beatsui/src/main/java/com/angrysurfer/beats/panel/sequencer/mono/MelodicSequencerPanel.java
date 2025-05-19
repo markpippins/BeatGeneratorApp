@@ -90,19 +90,19 @@ public class MelodicSequencerPanel extends JPanel implements IBusListener {
         loadFirstSequenceIfExists();
 
         // Register with command bus for other UI updates (not step highlighting)
-        CommandBus.getInstance().register(this, new String[] {
-            Commands.MELODIC_SEQUENCE_LOADED,
-            Commands.MELODIC_SEQUENCE_CREATED,
-            Commands.MELODIC_SEQUENCE_SELECTED,
-            Commands.MELODIC_SEQUENCE_UPDATED,
-            Commands.SCALE_SELECTED,
-            Commands.PATTERN_UPDATED,
-            Commands.PLAYER_UPDATED,
-            Commands.INSTRUMENT_CHANGED,
-            Commands.DRUM_PAD_SELECTED,
-            Commands.DRUM_STEP_SELECTED,
-            Commands.DRUM_INSTRUMENTS_UPDATED,
-            Commands.HIGHLIGHT_STEP
+        CommandBus.getInstance().register(this, new String[]{
+                Commands.MELODIC_SEQUENCE_LOADED,
+                Commands.MELODIC_SEQUENCE_CREATED,
+                Commands.MELODIC_SEQUENCE_SELECTED,
+                Commands.MELODIC_SEQUENCE_UPDATED,
+                Commands.SCALE_SELECTED,
+                Commands.PATTERN_UPDATED,
+                Commands.PLAYER_UPDATED,
+                Commands.INSTRUMENT_CHANGED,
+                Commands.DRUM_PAD_SELECTED,
+                Commands.DRUM_STEP_SELECTED,
+                Commands.DRUM_INSTRUMENTS_UPDATED,
+                Commands.HIGHLIGHT_STEP
         });
 
         logger.info("MelodicSequencerPanel registered for specific sequencer events");
@@ -283,7 +283,7 @@ public class MelodicSequencerPanel extends JPanel implements IBusListener {
         // Create the tilt panel and add it to the NORTH of bottom panel
 
         tiltSequencerPanel = new TiltSequencerPanel(sequencer);
-        sequencersPanel.add(tiltSequencerPanel, BorderLayout.NORTH);
+        topPanel.add(tiltSequencerPanel, BorderLayout.SOUTH);
         sequencersPanel.add(new MuteSequencerPanel(sequencer), BorderLayout.SOUTH);
         // Create bottom panel with BorderLayout for proper positioning
         JPanel bottomPanel = new JPanel(new BorderLayout(2, 1));

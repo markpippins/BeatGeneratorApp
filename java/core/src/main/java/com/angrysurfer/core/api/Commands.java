@@ -409,4 +409,5 @@ public class Commands {
     public static final String SEQUENCER_ROOT_NOTE_SELECTED = "SEQUENCER_ROOT_NOTE_SELECTED";
     public static final String TOGGLE_LOOPING = "TOGGLE_LOOPING";
     public static final String SEQUENCER_FOLLOW_EVENT = "SEQUENCER_FOLLOW_EVENT";
+    public static final String SET_MAX_LENGTH = "SET_MAX_LENGTH";
 }

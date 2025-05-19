@@ -224,6 +224,19 @@ public class DrumSequenceData {
     }
 
     /**
+     * Set whether a step is active for a specific drum
+     * @param drumIndex The drum pad index
+     * @param stepIndex The step index
+     * @param active true to activate the step, false to deactivate
+     */
+    public void setStepActive(int drumIndex, int stepIndex, boolean active) {
+        if (drumIndex >= 0 && drumIndex < SequencerConstants.DRUM_PAD_COUNT && 
+                stepIndex >= 0 && stepIndex < maxPatternLength) {
+            patterns[drumIndex][stepIndex] = active;
+        }
+    }
+
+    /**
      * Toggle a step on/off for a specific drum
      *
      * @param drumIndex The drum pad index

@@ -164,25 +164,6 @@ public class MelodicSequencerGridPanel extends JPanel implements IBusListener {
             column.add(dialPanel);
         }
 
-        // Add trigger button
-        column.add(Box.createRigidArea(new Dimension(0, 2)));
-        TriggerButton triggerButton = createTriggerButton(index);
-        triggerButtons.add(triggerButton);
-        JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 0, 0));
-        buttonPanel.add(triggerButton);
-        buttonPanel.setName("ButtonPanel-" + index);
-        column.add(buttonPanel);
-
-        // Finally, add note dials (at the bottom)
-//        JLabel noteLabel = new JLabel(getKnobLabel(4));  // "Note" label
-//        noteLabel.setBorder(BorderFactory.createEmptyBorder(2, 2, 2, 2));
-//        noteLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
-//        noteLabel.setFont(noteLabel.getFont().deriveFont(11f));
-//
-//        JPanel noteLabelPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 0, 0));
-//        noteLabelPanel.add(noteLabel);
-//        column.add(noteLabelPanel);
-
         // Create both dial types for note selection
         NoteSelectionDial noteDial = new NoteSelectionDial();
         CircleOfFifthsDial circleDial = new CircleOfFifthsDial();
@@ -236,6 +217,15 @@ public class MelodicSequencerGridPanel extends JPanel implements IBusListener {
 
         // Add listeners after all dials are created and added to collections
         addDialListeners(index);
+
+        // Add trigger button
+        column.add(Box.createRigidArea(new Dimension(0, 2)));
+        TriggerButton triggerButton = createTriggerButton(index);
+        triggerButtons.add(triggerButton);
+        JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 0, 0));
+        buttonPanel.add(triggerButton);
+        buttonPanel.setName("ButtonPanel-" + index);
+        column.add(buttonPanel);
 
         return column;
     }

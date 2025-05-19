@@ -44,12 +44,13 @@ public class MelodicSequenceNavigationPanel extends PlayerAwarePanel {
     }
 
     private void initializeUI() {
-        // Change to use BoxLayout instead of FlowLayout to match SoundParametersPanel
-        setLayout(new BoxLayout(this, BoxLayout.X_AXIS));
+        // Change to use the same FlowLayout as DrumSequenceNavigationPanel
+        setLayout(new FlowLayout(FlowLayout.LEFT, 2, 1));
 
-        // Match the border style to SoundParametersPanel - use compound border
+        // Keep the border style with sequence position
         UIHelper.setWidgetPanelBorder(this, "Sequence");
-        // Create ID label with adjusted sizing
+        
+        // Create ID label with identical styling as DrumSequenceNavigationPanel
         sequenceIdLabel = new JLabel(getFormattedIdText(), SwingConstants.CENTER);
         sequenceIdLabel.setPreferredSize(new Dimension(UIHelper.ID_LABEL_WIDTH - 5, UIHelper.CONTROL_HEIGHT - 2));
         sequenceIdLabel.setOpaque(true);
@@ -57,13 +58,7 @@ public class MelodicSequenceNavigationPanel extends PlayerAwarePanel {
         sequenceIdLabel.setForeground(UIHelper.coolBlue);
         sequenceIdLabel.setFont(sequenceIdLabel.getFont().deriveFont(12f));
 
-        // Add horizontal strut to match spacing in SoundParametersPanel
-        add(Box.createHorizontalStrut(2));
-        add(sequenceIdLabel);
-        add(Box.createHorizontalStrut(4));
-
-        // Create navigation buttons with consistent styling
-        // Add new button like in DrumSequenceNavigationPanel
+        // Create navigation buttons with consistent styling - exactly like DrumSequenceNavigationPanel
         JButton newButton = createButton("➕", "Create new sequence", e -> createNewSequence());
         firstButton = createButton("⏮", "First sequence", e -> loadFirstSequence());
         prevButton = createButton("◀", "Previous sequence", e -> loadPreviousSequence());
@@ -71,21 +66,14 @@ public class MelodicSequenceNavigationPanel extends PlayerAwarePanel {
         lastButton = createButton("⏭", "Last sequence", e -> loadLastSequence());
         JButton saveButton = createButton("💾", "Save current sequence", e -> saveCurrentSequence());
 
-        // Add components with consistent spacing
+        // Add components in same order as DrumSequenceNavigationPanel
+        add(sequenceIdLabel);
         add(newButton);
-        add(Box.createHorizontalStrut(4));
         add(firstButton);
-        add(Box.createHorizontalStrut(2));
         add(prevButton);
-        add(Box.createHorizontalStrut(2));
         add(nextButton);
-        add(Box.createHorizontalStrut(2));
         add(lastButton);
-        add(Box.createHorizontalStrut(4));
         add(saveButton);
-
-        // Add flexible space at the end
-        add(Box.createHorizontalGlue());
 
         // Set initial button state
         updateButtonStates();
@@ -97,10 +85,9 @@ public class MelodicSequenceNavigationPanel extends PlayerAwarePanel {
         button.addActionListener(listener);
         button.setFocusable(false);
 
-        // Match the sizing of buttons in SoundParametersPanel
-        button.setPreferredSize(new Dimension(UIHelper.SMALL_CONTROL_WIDTH, UIHelper.CONTROL_HEIGHT));
-        button.setMaximumSize(new Dimension(UIHelper.SMALL_CONTROL_WIDTH, UIHelper.CONTROL_HEIGHT));
-        button.setMargin(new Insets(1, 1, 1, 1));
+        // Match DrumSequenceNavigationPanel button sizing exactly
+        button.setPreferredSize(new Dimension(24, 24));
+        button.setMargin(new Insets(2, 2, 2, 2));
 
         return button;
     }

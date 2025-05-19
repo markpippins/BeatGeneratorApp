@@ -1,25 +1,24 @@
 package com.angrysurfer.beats.widget;
 
-import java.awt.Component;
-
-import javax.swing.JMenu;
-import javax.swing.JMenuItem;
-import javax.swing.JOptionPane;
-import javax.swing.JPopupMenu;
-
+import com.angrysurfer.beats.panel.sequencer.poly.DrumSequencerPanel;
+import com.angrysurfer.core.api.Command;
+import com.angrysurfer.core.api.CommandBus;
+import com.angrysurfer.core.api.Commands;
+import com.angrysurfer.core.api.IBusListener;
+import com.angrysurfer.core.sequencer.DrumSequenceModifier;
+import com.angrysurfer.core.sequencer.DrumSequencer;
+import com.angrysurfer.core.sequencer.SequencerConstants;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.angrysurfer.beats.panel.sequencer.poly.DrumSequencerPanel;
-import com.angrysurfer.core.api.CommandBus;
-import com.angrysurfer.core.api.Commands;
-import com.angrysurfer.core.sequencer.DrumSequenceModifier;
-import com.angrysurfer.core.sequencer.DrumSequencer;
+import javax.swing.*;
+import java.awt.*;
+import java.util.List;
 
 /**
  * Handler for context menu operations on the drum sequencer grid
  */
-public class DrumSequencerGridPanelContextHandler {
+public class DrumSequencerGridPanelContextHandler implements IBusListener {
     private static final Logger logger = LoggerFactory.getLogger(DrumSequencerGridPanelContextHandler.class);
 
     // References to required components
@@ -28,18 +27,68 @@ public class DrumSequencerGridPanelContextHandler {
 
     /**
      * Create a new context menu handler
-     * 
+     *
      * @param sequencer   The drum sequencer
      * @param parentPanel The parent panel for callbacks
      */
     public DrumSequencerGridPanelContextHandler(DrumSequencer sequencer, DrumSequencerPanel parentPanel) {
         this.sequencer = sequencer;
         this.parentPanel = parentPanel;
+
+        CommandBus.getInstance().register(this, new String[]{
+                Commands.FILL_PATTERN_SELECTED,
+                Commands.EUCLIDEAN_PATTERN_SELECTED,
+                Commands.MAX_LENGTH_SELECTED
+        });
+
+        logger.debug("DrumSequencerGridPanelContextHandler registered for commands");
+    }
+
+    /**
+     * Applies a pattern that activates every Nth step
+     *
+     * @param sequencer    The drum sequencer to modify
+     * @param drumIndex    The index of the drum to update
+     * @param stepInterval The interval between active steps (2 = every other step)
+     * @return True if pattern was applied successfully
+     */
+    public static boolean applyPatternEveryN(DrumSequencer sequencer, int drumIndex, int stepInterval) {
+        try {
+            int patternLength = sequencer.getPatternLength(drumIndex);
+
+            // Clear existing pattern first - this also resets all parameters
+            DrumSequenceModifier.clearDrumTrack(sequencer, drumIndex);
+
+            // Set every Nth step
+            for (int i = 0; i < patternLength; i += stepInterval) {
+                // Toggle the step to make it active
+                sequencer.toggleStep(drumIndex, i);
+
+                // Always set parameters for activated steps
+                sequencer.setStepVelocity(drumIndex, i, SequencerConstants.DEFAULT_VELOCITY);
+                sequencer.setStepDecay(drumIndex, i, SequencerConstants.DEFAULT_DECAY);
+                sequencer.setStepProbability(drumIndex, i, SequencerConstants.DEFAULT_PROBABILITY);
+
+                // Also set effects parameters
+                sequencer.setStepPan(drumIndex, i, 64); // Center
+                sequencer.setStepChorus(drumIndex, i, 0);
+                sequencer.setStepReverb(drumIndex, i, 0);
+            }
+
+            // Notify UI of changes
+            DrumSequenceModifier.notifyPatternChanged(sequencer, drumIndex);
+
+            logger.info("Applied 1/{} pattern to drum {}", stepInterval, drumIndex);
+            return true;
+        } catch (Exception e) {
+            logger.error("Error applying pattern every {} steps to drum {}", stepInterval, drumIndex, e);
+            return false;
+        }
     }
 
     /**
      * Display a context menu for a step button
-     * 
+     *
      * @param component The component that triggered the context menu
      * @param x         The x position to show the menu
      * @param y         The y position to show the menu
@@ -53,7 +102,7 @@ public class DrumSequencerGridPanelContextHandler {
         JMenuItem fillItem = new JMenuItem("Fill From Here...");
         fillItem.addActionListener(e -> {
             // Use CommandBus for dialog creation
-            Object[] params = new Object[] { sequencer, drumIndex, step };
+            Object[] params = new Object[]{sequencer, drumIndex, step};
             CommandBus.getInstance().publish(Commands.SHOW_FILL_DIALOG, this, params);
         });
 
@@ -88,7 +137,7 @@ public class DrumSequencerGridPanelContextHandler {
         JMenuItem euclideanItem = new JMenuItem("Euclidean Pattern...");
         euclideanItem.addActionListener(e -> {
             // Use CommandBus for dialog creation
-            Object[] params = new Object[] { sequencer, drumIndex };
+            Object[] params = new Object[]{sequencer, drumIndex};
             CommandBus.getInstance().publish(Commands.SHOW_EUCLIDEAN_DIALOG, this, params);
         });
 
@@ -112,11 +161,11 @@ public class DrumSequencerGridPanelContextHandler {
 
     /**
      * Shows a dialog to choose pattern type
-     * 
+     *
      * @param drumIndex The drum index to apply the pattern to
      */
     private void showPatternDialog(int drumIndex) {
-        Object[] options = { "Every 2nd Step", "Every 3rd Step", "Every 4th Step" };
+        Object[] options = {"Every 2nd Step", "Every 3rd Step", "Every 4th Step"};
         int choice = JOptionPane.showOptionDialog(
                 parentPanel,
                 "Choose pattern type:",
@@ -134,7 +183,7 @@ public class DrumSequencerGridPanelContextHandler {
 
     /**
      * Apply a pattern that activates every Nth step
-     * 
+     *
      * @param drumIndex The drum index to apply the pattern to
      * @param n         The step interval
      */
@@ -147,7 +196,7 @@ public class DrumSequencerGridPanelContextHandler {
 
     /**
      * Copy the current sequence to a new sequence
-     * 
+     *
      * @param drumIndex The drum index to copy
      */
     private void copyToNewSequence(int drumIndex) {
@@ -157,30 +206,30 @@ public class DrumSequencerGridPanelContextHandler {
 
     /**
      * Double the current pattern for the given drum index
-     * 
+     *
      * @param drumIndex The drum index to double the pattern for
      */
     private void doublePattern(int drumIndex) {
         try {
             int currentLength = sequencer.getPatternLength(drumIndex);
             int maxLength = sequencer.getMaxPatternLength();
-            
+
             // Safety check - make sure doubling is possible
             if (currentLength * 2 > maxLength) {
-                JOptionPane.showMessageDialog(parentPanel, 
-                    "Cannot double pattern - maximum length would be exceeded.", 
-                    "Double Pattern", 
-                    JOptionPane.WARNING_MESSAGE);
+                JOptionPane.showMessageDialog(parentPanel,
+                        "Cannot double pattern - maximum length would be exceeded.",
+                        "Double Pattern",
+                        JOptionPane.WARNING_MESSAGE);
                 return;
             }
-            
+
             // Copy the pattern
             boolean[] activeSteps = new boolean[currentLength];
             int[] velocities = new int[currentLength];
             int[] decays = new int[currentLength];
             int[] probabilities = new int[currentLength];
             int[] nudges = new int[currentLength];
-            
+
             // Get current values
             for (int i = 0; i < currentLength; i++) {
                 activeSteps[i] = sequencer.isStepActive(drumIndex, i);
@@ -189,11 +238,11 @@ public class DrumSequencerGridPanelContextHandler {
                 probabilities[i] = sequencer.getStepProbability(drumIndex, i);
                 nudges[i] = sequencer.getStepNudge(drumIndex, i);
             }
-            
+
             // Double the pattern length
             int newLength = currentLength * 2;
             sequencer.setPatternLength(drumIndex, newLength);
-            
+
             // Copy the pattern to the second half
             for (int i = 0; i < currentLength; i++) {
                 // Set first half (should already be set, but to be safe)
@@ -202,7 +251,7 @@ public class DrumSequencerGridPanelContextHandler {
                 sequencer.setStepDecay(drumIndex, i, decays[i]);
                 sequencer.setStepProbability(drumIndex, i, probabilities[i]);
                 sequencer.setStepNudge(drumIndex, i, nudges[i]);
-                
+
                 // Copy to second half
                 int destIndex = i + currentLength;
                 if (activeSteps[i]) {
@@ -213,23 +262,86 @@ public class DrumSequencerGridPanelContextHandler {
                 sequencer.setStepProbability(drumIndex, destIndex, probabilities[i]);
                 sequencer.setStepNudge(drumIndex, destIndex, nudges[i]);
             }
-            
+
             // Update UI
             CommandBus.getInstance().publish(
-                Commands.DRUM_SEQUENCE_UPDATED, 
-                this,
-                null
+                    Commands.DRUM_SEQUENCE_UPDATED,
+                    this,
+                    null
             );
-            
+
             // Log the action
-            logger.info("Doubled pattern for drum {} from length {} to {}", 
-                       drumIndex, currentLength, newLength);
+            logger.info("Doubled pattern for drum {} from length {} to {}",
+                    drumIndex, currentLength, newLength);
         } catch (Exception ex) {
             logger.error("Error doubling pattern: {}", ex.getMessage(), ex);
-            JOptionPane.showMessageDialog(parentPanel, 
-                "Error doubling pattern: " + ex.getMessage(), 
-                "Error", 
-                JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(parentPanel,
+                    "Error doubling pattern: " + ex.getMessage(),
+                    "Error",
+                    JOptionPane.ERROR_MESSAGE);
+        }
+    }
+
+    /**
+     * Handles the action for commands.
+     */
+    @Override
+    public void onAction(Command action) {
+        if (action == null || action.getCommand() == null) return;
+
+        switch (action.getCommand()) {
+            case Commands.FILL_PATTERN_SELECTED -> {
+                if (action.getData() instanceof Object[] result) {
+                    int drumIndex = (Integer) result[0];
+                    int startStep = (Integer) result[1];
+                    String fillType = (String) result[2];
+
+                    // Call DrumSequenceModifier's method directly
+                    boolean success = DrumSequenceModifier.applyFillPattern(
+                            sequencer, drumIndex, startStep, fillType);
+
+                    if (success) {
+                        // Force UI update
+                        parentPanel.updateStepButtonsForDrum(drumIndex);
+                        logger.debug("Applied fill pattern {} from step {} for drum {}",
+                                fillType, startStep, drumIndex);
+                    }
+                }
+            }
+
+            case Commands.EUCLIDEAN_PATTERN_SELECTED -> {
+                if (action.getData() instanceof Object[] result) {
+                    int drumIndex = (Integer) result[0];
+                    boolean[] pattern = (boolean[]) result[1];
+
+                    // Call DrumSequenceModifier's method directly
+                    boolean success = DrumSequenceModifier.applyEuclideanPattern(
+                            sequencer, drumIndex, pattern);
+
+                    if (success) {
+                        // Force UI update directly through parent panel
+                        parentPanel.updateStepButtonsForDrum(drumIndex);
+                        logger.info("Successfully applied Euclidean pattern to drum {}", drumIndex);
+                    } else {
+                        logger.error("Failed to apply Euclidean pattern to drum {}", drumIndex);
+                    }
+                }
+            }
+
+            case Commands.MAX_LENGTH_SELECTED -> {
+                if (action.getData() instanceof Integer maxLength) {
+                    List<Integer> updatedDrums = DrumSequenceModifier.applyMaxPatternLength(
+                            sequencer, maxLength);
+
+                    // Update UI for all affected drums
+                    for (int drumIndex : updatedDrums) {
+                        parentPanel.updateStepButtonsForDrum(drumIndex);
+                    }
+
+                    logger.info("Applied max pattern length {} to {} drums",
+                            maxLength, updatedDrums.size());
+                }
+            }
         }
     }
 }

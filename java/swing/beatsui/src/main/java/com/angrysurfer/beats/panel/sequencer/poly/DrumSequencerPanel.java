@@ -107,15 +107,15 @@ public class DrumSequencerPanel extends JPanel implements IBusListener {
                         event.getNewStep()));
 
         // Add as listener
-    CommandBus.getInstance().register(this, new String[] {
-        Commands.DRUM_STEP_UPDATED,
-        Commands.DRUM_SEQUENCE_GRID_RECREATE_REQUESTED,
-        Commands.DRUM_PAD_SELECTED,
-        Commands.DRUM_STEP_PARAMETERS_CHANGED,
-        Commands.DRUM_STEP_EFFECTS_CHANGED,
-        Commands.HIGHLIGHT_STEP,
-        Commands.WINDOW_RESIZED
-    });
+        CommandBus.getInstance().register(this, new String[]{
+                Commands.DRUM_STEP_UPDATED,
+                Commands.DRUM_SEQUENCE_GRID_RECREATE_REQUESTED,
+                Commands.DRUM_PAD_SELECTED,
+                Commands.DRUM_STEP_PARAMETERS_CHANGED,
+                Commands.DRUM_STEP_EFFECTS_CHANGED,
+                Commands.HIGHLIGHT_STEP,
+                Commands.WINDOW_RESIZED
+        });
         logger.info("DrumSequencerPanel registered as listener");
 
         // Initialize UI components
@@ -178,13 +178,14 @@ public class DrumSequencerPanel extends JPanel implements IBusListener {
 
         add(scrollPane, BorderLayout.CENTER);
         JPanel bottomPanel = new JPanel(new BorderLayout(2, 2));
-        bottomPanel.add(new DrumSequencerMaxLengthPanel(sequencer), BorderLayout.WEST);
 
         sequenceParamsPanel = new DrumSequencerParametersPanel(sequencer);
 
-        bottomPanel.add(sequenceParamsPanel, BorderLayout.CENTER);
+        bottomPanel.add(sequenceParamsPanel, BorderLayout.WEST);
 
         JPanel rightPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 2, 0));
+        rightPanel.add(new DrumSequencerMaxLengthPanel(sequencer));
+
         generatorPanel = new DrumSequenceGeneratorPanel(sequencer);
         rightPanel.add(generatorPanel);
 

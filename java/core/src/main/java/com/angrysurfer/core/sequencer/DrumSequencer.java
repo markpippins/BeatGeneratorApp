@@ -783,44 +783,55 @@ public class DrumSequencer implements IBusListener {
     }
 
     /**
-     * Toggle a step on/off for a specific drum and step
-     *
-     * @param drumIndex The drum pad index
-     * @param stepIndex The step index to toggle
-     * @return The new state of the step (true=active, false=inactive)
+     * Toggle a step in the pattern
      */
-    public boolean toggleStep(int drumIndex, int stepIndex) {
-        if (drumIndex >= 0 && drumIndex < SequencerConstants.DRUM_PAD_COUNT
-                && stepIndex >= 0 && stepIndex < sequenceData.getMaxPatternLength()) {
-
-            // Toggle the step
-            boolean[][] patterns = sequenceData.getPatterns();
-            patterns[drumIndex][stepIndex] = !patterns[drumIndex][stepIndex];
-            boolean newState = patterns[drumIndex][stepIndex];
-
-            // Create event data - FIX: Convert boolean to int
-            DrumStepUpdateEvent event = new DrumStepUpdateEvent(
-                    drumIndex,
-                    stepIndex,
-                    newState ? 1 : 0 // Convert boolean to int
-            );
-
-            // If we have a direct listener, notify it
-            if (stepUpdateListener != null) {
-                stepUpdateListener.accept(event);
-            }
-
-            // Also publish on command bus for other listeners
-            CommandBus.getInstance().publish(Commands.DRUM_STEP_UPDATED, this, event);
-
-            logger.debug("Toggled step for drum {} at position {} to {}",
-                    drumIndex, stepIndex, newState);
-
-            return newState;
+    public void toggleStep(int drumIndex, int step) {
+        if (!isValidDrumAndStep(drumIndex, step)) {
+            return;
         }
+        
+        boolean currentState = isStepActive(drumIndex, step);
+        boolean newState = !currentState;
+        
+        // Set the new state
+        sequenceData.setStepActive(drumIndex, step, newState);
+        
+        // If activating a step, ensure all parameters have default values
+        if (newState) {
+            // Initialize with default values if not already set
+            if (getStepVelocity(drumIndex, step) <= 0) {
+                setStepVelocity(drumIndex, step, SequencerConstants.DEFAULT_VELOCITY);
+            }
+            
+            if (getStepDecay(drumIndex, step) <= 0) {
+                setStepDecay(drumIndex, step, SequencerConstants.DEFAULT_DECAY);
+            }
+            
+            if (getStepProbability(drumIndex, step) <= 0) {
+                setStepProbability(drumIndex, step, SequencerConstants.DEFAULT_PROBABILITY);
+            }
+        }
+    }
 
-        logger.warn("Invalid drum/step indices: {}/{}", drumIndex, stepIndex);
-        return false;
+    /**
+     * Checks if the drum index and step index are valid
+     * @param drumIndex The drum index to check
+     * @param stepIndex The step index to check
+     * @return true if both indices are valid
+     */
+    private boolean isValidDrumAndStep(int drumIndex, int stepIndex) {
+        if (drumIndex < 0 || drumIndex >= SequencerConstants.DRUM_PAD_COUNT) {
+            logger.warn("Invalid drum index: {}", drumIndex);
+            return false;
+        }
+        
+        if (stepIndex < 0 || stepIndex >= sequenceData.getMaxPatternLength()) {
+            logger.warn("Invalid step index: {} (max: {})", 
+                    stepIndex, sequenceData.getMaxPatternLength() - 1);
+            return false;
+        }
+        
+        return true;
     }
 
     /**
