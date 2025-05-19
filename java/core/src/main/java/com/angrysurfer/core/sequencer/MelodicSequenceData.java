@@ -19,8 +19,8 @@ public class MelodicSequenceData {
     private static final Logger logger = LoggerFactory.getLogger(MelodicSequenceData.class);
     // Id and metadata
     private Long id = 0L;
-    private Long playerId; 
-    
+    private Long playerId;
+
     private String name = "New Pattern";
     private Long createdAt = System.currentTimeMillis();
     private Long updatedAt = System.currentTimeMillis();
@@ -38,6 +38,7 @@ public class MelodicSequenceData {
     private Integer octaveShift = 0;
     private TimingDivision timingDivision = TimingDivision.SIXTEENTH;
     private Integer sequencerId; // Add this field to store the sequencer ID
+    private Integer followSequencerId = -1;
 
     // Sound-related settings
     private String soundbankName = "Default";

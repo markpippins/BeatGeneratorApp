@@ -485,7 +485,19 @@ public class MelodicSequencer implements IBusListener {
      * @return true if pattern was generated successfully
      */
     public boolean generatePattern(int octaveRange, int density) {
-        return MelodicSequenceModifier.generatePattern(this, octaveRange, density);
+
+
+        boolean result = MelodicSequenceModifier.generatePattern(this, octaveRange, density);
+        
+        if (result) {
+            // Notify pattern updated (this is a backup in case the modifier doesn't publish)
+            CommandBus.getInstance().publish(
+                    Commands.MELODIC_PATTERN_UPDATED,
+                    this,
+                    this.sequenceData);
+        }
+        
+        return result;
     }
 
     @Override

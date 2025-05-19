@@ -8,6 +8,7 @@ import com.angrysurfer.core.api.Command;
 import com.angrysurfer.core.api.CommandBus;
 import com.angrysurfer.core.api.Commands;
 import com.angrysurfer.core.api.IBusListener;
+import com.angrysurfer.core.event.MelodicSequencerEvent;
 import com.angrysurfer.core.sequencer.MelodicSequencer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -447,6 +448,58 @@ public class MelodicSequencerGridPanel extends JPanel implements IBusListener {
 
     @Override
     public void onAction(Command action) {
+        if (action == null || action.getCommand() == null) return;
 
+        // Make sure we're only processing events for our sequencer
+        if (action.getData() instanceof MelodicSequencerEvent event) {
+            if (event.getSequencerId() != null && !event.getSequencerId().equals(sequencer.getId())) {
+                return; // Not for our sequencer
+            }
+        }
+
+        switch (action.getCommand()) {
+            case Commands.PATTERN_UPDATED:
+            case Commands.MELODIC_PATTERN_UPDATED:
+            case Commands.MELODIC_SEQUENCE_UPDATED:
+            case Commands.MELODIC_SEQUENCE_LOADED:
+            case Commands.MELODIC_SEQUENCE_CREATED:
+                // Sync UI with sequencer data
+                SwingUtilities.invokeLater(this::syncWithSequencer);
+                logger.debug("Grid panel updated due to pattern/sequence change");
+                break;
+
+            case Commands.SCALE_SELECTED:
+                // If scale changes, we should update note dial displays
+                if (action.getSender() != this) {
+                    SwingUtilities.invokeLater(this::updateNoteDialsForScale);
+                }
+                break;
+
+            case Commands.HIGHLIGHT_SCALE_NOTE:
+                // Handle note highlighting for scale visualization
+                if (action.getData() instanceof Integer noteValue) {
+                    // Implementation for highlighting
+                }
+                break;
+
+            case Commands.WINDOW_RESIZED:
+                // Update dial sizes when window is resized
+                SwingUtilities.invokeLater(this::updateDialSizes);
+                break;
+        }
+    }
+
+    /**
+     * Update note dials to reflect the current scale
+     */
+    private void updateNoteDialsForScale() {
+        if (sequencer.getSequenceData().isQuantizeEnabled()) {
+            for (Dial dial : noteDials) {
+                if (dial instanceof NoteSelectionDial noteSelectionDial) {
+                    // Ensure notes reflect current scale setting
+                    noteSelectionDial.repaint();
+                }
+            }
+        }
     }
 }

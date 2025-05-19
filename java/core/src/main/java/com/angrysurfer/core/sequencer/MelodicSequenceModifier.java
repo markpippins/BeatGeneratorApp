@@ -1,5 +1,7 @@
 package com.angrysurfer.core.sequencer;
 
+import com.angrysurfer.core.api.CommandBus;
+import com.angrysurfer.core.api.Commands;
 import com.angrysurfer.core.model.InstrumentWrapper;
 import com.angrysurfer.core.model.Player;
 import org.slf4j.Logger;
@@ -100,6 +102,12 @@ public class MelodicSequenceModifier {
                     sequenceData.setProbabilityValue(step, probability);
                 }
             }
+
+            // Notify that pattern was updated
+            CommandBus.getInstance().publish(
+                    Commands.MELODIC_PATTERN_UPDATED,
+                    sequencer,
+                    sequenceData);
 
             logger.info("Successfully generated new pattern with {} active steps", stepsToActivate);
             return true;

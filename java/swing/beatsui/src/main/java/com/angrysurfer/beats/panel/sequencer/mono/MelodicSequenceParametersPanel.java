@@ -23,6 +23,7 @@ public class MelodicSequenceParametersPanel extends JPanel {
     private JComboBox<TimingDivision> timingCombo;
     private JToggleButton loopToggleButton;
     private JSpinner lastStepSpinner;
+    private JComboBox<Integer> followSequenceCombo;
 
     // Reference to sequencer
     private MelodicSequencer sequencer;
@@ -56,6 +57,7 @@ public class MelodicSequenceParametersPanel extends JPanel {
         createTimingControls(controlsPanel);
         createLoopButton(controlsPanel);
         createRotationControls(controlsPanel);
+        createFollowSequencControls(controlsPanel);
 
         add(controlsPanel, BorderLayout.WEST);
 
@@ -66,6 +68,31 @@ public class MelodicSequenceParametersPanel extends JPanel {
 
         // Add the clear panel to the EAST position
         add(clearPanel, BorderLayout.EAST);
+    }
+
+    private void createFollowSequencControls(JPanel parentPanel) {
+        JPanel timingPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 2, 0)); // REDUCED: from 5,0 to 2,0
+
+        followSequenceCombo = new JComboBox<>(getOtherSequencerIds());
+        followSequenceCombo.setPreferredSize(new Dimension(UIHelper.LARGE_CONTROL_WIDTH, UIHelper.CONTROL_HEIGHT));
+        followSequenceCombo.setToolTipText("Set a master sequencer for this one");
+        followSequenceCombo.addActionListener(e -> {
+            if (!updatingUI) {
+                sequencer.getSequenceData().setFollowSequencerId(-1);
+                Integer followId = (Integer) followSequenceCombo.getSelectedItem();
+                if (followId > -1) {
+                    logger.info("Setting a master sequencer for this one");
+                    sequencer.getSequenceData().setFollowSequencerId(followId);
+                }
+                CommandBus.getInstance().publish(Commands.SEQUENCER_FOLLOW_EVENT, sequencer, followId);
+            }
+        });
+        timingPanel.add(timingCombo);
+
+        parentPanel.add(timingPanel);
+    }
+
+    private Integer[] getOtherSequencerIds() {
     }
 
     /**
