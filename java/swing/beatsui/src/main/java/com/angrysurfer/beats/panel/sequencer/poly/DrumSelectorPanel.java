@@ -53,10 +53,16 @@ public class DrumSelectorPanel extends JPanel implements IBusListener {
 
         initializeButtons();
 
-        // Register for events
-        CommandBus.getInstance().register(this, new String[]{Commands.PLAYER_UPDATED, Commands.PLAYER_UPDATE_EVENT,
-                Commands.PLAYER_PRESET_CHANGED, Commands.PLAYER_PRESET_CHANGE_EVENT, Commands.PLAYER_INSTRUMENT_CHANGED,
-                Commands.DRUM_PLAYER_INSTRUMENT_CHANGED, Commands.SOUNDBANK_CHANGED
+        // Register for events - adding SYSTEM_READY
+        CommandBus.getInstance().register(this, new String[]{
+                Commands.PLAYER_UPDATED,
+                Commands.PLAYER_UPDATE_EVENT,
+                Commands.PLAYER_PRESET_CHANGED,
+                Commands.PLAYER_PRESET_CHANGE_EVENT,
+                Commands.PLAYER_INSTRUMENT_CHANGED,
+                Commands.DRUM_PLAYER_INSTRUMENT_CHANGED,
+                Commands.SOUNDBANK_CHANGED,
+                Commands.SYSTEM_READY  // Add this for startup initialization
         });
     }
 
@@ -70,6 +76,43 @@ public class DrumSelectorPanel extends JPanel implements IBusListener {
         }
 
         switch (action.getCommand()) {
+            case Commands.SYSTEM_READY:
+                // Slight delay to ensure all managers are fully initialized
+                Timer timer = new Timer(100, evt -> {
+                    logger.info("System ready - initializing drum selector buttons");
+                    // Make sure all players are properly initialized with instruments
+
+                    for (int i = 0; i < DRUM_PAD_COUNT; i++) {
+                        Player player = sequencer.getPlayer(i);
+                        if (player != null) {
+                            // Ensure player has instrument
+                            if (player.getInstrument() == null) {
+                                logger.warn("Player {} has no instrument, initializing default", SequencerConstants.MELODIC_CHANNELS[i]);
+                                sequencer.ensurePlayerHasInstrument(i);
+                                player = sequencer.getPlayer(i); // Get refreshed reference
+                            }
+
+                            // Make sure each drum has the right sound name from InternalSynthManager
+                            if (player.getRootNote() != null) {
+                                String drumName = com.angrysurfer.core.service.InternalSynthManager.getInstance()
+                                        .getDrumName(player.getRootNote());
+                                player.setName(drumName);
+                                logger.debug("Set player {} name to: {}", i, drumName);
+                            }
+                        }
+                    }
+
+                    // Update all buttons with player info
+                    refreshAllButtons();
+
+                    // Force repaint of the entire panel
+                    revalidate();
+                    repaint();
+                });
+                timer.setRepeats(false);
+                timer.start();
+                break;
+
             case Commands.PLAYER_UPDATED:
                 if (action.getData() instanceof Player player) {
                     // Check if this player belongs to our sequencer

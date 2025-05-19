@@ -209,7 +209,7 @@ public class DrumParamsSequencerPanel extends JPanel implements IBusListener {
 
         // Create a panel for the drum section (drum buttons only)
         JPanel drumSection = new JPanel(new BorderLayout(2, 2));
-        drumSection.add(new MuteSequencerPanel(sequencer), BorderLayout.SOUTH);
+        drumSection.add(new MuteSequencerPanel(sequencer), BorderLayout.NORTH);
         drumSection.add(drumPadPanel, BorderLayout.CENTER);
 
         // Add the drum section to the SOUTH of the centerPanel

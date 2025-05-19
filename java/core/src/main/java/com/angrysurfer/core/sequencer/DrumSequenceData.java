@@ -225,12 +225,13 @@ public class DrumSequenceData {
 
     /**
      * Set whether a step is active for a specific drum
+     *
      * @param drumIndex The drum pad index
      * @param stepIndex The step index
-     * @param active true to activate the step, false to deactivate
+     * @param active    true to activate the step, false to deactivate
      */
     public void setStepActive(int drumIndex, int stepIndex, boolean active) {
-        if (drumIndex >= 0 && drumIndex < SequencerConstants.DRUM_PAD_COUNT && 
+        if (drumIndex >= 0 && drumIndex < SequencerConstants.DRUM_PAD_COUNT &&
                 stepIndex >= 0 && stepIndex < maxPatternLength) {
             patterns[drumIndex][stepIndex] = active;
         }
@@ -414,146 +415,146 @@ public class DrumSequenceData {
      *
      * @param drumIndex The drum index
      */
-    public void pushPatternForward(int drumIndex) {
-        if (drumIndex < 0 || drumIndex >= SequencerConstants.DRUM_PAD_COUNT) {
-            return;
-        }
-
-        int length = patternLengths[drumIndex];
-
-        if (length <= 1) {
-            return; // No need to rotate a single-step pattern
-        }
-
-        // Rotate main pattern (trigger states)
-        boolean lastTrigger = patterns[drumIndex][length - 1];
-        for (int i = length - 1; i > 0; i--) {
-            patterns[drumIndex][i] = patterns[drumIndex][i - 1];
-        }
-        patterns[drumIndex][0] = lastTrigger;
-
-        // Rotate step velocities
-        int lastVelocity = stepVelocities[drumIndex][length - 1];
-        for (int i = length - 1; i > 0; i--) {
-            stepVelocities[drumIndex][i] = stepVelocities[drumIndex][i - 1];
-        }
-        stepVelocities[drumIndex][0] = lastVelocity;
-
-        // Rotate step decays
-        int lastDecay = stepDecays[drumIndex][length - 1];
-        for (int i = length - 1; i > 0; i--) {
-            stepDecays[drumIndex][i] = stepDecays[drumIndex][i - 1];
-        }
-        stepDecays[drumIndex][0] = lastDecay;
-
-        // Rotate step probabilities
-        int lastProbability = stepProbabilities[drumIndex][length - 1];
-        for (int i = length - 1; i > 0; i--) {
-            stepProbabilities[drumIndex][i] = stepProbabilities[drumIndex][i - 1];
-        }
-        stepProbabilities[drumIndex][0] = lastProbability;
-
-        // Rotate step nudges
-        int lastNudge = stepNudges[drumIndex][length - 1];
-        for (int i = length - 1; i > 0; i--) {
-            stepNudges[drumIndex][i] = stepNudges[drumIndex][i - 1];
-        }
-        stepNudges[drumIndex][0] = lastNudge;
-
-        // Rotate step pans
-        int lastPan = stepPans[drumIndex][length - 1];
-        for (int i = length - 1; i > 0; i--) {
-            stepPans[drumIndex][i] = stepPans[drumIndex][i - 1];
-        }
-        stepPans[drumIndex][0] = lastPan;
-
-        // Rotate step chorus
-        int lastChorus = stepChorus[drumIndex][length - 1];
-        for (int i = length - 1; i > 0; i--) {
-            stepChorus[drumIndex][i] = stepChorus[drumIndex][i - 1];
-        }
-        stepChorus[drumIndex][0] = lastChorus;
-
-        // Rotate step reverb
-        int lastReverb = stepReverb[drumIndex][length - 1];
-        for (int i = length - 1; i > 0; i--) {
-            stepReverb[drumIndex][i] = stepReverb[drumIndex][i - 1];
-        }
-        stepReverb[drumIndex][0] = lastReverb;
-    }
-
-    /**
-     * Pull a pattern backward by one step (rotation)
-     *
-     * @param drumIndex The drum index
-     */
-    public void pullPatternBackward(int drumIndex) {
-        if (drumIndex < 0 || drumIndex >= SequencerConstants.DRUM_PAD_COUNT) {
-            return;
-        }
-
-        int length = patternLengths[drumIndex];
-
-        if (length <= 1) {
-            return; // No need to rotate a single-step pattern
-        }
-
-        // Rotate main pattern (trigger states)
-        boolean firstTrigger = patterns[drumIndex][0];
-        for (int i = 0; i < length - 1; i++) {
-            patterns[drumIndex][i] = patterns[drumIndex][i + 1];
-        }
-        patterns[drumIndex][length - 1] = firstTrigger;
-
-        // Rotate step velocities
-        int firstVelocity = stepVelocities[drumIndex][0];
-        for (int i = 0; i < length - 1; i++) {
-            stepVelocities[drumIndex][i] = stepVelocities[drumIndex][i + 1];
-        }
-        stepVelocities[drumIndex][length - 1] = firstVelocity;
-
-        // Rotate step decays
-        int firstDecay = stepDecays[drumIndex][0];
-        for (int i = 0; i < length - 1; i++) {
-            stepDecays[drumIndex][i] = stepDecays[drumIndex][i + 1];
-        }
-        stepDecays[drumIndex][length - 1] = firstDecay;
-
-        // Rotate step probabilities
-        int firstProbability = stepProbabilities[drumIndex][0];
-        for (int i = 0; i < length - 1; i++) {
-            stepProbabilities[drumIndex][i] = stepProbabilities[drumIndex][i + 1];
-        }
-        stepProbabilities[drumIndex][length - 1] = firstProbability;
-
-        // Rotate step nudges
-        int firstNudge = stepNudges[drumIndex][0];
-        for (int i = 0; i < length - 1; i++) {
-            stepNudges[drumIndex][i] = stepNudges[drumIndex][i + 1];
-        }
-        stepNudges[drumIndex][length - 1] = firstNudge;
-
-        // Rotate step pans
-        int firstPan = stepPans[drumIndex][0];
-        for (int i = 0; i < length - 1; i++) {
-            stepPans[drumIndex][i] = stepPans[drumIndex][i + 1];
-        }
-        stepPans[drumIndex][length - 1] = firstPan;
-
-        // Rotate step chorus
-        int firstChorus = stepChorus[drumIndex][0];
-        for (int i = 0; i < length - 1; i++) {
-            stepChorus[drumIndex][i] = stepChorus[drumIndex][i + 1];
-        }
-        stepChorus[drumIndex][length - 1] = firstChorus;
-
-        // Rotate step reverb
-        int firstReverb = stepReverb[drumIndex][0];
-        for (int i = 0; i < length - 1; i++) {
-            stepReverb[drumIndex][i] = stepReverb[drumIndex][i + 1];
-        }
-        stepReverb[drumIndex][length - 1] = firstReverb;
-    }
+//    public void pushPatternForward(int drumIndex) {
+//        if (drumIndex < 0 || drumIndex >= SequencerConstants.DRUM_PAD_COUNT) {
+//            return;
+//        }
+//
+//        int length = patternLengths[drumIndex];
+//
+//        if (length <= 1) {
+//            return; // No need to rotate a single-step pattern
+//        }
+//
+//        // Rotate main pattern (trigger states)
+//        boolean lastTrigger = patterns[drumIndex][length - 1];
+//        for (int i = length - 1; i > 0; i--) {
+//            patterns[drumIndex][i] = patterns[drumIndex][i - 1];
+//        }
+//        patterns[drumIndex][0] = lastTrigger;
+//
+//        // Rotate step velocities
+//        int lastVelocity = stepVelocities[drumIndex][length - 1];
+//        for (int i = length - 1; i > 0; i--) {
+//            stepVelocities[drumIndex][i] = stepVelocities[drumIndex][i - 1];
+//        }
+//        stepVelocities[drumIndex][0] = lastVelocity;
+//
+//        // Rotate step decays
+//        int lastDecay = stepDecays[drumIndex][length - 1];
+//        for (int i = length - 1; i > 0; i--) {
+//            stepDecays[drumIndex][i] = stepDecays[drumIndex][i - 1];
+//        }
+//        stepDecays[drumIndex][0] = lastDecay;
+//
+//        // Rotate step probabilities
+//        int lastProbability = stepProbabilities[drumIndex][length - 1];
+//        for (int i = length - 1; i > 0; i--) {
+//            stepProbabilities[drumIndex][i] = stepProbabilities[drumIndex][i - 1];
+//        }
+//        stepProbabilities[drumIndex][0] = lastProbability;
+//
+//        // Rotate step nudges
+//        int lastNudge = stepNudges[drumIndex][length - 1];
+//        for (int i = length - 1; i > 0; i--) {
+//            stepNudges[drumIndex][i] = stepNudges[drumIndex][i - 1];
+//        }
+//        stepNudges[drumIndex][0] = lastNudge;
+//
+//        // Rotate step pans
+//        int lastPan = stepPans[drumIndex][length - 1];
+//        for (int i = length - 1; i > 0; i--) {
+//            stepPans[drumIndex][i] = stepPans[drumIndex][i - 1];
+//        }
+//        stepPans[drumIndex][0] = lastPan;
+//
+//        // Rotate step chorus
+//        int lastChorus = stepChorus[drumIndex][length - 1];
+//        for (int i = length - 1; i > 0; i--) {
+//            stepChorus[drumIndex][i] = stepChorus[drumIndex][i - 1];
+//        }
+//        stepChorus[drumIndex][0] = lastChorus;
+//
+//        // Rotate step reverb
+//        int lastReverb = stepReverb[drumIndex][length - 1];
+//        for (int i = length - 1; i > 0; i--) {
+//            stepReverb[drumIndex][i] = stepReverb[drumIndex][i - 1];
+//        }
+//        stepReverb[drumIndex][0] = lastReverb;
+//    }
+//
+//    /**
+//     * Pull a pattern backward by one step (rotation)
+//     *
+//     * @param drumIndex The drum index
+//     */
+//    public void pullPatternBackward(int drumIndex) {
+//        if (drumIndex < 0 || drumIndex >= SequencerConstants.DRUM_PAD_COUNT) {
+//            return;
+//        }
+//
+//        int length = patternLengths[drumIndex];
+//
+//        if (length <= 1) {
+//            return; // No need to rotate a single-step pattern
+//        }
+//
+//        // Rotate main pattern (trigger states)
+//        boolean firstTrigger = patterns[drumIndex][0];
+//        for (int i = 0; i < length - 1; i++) {
+//            patterns[drumIndex][i] = patterns[drumIndex][i + 1];
+//        }
+//        patterns[drumIndex][length - 1] = firstTrigger;
+//
+//        // Rotate step velocities
+//        int firstVelocity = stepVelocities[drumIndex][0];
+//        for (int i = 0; i < length - 1; i++) {
+//            stepVelocities[drumIndex][i] = stepVelocities[drumIndex][i + 1];
+//        }
+//        stepVelocities[drumIndex][length - 1] = firstVelocity;
+//
+//        // Rotate step decays
+//        int firstDecay = stepDecays[drumIndex][0];
+//        for (int i = 0; i < length - 1; i++) {
+//            stepDecays[drumIndex][i] = stepDecays[drumIndex][i + 1];
+//        }
+//        stepDecays[drumIndex][length - 1] = firstDecay;
+//
+//        // Rotate step probabilities
+//        int firstProbability = stepProbabilities[drumIndex][0];
+//        for (int i = 0; i < length - 1; i++) {
+//            stepProbabilities[drumIndex][i] = stepProbabilities[drumIndex][i + 1];
+//        }
+//        stepProbabilities[drumIndex][length - 1] = firstProbability;
+//
+//        // Rotate step nudges
+//        int firstNudge = stepNudges[drumIndex][0];
+//        for (int i = 0; i < length - 1; i++) {
+//            stepNudges[drumIndex][i] = stepNudges[drumIndex][i + 1];
+//        }
+//        stepNudges[drumIndex][length - 1] = firstNudge;
+//
+//        // Rotate step pans
+//        int firstPan = stepPans[drumIndex][0];
+//        for (int i = 0; i < length - 1; i++) {
+//            stepPans[drumIndex][i] = stepPans[drumIndex][i + 1];
+//        }
+//        stepPans[drumIndex][length - 1] = firstPan;
+//
+//        // Rotate step chorus
+//        int firstChorus = stepChorus[drumIndex][0];
+//        for (int i = 0; i < length - 1; i++) {
+//            stepChorus[drumIndex][i] = stepChorus[drumIndex][i + 1];
+//        }
+//        stepChorus[drumIndex][length - 1] = firstChorus;
+//
+//        // Rotate step reverb
+//        int firstReverb = stepReverb[drumIndex][0];
+//        for (int i = 0; i < length - 1; i++) {
+//            stepReverb[drumIndex][i] = stepReverb[drumIndex][i + 1];
+//        }
+//        stepReverb[drumIndex][length - 1] = firstReverb;
+//    }
 
     /**
      * Get mute value for a drum at a specific bar
@@ -615,6 +616,7 @@ public class DrumSequenceData {
 
     /**
      * Get the default timing division (when no drum is specified)
+     *
      * @return The default timing division
      */
     public TimingDivision getTimingDivision() {
@@ -624,6 +626,7 @@ public class DrumSequenceData {
 
     /**
      * Get the timing division for a specific drum
+     *
      * @param drumIndex The index of the drum
      * @return The timing division for that drum
      */

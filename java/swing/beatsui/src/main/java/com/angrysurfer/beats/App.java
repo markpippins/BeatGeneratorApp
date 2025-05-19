@@ -35,7 +35,7 @@ public class App implements IBusListener {
 
     public static void main(String[] args) {
         // Configure logging first
-        System.setProperty("java.util.logging.config.file", "src/main/resources/logging.properties");
+        // System.setProperty("java.util.logging.config.file", "src/main/resources/logging.properties");
 
         try {
             logger.info("Starting application...");

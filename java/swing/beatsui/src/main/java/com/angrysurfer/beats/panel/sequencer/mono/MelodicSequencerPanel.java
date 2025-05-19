@@ -284,7 +284,7 @@ public class MelodicSequencerPanel extends JPanel implements IBusListener {
 
         tiltSequencerPanel = new TiltSequencerPanel(sequencer);
         topPanel.add(tiltSequencerPanel, BorderLayout.SOUTH);
-        sequencersPanel.add(new MuteSequencerPanel(sequencer), BorderLayout.SOUTH);
+        sequencersPanel.add(new MuteSequencerPanel(sequencer), BorderLayout.NORTH);
         // Create bottom panel with BorderLayout for proper positioning
         JPanel bottomPanel = new JPanel(new BorderLayout(2, 1));
 

@@ -13,6 +13,7 @@ import com.angrysurfer.beats.panel.sequencer.poly.DrumEffectsSequencerPanel;
 import com.angrysurfer.beats.panel.sequencer.poly.DrumParamsSequencerPanel;
 import com.angrysurfer.beats.panel.sequencer.poly.DrumSequencerPanel;
 import com.angrysurfer.beats.panel.session.SessionPanel;
+import com.angrysurfer.beats.widget.CircleOfFifthsDial;
 import com.angrysurfer.core.api.Command;
 import com.angrysurfer.core.api.CommandBus;
 import com.angrysurfer.core.api.Commands;
@@ -103,7 +104,6 @@ public class MainPanel extends PlayerAwarePanel implements AutoCloseable, IBusLi
 
         JPanel pianoPanel = new JPanel(new BorderLayout());
         pianoPanel.add(new PianoPanel(), BorderLayout.SOUTH);
-        tabbedPane.addTab("Piano", new PianoPanel());
 
         tabbedPane.addTab("Launch", new LaunchPanel());
 
@@ -111,6 +111,7 @@ public class MainPanel extends PlayerAwarePanel implements AutoCloseable, IBusLi
         tabbedPane.addTab("Instruments", createCombinedInstrumentsSystemPanel());
 
         tabbedPane.addTab("Logs", new LoggingPanel());
+        tabbedPane.addTab("Sandbox", createSandbox());
         // tabbedPane.addTab("Visualizer", new GridPanel());
 
         tabbedPane.setBorder(BorderFactory.createEmptyBorder(0, 4, 0, 4));
@@ -183,6 +184,19 @@ public class MainPanel extends PlayerAwarePanel implements AutoCloseable, IBusLi
         addListeners(drumsTabbedPane);
 
         updateMuteButtonSequencers();
+    }
+
+    private JPanel createSandbox() {
+        JPanel panel = new JPanel(new BorderLayout());
+
+        CircleOfFifthsDial dial = new CircleOfFifthsDial();
+        dial.setMinimumSize(new Dimension(250, 250));
+        dial.setPreferredSize(new Dimension(250, 250));
+        dial.setMaximumSize(new Dimension(250, 250));
+
+        panel.add(dial, BorderLayout.CENTER);
+
+        return panel;
     }
 
     /**

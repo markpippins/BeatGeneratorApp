@@ -217,12 +217,12 @@ public class CircleOfFifthsDial extends NoteSelectionDial {
                 (int) (centerY + fm.getHeight() / 4));
 
         // Draw "mode" indicator (major/minor)
-        String modeText = showMinorKeys ? "minor" : "MAJOR";
-        g2d.setFont(new Font("SansSerif", Font.ITALIC, size / 12));
-        fm = g2d.getFontMetrics();
-        g2d.drawString(modeText,
-                (int) (centerX - fm.stringWidth(modeText) / 2),
-                (int) (centerY + innerRadius + fm.getHeight() + 4));
+//        String modeText = showMinorKeys ? "minor" : "MAJOR";
+//        g2d.setFont(new Font("SansSerif", Font.ITALIC, size / 12));
+//        fm = g2d.getFontMetrics();
+//        g2d.drawString(modeText,
+//                (int) (centerX - fm.stringWidth(modeText) / 2),
+//                (int) (centerY + innerRadius + fm.getHeight() + 4));
 
         g2d.dispose();
     }

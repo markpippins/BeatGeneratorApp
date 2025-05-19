@@ -40,7 +40,7 @@ public class DrumSequencerGridPanel extends JPanel implements IBusListener {
     /**
      * Create a new DrumSequencerGridPanel
      *
-     * @param sequencer The drum sequencer
+     * @param sequencer   The drum sequencer
      * @param parentPanel The parent panel for callbacks
      */
     public DrumSequencerGridPanel(DrumSequencer sequencer, DrumSequencerPanel parentPanel) {
@@ -63,12 +63,12 @@ public class DrumSequencerGridPanel extends JPanel implements IBusListener {
         // Visualizer gridSaver = new Visualizer(this, gridButtons);
         TimingBus.getInstance().register(this);
         CommandBus.getInstance().register(this, new String[]{
-            Commands.DRUM_STEP_UPDATED,
-            Commands.DRUM_STEP_PARAMETERS_CHANGED,
-            Commands.DRUM_STEP_EFFECTS_CHANGED,
-            Commands.TRANSPORT_START,
-            Commands.TRANSPORT_STOP,
-            Commands.DRUM_GRID_REFRESH_REQUESTED  // Add this line
+                Commands.DRUM_STEP_UPDATED,
+                Commands.DRUM_STEP_PARAMETERS_CHANGED,
+                Commands.DRUM_STEP_EFFECTS_CHANGED,
+                Commands.TRANSPORT_START,
+                Commands.TRANSPORT_STOP,
+                Commands.DRUM_GRID_REFRESH_REQUESTED  // Add this line
         });
 //        TimingBus.getInstance().register(this, new String[]{Commands.DRUM_STEP_UPDATED,
 //                Commands.DRUM_STEP_PARAMETERS_CHANGED, Commands.DRUM_STEP_EFFECTS_CHANGED});
@@ -315,7 +315,7 @@ public class DrumSequencerGridPanel extends JPanel implements IBusListener {
                     newButton.setHighlightColor(highlightColor);
                 }
             }
-            
+
             // Repaint the entire row to avoid partial update issues
             for (int step = 0; step < sequencer.getDefaultPatternLength(); step++) {
                 if (gridButtons[drumIndex][step] != null) {
@@ -540,7 +540,7 @@ public class DrumSequencerGridPanel extends JPanel implements IBusListener {
                                 // Otherwise, previous step is one step forward (not backward) 
                                 drumPreviousStep = drumCurrentStep - 1;
                             }
-                            
+
                             // **** THIS IS THE CRITICAL CHANGE ****
                             // Use the special backward highlighting method instead of the regular one
                             updateBackwardStepHighlighting(drumIndex, drumPreviousStep, drumCurrentStep);
@@ -610,7 +610,7 @@ public class DrumSequencerGridPanel extends JPanel implements IBusListener {
      * Update a step button's parameter visualizations
      */
     private void updateStepButtonParameters(int drumIndex, int stepIndex, int velocity, int decay,
-            int probability, int nudge) {
+                                            int probability, int nudge) {
         if (drumIndex >= 0 && drumIndex < gridButtons.length) {
             DrumGridButton[] row = gridButtons[drumIndex];
             if (stepIndex >= 0 && stepIndex < row.length) {

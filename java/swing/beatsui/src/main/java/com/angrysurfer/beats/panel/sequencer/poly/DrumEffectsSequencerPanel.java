@@ -204,7 +204,7 @@ public class DrumEffectsSequencerPanel extends JPanel implements IBusListener {
         // drumSection.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5)); 
 
 
-        drumSection.add(new MuteSequencerPanel(sequencer), BorderLayout.SOUTH);
+        drumSection.add(new MuteSequencerPanel(sequencer), BorderLayout.NORTH);
         drumPadPanel = new DrumButtonsPanel(sequencer, this::handleDrumPadSelected);
         drumSection.add(drumPadPanel, BorderLayout.CENTER);
 
