@@ -11,16 +11,15 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.awt.*;
-import java.awt.geom.Point2D;
 import java.awt.event.MouseEvent;
+import java.awt.geom.Point2D;
 
 @Getter
 @Setter
 public class NoteSelectionDial extends Dial implements IBusListener {
 
+    static final String[] NOTE_NAMES = {"C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"};
     private static final Logger logger = LoggerFactory.getLogger(NoteSelectionDial.class);
-
-    private static final String[] NOTE_NAMES = {"C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"};
     private static final int DETENT_COUNT = 12;
     private static final double SNAP_THRESHOLD = 0.2;
     private static final double START_ANGLE = -90; // Start at top (-90 degrees)
@@ -385,8 +384,7 @@ public class NoteSelectionDial extends Dial implements IBusListener {
         switch (action.getCommand()) {
             case Commands.ROOT_NOTE_SELECTED:
                 // Handle global root note changes
-                if (followGlobal && action.getData() instanceof String) {
-                    String rootNote = (String) action.getData();
+                if (followGlobal && action.getData() instanceof String rootNote) {
                     setRootNote(rootNote, true);
                     logger.debug("Following global root note change to: {}", rootNote);
                 }
@@ -394,11 +392,8 @@ public class NoteSelectionDial extends Dial implements IBusListener {
 
             case Commands.SEQUENCER_ROOT_NOTE_SELECTED:
                 // Handle sequencer-specific root note changes
-                if (!followGlobal && action.getData() instanceof Object[] && sequencerId != null) {
-                    Object[] data = (Object[]) action.getData();
-                    if (data.length == 2 && data[0] instanceof Integer && data[1] instanceof String) {
-                        Integer targetSequencerId = (Integer) data[0];
-                        String rootNote = (String) data[1];
+                if (!followGlobal && action.getData() instanceof Object[] data && sequencerId != null) {
+                    if (data.length == 2 && data[0] instanceof Integer targetSequencerId && data[1] instanceof String rootNote) {
 
                         // Only apply if targeting our sequencer
                         if (sequencerId.equals(targetSequencerId)) {
