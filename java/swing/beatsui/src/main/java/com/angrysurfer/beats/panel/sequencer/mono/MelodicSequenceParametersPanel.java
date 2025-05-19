@@ -5,6 +5,7 @@ import com.angrysurfer.core.api.CommandBus;
 import com.angrysurfer.core.api.Commands;
 import com.angrysurfer.core.sequencer.Direction;
 import com.angrysurfer.core.sequencer.MelodicSequencer;
+import com.angrysurfer.core.sequencer.SequencerConstants;
 import com.angrysurfer.core.sequencer.TimingDivision;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -71,11 +72,17 @@ public class MelodicSequenceParametersPanel extends JPanel {
     }
 
     private void createFollowSequencControls(JPanel parentPanel) {
-        JPanel timingPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 2, 0)); // REDUCED: from 5,0 to 2,0
+        JPanel followPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 2, 0));
+
+        JLabel label = new JLabel("Source:");
 
         followSequenceCombo = new JComboBox<>(getOtherSequencerIds());
         followSequenceCombo.setPreferredSize(new Dimension(UIHelper.LARGE_CONTROL_WIDTH, UIHelper.CONTROL_HEIGHT));
         followSequenceCombo.setToolTipText("Set a master sequencer for this one");
+        
+        // Add the custom renderer
+        setupFollowSequenceComboRenderer();
+        
         followSequenceCombo.addActionListener(e -> {
             if (!updatingUI) {
                 sequencer.getSequenceData().setFollowSequencerId(-1);
@@ -87,12 +94,77 @@ public class MelodicSequenceParametersPanel extends JPanel {
                 CommandBus.getInstance().publish(Commands.SEQUENCER_FOLLOW_EVENT, sequencer, followId);
             }
         });
-        timingPanel.add(timingCombo);
 
-        parentPanel.add(timingPanel);
+        followPanel.add(label);
+        followPanel.add(followSequenceCombo);
+
+        parentPanel.add(followPanel);
     }
 
+    /**
+     * Create custom renderer for the follow sequence combo box
+     */
+    private void setupFollowSequenceComboRenderer() {
+        followSequenceCombo.setRenderer(new DefaultListCellRenderer() {
+            @Override
+            public Component getListCellRendererComponent(JList<?> list, Object value, 
+                    int index, boolean isSelected, boolean cellHasFocus) {
+                
+                // Get the default renderer
+                Component component = super.getListCellRendererComponent(
+                        list, value, index, isSelected, cellHasFocus);
+                
+                // Cast to label
+                JLabel label = (JLabel) component;
+                
+                // Format the display based on the value
+                if (value != null) {
+                    int id = (Integer) value;
+                    if (id == -1) {
+                        label.setText("None");
+                    } else {
+                        // Make the sequencer ID 1-based for display
+                        label.setText("Melo " + (id + 1));
+                    }
+                }
+                
+                return label;
+            }
+        });
+    }
+
+    /**
+     * Get an array of all other sequencer IDs (plus a "none" option)
+     *
+     * @return Array of sequencer IDs, with -1 representing "none"
+     */
     private Integer[] getOtherSequencerIds() {
+        // Get the maximum number of melodic sequencers
+        int totalSequencers = SequencerConstants.MELODIC_CHANNELS.length;
+
+        // Create array with size totalSequencers + 1 to include the "none" option (-1)
+        Integer[] ids = new Integer[totalSequencers + 1];
+
+        // First option is always -1 (meaning "none" or "don't follow")
+        ids[0] = -1;
+
+        // Fill the rest with sequencer IDs, skipping our own
+        int currentIndex = 1;
+        for (int i = 0; i < totalSequencers; i++) {
+            // Skip our own sequencer ID
+            if (i != sequencer.getId()) {
+                ids[currentIndex++] = i;
+            }
+        }
+
+        // If array is now too long (because we skipped one), create a properly sized one
+        if (currentIndex < ids.length) {
+            Integer[] trimmed = new Integer[currentIndex];
+            System.arraycopy(ids, 0, trimmed, 0, currentIndex);
+            return trimmed;
+        }
+
+        return ids;
     }
 
     /**

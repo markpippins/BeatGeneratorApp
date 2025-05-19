@@ -1,6 +1,7 @@
 package com.angrysurfer.core.sequencer;
 
 import com.angrysurfer.core.api.*;
+import com.angrysurfer.core.event.MelodicScaleSelectionEvent;
 import com.angrysurfer.core.event.NoteEvent;
 import com.angrysurfer.core.event.PatternSwitchEvent;
 import com.angrysurfer.core.event.StepUpdateEvent;
@@ -10,21 +11,16 @@ import com.angrysurfer.core.model.Player;
 import com.angrysurfer.core.model.Session;
 import com.angrysurfer.core.redis.RedisService;
 import com.angrysurfer.core.service.*;
-
 import lombok.Getter;
 import lombok.Setter;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.sound.midi.MidiDevice;
 import javax.sound.midi.MidiUnavailableException;
-
 import java.util.*;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
-
-import com.angrysurfer.core.event.MelodicScaleSelectionEvent;
 
 @Getter
 @Setter
@@ -332,29 +328,27 @@ public class MelodicSequencer implements IBusListener {
             }
             lastNoteTriggeredTime = currentTime;
 
-            int noteOnVelocity = velocity;
-
             NoteEvent event = new NoteEvent(
                     noteValue,
-                    noteOnVelocity,
+                    velocity,
                     gate
             );
 
             if (player != null) {
-                player.noteOn(noteValue, noteOnVelocity, gate);
+                player.noteOn(noteValue, velocity, gate);
             }
 
             if (noteEventListener != null) {
                 noteEventListener.accept(event);
             }
 
-            CommandBus.getInstance().publish(
-                    Commands.MELODIC_NOTE_TRIGGERED,
-                    this,
-                    event);
+//            CommandBus.getInstance().publish(
+//                    Commands.MELODIC_NOTE_TRIGGERED,
+//                    this,
+//                    event);
 
-            logger.debug("Triggered step {} - note:{} vel:{} gate:{} tilt:{}",
-                    stepIndex, noteValue, velocity, gate, currentTilt);
+//            logger.debug("Triggered step {} - note:{} vel:{} gate:{} tilt:{}",
+//                    stepIndex, noteValue, velocity, gate, currentTilt);
 
         } catch (Exception e) {
             logger.error("Error triggering note: {}", e.getMessage(), e);
@@ -377,15 +371,10 @@ public class MelodicSequencer implements IBusListener {
         }
 
         boolean wasPlaying = isPlaying;
-
         this.sequenceData = sequenceData;
-
         updateQuantizer();
-
         currentStep = 0;
-
         isPlaying = wasPlaying;
-
         logger.info("Sequencer updated from sequence data (ID: {})",
                 sequenceData.getId());
     }
@@ -488,7 +477,7 @@ public class MelodicSequencer implements IBusListener {
 
 
         boolean result = MelodicSequenceModifier.generatePattern(this, octaveRange, density);
-        
+
         if (result) {
             // Notify pattern updated (this is a backup in case the modifier doesn't publish)
             CommandBus.getInstance().publish(
@@ -496,7 +485,7 @@ public class MelodicSequencer implements IBusListener {
                     this,
                     this.sequenceData);
         }
-        
+
         return result;
     }
 
@@ -515,7 +504,7 @@ public class MelodicSequencer implements IBusListener {
                     logger.info("Applied global scale change to sequencer {}: {}", id, scale);
                 }
             }
-            
+
             case Commands.SCALE_SELECTED -> {
                 // Handle sequencer-specific scale changes
                 if (action.getData() instanceof MelodicScaleSelectionEvent event) {
@@ -532,7 +521,7 @@ public class MelodicSequencer implements IBusListener {
                     logger.info("Applied scale change to sequencer {}: {}", id, scale);
                 }
             }
-            
+
             case Commands.ROOT_NOTE_SELECTED -> {
                 // Apply root note changes
                 if (action.getData() instanceof String rootNote) {
@@ -541,10 +530,9 @@ public class MelodicSequencer implements IBusListener {
                     logger.info("Applied root note change to sequencer {}: {}", id, rootNote);
                 }
             }
-            
+
             case Commands.REPAIR_MIDI_CONNECTIONS -> {
                 MelodicSequencerManager.getInstance().repairMidiConnections(this);
-                return;
             }
 
             case Commands.SYSTEM_READY -> {
