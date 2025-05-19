@@ -69,17 +69,17 @@ public class DrumSequencer implements IBusListener {
 
         // Register with command bus
         CommandBus.getInstance().register(this, new String[]{
-                Commands.REPAIR_MIDI_CONNECTIONS,
-                Commands.TIMING_UPDATE,
-                Commands.TRANSPORT_START,
-                Commands.TRANSPORT_STOP,
-                Commands.UPDATE_TEMPO,
-                Commands.DRUM_PAD_SELECTED,
-                Commands.DRUM_STEP_UPDATED,
-                Commands.REFRESH_ALL_INSTRUMENTS,
-                Commands.REFRESH_PLAYER_INSTRUMENT,
-                Commands.PLAYER_UPDATED,
-                Commands.PLAYER_INSTRUMENT_CHANGED
+            Commands.REPAIR_MIDI_CONNECTIONS,
+            Commands.TIMING_UPDATE,
+            Commands.TRANSPORT_START,
+            Commands.TRANSPORT_STOP,
+            Commands.UPDATE_TEMPO,
+            Commands.DRUM_PAD_SELECTED,
+            Commands.DRUM_STEP_UPDATED,
+            Commands.REFRESH_ALL_INSTRUMENTS,
+            Commands.REFRESH_PLAYER_INSTRUMENT,
+            Commands.PLAYER_UPDATED,
+            Commands.PLAYER_INSTRUMENT_CHANGED
         });
 
         TimingBus.getInstance().register(this);
@@ -185,9 +185,9 @@ public class DrumSequencer implements IBusListener {
     /**
      * Initialize a drum pad with proper device connections
      *
-     * @param drumIndex     The index of the drum pad to initialize
+     * @param drumIndex The index of the drum pad to initialize
      * @param defaultDevice The default MIDI device to use if a specific one
-     *                      isn't available
+     * isn't available
      */
     private void initializeDrumPadConnections(int drumIndex, MidiDevice defaultDevice) {
         try {
@@ -298,7 +298,7 @@ public class DrumSequencer implements IBusListener {
 
         // Notify UI of parameter change
         CommandBus.getInstance().publish(Commands.DRUM_SEQUENCE_PARAMS_CHANGED, this, -1 // -1 indicates global
-                // parameter
+        // parameter
         );
     }
 
@@ -497,7 +497,7 @@ public class DrumSequencer implements IBusListener {
      * completes
      *
      * @param patternId The ID of the next pattern, or null to disable automatic
-     *                  switching
+     * switching
      */
     public void setNextPatternId(Long patternId) {
         sequenceData.setNextPatternId(patternId);
@@ -535,8 +535,10 @@ public class DrumSequencer implements IBusListener {
         int length = sequenceData.getPatternLengths()[drumIndex];
 
         return switch (direction) {
-            case FORWARD -> (currentPos + length - 1) % length;
-            case BACKWARD -> (currentPos + 1) % length;
+            case FORWARD ->
+                (currentPos + length - 1) % length;
+            case BACKWARD ->
+                (currentPos + 1) % length;
             case BOUNCE -> {
                 // For bounce, it depends on the current bounce direction
                 if (sequenceData.getBounceDirections()[drumIndex] > 0) {
@@ -545,7 +547,8 @@ public class DrumSequencer implements IBusListener {
                     yield currentPos < length - 1 ? currentPos + 1 : length - 1;
                 }
             }
-            case RANDOM -> currentPos; // For random, just use current position
+            case RANDOM ->
+                currentPos; // For random, just use current position
         };
     }
 
@@ -648,21 +651,36 @@ public class DrumSequencer implements IBusListener {
 
         // Adjust for timing division based on actual enum values
         switch (division) {
-            case NORMAL -> stepDurationMs *= 1; // No change for normal timing
-            case DOUBLE -> stepDurationMs /= 2; // Double time (faster)
-            case HALF -> stepDurationMs *= 2; // Half-time (slower)
-            case QUARTER -> stepDurationMs *= 4; // Quarter time (very slow)
-            case TRIPLET -> stepDurationMs *= 2.0f / 3.0f; // Triplet feel
-            case QUARTER_TRIPLET -> stepDurationMs *= 4.0f / 3.0f; // Quarter note triplets
-            case EIGHTH_TRIPLET -> stepDurationMs *= 1.0f / 3.0f; // Eighth note triplets
-            case SIXTEENTH -> stepDurationMs *= 1.0f / 4.0f; // Sixteenth notes
-            case SIXTEENTH_TRIPLET -> stepDurationMs *= 1.0f / 6.0f; // Sixteenth note triplets
-            case BEBOP -> stepDurationMs *= 1; // Same as normal for swing calculations
-            case FIVE_FOUR -> stepDurationMs *= 5.0f / 4.0f; // 5/4 time
-            case SEVEN_EIGHT -> stepDurationMs *= 7.0f / 8.0f; // 7/8 time
-            case NINE_EIGHT -> stepDurationMs *= 9.0f / 8.0f; // 9/8 time
-            case TWELVE_EIGHT -> stepDurationMs *= 12.0f / 8.0f; // 12/8 time
-            case SIX_FOUR -> stepDurationMs *= 6.0f / 4.0f; // 6/4 time
+            case NORMAL ->
+                stepDurationMs *= 1; // No change for normal timing
+            case DOUBLE ->
+                stepDurationMs /= 2; // Double time (faster)
+            case HALF ->
+                stepDurationMs *= 2; // Half-time (slower)
+            case QUARTER ->
+                stepDurationMs *= 4; // Quarter time (very slow)
+            case TRIPLET ->
+                stepDurationMs *= 2.0f / 3.0f; // Triplet feel
+            case QUARTER_TRIPLET ->
+                stepDurationMs *= 4.0f / 3.0f; // Quarter note triplets
+            case EIGHTH_TRIPLET ->
+                stepDurationMs *= 1.0f / 3.0f; // Eighth note triplets
+            case SIXTEENTH ->
+                stepDurationMs *= 1.0f / 4.0f; // Sixteenth notes
+            case SIXTEENTH_TRIPLET ->
+                stepDurationMs *= 1.0f / 6.0f; // Sixteenth note triplets
+            case BEBOP ->
+                stepDurationMs *= 1; // Same as normal for swing calculations
+            case FIVE_FOUR ->
+                stepDurationMs *= 5.0f / 4.0f; // 5/4 time
+            case SEVEN_EIGHT ->
+                stepDurationMs *= 7.0f / 8.0f; // 7/8 time
+            case NINE_EIGHT ->
+                stepDurationMs *= 9.0f / 8.0f; // 9/8 time
+            case TWELVE_EIGHT ->
+                stepDurationMs *= 12.0f / 8.0f; // 12/8 time
+            case SIX_FOUR ->
+                stepDurationMs *= 6.0f / 4.0f; // 6/4 time
         }
 
         // Calculate swing percentage (convert from 50-75% to 0-25%)
@@ -778,20 +796,25 @@ public class DrumSequencer implements IBusListener {
         // Set the new state
         sequenceData.setStepActive(drumIndex, step, newState);
 
-        // If activating a step, ensure all parameters have default values
+        // If activating a step, ensure ALL parameters have default values
         if (newState) {
-            // Initialize with default values if not already set
-            if (getStepVelocity(drumIndex, step) <= 0) {
-                setStepVelocity(drumIndex, step, SequencerConstants.DEFAULT_VELOCITY);
-            }
+            // Always explicitly set all parameters to defaults when step is activated
+            setStepVelocity(drumIndex, step, SequencerConstants.DEFAULT_VELOCITY);
+            setStepDecay(drumIndex, step, SequencerConstants.DEFAULT_DECAY);
+            setStepProbability(drumIndex, step, SequencerConstants.DEFAULT_PROBABILITY);
+            setStepNudge(drumIndex, step, 0);
+            setStepPan(drumIndex, step, 64); // Center pan
+            setStepChorus(drumIndex, step, 0);
+            setStepReverb(drumIndex, step, 0);
 
-            if (getStepDecay(drumIndex, step) <= 0) {
-                setStepDecay(drumIndex, step, SequencerConstants.DEFAULT_DECAY);
-            }
-
-            if (getStepProbability(drumIndex, step) <= 0) {
-                setStepProbability(drumIndex, step, SequencerConstants.DEFAULT_PROBABILITY);
-            }
+            // Notify that parameters have changed
+            CommandBus.getInstance().publish(
+                    Commands.DRUM_STEP_PARAMETERS_CHANGED,
+                    this,
+                    new Object[]{drumIndex, step, getStepVelocity(drumIndex, step),
+                        getStepDecay(drumIndex, step), getStepProbability(drumIndex, step),
+                        getStepNudge(drumIndex, step)}
+            );
         }
     }
 
@@ -1476,7 +1499,6 @@ public class DrumSequencer implements IBusListener {
 
     // Add a method to update root notes
     // Add a getter method for drum root note
-
     /**
      * Update all drum root notes from the sequence data Called after loading a
      * sequence
@@ -1525,15 +1547,16 @@ public class DrumSequencer implements IBusListener {
     }
 
     /**
-     * Calculate ticks per step for the given drum index based on its timing division
+     * Calculate ticks per step for the given drum index based on its timing
+     * division
      *
      * @param drumIndex The drum index to calculate ticks for
      * @return The number of ticks per step
      */
     public int getTicksPerStep(int drumIndex) {
         // Access the timing division from the array
-        if (sequenceData != null && drumIndex >= 0 &&
-                drumIndex < sequenceData.getTimingDivisions().length) {
+        if (sequenceData != null && drumIndex >= 0
+                && drumIndex < sequenceData.getTimingDivisions().length) {
 
             TimingDivision division = sequenceData.getTimingDivisions()[drumIndex];
             if (division != null) {

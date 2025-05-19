@@ -118,10 +118,37 @@ public class DrumSequencerGridPanel extends JPanel implements IBusListener {
             button.setFont(new java.awt.Font("Monospaced", java.awt.Font.PLAIN, 8));
         }
 
+        // IMPORTANT: Initialize button with all current parameter values
+        // Set step parameters for visualization
+        button.setStepParameters(
+                sequencer.getStepVelocity(drumIndex, step),
+                sequencer.getStepDecay(drumIndex, step),
+                sequencer.getStepProbability(drumIndex, step),
+                sequencer.getStepNudge(drumIndex, step)
+        );
+
+        // Set effects parameters
+        button.setEffectsParameters(
+                sequencer.getStepPan(drumIndex, step),
+                sequencer.getStepChorus(drumIndex, step),
+                sequencer.getStepReverb(drumIndex, step)
+        );
+
+        // Set step index for debugging/visualization
+        button.setStepIndex(step);
+
         // Add action listener to toggle step state
         button.addActionListener(e -> {
             sequencer.toggleStep(drumIndex, step);
             button.setSelected(sequencer.isStepActive(drumIndex, step));
+            
+            // IMPORTANT: Update parameters after toggle to ensure defaults are applied
+            button.setStepParameters(
+                    sequencer.getStepVelocity(drumIndex, step),
+                    sequencer.getStepDecay(drumIndex, step),
+                    sequencer.getStepProbability(drumIndex, step),
+                    sequencer.getStepNudge(drumIndex, step)
+            );
         });
 
         // Add right-click context menu
@@ -212,6 +239,21 @@ public class DrumSequencerGridPanel extends JPanel implements IBusListener {
                 // Update button state
                 button.setEnabled(isInPattern);
                 button.setSelected(isActive);
+
+                // Update all parameter values
+                button.setStepParameters(
+                        sequencer.getStepVelocity(drumIndex, step),
+                        sequencer.getStepDecay(drumIndex, step),
+                        sequencer.getStepProbability(drumIndex, step),
+                        sequencer.getStepNudge(drumIndex, step)
+                );
+
+                // Set effects parameters
+                button.setEffectsParameters(
+                        sequencer.getStepPan(drumIndex, step),
+                        sequencer.getStepChorus(drumIndex, step),
+                        sequencer.getStepReverb(drumIndex, step)
+                );
 
                 // Style based on whether step is active and in pattern
                 if (!isInPattern) {
