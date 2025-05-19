@@ -9,8 +9,8 @@ import com.angrysurfer.core.sequencer.*;
 import com.angrysurfer.core.service.DeviceManager;
 import com.angrysurfer.core.service.InstrumentManager;
 import com.angrysurfer.core.service.PlayerManager;
-import com.angrysurfer.core.service.ReceiverManager;
 import com.angrysurfer.core.util.MelodicSequenceDataDeserializer;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.module.SimpleModule;
@@ -22,12 +22,7 @@ import redis.clients.jedis.Jedis;
 import redis.clients.jedis.JedisPool;
 
 import javax.sound.midi.MidiDevice;
-import javax.sound.midi.Receiver;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 @Getter
 @Setter
@@ -96,6 +91,7 @@ public class MelodicSequenceDataHelper {
                             id, sequencerId,
                             data.getInstrumentName(),
                             data.getPreset() != null ? "Preset " + data.getPreset() : "No preset");
+                    debugData(data);
                     return data;
                 } catch (Exception e) {
                     logger.error("Error deserializing melodic sequence: " + e.getMessage(), e);
@@ -179,6 +175,20 @@ public class MelodicSequenceDataHelper {
                 int[] defaultTiltValues = new int[sequencer.getSequenceData().getPatternLength()];
                 sequencer.getSequenceData().setHarmonicTiltValues(defaultTiltValues);
                 logger.info("Initialized default tilt values");
+            }
+
+            // Apply mute values explicitly
+            List<Integer> muteValues = data.getMuteValues();
+            if (muteValues != null && !muteValues.isEmpty()) {
+                logger.info("Applying {} mute values from loaded sequence", muteValues.size());
+                sequencer.setMuteValues(muteValues);
+            } else {
+                logger.warn("No mute values found in sequence data, initializing defaults");
+
+                // Initialize with defaults if missing
+                int[] defaultMuteValues = new int[sequencer.getSequenceData().getPatternLength()];
+                sequencer.getSequenceData().setMuteValues(defaultMuteValues);
+                logger.info("Initialized default mute values");
             }
 
             // Handle player association using the stored player ID
@@ -294,9 +304,6 @@ public class MelodicSequenceDataHelper {
 
     /**
      * Apply melodic sequence data to a sequencer
-     *
-     * @param data      The melodic sequence data to apply
-     * @param sequencer The sequencer to apply the data to
      */
     public void applyMelodicSequenceToSequencer(MelodicSequenceData data, MelodicSequencer sequencer) {
         if (data == null || sequencer == null) {
@@ -310,6 +317,9 @@ public class MelodicSequenceDataHelper {
 
             // Apply the sequence data
             sequencer.setSequenceData(data);
+
+            // Log the mute values after setting the data
+            logger.info("Mute values after applying: {}", sequencer.getMuteValues());
 
             // Update instrument settings if possible
             if (sequencer.getPlayer() != null) {
@@ -341,23 +351,22 @@ public class MelodicSequenceDataHelper {
                     }
 
                     if (data.getDeviceName() != null) {
+
                         // Try to reconnect to saved device
-                        DeviceManager.getInstance();
                         MidiDevice device = DeviceManager.getMidiDevice(data.getDeviceName());
                         if (device != null) {
                             try {
                                 if (!device.isOpen()) {
                                     device.open();
                                 }
-                                instrument.setDevice(device);
-                                instrument.setDeviceName(data.getDeviceName());
 
-                                // Get a receiver
-                                Receiver receiver = ReceiverManager.getInstance()
-                                        .getOrCreateReceiver(data.getDeviceName(), device);
-                                if (receiver != null) {
-                                    instrument.setReceiver(receiver);
-                                }
+                                instrument.setDevice(device);
+//
+//                                // Get a receiver
+//                                if (instrument.getReceiver() == null) {
+//                                    instrument.setReceiver(ReceiverManager.getInstance()
+//                                            .getOrCreateReceiver(data.getDeviceName(), device));
+//                                }
                             } catch (Exception e) {
                                 logger.warn("Could not connect to device {}: {}",
                                         data.getDeviceName(), e.getMessage());
@@ -367,6 +376,7 @@ public class MelodicSequenceDataHelper {
 
                     // Apply the instrument settings
                     PlayerManager.getInstance().applyInstrumentPreset(player);
+
                 }
             }
 
@@ -430,18 +440,13 @@ public class MelodicSequenceDataHelper {
             // Save to Redis
             String json = objectMapper.writeValueAsString(data);
 
-            // Debug log the JSON to see if instrument data is included
-            logger.debug("Saving melodic sequence JSON (excerpt): {}",
-                    json.length() > 300 ? json.substring(0, 300) + "..." : json);
-
             // Save to both storage formats
             jedis.set("melodicseq:" + sequencer.getId() + ":" + data.getId(), json);
             jedis.hset("melodic-sequences:" + sequencer.getId(), String.valueOf(data.getId()), json);
 
-            logger.info("Saved melodic sequence {} for sequencer {} with instrument settings",
+            logger.info("Saved melodic sequence {} for sequencer {}.",
                     data.getId(), sequencer.getId());
-
-            logger.info(json);
+            debugData(data);
 
             // Notify listeners
             CommandBus.getInstance().publish(Commands.MELODIC_SEQUENCE_SAVED, this,
@@ -453,8 +458,28 @@ public class MelodicSequenceDataHelper {
         }
     }
 
+    public void debugData(MelodicSequenceData data) throws JsonProcessingException {
+        logger.info("ID: {}, Sequencer: {}, Root: {}, Scale: {}, Instrument: {}, Device: {}, Follow: {}, Looping: {}",
+                data.getId(), data.getSequencerId(), data.getInstrumentName(), data.getDeviceName(),
+                data.getFollowSequencerId(), data.getRootNote(), data.getScale(), data.getLooping());
+
+        logger.info("note values:");
+        logger.info(objectMapper.writeValueAsString(data.getNoteValues()));
+        logger.info("gate values:");
+        logger.info(objectMapper.writeValueAsString(data.getGateValues()));
+        logger.info("active steps:");
+        logger.info(objectMapper.writeValueAsString(data.getActiveSteps()));
+        logger.info("velocity values:");
+        logger.info(objectMapper.writeValueAsString(data.getVelocityValues()));
+        logger.info("tilt:");
+        logger.info(objectMapper.writeValueAsString(data.getTiltValues()));
+        logger.info("mutes:");
+        logger.info(objectMapper.writeValueAsString(data.getMuteValues()));
+    }
+
     /**
      * Get all melodic sequence IDs for a specific sequencer
+     *
      * @param sequencerId The sequencer ID to get sequences for
      * @return A list of sequence IDs
      */
@@ -462,7 +487,7 @@ public class MelodicSequenceDataHelper {
         try (Jedis jedis = jedisPool.getResource()) {
             // Use a Set to avoid duplicate IDs
             Set<Long> uniqueIds = new HashSet<>();
-            
+
             // Check older key format
             Set<String> oldKeys = jedis.keys("melseq:" + sequencerId + ":*");
             for (String key : oldKeys) {
@@ -472,7 +497,7 @@ public class MelodicSequenceDataHelper {
                     logger.error("Invalid melodic sequence key: " + key);
                 }
             }
-            
+
             // Check newer key format
             Set<String> newKeys = jedis.keys("melodicseq:" + sequencerId + ":*");
             for (String key : newKeys) {
@@ -482,7 +507,7 @@ public class MelodicSequenceDataHelper {
                     logger.error("Invalid melodic sequence key: " + key);
                 }
             }
-            
+
             // Check hash storage
             Map<String, String> hashEntries = jedis.hgetAll("melodic-sequences:" + sequencerId);
             for (String idStr : hashEntries.keySet()) {
@@ -492,7 +517,7 @@ public class MelodicSequenceDataHelper {
                     logger.error("Invalid melodic sequence hash key: " + idStr);
                 }
             }
-            
+
             logger.info("Found {} melodic sequences for sequencer {}", uniqueIds.size(), sequencerId);
             return new ArrayList<>(uniqueIds);
         }
@@ -572,6 +597,7 @@ public class MelodicSequenceDataHelper {
             data.setQuantizeEnabled(true);
             data.setRootNote(60);
             data.setScale(Scale.SCALE_CHROMATIC);
+            data.setFollowSequencerId(-1);
 
             // Initialize pattern data with arrays and SET THEM on the data object
             boolean[] activeSteps = new boolean[16];
@@ -579,6 +605,7 @@ public class MelodicSequenceDataHelper {
             int[] velocityValues = new int[16];
             int[] gateValues = new int[16];
             int[] harmonicTiltValues = new int[16]; // Create tilt values array
+            int[] muteValues = new int[16]; // Create tilt values array
 
             // Initialize values
             for (int i = 0; i < 16; i++) {
@@ -586,7 +613,8 @@ public class MelodicSequenceDataHelper {
                 noteValues[i] = 60 + (i % 12);
                 velocityValues[i] = 100;
                 gateValues[i] = 50;
-                harmonicTiltValues[i] = 0; // Default to no tilt
+                harmonicTiltValues[i] = 0;
+                muteValues[i] = 0;
             }
 
             // SET ALL arrays on the data object
@@ -595,6 +623,7 @@ public class MelodicSequenceDataHelper {
             data.setVelocityValues(velocityValues);
             data.setGateValues(gateValues);
             data.setHarmonicTiltValues(harmonicTiltValues); // Don't forget this line!
+            data.setMuteValues(muteValues);
 
             // Save to Redis
             String json = objectMapper.writeValueAsString(data);

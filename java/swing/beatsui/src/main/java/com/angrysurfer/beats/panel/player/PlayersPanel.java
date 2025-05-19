@@ -1,59 +1,47 @@
 package com.angrysurfer.beats.panel.player;
 
-import java.awt.BorderLayout;
-import java.awt.FlowLayout;
-import java.awt.event.KeyAdapter;
-import java.awt.event.KeyEvent;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-
-import javax.swing.JButton;
-import javax.swing.JOptionPane;
-import javax.swing.JPanel;
-import javax.swing.JScrollPane;
-import javax.swing.SwingUtilities;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import com.angrysurfer.beats.panel.ButtonPanel;
 import com.angrysurfer.beats.panel.ContextMenuHelper;
 import com.angrysurfer.beats.widget.PlayersTable;
 import com.angrysurfer.beats.widget.PlayersTableModel;
-import com.angrysurfer.core.api.Command;
-import com.angrysurfer.core.api.CommandBus;
-import com.angrysurfer.core.api.Commands;
-import com.angrysurfer.core.api.IBusListener;
-import com.angrysurfer.core.api.TimingBus;
+import com.angrysurfer.core.api.*;
 import com.angrysurfer.core.model.Player;
 import com.angrysurfer.core.model.Session;
-import com.angrysurfer.core.service.PlayerManager;
 import com.angrysurfer.core.service.SessionManager;
-
 import lombok.Getter;
 import lombok.Setter;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import javax.swing.*;
+import java.awt.*;
+import java.awt.event.KeyAdapter;
+import java.awt.event.KeyEvent;
+import java.util.List;
+import java.util.*;
 
 @Getter
 @Setter
 public class PlayersPanel extends JPanel {
 
     private static final Logger logger = LoggerFactory.getLogger(PlayersPanel.class.getName());
-
+    private static final long EVENT_THROTTLE_MS = 100;
     private final PlayersTable table;
     private final ButtonPanel buttonPanel;
     private final ContextMenuHelper contextMenu;
-
     private boolean hasActiveSession = false;
     private JButton controlButton;
     private JButton saveButton;
     private JButton copyButton;
     private JButton refreshButton;
     private JButton muteButton;
+    // Add a field to track the last selected row
+    private int lastSelectedRow = -1;
+    // Add this field to the class
+    private boolean isRefreshing = false;
+    // Add this field to PlayersPanel
+    private Long lastProcessedSessionId = null;
+    private long lastSessionEventTime = 0;
 
     public PlayersPanel() {
         super(new BorderLayout());
@@ -111,6 +99,7 @@ public class PlayersPanel extends JPanel {
         saveButton.addActionListener(e -> {
             if (SessionManager.getInstance().getActiveSession() != null) {
                 CommandBus.getInstance().publish(Commands.SAVE_SESSION, this);
+                CommandBus.getInstance().publish(Commands.SAVE_ALL_MELODIC, this);
             }
         });
 
@@ -287,6 +276,8 @@ public class PlayersPanel extends JPanel {
         }
     }
 
+    // Update the problematic methods
+
     private void deletePlayersWithNoOwner() {
         Session currentSession = SessionManager.getInstance().getActiveSession();
         if (currentSession == null || currentSession.getPlayers() == null || currentSession.getPlayers().isEmpty()) {
@@ -422,8 +413,7 @@ public class PlayersPanel extends JPanel {
                         case Commands.SESSION_CHANGED:
                         case Commands.SESSION_LOADED: {
                             SwingUtilities.invokeLater(() -> {
-                                if (action.getData() instanceof Session) {
-                                    final Session session = (Session) action.getData();
+                                if (action.getData() instanceof Session session) {
                                     long now = System.currentTimeMillis();
                                     if (session.getId() != null &&
                                             session.getId().equals(lastProcessedSessionId) &&
@@ -449,8 +439,7 @@ public class PlayersPanel extends JPanel {
                             break;
                         }
                         case Commands.PLAYER_ROW_REFRESH: {
-                            if (action.getData() instanceof Player) {
-                                Player player = (Player) action.getData();
+                            if (action.getData() instanceof Player player) {
                                 logger.info("Refreshing player row for: " + player.getName());
                                 updatePlayerRow(player);
                             }
@@ -461,8 +450,7 @@ public class PlayersPanel extends JPanel {
                             Session activeSession = SessionManager.getInstance().getActiveSession();
                             if (activeSession != null) {
                                 refreshPlayers(activeSession.getPlayers());
-                                if (action.getData() instanceof Player) {
-                                    Player player = (Player) action.getData();
+                                if (action.getData() instanceof Player player) {
                                     selectPlayerById(player.getId());
                                 } else {
                                     selectLastPlayer();
@@ -473,8 +461,7 @@ public class PlayersPanel extends JPanel {
                         case Commands.SHOW_PLAYER_EDITOR_OK: {
                             logger.info("Player edited, refreshing table");
                             Session activeSession = SessionManager.getInstance().getActiveSession();
-                            if (activeSession != null && action.getData() instanceof Player) {
-                                Player player = (Player) action.getData();
+                            if (activeSession != null && action.getData() instanceof Player player) {
                                 refreshPlayers(activeSession.getPlayers());
                                 selectPlayerById(player.getId());
                             }
@@ -507,8 +494,7 @@ public class PlayersPanel extends JPanel {
                         case Commands.NEW_VALUE_PAN:
                         case Commands.NEW_VALUE_SPARSE:
                         case Commands.PLAYER_UPDATED: {
-                            if (action.getSender() instanceof Player) {
-                                Player player = (Player) action.getSender();
+                            if (action.getSender() instanceof Player player) {
                                 logger.info("Updating player row due to " + cmd + " for: " + player.getName());
                                 updatePlayerRow(player);
                             }
@@ -527,32 +513,27 @@ public class PlayersPanel extends JPanel {
 
         // Register the single listener on both buses
         TimingBus.getInstance().register(consolidatedListener);
-     CommandBus.getInstance().register(consolidatedListener, new String[] {
-        Commands.PLAYER_TABLE_REFRESH_REQUEST,
-        Commands.SESSION_SELECTED,
-        Commands.SESSION_CHANGED,
-        Commands.SESSION_LOADED,
-        Commands.PLAYER_ROW_REFRESH,
-        Commands.PLAYER_ADDED,
-        Commands.SHOW_PLAYER_EDITOR_OK,
-        Commands.PLAYER_DELETED,
-        Commands.NEW_VALUE_LEVEL,
-        Commands.NEW_VALUE_NOTE,
-        Commands.NEW_VALUE_SWING,
-        Commands.NEW_VALUE_PROBABILITY, 
-        Commands.NEW_VALUE_VELOCITY_MIN,
-        Commands.NEW_VALUE_VELOCITY_MAX,
-        Commands.NEW_VALUE_RANDOM,
-        Commands.NEW_VALUE_PAN,
-        Commands.NEW_VALUE_SPARSE,
-        Commands.PLAYER_UPDATED
-    });
+        CommandBus.getInstance().register(consolidatedListener, new String[]{
+                Commands.PLAYER_TABLE_REFRESH_REQUEST,
+                Commands.SESSION_SELECTED,
+                Commands.SESSION_CHANGED,
+                Commands.SESSION_LOADED,
+                Commands.PLAYER_ROW_REFRESH,
+                Commands.PLAYER_ADDED,
+                Commands.SHOW_PLAYER_EDITOR_OK,
+                Commands.PLAYER_DELETED,
+                Commands.NEW_VALUE_LEVEL,
+                Commands.NEW_VALUE_NOTE,
+                Commands.NEW_VALUE_SWING,
+                Commands.NEW_VALUE_PROBABILITY,
+                Commands.NEW_VALUE_VELOCITY_MIN,
+                Commands.NEW_VALUE_VELOCITY_MAX,
+                Commands.NEW_VALUE_RANDOM,
+                Commands.NEW_VALUE_PAN,
+                Commands.NEW_VALUE_SPARSE,
+                Commands.PLAYER_UPDATED
+        });
     }
-
-    // Add a field to track the last selected row
-    private int lastSelectedRow = -1;
-
-    // Update the problematic methods
 
     private void selectPlayerById(Long playerId) {
         if (playerId == null)
@@ -631,7 +612,7 @@ public class PlayersPanel extends JPanel {
 
     /**
      * Find the row index for a player in the table
-     * 
+     *
      * @param player Player to locate
      * @return Row index or -1 if not found
      */
@@ -763,7 +744,7 @@ public class PlayersPanel extends JPanel {
 
     /**
      * Update a single player row in the table
-     * 
+     *
      * @param player The player to update
      */
     private void updatePlayerRow(Player player) {
@@ -843,12 +824,4 @@ public class PlayersPanel extends JPanel {
             table.handlePlayerSelection(0);
         }
     }
-
-    // Add this field to the class
-    private boolean isRefreshing = false;
-
-    // Add this field to PlayersPanel
-    private Long lastProcessedSessionId = null;
-    private long lastSessionEventTime = 0;
-    private static final long EVENT_THROTTLE_MS = 100;
 }

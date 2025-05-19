@@ -243,7 +243,24 @@ public class MelodicSequencerGridPanel extends JPanel implements IBusListener {
 
             // Update each column
             for (int i = 0; i < Math.min(noteDials.size(), circleOfFifthsDials.size()); i++) {
-                JPanel columnPanel = (JPanel) noteDialPanels.get(i).getParent();
+                // Null safety check for noteDialPanels
+                if (!noteDialPanels.containsKey(i)) {
+                    logger.warn("Note dial panel not found for index {}", i);
+                    continue;
+                }
+                
+                JPanel dialPanel = noteDialPanels.get(i);
+                if (dialPanel == null) {
+                    logger.warn("Note dial panel is null for index {}", i);
+                    continue;
+                }
+                
+                // Get parent, with safety check
+                Container columnPanel = dialPanel.getParent();
+                if (columnPanel == null || !(columnPanel instanceof JPanel)) {
+                    logger.warn("Column panel is null or not a JPanel for note dial {}", i);
+                    continue;
+                }
 
                 // Find and manage trigger button visibility
                 for (Component component : columnPanel.getComponents()) {
@@ -262,7 +279,7 @@ public class MelodicSequencerGridPanel extends JPanel implements IBusListener {
                             (component.getName() != null &&
                                     (component.getName().startsWith("NoteDialPanel") ||
                                             component.getName().startsWith("CircleDialPanel")))) {
-                        columnPanel.remove(component);
+                        ((JPanel)columnPanel).remove(component);
                         break;
                     }
                 }
@@ -272,13 +289,10 @@ public class MelodicSequencerGridPanel extends JPanel implements IBusListener {
                 if (isFollowing) {
                     // When following, show the circle of fifths dial
                     CircleOfFifthsDial circleDial = circleOfFifthsDials.get(i);
-
-                    // Make it larger when shown (since trigger buttons are hidden)
-                    // circleDial.setPreferredSize(new Dimension(60, 60));
-
-                    // Ensure the circle dial has the same value as the note dial
+                    
+                    // Update the value before adding to panel
                     circleDial.setValue(noteDials.get(i).getValue(), false);
-
+                    
                     newDialPanel.add(circleDial);
                     newDialPanel.setName("CircleDialPanel-" + i);
                 } else {
@@ -287,9 +301,9 @@ public class MelodicSequencerGridPanel extends JPanel implements IBusListener {
                     newDialPanel.setName("NoteDialPanel-" + i);
                 }
 
-                // Add the new panel at the end of the column
-                columnPanel.add(newDialPanel);
-
+                // Add the new panel to column
+                ((JPanel)columnPanel).add(newDialPanel);
+                
                 // Store the new panel reference
                 noteDialPanels.put(i, newDialPanel);
             }
@@ -297,6 +311,8 @@ public class MelodicSequencerGridPanel extends JPanel implements IBusListener {
             // Force UI update
             revalidate();
             repaint();
+        } catch (Exception e) {
+            logger.error("Error updating note dials display", e);
         } finally {
             listenersEnabled = true;
         }
@@ -519,6 +535,7 @@ public class MelodicSequencerGridPanel extends JPanel implements IBusListener {
         // Register for specific events only
         CommandBus.getInstance().register(this, new String[]{
                 Commands.PATTERN_UPDATED,
+                Commands.MELODIC_PATTERN_UPDATED,
                 Commands.MELODIC_SEQUENCE_UPDATED,
                 Commands.MELODIC_SEQUENCE_CREATED,
                 Commands.MELODIC_SEQUENCE_LOADED,

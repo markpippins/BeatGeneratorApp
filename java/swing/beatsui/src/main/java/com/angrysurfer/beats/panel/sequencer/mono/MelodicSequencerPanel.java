@@ -99,9 +99,6 @@ public class MelodicSequencerPanel extends JPanel implements IBusListener {
                 Commands.PATTERN_UPDATED,
                 Commands.PLAYER_UPDATED,
                 Commands.INSTRUMENT_CHANGED,
-                Commands.DRUM_PAD_SELECTED,
-                Commands.DRUM_STEP_SELECTED,
-                Commands.DRUM_INSTRUMENTS_UPDATED,
                 Commands.HIGHLIGHT_STEP
         });
 

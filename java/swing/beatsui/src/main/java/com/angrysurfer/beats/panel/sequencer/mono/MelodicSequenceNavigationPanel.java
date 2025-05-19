@@ -40,7 +40,7 @@ public class MelodicSequenceNavigationPanel extends PlayerAwarePanel {
         this.sequencer = sequencer;
 
         initializeUI();
-        // registerForEvents();
+        registerForEvents();
     }
 
     private void initializeUI() {
@@ -350,15 +350,15 @@ public class MelodicSequenceNavigationPanel extends PlayerAwarePanel {
     /**
      * Register for command bus events
      */
-//    private void registerForEvents() {
-//        // Register only for sequence navigation related events
-//        CommandBus.getInstance().register(this, new String[] {
-//            Commands.MELODIC_SEQUENCE_LOADED,
-//            Commands.MELODIC_SEQUENCE_CREATED,
-//            Commands.MELODIC_SEQUENCE_DELETED,
-//            Commands.MELODIC_SEQUENCE_SAVED
-//        });
-//
-//        logger.debug("MelodicSequenceNavigationPanel registered for specific events");
-//    }
+   private void registerForEvents() {
+       // Register only for sequence navigation related events
+       CommandBus.getInstance().register(this, new String[] {
+           Commands.MELODIC_SEQUENCE_LOADED,
+           Commands.MELODIC_SEQUENCE_CREATED,
+           Commands.MELODIC_SEQUENCE_DELETED,
+           Commands.MELODIC_SEQUENCE_SAVED
+       });
+
+       logger.debug("MelodicSequenceNavigationPanel registered for specific events");
+   }
 }

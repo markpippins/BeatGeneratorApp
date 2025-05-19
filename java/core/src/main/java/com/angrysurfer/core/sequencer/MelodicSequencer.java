@@ -1,10 +1,7 @@
 package com.angrysurfer.core.sequencer;
 
 import com.angrysurfer.core.api.*;
-import com.angrysurfer.core.event.MelodicScaleSelectionEvent;
-import com.angrysurfer.core.event.NoteEvent;
-import com.angrysurfer.core.event.PatternSwitchEvent;
-import com.angrysurfer.core.event.StepUpdateEvent;
+import com.angrysurfer.core.event.*;
 import com.angrysurfer.core.model.InstrumentWrapper;
 import com.angrysurfer.core.model.Note;
 import com.angrysurfer.core.model.Player;
@@ -77,6 +74,10 @@ public class MelodicSequencer implements IBusListener {
         TimingBus.getInstance().register(this);
         updateQuantizer();
         logger.info("MelodicSequencer {} initialized and registered with CommandBus", id);
+    }
+
+    public void setId(Integer id) {
+        this.id = id;
     }
 
     public void setSequenceData(MelodicSequenceData data) {
@@ -480,6 +481,13 @@ public class MelodicSequencer implements IBusListener {
                     Commands.MELODIC_PATTERN_UPDATED,
                     this,
                     this.sequenceData);
+
+            // Notify that pattern was updated
+            CommandBus.getInstance().publish(
+                    Commands.PATTERN_UPDATED,
+                    this,
+                    new MelodicSequencerEvent(
+                            this.getId(), sequenceData.getId()));
         }
 
         return result;
