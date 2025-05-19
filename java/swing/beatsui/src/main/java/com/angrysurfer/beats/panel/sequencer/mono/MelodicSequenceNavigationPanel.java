@@ -2,6 +2,7 @@ package com.angrysurfer.beats.panel.sequencer.mono;
 
 import com.angrysurfer.beats.panel.PlayerAwarePanel;
 import com.angrysurfer.beats.util.UIHelper;
+import com.angrysurfer.core.api.Command;
 import com.angrysurfer.core.api.CommandBus;
 import com.angrysurfer.core.api.Commands;
 import com.angrysurfer.core.event.MelodicSequencerEvent;
@@ -49,7 +50,7 @@ public class MelodicSequenceNavigationPanel extends PlayerAwarePanel {
 
         // Keep the border style with sequence position
         UIHelper.setWidgetPanelBorder(this, "Sequence");
-        
+
         // Create ID label with identical styling as DrumSequenceNavigationPanel
         sequenceIdLabel = new JLabel(getFormattedIdText(), SwingConstants.CENTER);
         sequenceIdLabel.setPreferredSize(new Dimension(UIHelper.ID_LABEL_WIDTH - 5, UIHelper.CONTROL_HEIGHT - 2));
@@ -146,31 +147,46 @@ public class MelodicSequenceNavigationPanel extends PlayerAwarePanel {
         if (sequencer == null || sequencer.getId() == null) {
             return;
         }
-        
-        // Get all sequence IDs for this sequencer
-        List<Long> allIds = MelodicSequencerManager.getInstance()
-                .getAllMelodicSequenceIds(sequencer.getId());
-        
-        if (allIds == null || allIds.isEmpty()) {
+
+        try {
+            // Get all sequence IDs for this sequencer
+            List<Long> allIds = MelodicSequencerManager.getInstance()
+                    .getAllMelodicSequenceIds(sequencer.getId());
+
+            if (allIds == null || allIds.isEmpty()) {
+                UIHelper.setWidgetPanelBorder(this, "Sequence");
+                return;
+            }
+
+            // Sort IDs for consistent ordering
+            Collections.sort(allIds);
+
+            // Get current sequence ID
+            long currentId = sequencer.getSequenceData().getId();
+
+            // Skip if current ID is 0 (new unsaved sequence)
+            if (currentId == 0) {
+                UIHelper.setWidgetPanelBorder(this, "Sequence (New)");
+                return;
+            }
+
+            // Find index of current ID (0-based)
+            int currentIndex = allIds.indexOf(currentId);
+
+            // Format title with 1-based index for user-friendliness
+            if (currentIndex >= 0) {
+                String title = String.format("Sequence %d of %d",
+                        currentIndex + 1, allIds.size());
+
+                // Update border
+                UIHelper.setWidgetPanelBorder(this, title);
+            } else {
+                UIHelper.setWidgetPanelBorder(this, "Sequence");
+            }
+        } catch (Exception e) {
+            logger.error("Error updating border title", e);
             UIHelper.setWidgetPanelBorder(this, "Sequence");
-            return;
         }
-        
-        // Sort IDs for consistent ordering
-        Collections.sort(allIds);
-        
-        // Get current sequence ID
-        long currentId = sequencer.getSequenceData().getId();
-        
-        // Find index of current ID (0-based)
-        int currentIndex = allIds.indexOf(currentId);
-        
-        // Format title with 1-based index for user-friendliness
-        String title = String.format("Sequence %d of %d", 
-                currentIndex + 1, allIds.size());
-        
-        // Update border
-        UIHelper.setWidgetPanelBorder(this, title);
     }
 
     /**
@@ -209,7 +225,7 @@ public class MelodicSequenceNavigationPanel extends PlayerAwarePanel {
                     event);
 
             logger.info("Created new blank melodic sequence for sequencer {}", sequencer.getId());
-            
+
             // Update border title
             updateBorderTitle();
         } catch (Exception e) {
@@ -247,7 +263,7 @@ public class MelodicSequenceNavigationPanel extends PlayerAwarePanel {
                             sequencer.getSequenceData().getId()));
 
             logger.info("Loaded melodic sequence {} for sequencer {}", sequenceId, sequencer.getId());
-            
+
             // Update border title
             updateBorderTitle();
         }
@@ -259,12 +275,17 @@ public class MelodicSequenceNavigationPanel extends PlayerAwarePanel {
             return;
         }
 
-        Long firstId = MelodicSequencerManager.getInstance().getFirstSequenceId(sequencer.getId());
-        if (firstId != null) {
-            loadSequence(firstId);
-        } else {
-            // No sequences available - create one
-            createAndSaveNewSequence();
+        try {
+            Long firstId = MelodicSequencerManager.getInstance().getFirstSequenceId(sequencer.getId());
+            if (firstId != null) {
+                logger.info("Loading first sequence ID: {}", firstId);
+                loadSequence(firstId);
+            } else {
+                logger.info("No sequences available - creating new one");
+                createAndSaveNewSequence();
+            }
+        } catch (Exception e) {
+            logger.error("Error loading first sequence", e);
         }
     }
 
@@ -311,11 +332,29 @@ public class MelodicSequenceNavigationPanel extends PlayerAwarePanel {
     }
 
     private void saveCurrentSequence() {
-        // Before saving, make sure any changes are applied to the sequencer's data
-        MelodicSequencerManager.getInstance().saveSequence(sequencer);
-        
-        // Update border after saving
-        updateBorderTitle();
+        try {
+            logger.debug("Saving current sequence for sequencer {}", sequencer.getId());
+
+            // Save the sequence
+            Long savedId = MelodicSequencerManager.getInstance().saveSequence(sequencer);
+
+            if (savedId != null) {
+                logger.info("Successfully saved sequence with ID: {}", savedId);
+
+                // Update UI to reflect the saved state
+                updateSequenceIdDisplay();
+                updateBorderTitle();
+                updateButtonStates();
+            } else {
+                logger.warn("Failed to save sequence");
+            }
+        } catch (Exception e) {
+            logger.error("Error saving current sequence", e);
+            JOptionPane.showMessageDialog(this,
+                    "Error saving sequence: " + e.getMessage(),
+                    "Save Error",
+                    JOptionPane.ERROR_MESSAGE);
+        }
     }
 
     // Add this new method to handle the case where no sequences exist
@@ -350,15 +389,73 @@ public class MelodicSequenceNavigationPanel extends PlayerAwarePanel {
     /**
      * Register for command bus events
      */
-   private void registerForEvents() {
-       // Register only for sequence navigation related events
-       CommandBus.getInstance().register(this, new String[] {
-           Commands.MELODIC_SEQUENCE_LOADED,
-           Commands.MELODIC_SEQUENCE_CREATED,
-           Commands.MELODIC_SEQUENCE_DELETED,
-           Commands.MELODIC_SEQUENCE_SAVED
-       });
+    private void registerForEvents() {
+        // Register for sequence navigation related events
+        CommandBus.getInstance().register(this, new String[]{
+                Commands.MELODIC_SEQUENCE_LOADED,
+                Commands.MELODIC_SEQUENCE_CREATED,
+                Commands.MELODIC_SEQUENCE_DELETED,
+                Commands.MELODIC_SEQUENCE_SAVED,
+                Commands.MELODIC_SEQUENCE_UPDATED,
+                Commands.PATTERN_UPDATED
+        });
 
-       logger.debug("MelodicSequenceNavigationPanel registered for specific events");
-   }
+        logger.debug("MelodicSequenceNavigationPanel registered for sequence events");
+    }
+
+    /**
+     * Handle command bus events
+     */
+    @Override
+    public void onAction(Command action) {
+        if (action == null || action.getCommand() == null) {
+            return;
+        }
+
+        // Use SwingUtilities to ensure UI updates happen on the EDT
+        SwingUtilities.invokeLater(() -> {
+            switch (action.getCommand()) {
+                case Commands.MELODIC_SEQUENCE_LOADED:
+                    logger.debug("Handling MELODIC_SEQUENCE_LOADED event");
+
+                    // Update the UI state after sequence load
+                    updateSequenceIdDisplay();
+                    updateBorderTitle();
+                    updateButtonStates();
+                    break;
+
+                case Commands.MELODIC_SEQUENCE_SAVED:
+                    logger.debug("Handling MELODIC_SEQUENCE_SAVED event");
+
+                    // Update the UI state after sequence save
+                    updateSequenceIdDisplay();
+                    updateBorderTitle();
+                    updateButtonStates();
+                    break;
+
+                case Commands.MELODIC_SEQUENCE_CREATED:
+                case Commands.MELODIC_SEQUENCE_UPDATED:
+                case Commands.PATTERN_UPDATED:
+                    // Ensure UI reflects the current sequence state
+                    if (sequencer != null) {
+                        updateSequenceIdDisplay();
+                        updateBorderTitle();
+                        updateButtonStates();
+                    }
+                    break;
+
+                case Commands.MELODIC_SEQUENCE_DELETED:
+                    // After deletion, update navigation UI
+                    updateSequenceIdDisplay();
+                    updateBorderTitle();
+                    updateButtonStates();
+
+                    // If all sequences deleted, create a new one
+                    if (!MelodicSequencerManager.getInstance().hasSequences(sequencer.getId())) {
+                        createAndSaveNewSequence();
+                    }
+                    break;
+            }
+        });
+    }
 }
