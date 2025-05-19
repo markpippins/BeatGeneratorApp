@@ -81,9 +81,9 @@ public class SessionControlPanel extends JPanel {
                         break;
                 }
             }
-        }, new String[] { 
-            Commands.PREV_SCALE_SELECTED, 
-            Commands.NEXT_SCALE_SELECTED 
+        }, new String[]{
+                Commands.PREV_SCALE_SELECTED,
+                Commands.NEXT_SCALE_SELECTED
         });
     }
 
@@ -261,7 +261,7 @@ public class SessionControlPanel extends JPanel {
                 if (currentSession != null) {
                     currentSession.setScale(selectedScale);
                     CommandBus.getInstance().publish(
-                            Commands.GLOBAL_SCALE_SELECTED,
+                            Commands.GLOBAL_SCALE_SELECTION_EVENT,
                             this,
                             selectedScale
                     );
@@ -287,7 +287,7 @@ public class SessionControlPanel extends JPanel {
 
         combo.addItemListener(e -> {
             if (e.getStateChange() == ItemEvent.SELECTED)
-                CommandBus.getInstance().publish(Commands.ROOT_NOTE_SELECTED, this, (String) combo.getSelectedItem());
+                CommandBus.getInstance().publish(Commands.ROOT_NOTE_SELECTED, this, combo.getSelectedItem());
         });
 
         return combo;

@@ -320,7 +320,7 @@ public class Commands {
     public static final String TIMING_DIVISION_CHANGED = "TIMING_DIVISION_CHANGED";
     public static final String MELODIC_SEQUENCE_CREATED = "MELODIC_SEQUENCE_CREATED";
     public static final String DRUM_BUTTON_SELECTED = "DRUM_BUTTON_SELECTED";
-    public static final String GLOBAL_SCALE_SELECTED = "GLOBAL_SCALE_SELECTED";
+    public static final String GLOBAL_SCALE_SELECTION_EVENT = "GLOBAL_SCALE_SELECTION_EVENT";
     public static final String DRUM_SEQUENCE_MAX_LENGTH_CHANGED = "DRUM_SEQUENCE_MAX_LENGTH_CHANGED";
     public static final String DRUM_SEQUENCE_GRID_RECREATE_REQUESTED = "DRUM_SEQUENCE_GRID_RECREATE_REQUESTED";
     public static final String USER_CONFIG_UPDATED = "USER_CONFIG_UPDATED";
@@ -407,4 +407,5 @@ public class Commands {
 
     // Add this constant for sequencer-specific root note changes
     public static final String SEQUENCER_ROOT_NOTE_SELECTED = "SEQUENCER_ROOT_NOTE_SELECTED";
+    public static final String TOGGLE_LOOPING = "TOGGLE_LOOPING";
 }

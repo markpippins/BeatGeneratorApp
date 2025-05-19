@@ -2,11 +2,19 @@ package com.angrysurfer.core.service;
 
 import com.angrysurfer.core.api.CommandBus;
 import com.angrysurfer.core.api.Commands;
+import com.angrysurfer.core.api.midi.MidiControlMessageEnum;
+import com.angrysurfer.core.model.InstrumentWrapper;
+import com.angrysurfer.core.model.Note;
+import com.angrysurfer.core.model.Player;
+import com.angrysurfer.core.model.Session;
 import com.angrysurfer.core.redis.RedisService;
 import com.angrysurfer.core.sequencer.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.sound.midi.MidiDevice;
+import javax.sound.midi.MidiUnavailableException;
+import javax.sound.midi.Receiver;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -305,7 +313,7 @@ public class MelodicSequencerManager {
             }
 
             // Update instrument settings in the sequence data
-            sequencer.updateInstrumentSettingsInSequenceData();
+            MelodicSequenceModifier.updateInstrumentSettingsInSequenceData(sequencer);
 
             // Now save
             RedisService.getInstance().saveMelodicSequence(sequencer);
@@ -460,7 +468,7 @@ public class MelodicSequencerManager {
             sequencer.setSequenceData(data);
 
             // Update instrument settings
-            sequencer.updateInstrumentSettingsInSequenceData();
+            MelodicSequenceModifier.updateInstrumentSettingsInSequenceData(sequencer);
 
             // Save the new sequence
             saveSequence(sequencer);
@@ -507,9 +515,191 @@ public class MelodicSequencerManager {
         return null;
     }
 
-    public void initializeAllSequencers() {
-        for (MelodicSequencer seq : getAllSequencers()) {
-            seq.start();
+    public void repairMidiConnections(MelodicSequencer sequencer) {
+        logger.info("Attempting to repair MIDI connections for melodic sequencer {}", sequencer.getId());
+
+        Player player = sequencer.getPlayer();
+        Integer id = sequencer.getId();
+
+        try {
+            if (player == null) {
+                logger.warn("No player for sequencer {}, creating", sequencer.getId());
+                initializePlayer(sequencer);
+                return;
+            }
+
+            if (player.getInstrument() == null) {
+                logger.warn("Player has no instrument, initializing...");
+                PlayerManager.getInstance().initializeInternalInstrument(player, true, player.getId().intValue());
+            }
+
+            InstrumentWrapper instrument = player.getInstrument();
+            if (instrument == null) {
+                logger.error("Failed to initialize instrument");
+                return;
+            }
+
+            String deviceName = instrument.getDeviceName();
+            if (deviceName == null || deviceName.isEmpty()) {
+                deviceName = SequencerConstants.GERVILL; // Default to Gervill
+                instrument.setDeviceName(deviceName);
+            }
+
+            MidiDevice device = DeviceManager.getMidiDevice(deviceName);
+            if (device == null) {
+                device = DeviceManager.getInstance().getDefaultOutputDevice();
+                if (device != null) {
+                    deviceName = device.getDeviceInfo().getName();
+                    instrument.setDeviceName(deviceName);
+                }
+            }
+
+            if (device != null) {
+                if (!device.isOpen()) {
+                    device.open();
+                }
+                instrument.setDevice(device);
+
+                Receiver receiver = ReceiverManager.getInstance().getOrCreateReceiver(deviceName, device);
+                if (receiver != null) {
+                    logger.info("Successfully reconnected sequencer {} to device {}", id, deviceName);
+
+                    // PlayerManager.getInstance().applyInstrumentPreset(player);
+                    initializePlayer(player);
+
+                } else {
+                    logger.warn("Failed to get receiver for sequencer {}", id);
+                }
+            } else {
+                logger.warn("Could not get device for sequencer {}", id);
+            }
+
+            PlayerManager.getInstance().savePlayerProperties(player);
+        } catch (Exception e) {
+            logger.error("Error repairing melodic sequencer {}: {}", id, e.getMessage());
         }
     }
+
+    public void initializePlayer(Player player) {
+        // PlayerManager.getInstance().applyInstrumentPreset(player);
+
+        // Add this explicit program change to ensure the preset is applied:
+        if (player != null && player.getInstrument() != null) {
+            try {
+                // Force program change through both regular channel and direct MIDI
+                InstrumentWrapper instrument = player.getInstrument();
+                int channel = player.getChannel();
+                int bankIndex = instrument.getBankIndex() != null ? instrument.getBankIndex() : 0;
+                int preset = instrument.getPreset() != null ? instrument.getPreset() : 0;
+
+                player.getInstrument().controlChange(0, (bankIndex >> 7) & MidiControlMessageEnum.POLY_MODE_ON);
+                player.getInstrument().controlChange(32, bankIndex & MidiControlMessageEnum.POLY_MODE_ON);
+                player.getInstrument().programChange(preset, 0);
+
+                // Send explicit bank select and program change
+                // instrument.controlChange(0, (bankIndex >> 7) & MidiControlMessageEnum.POLY_MODE_ON);  // Bank MSB
+                // instrument.controlChange(32, bankIndex & MidiControlMessageEnum.POLY_MODE_ON);        // Bank LSB
+                // instrument.programChange(preset, 0);
+
+                logger.info("Explicitly set instrument {} to bank {} program {} on channel {}",
+                        instrument.getName(), bankIndex, preset, channel);
+            } catch (Exception e) {
+                logger.error("Error applying program change: {}", e.getMessage(), e);
+            }
+        }
+    }
+
+    private void initializePlayer(MelodicSequencer sequencer) {
+
+        int playerChannel = SequencerConstants.MELODIC_CHANNELS[sequencer.getId()];
+
+        Session session = SessionManager.getInstance().getActiveSession();
+        if (session == null) {
+            logger.error("Cannot initialize player - no active session");
+            return;
+        }
+
+        Optional<Note> opt = UserConfigManager.getInstance().getCurrentConfig().getDefaultNotes()
+                .stream().filter(p -> p.getChannel().equals(playerChannel)).findFirst();
+
+        Player player;
+
+        if (opt.isPresent()) {
+
+            player = opt.get();
+            logger.info("Using existing player {} for sequencer {}", player.getId(), sequencer.getId());
+            player.setDefaultChannel(playerChannel);
+            player.setOwner(this);
+            player.setMelodicPlayer(true);
+
+        } else {
+            logger.info("Creating new player for melodic sequencer {}", sequencer.getId());
+            // player = RedisService.getInstance().newNote();
+            player = new Note();
+            player.setId(RedisService.getInstance().getPlayerHelper().getNextPlayerId());
+            player.setRules(new HashSet<>()); // Ensure rules are initialized
+            player.setMinVelocity(60);
+            player.setMaxVelocity(127);
+            player.setLevel(100);
+            player.setIsDefault(true);
+            player.setName("Melo " + sequencer.getId() + 1);
+            player.setDefaultChannel(playerChannel);
+        }
+
+        if (player.getInstrument() != null) {
+            DeviceManager.getInstance();
+            MidiDevice device = DeviceManager.getMidiDevice(player.getInstrument().getDeviceName());
+            if (device != null) {
+                if (!device.isOpen()) {
+                    try {
+                        device.open();
+                    } catch (MidiUnavailableException e) {
+                        throw new RuntimeException(e);
+                    }
+                }
+                player.getInstrument().setDevice(device);
+                player.getInstrument().setAssignedToPlayer(true);
+            } else PlayerManager.getInstance().initializeInternalInstrument(player, true, player.getId().intValue());
+        }
+
+        if (sequencer.getSequenceData() != null) {
+            applySequenceDataToInstrument(sequencer);
+        }
+
+        // initializePlayer(player);
+        session.getPlayers().add(player);
+        PlayerManager.getInstance().savePlayerProperties(player);
+        SessionManager.getInstance().saveSession(session);
+        logger.info("Added new player to session {}: {}", session.getId(), player.getId());
+    }
+
+    private void applySequenceDataToInstrument(MelodicSequencer sequencer) {
+
+        Player player = sequencer.getPlayer();
+        MelodicSequenceData sequenceData = sequencer.getSequenceData();
+
+        if (sequenceData == null || player == null || player.getInstrument() == null) {
+            return;
+        }
+
+        if (!player.getInstrument().isInternalSynth() && player.getInstrument().getChannel() != SequencerConstants.MIDI_DRUM_CHANNEL) {
+
+            if (sequenceData.getSoundbankName() != null) {
+                player.getInstrument().setSoundbankName(sequenceData.getSoundbankName());
+            }
+
+            if (sequenceData.getBankIndex() != null) {
+                player.getInstrument().setBankIndex(sequenceData.getBankIndex());
+            }
+
+            if (sequenceData.getPreset() != null) {
+                player.getInstrument().setPreset(sequenceData.getPreset());
+            }
+
+        }
+
+        logger.debug("Applied sequence data settings to instrument: preset:{}, bank:{}, soundbank:{}",
+                player.getInstrument().getPreset(), player.getInstrument().getBankIndex(), player.getInstrument().getSoundbankName());
+    }
+
 }
