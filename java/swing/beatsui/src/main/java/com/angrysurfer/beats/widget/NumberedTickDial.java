@@ -1,18 +1,10 @@
 package com.angrysurfer.beats.widget;
 
-import java.awt.BasicStroke;
-import java.awt.Color;
-import java.awt.Dimension;
-import java.awt.Font;
-import java.awt.FontMetrics;
-import java.awt.Graphics;
-import java.awt.Graphics2D;
-import java.awt.Point;
-import java.awt.RenderingHints;
-import java.awt.geom.Point2D;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.awt.*;
+import java.awt.geom.Point2D;
 
 /**
  * A dial control with numbered tick marks that shows integer values
@@ -20,41 +12,41 @@ import org.slf4j.LoggerFactory;
 public class NumberedTickDial extends Dial {
 
     private static final Logger logger = LoggerFactory.getLogger(NumberedTickDial.class.getName());
-    
+
     private static final double START_ANGLE = -90; // Start at top (-90 degrees)
     private static final double TOTAL_ARC = 300;   // Not a full circle to prevent wrap-around
-    
-    private int detentCount;               // Number of detent positions
-    private double degreesPerDetent;       // Angular distance between detents
+
+    private final int detentCount;               // Number of detent positions
+    private final double degreesPerDetent;       // Angular distance between detents
     private int currentDetent = 0;         // Current detent position
     private boolean isDragging = false;    // Whether user is dragging the dial
     private double startAngle = 0;         // Starting angle for drag operations
     private String[] tickLabels;           // Labels for tick marks
-    
+
     /**
      * Creates a new NumberedTickDial with the specified value range
-     * 
+     *
      * @param min The minimum value
      * @param max The maximum value
      */
     public NumberedTickDial(int min, int max) {
         super();
-        
+
         // Set value range
         setMinimum(min);
         setMaximum(max);
-        
+
         // Calculate number of detent positions
         detentCount = max - min + 1;
         degreesPerDetent = TOTAL_ARC / (detentCount - 1);
-        
+
         // Generate tick labels
         generateTickLabels(min, max);
-        
+
         // Default to middle value
         int defaultValue = (min + max) / 2;
         setValue(defaultValue, false);
-        
+
         // Set size
         setPreferredSize(new Dimension(100, 100));
         setMinimumSize(new Dimension(80, 80));
@@ -62,14 +54,14 @@ public class NumberedTickDial extends Dial {
         // Setup mouse listeners for interaction
         setupMouseListeners();
     }
-    
+
     /**
      * Creates a dial with values from 0 to the specified maximum
      */
     public NumberedTickDial(int max) {
         this(0, max);
     }
-    
+
     /**
      * Generates numeric labels for tick marks
      */
@@ -79,7 +71,7 @@ public class NumberedTickDial extends Dial {
             tickLabels[i] = String.valueOf(min + i);
         }
     }
-    
+
     /**
      * Sets up mouse listeners for dial interaction
      */
@@ -114,21 +106,21 @@ public class NumberedTickDial extends Dial {
                 if (detentDelta != 0) {
                     // Calculate new detent position, clamping to valid range
                     int newDetent = Math.max(0, Math.min(detentCount - 1, currentDetent + detentDelta));
-                    
+
                     // Only update if the position changes
                     if (newDetent != currentDetent) {
                         currentDetent = newDetent;
-                        
+
                         // Convert from detent position to actual value
                         int value = getMinimum() + currentDetent;
-                        
+
                         // Update the visual representation
                         startAngle = currentAngle;
                         repaint();
-                        
+
                         // Fire change events
                         setValue(value, true);
-                        
+
                         logger.debug("Dial changed to value: {}", value);
                     }
                 }
@@ -137,23 +129,18 @@ public class NumberedTickDial extends Dial {
     }
 
     @Override
-    protected void updateSize() {
-        // Size is fixed by preferred size setting
-    }
-    
-    @Override
     public void setValue(int value, boolean notify) {
         // Ensure value is within range
         value = Math.max(getMinimum(), Math.min(getMaximum(), value));
-        
+
         // Convert from value to detent position
         currentDetent = value - getMinimum();
-        
+
         // Set the base class value
         super.setValue(value, notify);
-        
+
         logger.debug("Set dial value to: {}", value);
-        
+
         repaint();
     }
 
@@ -186,12 +173,12 @@ public class NumberedTickDial extends Dial {
         // Draw arc to show limited rotation range
         g2d.setColor(Color.DARK_GRAY);
         g2d.setStroke(new BasicStroke(1f));
-        g2d.drawArc(x + margin/2, y + margin/2, size - margin, size - margin,
-                (int)(START_ANGLE - TOTAL_ARC/2), (int)TOTAL_ARC);
+        g2d.drawArc(x + margin / 2, y + margin / 2, size - margin, size - margin,
+                (int) (START_ANGLE - TOTAL_ARC / 2), (int) TOTAL_ARC);
 
         // Calculate starting position for detent markers
         double startingAngle = START_ANGLE - (TOTAL_ARC / 2);
-        
+
         // Draw detent markers and labels
         Font font = new Font("SansSerif", Font.PLAIN, size / 12);
         g2d.setFont(font);
@@ -210,7 +197,7 @@ public class NumberedTickDial extends Dial {
             // Calculate marker points
             Point2D p1 = new Point2D.Double(centerX + Math.cos(angle) * (radius - margin),
                     centerY + Math.sin(angle) * (radius - margin));
-            Point2D p2 = new Point2D.Double(centerX + Math.cos(angle) * radius, 
+            Point2D p2 = new Point2D.Double(centerX + Math.cos(angle) * radius,
                     centerY + Math.sin(angle) * radius);
 
             // Highlight current position
@@ -226,8 +213,8 @@ public class NumberedTickDial extends Dial {
             g2d.drawLine((int) p1.getX(), (int) p1.getY(), (int) p2.getX(), (int) p2.getY());
 
             // Draw labels for key positions
-            boolean shouldShowLabel = (i % tickSpacing == 0) || (i == 0) || (i == detentCount-1);
-            
+            boolean shouldShowLabel = (i % tickSpacing == 0) || (i == 0) || (i == detentCount - 1);
+
             if (shouldShowLabel) {
                 Point2D labelPos = new Point2D.Double(
                         centerX + Math.cos(angle) * (radius + margin * 1.5),
@@ -238,8 +225,8 @@ public class NumberedTickDial extends Dial {
                 int labelW = fm.stringWidth(label);
                 int labelH = fm.getHeight();
 
-                g2d.drawString(label, (int)(labelPos.getX() - labelW/2), 
-                        (int)(labelPos.getY() + labelH/4));
+                g2d.drawString(label, (int) (labelPos.getX() - labelW / 2),
+                        (int) (labelPos.getY() + labelH / 4));
             }
         }
 
@@ -247,28 +234,28 @@ public class NumberedTickDial extends Dial {
         double pointerAngle = Math.toRadians(startingAngle + (currentDetent * degreesPerDetent));
         g2d.setStroke(new BasicStroke(2.5f));
         g2d.setColor(isEnabled() ? Color.RED : Color.GRAY);
-        g2d.drawLine((int)centerX, (int)centerY, 
-                (int)(centerX + Math.cos(pointerAngle) * (radius - margin/2)),
-                (int)(centerY + Math.sin(pointerAngle) * (radius - margin/2)));
+        g2d.drawLine((int) centerX, (int) centerY,
+                (int) (centerX + Math.cos(pointerAngle) * (radius - margin / 2)),
+                (int) (centerY + Math.sin(pointerAngle) * (radius - margin / 2)));
 
         // Draw center value
         g2d.setColor(Color.WHITE);
         g2d.setFont(new Font("SansSerif", Font.BOLD, size / 5));
         String valueText = tickLabels[currentDetent];
         FontMetrics fm = g2d.getFontMetrics();
-        g2d.drawString(valueText, (int)(centerX - fm.stringWidth(valueText)/2),
-                (int)(centerY + fm.getHeight()/4));
+        g2d.drawString(valueText, (int) (centerX - fm.stringWidth(valueText) / 2),
+                (int) (centerY + fm.getHeight() / 4));
 
         g2d.dispose();
     }
-    
+
     /**
      * Gets the current value as a string
      */
     public String getValueText() {
         return tickLabels[currentDetent];
     }
-    
+
     /**
      * Sets custom labels for the tick marks
      */

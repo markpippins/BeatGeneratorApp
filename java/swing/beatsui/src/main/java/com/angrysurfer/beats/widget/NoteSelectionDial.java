@@ -138,9 +138,6 @@ public class NoteSelectionDial extends Dial implements IBusListener {
         // (This can be implemented later if desired)
     }
 
-    @Override
-    protected void updateSize() {
-    }
 
     @Override
     protected void paintComponent(Graphics g) {

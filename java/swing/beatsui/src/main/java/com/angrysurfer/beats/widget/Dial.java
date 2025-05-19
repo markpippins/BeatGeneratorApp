@@ -43,7 +43,7 @@ public class Dial extends JComponent {
 
     public Dial() {
         this.command = null;
-        // updateSize();
+
         setMinimumSize(new Dimension(50, 50));
         setPreferredSize(new Dimension(50, 50));
         setMaximumSize(new Dimension(50, 50));
@@ -135,28 +135,6 @@ public class Dial extends JComponent {
         this.knobColor = color;
         this.gradientStartColor = color.brighter();
         this.gradientEndColor = color.darker();
-    }
-
-    protected void updateSize() {
-        Window window = SwingUtilities.getWindowAncestor(this);
-        if (window != null) {
-            // Calculate size based on window dimensions
-            double widthRatio = (double) window.getWidth() / BASE_WINDOW_WIDTH;
-            double heightRatio = (double) window.getHeight() / BASE_WINDOW_HEIGHT;
-            double scaleFactor = updateOnResize ? 1
-                    : Math.min(Math.max(widthRatio, heightRatio), getMaxSize() / (double) getMinSize());
-
-            int size = Math.min(getMaxSize(), (int) (getMinSize() * scaleFactor));
-
-            Dimension newSize = new Dimension(size, size);
-            setPreferredSize(newSize);
-            setMinimumSize(newSize);
-            revalidate();
-        } else {
-            // Default size when no window is available
-            setPreferredSize(new Dimension(getMinSize(), getMinSize()));
-            setMinimumSize(new Dimension(getMinSize(), getMinSize()));
-        }
     }
 
     @Override

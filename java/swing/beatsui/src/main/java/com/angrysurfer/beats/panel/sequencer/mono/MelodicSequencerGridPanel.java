@@ -111,7 +111,8 @@ public class MelodicSequencerGridPanel extends JPanel implements IBusListener {
         column.setLayout(new BoxLayout(column, BoxLayout.Y_AXIS));
         column.setBorder(BorderFactory.createEmptyBorder(2, 1, 2, 1));
 
-        for (int i = 0; i < 5; i++) {
+        // Create standard dials first (velocity, gate, probability, nudge)
+        for (int i = 0; i < 4; i++) {
             JLabel label = new JLabel(getKnobLabel(i));
             // Make label more compact with smaller padding
             label.setBorder(BorderFactory.createEmptyBorder(2, 2, 2, 2));
@@ -119,118 +120,196 @@ public class MelodicSequencerGridPanel extends JPanel implements IBusListener {
             // Set consistent font size
             label.setFont(label.getFont().deriveFont(11f));
 
-            JPanel noteDialPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 0, 0));
-            if (i < 4) {
-                JPanel labelPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 0, 0));
-                labelPanel.add(label);
-                column.add(labelPanel);
-            }
+            JPanel labelPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 0, 0));
+            labelPanel.add(label);
+            column.add(labelPanel);
 
-            if (i == 4) {
-                // Create both dial types for note selection
-                NoteSelectionDial noteDial = new NoteSelectionDial();
-                CircleOfFifthsDial circleDial = new CircleOfFifthsDial();
+            // Create standard dials
+            Dial dial = new Dial();
+            dial.setSequencerId(sequencer.getId());
 
-                // Configure both dials
-                noteDial.setSequencerId(sequencer.getId());
-                circleDial.setSequencerId(sequencer.getId());
-
-                // Set initial range and value for both
-                noteDial.setMinimum(0);
-                noteDial.setMaximum(127);
-                noteDial.setValue(60);
-                noteDial.setKnobColor(UIHelper.getDialColor("note"));
-
-                circleDial.setMinimum(0);
-                circleDial.setMaximum(127);
-                circleDial.setValue(60);
-                circleDial.setKnobColor(UIHelper.getDialColor("note").darker());
-
-                // Add to respective collections
-                noteDials.add(noteDial);
-                circleOfFifthsDials.add(circleDial);
-
-                // Create panels for each dial type
-                noteDialPanel.add(noteDial);
-
-                JPanel circleDialPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 0, 0));
-                circleDialPanel.add(circleDial);
-
-                // Initially show the note dial (assume not following)
-                column.add(noteDialPanel);
-
-                // Store reference to the panel containing the note dial for this step
-                noteDialPanels.put(index, noteDialPanel);
-
-                // Set the dial's tool tips
-                noteDial.setToolTipText(String.format("Step %d Note", index + 1));
-                circleDial.setToolTipText(String.format("Step %d Note (Following)", index + 1));
-
-                noteDial.setName("NoteDial-" + index);
-                circleDial.setName("CircleDial-" + index);
-
-                // Add change listener to circle dial too
-                circleDial.addChangeListener(e -> {
-                    if (!listenersEnabled) return;
-                    updateSequencerData(index);
-                });
-            } else {
-                // Create standard dials as before
-                Dial dial = new Dial();
-                dial.setSequencerId(sequencer.getId());
-
-                // Store the dial in the appropriate collection based on its type
-                switch (i) {
-                    case 0 -> {
-                        velocityDials.add(dial);
-                        dial.setKnobColor(UIHelper.getDialColor("velocity"));
-                    }
-                    case 1 -> {
-                        gateDials.add(dial);
-                        dial.setKnobColor(UIHelper.getDialColor("gate"));
-                    }
-                    case 2 -> {
-                        dial.setMinimum(0);
-                        dial.setMaximum(100);
-                        dial.setValue(100); // Default to 100%
-                        dial.setKnobColor(UIHelper.getDialColor("probability"));
-                        probabilityDials.add(dial);
-                    }
-                    case 3 -> {
-                        dial.setMinimum(0);
-                        dial.setMaximum(250);
-                        dial.setValue(0); // Default to no nudge
-                        dial.setKnobColor(UIHelper.getDialColor("nudge"));
-                        nudgeDials.add(dial);
-                    }
+            // Store the dial in the appropriate collection based on its type
+            switch (i) {
+                case 0 -> {
+                    velocityDials.add(dial);
+                    dial.setKnobColor(UIHelper.getDialColor("velocity"));
                 }
-
-                dial.setUpdateOnResize(true); // Enable auto-updating on resize
-                dial.setToolTipText(String.format("Step %d %s", index + 1, getKnobLabel(i)));
-                dial.setName("JDial-" + index + "-" + i);
-
-                // Center the dial horizontally with minimal padding
-                JPanel dialPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 0, 0));
-                dialPanel.add(dial);
-                column.add(dialPanel);
+                case 1 -> {
+                    gateDials.add(dial);
+                    dial.setKnobColor(UIHelper.getDialColor("gate"));
+                }
+                case 2 -> {
+                    dial.setMinimum(0);
+                    dial.setMaximum(100);
+                    dial.setValue(100); // Default to 100%
+                    dial.setKnobColor(UIHelper.getDialColor("probability"));
+                    probabilityDials.add(dial);
+                }
+                case 3 -> {
+                    dial.setMinimum(0);
+                    dial.setMaximum(250);
+                    dial.setValue(0); // Default to no nudge
+                    dial.setKnobColor(UIHelper.getDialColor("nudge"));
+                    nudgeDials.add(dial);
+                }
             }
+
+            dial.setUpdateOnResize(false); // Enable auto-updating on resize
+            dial.setToolTipText(String.format("Step %d %s", index + 1, getKnobLabel(i)));
+            dial.setName("JDial-" + index + "-" + i);
+            dial.setMaximumSize(new Dimension(50, 50));
+            // Center the dial horizontally with minimal padding
+            JPanel dialPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 0, 0));
+            dialPanel.add(dial);
+            column.add(dialPanel);
         }
+
+        // Add trigger button
+        column.add(Box.createRigidArea(new Dimension(0, 2)));
+        TriggerButton triggerButton = createTriggerButton(index);
+        triggerButtons.add(triggerButton);
+        JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 0, 0));
+        buttonPanel.add(triggerButton);
+        buttonPanel.setName("ButtonPanel-" + index);
+        column.add(buttonPanel);
+
+        // Finally, add note dials (at the bottom)
+//        JLabel noteLabel = new JLabel(getKnobLabel(4));  // "Note" label
+//        noteLabel.setBorder(BorderFactory.createEmptyBorder(2, 2, 2, 2));
+//        noteLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
+//        noteLabel.setFont(noteLabel.getFont().deriveFont(11f));
+//
+//        JPanel noteLabelPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 0, 0));
+//        noteLabelPanel.add(noteLabel);
+//        column.add(noteLabelPanel);
+
+        // Create both dial types for note selection
+        NoteSelectionDial noteDial = new NoteSelectionDial();
+        CircleOfFifthsDial circleDial = new CircleOfFifthsDial();
+
+        // Configure both dials
+        noteDial.setSequencerId(sequencer.getId());
+        circleDial.setSequencerId(sequencer.getId());
+
+        // Set initial range and value for both
+        noteDial.setMinimum(0);
+        noteDial.setMaximum(127);
+        noteDial.setValue(60);
+        noteDial.setKnobColor(UIHelper.getDialColor("note"));
+
+        circleDial.setMinimum(0);
+        circleDial.setMaximum(127);
+        circleDial.setValue(60);
+        circleDial.setKnobColor(UIHelper.getDialColor("note").darker());
+
+        // Add to respective collections
+        noteDials.add(noteDial);
+        circleOfFifthsDials.add(circleDial);
+
+        // Create panels for each dial type
+        JPanel noteDialPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 0, 0));
+        noteDialPanel.add(noteDial);
+        noteDialPanel.setName("NoteDialPanel-" + index);
+
+        JPanel circleDialPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 0, 0));
+        circleDialPanel.add(circleDial);
+        circleDialPanel.setName("CircleDialPanel-" + index);
+
+        // Initially show the note dial (assume not following)
+        column.add(noteDialPanel);
+
+        // Store reference to the panel containing the note dial for this step
+        noteDialPanels.put(index, noteDialPanel);
+
+        // Set the dial's tool tips
+        noteDial.setToolTipText(String.format("Step %d Note", index + 1));
+        circleDial.setToolTipText(String.format("Step %d Note (Following)", index + 1));
+
+        noteDial.setName("NoteDial-" + index);
+        circleDial.setName("CircleDial-" + index);
+
+        // Add change listener to circle dial too
+        circleDial.addChangeListener(e -> {
+            if (!listenersEnabled) return;
+            updateSequencerData(index);
+        });
 
         // Add listeners after all dials are created and added to collections
         addDialListeners(index);
 
-        column.add(Box.createRigidArea(new Dimension(0, 2)));
-
-        // Make trigger button more compact
-        TriggerButton triggerButton = createTriggerButton(index);
-
-        triggerButtons.add(triggerButton);
-        // Compact panel for trigger button
-        JPanel buttonPanel1 = new JPanel(new FlowLayout(FlowLayout.CENTER, 0, 0));
-        buttonPanel1.add(triggerButton);
-        column.add(buttonPanel1);
-
         return column;
+    }
+
+    /**
+     * Update the note dials display based on follow state
+     */
+    private void updateNoteDialsDisplay(Integer followId) {
+        // Flag to prevent event recursion
+        listenersEnabled = false;
+
+        try {
+            boolean isFollowing = followId != null && followId > -1;
+            logger.info("Updating note dials display - following: {}", isFollowing ? "Melo " + (followId + 1) : "None");
+
+            // Update each column
+            for (int i = 0; i < Math.min(noteDials.size(), circleOfFifthsDials.size()); i++) {
+                JPanel columnPanel = (JPanel) noteDialPanels.get(i).getParent();
+
+                // Find and manage trigger button visibility
+                for (Component component : columnPanel.getComponents()) {
+                    if (component instanceof JPanel && component.getName() != null &&
+                            component.getName().equals("ButtonPanel-" + i)) {
+                        // Hide trigger buttons when showing circle of fifths (following)
+                        component.setVisible(!isFollowing);
+                        break;
+                    }
+                }
+
+                // Remove the current note dial panel
+                Component[] components = columnPanel.getComponents();
+                for (Component component : components) {
+                    if (component instanceof JPanel &&
+                            (component.getName() != null &&
+                                    (component.getName().startsWith("NoteDialPanel") ||
+                                            component.getName().startsWith("CircleDialPanel")))) {
+                        columnPanel.remove(component);
+                        break;
+                    }
+                }
+
+                // Create the appropriate dial panel based on follow state
+                JPanel newDialPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 0, 0));
+                if (isFollowing) {
+                    // When following, show the circle of fifths dial
+                    CircleOfFifthsDial circleDial = circleOfFifthsDials.get(i);
+
+                    // Make it larger when shown (since trigger buttons are hidden)
+                    // circleDial.setPreferredSize(new Dimension(60, 60));
+
+                    // Ensure the circle dial has the same value as the note dial
+                    circleDial.setValue(noteDials.get(i).getValue(), false);
+
+                    newDialPanel.add(circleDial);
+                    newDialPanel.setName("CircleDialPanel-" + i);
+                } else {
+                    // When not following, show the regular note dial
+                    newDialPanel.add(noteDials.get(i));
+                    newDialPanel.setName("NoteDialPanel-" + i);
+                }
+
+                // Add the new panel at the end of the column
+                columnPanel.add(newDialPanel);
+
+                // Store the new panel reference
+                noteDialPanels.put(i, newDialPanel);
+            }
+
+            // Force UI update
+            revalidate();
+            repaint();
+        } finally {
+            listenersEnabled = true;
+        }
     }
 
     private TriggerButton createTriggerButton(int index) {
@@ -254,64 +333,6 @@ public class MelodicSequencerGridPanel extends JPanel implements IBusListener {
             sequencer.setStepData(index, isSelected, note, velocity, gate, probability, nudge);
         });
         return triggerButton;
-    }
-
-    /**
-     * Update the note dials display based on follow state
-     *
-     * @param followId The sequencer ID to follow, or -1 for none
-     */
-    private void updateNoteDialsDisplay(Integer followId) {
-        // Flag to prevent event recursion
-        listenersEnabled = false;
-
-        try {
-            boolean isFollowing = followId != null && followId > -1;
-            logger.info("Updating note dials display - following: {}", isFollowing ? "Melo " + (followId + 1) : "None");
-
-            // Update each column
-            for (int i = 0; i < Math.min(noteDials.size(), circleOfFifthsDials.size()); i++) {
-                JPanel columnPanel = (JPanel) noteDialPanels.get(i).getParent();
-
-                // Remove the current dial panel
-                Component[] components = columnPanel.getComponents();
-                for (Component component : components) {
-                    if (component instanceof JPanel &&
-                            (((JPanel) component).getComponent(0) instanceof NoteSelectionDial ||
-                                    ((JPanel) component).getComponent(0) instanceof CircleOfFifthsDial)) {
-                        columnPanel.remove(component);
-                        break;
-                    }
-                }
-
-                // Create a new panel with the appropriate dial
-                JPanel newDialPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 0, 0));
-                if (isFollowing) {
-                    // When following, show the circle of fifths dial
-                    CircleOfFifthsDial circleDial = circleOfFifthsDials.get(i);
-
-                    // Ensure the circle dial has the same value as the note dial
-                    circleDial.setValue(noteDials.get(i).getValue(), false);
-
-                    newDialPanel.add(circleDial);
-                } else {
-                    // When not following, show the regular note dial
-                    newDialPanel.add(noteDials.get(i));
-                }
-
-                // Find where to insert the new panel (should be at position 4)
-                columnPanel.add(newDialPanel, 4);
-
-                // Store the new panel reference
-                noteDialPanels.put(i, newDialPanel);
-            }
-
-            // Force UI update
-            revalidate();
-            repaint();
-        } finally {
-            listenersEnabled = true;
-        }
     }
 
     /**
@@ -375,51 +396,6 @@ public class MelodicSequencerGridPanel extends JPanel implements IBusListener {
                 nudgeDials.get(index).getValue());
     }
 
-    /**
-     * Update dial sizes based on container width
-     */
-    private void updateDialSizes() {
-        // Get available width per column (16 columns total)
-        int totalWidth = getWidth();
-        if (totalWidth <= 0) return; // Skip if not yet displayed
-
-        // Account for borders and padding
-        int availableWidth = totalWidth - 40; // Subtract border/padding (adjust as needed)
-        int columnWidth = Math.max(40, availableWidth / 16); // Ensure minimum width
-
-        // Calculate dial sizes based on column width
-        int standardDialSize = Math.max(30, (int) (columnWidth * 0.8)); // 80% of column width
-        int noteDialSize = Math.max(40, (int) (columnWidth * 0.95)); // 95% of column width
-
-        logger.debug("Resizing dials - column width: {}, standard size: {}, note size: {}",
-                columnWidth, standardDialSize, noteDialSize);
-
-        // Update all dials
-        for (int i = 0; i < noteDials.size(); i++) {
-            // Update standard dials
-            if (i < velocityDials.size()) {
-                velocityDials.get(i).setPreferredSize(new Dimension(standardDialSize, standardDialSize));
-            }
-            if (i < gateDials.size()) {
-                gateDials.get(i).setPreferredSize(new Dimension(standardDialSize, standardDialSize));
-            }
-            if (i < probabilityDials.size()) {
-                probabilityDials.get(i).setPreferredSize(new Dimension(standardDialSize, standardDialSize));
-            }
-            if (i < nudgeDials.size()) {
-                nudgeDials.get(i).setPreferredSize(new Dimension(standardDialSize, standardDialSize));
-            }
-
-            // Update note dials (larger)
-            if (i < noteDials.size()) {
-                noteDials.get(i).setPreferredSize(new Dimension(noteDialSize, noteDialSize));
-            }
-        }
-
-        // Force immediate update
-        revalidate();
-        repaint();
-    }
 
     /**
      * Overridden to update dial sizes when first displayed
@@ -620,7 +596,6 @@ public class MelodicSequencerGridPanel extends JPanel implements IBusListener {
 
             case Commands.WINDOW_RESIZED:
                 // Update dial sizes when window is resized
-                SwingUtilities.invokeLater(this::updateDialSizes);
                 break;
         }
     }

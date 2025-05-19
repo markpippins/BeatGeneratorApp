@@ -1,18 +1,10 @@
 package com.angrysurfer.beats.widget;
 
-import java.awt.BasicStroke;
-import java.awt.Color;
-import java.awt.Dimension;
-import java.awt.Font;
-import java.awt.FontMetrics;
-import java.awt.Graphics;
-import java.awt.Graphics2D;
-import java.awt.Point;
-import java.awt.RenderingHints;
-import java.awt.geom.Point2D;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.awt.*;
+import java.awt.geom.Point2D;
 
 public class ScaleDegreeSelectionDial extends Dial {
 
@@ -20,16 +12,16 @@ public class ScaleDegreeSelectionDial extends Dial {
 
     // Scale degree labels with Roman numerals
     private static final String[] SCALE_DEGREE_LABELS = {
-        "bVII", "bVI", "bV", "bIV", "bIII", "bII", "bI", 
-        "I", 
-        "II", "III", "IV", "V", "VI", "VII", "VIII"
+            "bVII", "bVI", "bV", "bIV", "bIII", "bII", "bI",
+            "I",
+            "II", "III", "IV", "V", "VI", "VII", "VIII"
     };
-    
+
     private static final int DETENT_COUNT = 15;  // -7 to +7
     private static final double START_ANGLE = -90; // Start at top (-90 degrees)
     private static final double TOTAL_ARC = 300;  // Not a full circle to prevent wrap-around
     private static final double DEGREES_PER_DETENT = TOTAL_ARC / (DETENT_COUNT - 1);
-    
+
     private int currentDetent = 7;  // Default to "I" (index 7 in our array)
     private boolean isDragging = false;
     private double startAngle = 0;
@@ -39,7 +31,7 @@ public class ScaleDegreeSelectionDial extends Dial {
         setMinimum(-7);
         setMaximum(7);
         setValue(1, false);  // Default to "I" (1 in our scale degree system)
-        
+
         setPreferredSize(new Dimension(100, 100));
         setMinimumSize(new Dimension(80, 80));
 
@@ -73,32 +65,27 @@ public class ScaleDegreeSelectionDial extends Dial {
                 if (detentDelta != 0) {
                     // Calculate new detent position, clamping to valid range
                     int newDetent = Math.max(0, Math.min(DETENT_COUNT - 1, currentDetent + detentDelta));
-                    
+
                     // Only update if the position changes
                     if (newDetent != currentDetent) {
                         currentDetent = newDetent;
-                        
+
                         // Convert from detent position to scale degree value (-7 to 7)
                         int scaleDegreeValue = currentDetent - 7;  // Map 0-14 → -7 to 7
-                        
+
                         // Update the visual representation
                         startAngle = currentAngle;
                         repaint();
-                        
+
                         // Fire change events
                         setValue(scaleDegreeValue, true);
-                        
-                        logger.debug("Scale degree changed: {} (value: {})", 
+
+                        logger.debug("Scale degree changed: {} (value: {})",
                                 SCALE_DEGREE_LABELS[currentDetent], scaleDegreeValue);
                     }
                 }
             }
         });
-    }
-
-    @Override
-    protected void updateSize() {
-        // Size is fixed by preferred size setting
     }
 
     @Override
@@ -130,12 +117,12 @@ public class ScaleDegreeSelectionDial extends Dial {
         // Draw arc to show limited rotation range
         g2d.setColor(Color.DARK_GRAY);
         g2d.setStroke(new BasicStroke(1f));
-        g2d.drawArc(x + margin/2, y + margin/2, size - margin, size - margin,
-                (int)(START_ANGLE - TOTAL_ARC/2), (int)TOTAL_ARC);
+        g2d.drawArc(x + margin / 2, y + margin / 2, size - margin, size - margin,
+                (int) (START_ANGLE - TOTAL_ARC / 2), (int) TOTAL_ARC);
 
         // Calculate starting position for detent markers
         double startingAngle = START_ANGLE - (TOTAL_ARC / 2);
-        
+
         // Draw detent markers and labels
         Font font = new Font("SansSerif", Font.PLAIN, size / 12);
         g2d.setFont(font);
@@ -149,7 +136,7 @@ public class ScaleDegreeSelectionDial extends Dial {
             // Calculate marker points
             Point2D p1 = new Point2D.Double(centerX + Math.cos(angle) * (radius - margin),
                     centerY + Math.sin(angle) * (radius - margin));
-            Point2D p2 = new Point2D.Double(centerX + Math.cos(angle) * radius, 
+            Point2D p2 = new Point2D.Double(centerX + Math.cos(angle) * radius,
                     centerY + Math.sin(angle) * radius);
 
             // Highlight current position
@@ -172,7 +159,7 @@ public class ScaleDegreeSelectionDial extends Dial {
                     break;
                 }
             }
-            
+
             if (shouldShowLabel) {
                 Point2D labelPos = new Point2D.Double(
                         centerX + Math.cos(angle) * (radius + margin * 1.5),
@@ -183,8 +170,8 @@ public class ScaleDegreeSelectionDial extends Dial {
                 int labelW = fm.stringWidth(label);
                 int labelH = fm.getHeight();
 
-                g2d.drawString(label, (int)(labelPos.getX() - labelW/2), 
-                        (int)(labelPos.getY() + labelH/4));
+                g2d.drawString(label, (int) (labelPos.getX() - labelW / 2),
+                        (int) (labelPos.getY() + labelH / 4));
             }
         }
 
@@ -192,17 +179,17 @@ public class ScaleDegreeSelectionDial extends Dial {
         double pointerAngle = Math.toRadians(startingAngle + (currentDetent * DEGREES_PER_DETENT));
         g2d.setStroke(new BasicStroke(2.5f));
         g2d.setColor(isEnabled() ? Color.RED : Color.GRAY);
-        g2d.drawLine((int)centerX, (int)centerY, 
-                (int)(centerX + Math.cos(pointerAngle) * (radius - margin/2)),
-                (int)(centerY + Math.sin(pointerAngle) * (radius - margin/2)));
+        g2d.drawLine((int) centerX, (int) centerY,
+                (int) (centerX + Math.cos(pointerAngle) * (radius - margin / 2)),
+                (int) (centerY + Math.sin(pointerAngle) * (radius - margin / 2)));
 
         // Draw center value
         g2d.setColor(Color.WHITE);
         g2d.setFont(new Font("SansSerif", Font.BOLD, size / 5));
         String valueText = SCALE_DEGREE_LABELS[currentDetent];
         FontMetrics fm = g2d.getFontMetrics();
-        g2d.drawString(valueText, (int)(centerX - fm.stringWidth(valueText)/2),
-                (int)(centerY + fm.getHeight()/4));
+        g2d.drawString(valueText, (int) (centerX - fm.stringWidth(valueText) / 2),
+                (int) (centerY + fm.getHeight() / 4));
 
         g2d.dispose();
     }
@@ -211,19 +198,19 @@ public class ScaleDegreeSelectionDial extends Dial {
     public void setValue(int value, boolean notify) {
         // Ensure value is within range
         value = Math.max(getMinimum(), Math.min(getMaximum(), value));
-        
+
         // Convert from scale degree value (-7 to 7) to detent position (0 to 14)
         currentDetent = value + 7;
-        
+
         // Set the base class value
         super.setValue(value, notify);
-        
-        logger.debug("Set scale degree: {} (value: {})", 
+
+        logger.debug("Set scale degree: {} (value: {})",
                 SCALE_DEGREE_LABELS[currentDetent], value);
-        
+
         repaint();
     }
-    
+
     /**
      * Gets the current scale degree as a Roman numeral string
      */
