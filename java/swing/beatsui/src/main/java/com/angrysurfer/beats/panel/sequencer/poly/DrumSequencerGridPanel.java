@@ -552,8 +552,9 @@ public class DrumSequencerGridPanel extends JPanel implements IBusListener {
 
                             // Calculate previous step based on direction in the cycle
                             if (positionInCycle == 0) {
-                                // At start of forward phase, previous is first step
-                                drumPreviousStep = 0;
+                                // FIXED: At start of forward phase, set previous to -1 instead of 0
+                                // This ensures no visual artifact from previous step
+                                drumPreviousStep = -1;
                             } else if (positionInCycle == drumPatternLength - 1) {
                                 // At end of forward phase, previous is one step back
                                 drumPreviousStep = drumPatternLength - 2;
@@ -570,6 +571,9 @@ public class DrumSequencerGridPanel extends JPanel implements IBusListener {
                                 // In backward phase
                                 drumPreviousStep = drumCurrentStep + 1;
                             }
+                            
+                            // Update highlighting using the regular method - bounce mode works well with it
+                            updateStepHighlighting(drumIndex, drumPreviousStep, drumCurrentStep);
                         } else if (direction == Direction.BACKWARD) {
                             // For backward mode, we count from the end back to the start
                             drumCurrentStep = (drumPatternLength - 1) - (absoluteStep % drumPatternLength);
