@@ -1,9 +1,6 @@
 package com.angrysurfer.core.redis;
 
-import com.angrysurfer.core.api.Command;
-import com.angrysurfer.core.api.CommandBus;
-import com.angrysurfer.core.api.Commands;
-import com.angrysurfer.core.api.IBusListener;
+import com.angrysurfer.core.api.*;
 import com.angrysurfer.core.config.FrameState;
 import com.angrysurfer.core.config.TableState;
 import com.angrysurfer.core.config.UserConfig;
@@ -12,11 +9,6 @@ import com.angrysurfer.core.sequencer.DrumSequenceData;
 import com.angrysurfer.core.sequencer.DrumSequencer;
 import com.angrysurfer.core.sequencer.MelodicSequenceData;
 import com.angrysurfer.core.sequencer.MelodicSequencer;
-import com.angrysurfer.core.service.DeviceManager;
-import com.angrysurfer.core.service.InstrumentManager;
-import com.angrysurfer.core.service.PlayerManager;
-import com.angrysurfer.core.service.ReceiverManager;
-import com.angrysurfer.core.util.ErrorHandler;
 import com.angrysurfer.core.util.SessionDeserializer;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -29,13 +21,8 @@ import redis.clients.jedis.Jedis;
 import redis.clients.jedis.JedisPool;
 import redis.clients.jedis.JedisPoolConfig;
 
-import javax.sound.midi.MidiDevice;
-import javax.sound.midi.Receiver;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
-import java.util.HashSet;
-import java.util.ArrayList;
 
 @Getter
 public class RedisService implements IBusListener {
@@ -502,6 +489,8 @@ public class RedisService implements IBusListener {
     }
 
     public void saveDrumSequence(DrumSequencer sequencer) {
+        CommandBus.getInstance().publish(Commands.STATUS_UPDATE, this, new StatusUpdate("Saving Drum Sequence " +
+                sequencer.getSequenceData().getId().toString()));
         drumSequenceHelper.saveDrumSequence(sequencer);
     }
 
@@ -557,6 +546,8 @@ public class RedisService implements IBusListener {
     }
 
     public void saveMelodicSequence(MelodicSequencer sequencer) {
+        CommandBus.getInstance().publish(Commands.STATUS_UPDATE, this, new StatusUpdate("Saving Melodic Sequence " +
+                sequencer.getSequenceData().getId().toString()));
         melodicSequencerHelper.saveMelodicSequence(sequencer);
     }
 
@@ -594,6 +585,7 @@ public class RedisService implements IBusListener {
 
     /**
      * Get the next available sequence ID for melodic sequences
+     *
      * @return The next available sequence ID
      */
     public long getNextSequenceId() {

@@ -38,7 +38,9 @@ public class MelodicSequenceData {
     private Integer octaveShift = 0;
     private TimingDivision timingDivision = TimingDivision.SIXTEENTH;
     private Integer sequencerId; // Add this field to store the sequencer ID
-    private Integer followSequencerId = -1;
+    //private Integer followSequencerId = -1;
+    private Integer followNoteSequencerId = -1;
+    private Integer followTiltSequencerId = -1;
 
     // Sound-related settings
     private String soundbankName = "Default";

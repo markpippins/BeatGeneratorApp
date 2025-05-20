@@ -93,6 +93,8 @@ public class DrumSequenceData {
     // Mute state for each step of each drum
     private int[][] stepMuteValues; // Mute state for each step of each drum [drumIndex][barIndex]
 
+    private Integer sequencerId = -1;
+
     /**
      * Initialize drum sequencer data with default values
      */

@@ -66,6 +66,7 @@ class DrumSequenceDataHelper {
         try {
             // Set basic sequence ID
             sequencer.getSequenceData().setId(data.getId());
+            //sequencer.getSequenceData().setSequencerId(sequencer.getId());
 
             // Apply instrument data
             for (int i = 0; i < SequencerConstants.DRUM_PAD_COUNT; i++) {

@@ -58,8 +58,8 @@ public class MelodicSequenceParametersPanel extends JPanel {
         createTimingControls(controlsPanel);
         createLoopButton(controlsPanel);
         createRotationControls(controlsPanel);
-        createFollowSequencControls(controlsPanel);
-
+        createFollowSequenceControls(controlsPanel);
+        createFollowHarmonicTiltControls(controlsPanel);
         add(controlsPanel, BorderLayout.WEST);
 
         // Reduce spacing in the clear button panel
@@ -71,25 +71,55 @@ public class MelodicSequenceParametersPanel extends JPanel {
         add(clearPanel, BorderLayout.EAST);
     }
 
-    private void createFollowSequencControls(JPanel parentPanel) {
+    private void createFollowHarmonicTiltControls(JPanel controlsPanel) {
         JPanel followPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 2, 0));
 
-        JLabel label = new JLabel("Source:");
+        JLabel label = new JLabel("Note Source:");
+
+        followSequenceCombo = new JComboBox<>(getOtherSequencerIds());
+        followSequenceCombo.setPreferredSize(new Dimension(UIHelper.LARGE_CONTROL_WIDTH, UIHelper.CONTROL_HEIGHT));
+        followSequenceCombo.setToolTipText("Set a master sequencer for Harmonic Tilt");
+
+        // Add the custom renderer
+        setupFollowSequenceComboRenderer(followSequenceCombo);
+
+        followSequenceCombo.addActionListener(e -> {
+            if (!updatingUI) {
+                sequencer.getSequenceData().setFollowTiltSequencerId(-1);
+                Integer followId = (Integer) followSequenceCombo.getSelectedItem();
+                if (followId > -1) {
+                    logger.info("Setting a master sequencer for Harmonic Tilt");
+                    sequencer.getSequenceData().setFollowTiltSequencerId(followId);
+                }
+                CommandBus.getInstance().publish(Commands.SEQUENCER_FOLLOW_EVENT, sequencer, followId);
+            }
+        });
+
+        followPanel.add(label);
+        followPanel.add(followSequenceCombo);
+
+        controlsPanel.add(followPanel);
+    }
+
+    private void createFollowSequenceControls(JPanel parentPanel) {
+        JPanel followPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 2, 0));
+
+        JLabel label = new JLabel("Note Source:");
 
         followSequenceCombo = new JComboBox<>(getOtherSequencerIds());
         followSequenceCombo.setPreferredSize(new Dimension(UIHelper.LARGE_CONTROL_WIDTH, UIHelper.CONTROL_HEIGHT));
         followSequenceCombo.setToolTipText("Set a master sequencer for this one");
-        
+
         // Add the custom renderer
-        setupFollowSequenceComboRenderer();
-        
+        setupFollowSequenceComboRenderer(followSequenceCombo);
+
         followSequenceCombo.addActionListener(e -> {
             if (!updatingUI) {
-                sequencer.getSequenceData().setFollowSequencerId(-1);
+                sequencer.getSequenceData().setFollowNoteSequencerId(-1);
                 Integer followId = (Integer) followSequenceCombo.getSelectedItem();
                 if (followId > -1) {
                     logger.info("Setting a master sequencer for this one");
-                    sequencer.getSequenceData().setFollowSequencerId(followId);
+                    sequencer.getSequenceData().setFollowNoteSequencerId(followId);
                 }
                 CommandBus.getInstance().publish(Commands.SEQUENCER_FOLLOW_EVENT, sequencer, followId);
             }
@@ -104,19 +134,19 @@ public class MelodicSequenceParametersPanel extends JPanel {
     /**
      * Create custom renderer for the follow sequence combo box
      */
-    private void setupFollowSequenceComboRenderer() {
-        followSequenceCombo.setRenderer(new DefaultListCellRenderer() {
+    private void setupFollowSequenceComboRenderer(JComboBox<Integer> combo) {
+        combo.setRenderer(new DefaultListCellRenderer() {
             @Override
-            public Component getListCellRendererComponent(JList<?> list, Object value, 
-                    int index, boolean isSelected, boolean cellHasFocus) {
-                
+            public Component getListCellRendererComponent(JList<?> list, Object value,
+                                                          int index, boolean isSelected, boolean cellHasFocus) {
+
                 // Get the default renderer
                 Component component = super.getListCellRendererComponent(
                         list, value, index, isSelected, cellHasFocus);
-                
+
                 // Cast to label
                 JLabel label = (JLabel) component;
-                
+
                 // Format the display based on the value
                 if (value != null) {
                     int id = (Integer) value;
@@ -127,7 +157,7 @@ public class MelodicSequenceParametersPanel extends JPanel {
                         label.setText("Melo " + (id + 1));
                     }
                 }
-                
+
                 return label;
             }
         });

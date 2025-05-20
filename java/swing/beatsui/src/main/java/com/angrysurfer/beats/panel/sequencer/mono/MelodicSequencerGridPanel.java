@@ -248,13 +248,13 @@ public class MelodicSequencerGridPanel extends JPanel implements IBusListener {
                     logger.warn("Note dial panel not found for index {}", i);
                     continue;
                 }
-                
+
                 JPanel dialPanel = noteDialPanels.get(i);
                 if (dialPanel == null) {
                     logger.warn("Note dial panel is null for index {}", i);
                     continue;
                 }
-                
+
                 // Get parent, with safety check
                 Container columnPanel = dialPanel.getParent();
                 if (columnPanel == null || !(columnPanel instanceof JPanel)) {
@@ -279,7 +279,7 @@ public class MelodicSequencerGridPanel extends JPanel implements IBusListener {
                             (component.getName() != null &&
                                     (component.getName().startsWith("NoteDialPanel") ||
                                             component.getName().startsWith("CircleDialPanel")))) {
-                        ((JPanel)columnPanel).remove(component);
+                        columnPanel.remove(component);
                         break;
                     }
                 }
@@ -289,10 +289,10 @@ public class MelodicSequencerGridPanel extends JPanel implements IBusListener {
                 if (isFollowing) {
                     // When following, show the circle of fifths dial
                     CircleOfFifthsDial circleDial = circleOfFifthsDials.get(i);
-                    
+
                     // Update the value before adding to panel
                     circleDial.setValue(noteDials.get(i).getValue(), false);
-                    
+
                     newDialPanel.add(circleDial);
                     newDialPanel.setName("CircleDialPanel-" + i);
                 } else {
@@ -302,8 +302,8 @@ public class MelodicSequencerGridPanel extends JPanel implements IBusListener {
                 }
 
                 // Add the new panel to column
-                ((JPanel)columnPanel).add(newDialPanel);
-                
+                columnPanel.add(newDialPanel);
+
                 // Store the new panel reference
                 noteDialPanels.put(i, newDialPanel);
             }
@@ -384,7 +384,7 @@ public class MelodicSequencerGridPanel extends JPanel implements IBusListener {
 
         // Get the note value from either dial type
         int noteValue;
-        Integer followId = sequencer.getSequenceData().getFollowSequencerId();
+        Integer followId = sequencer.getSequenceData().getFollowNoteSequencerId();
         boolean isFollowing = followId != null && followId > -1;
 
         if (isFollowing) {
@@ -472,7 +472,7 @@ public class MelodicSequencerGridPanel extends JPanel implements IBusListener {
             listenersEnabled = false;
 
             // Check follow state and update display accordingly
-            Integer followId = sequencer.getSequenceData().getFollowSequencerId();
+            Integer followId = sequencer.getSequenceData().getFollowNoteSequencerId();
             updateNoteDialsDisplay(followId);
 
             // Log what we're syncing
