@@ -87,85 +87,256 @@ public class DrumSequencerGridPanelContextHandler implements IBusListener {
     }
 
     /**
-     * Display a context menu for a step button
-     *
-     * @param component The component that triggered the context menu
-     * @param x         The x position to show the menu
-     * @param y         The y position to show the menu
-     * @param drumIndex The index of the drum for this step
-     * @param step      The step index
+     * Show context menu for drum grid
      */
     public void showContextMenu(Component component, int x, int y, int drumIndex, int step) {
         JPopupMenu menu = new JPopupMenu();
 
-        // Add menu items for step operations
-        JMenuItem fillItem = new JMenuItem("Fill From Here...");
-        fillItem.addActionListener(e -> {
-            // Use CommandBus for dialog creation
-            Object[] params = new Object[]{sequencer, drumIndex, step};
-            CommandBus.getInstance().publish(Commands.SHOW_FILL_DIALOG, this, params);
-        });
-
-        JMenuItem clearRowItem = new JMenuItem("Clear Row");
+        // ----- Basic Pattern Operations -----
+        JMenuItem clearRowItem = new JMenuItem("Clear");
         clearRowItem.addActionListener(e -> parentPanel.clearRow(drumIndex));
 
-        // Add randomize velocities menu item
-        JMenuItem randomizeVelocitiesItem = new JMenuItem("Randomize Velocities");
-        randomizeVelocitiesItem.addActionListener(e -> {
+        JMenuItem copyItem = new JMenuItem("Copy");
+        copyItem.setEnabled(false); // To be implemented
+        //copyItem.addActionListener(e -> copyPattern(drumIndex));
+
+        JMenuItem pasteItem = new JMenuItem("Paste");
+        pasteItem.setEnabled(false); // To be implemented
+        //pasteItem.addActionListener(e -> pastePattern(drumIndex));
+
+        menu.add(clearRowItem);
+        menu.add(copyItem);
+        menu.add(pasteItem);
+        menu.addSeparator();
+
+        // ----- Pattern Length -----
+        JMenuItem doublePatternItem = new JMenuItem("Double");
+        doublePatternItem.addActionListener(e -> doublePattern(drumIndex));
+        menu.add(doublePatternItem);
+        menu.addSeparator();
+
+        // ----- Direction Submenu -----
+        JMenu directionMenu = new JMenu("Direction");
+        
+        JMenuItem forwardItem = new JMenuItem("Forward");
+        forwardItem.addActionListener(e -> {
+            boolean success = DrumSequenceModifier.pushPatternForward(sequencer, drumIndex);
+            if (success) {
+                parentPanel.updateStepButtonsForDrum(drumIndex);
+            }
+        });
+        
+        JMenuItem backwardItem = new JMenuItem("Backward");
+        backwardItem.addActionListener(e -> {
+            boolean success = DrumSequenceModifier.pullPatternBackward(sequencer, drumIndex);
+            if (success) {
+                parentPanel.updateStepButtonsForDrum(drumIndex);
+            }
+        });
+        
+        JMenuItem bounceItem = new JMenuItem("Bounce");
+        bounceItem.addActionListener(e -> {
+            boolean success = DrumSequenceModifier.createBouncePattern(sequencer, drumIndex);
+            if (success) {
+                parentPanel.updateStepButtonsForDrum(drumIndex);
+            }
+        });
+        
+        JMenuItem randomDirItem = new JMenuItem("Random");
+        randomDirItem.addActionListener(e -> {
+            int density = 50; // Default density of 50%
+            boolean success = DrumSequenceModifier.generateRandomPattern(sequencer, drumIndex, density);
+            if (success) {
+                parentPanel.updateStepButtonsForDrum(drumIndex);
+            }
+        });
+        
+        directionMenu.add(forwardItem);
+        directionMenu.add(backwardItem);
+        directionMenu.add(bounceItem);
+        directionMenu.add(randomDirItem);
+        menu.add(directionMenu);
+        menu.addSeparator();
+
+        // ----- Fill Submenu -----
+        JMenu fillMenu = new JMenu("Fill");
+        
+        JMenuItem fillAllItem = new JMenuItem("All");
+        fillAllItem.addActionListener(e -> {
+            boolean success = DrumSequenceModifier.applyFillPattern(sequencer, drumIndex, 0, "all");
+            if (success) {
+                parentPanel.updateStepButtonsForDrum(drumIndex);
+            }
+        });
+        
+        JMenuItem fill2ndItem = new JMenuItem("Every 2nd");
+        fill2ndItem.addActionListener(e -> {
+            boolean success = DrumSequenceModifier.applyPatternEveryN(sequencer, drumIndex, 2);
+            if (success) {
+                parentPanel.updateStepButtonsForDrum(drumIndex);
+            }
+        });
+        
+        JMenuItem fill3rdItem = new JMenuItem("Every 3rd");
+        fill3rdItem.addActionListener(e -> {
+            boolean success = DrumSequenceModifier.applyPatternEveryN(sequencer, drumIndex, 3);
+            if (success) {
+                parentPanel.updateStepButtonsForDrum(drumIndex);
+            }
+        });
+        
+        JMenuItem fill4thItem = new JMenuItem("Every 4th");
+        fill4thItem.addActionListener(e -> {
+            boolean success = DrumSequenceModifier.applyPatternEveryN(sequencer, drumIndex, 4);
+            if (success) {
+                parentPanel.updateStepButtonsForDrum(drumIndex);
+            }
+        });
+        
+        JMenuItem fillEuclideanItem = new JMenuItem("Euclidean");
+        fillEuclideanItem.addActionListener(e -> {
+            // Use CommandBus for dialog creation - Euclidean for entire row
+            Object[] params = new Object[]{sequencer, drumIndex};
+            CommandBus.getInstance().publish(Commands.SHOW_EUCLIDEAN_DIALOG, this, params);
+        });
+        
+        fillMenu.add(fillAllItem);
+        fillMenu.add(fill2ndItem);
+        fillMenu.add(fill3rdItem);
+        fillMenu.add(fill4thItem);
+        fillMenu.addSeparator();
+        fillMenu.add(fillEuclideanItem);
+        menu.add(fillMenu);
+
+        // ----- Fill From Here Submenu -----
+        JMenu fillFromHereMenu = new JMenu("Fill From Here...");
+        
+        JMenuItem fillFromHereAllItem = new JMenuItem("All");
+        fillFromHereAllItem.addActionListener(e -> {
+            boolean success = DrumSequenceModifier.applyFillPattern(sequencer, drumIndex, step, "all");
+            if (success) {
+                parentPanel.updateStepButtonsForDrum(drumIndex);
+            }
+        });
+        
+        JMenuItem fillFromHere2ndItem = new JMenuItem("Every 2nd");
+        fillFromHere2ndItem.addActionListener(e -> {
+            boolean success = DrumSequenceModifier.applyPatternEveryNFromStep(sequencer, drumIndex, step, 2);
+            if (success) {
+                parentPanel.updateStepButtonsForDrum(drumIndex);
+            }
+        });
+        
+        JMenuItem fillFromHere3rdItem = new JMenuItem("Every 3rd");
+        fillFromHere3rdItem.addActionListener(e -> {
+            boolean success = DrumSequenceModifier.applyPatternEveryNFromStep(sequencer, drumIndex, step, 3);
+            if (success) {
+                parentPanel.updateStepButtonsForDrum(drumIndex);
+            }
+        });
+        
+        JMenuItem fillFromHere4thItem = new JMenuItem("Every 4th");
+        fillFromHere4thItem.addActionListener(e -> {
+            boolean success = DrumSequenceModifier.applyPatternEveryNFromStep(sequencer, drumIndex, step, 4);
+            if (success) {
+                parentPanel.updateStepButtonsForDrum(drumIndex);
+            }
+        });
+        
+        JMenuItem fillFromHereEuclideanItem = new JMenuItem("Euclidean");
+        fillFromHereEuclideanItem.addActionListener(e -> {
+            // Use CommandBus for dialog creation - Euclidean from specific step
+            Object[] params = new Object[]{sequencer, drumIndex, step};
+            CommandBus.getInstance().publish(Commands.SHOW_EUCLIDEAN_DIALOG, this, params);
+        });
+        
+        fillFromHereMenu.add(fillFromHereAllItem);
+        fillFromHereMenu.add(fillFromHere2ndItem);
+        fillFromHereMenu.add(fillFromHere3rdItem);
+        fillFromHereMenu.add(fillFromHere4thItem);
+        fillFromHereMenu.addSeparator();
+        fillFromHereMenu.add(fillFromHereEuclideanItem);
+        menu.add(fillFromHereMenu);
+
+        // ----- Fill Params Submenu -----
+        JMenu fillParamsMenu = new JMenu("Fill Params");
+        
+        JMenu nudgeMenu = new JMenu("Nudge");
+        JMenuItem randomizeNudgeItem = new JMenuItem("Randomize");
+        randomizeNudgeItem.addActionListener(e -> {
+            boolean success = DrumSequenceModifier.randomizeNudgeValues(sequencer, drumIndex);
+            if (success) {
+                parentPanel.updateStepButtonsForDrum(drumIndex);
+            }
+        });
+        nudgeMenu.add(randomizeNudgeItem);
+        
+        JMenu probabilityMenu = new JMenu("Probability");
+        JMenuItem randomizeProbItem = new JMenuItem("Randomize");
+        randomizeProbItem.addActionListener(e -> {
+            boolean success = DrumSequenceModifier.randomizeProbabilities(sequencer, drumIndex);
+            if (success) {
+                parentPanel.updateStepButtonsForDrum(drumIndex);
+            }
+        });
+        probabilityMenu.add(randomizeProbItem);
+        
+        JMenu velocityMenu = new JMenu("Velocity");
+        JMenuItem ascendingVelItem = new JMenuItem("Ascending");
+        ascendingVelItem.addActionListener(e -> {
+            boolean success = DrumSequenceModifier.setAscendingVelocities(sequencer, drumIndex);
+            if (success) {
+                parentPanel.updateStepButtonsForDrum(drumIndex);
+            }
+        });
+        
+        JMenuItem descendingVelItem = new JMenuItem("Descending");
+        descendingVelItem.addActionListener(e -> {
+            boolean success = DrumSequenceModifier.setDescendingVelocities(sequencer, drumIndex);
+            if (success) {
+                parentPanel.updateStepButtonsForDrum(drumIndex);
+            }
+        });
+        
+        JMenuItem randomizeVelItem = new JMenuItem("Randomize");
+        randomizeVelItem.addActionListener(e -> {
             boolean success = DrumSequenceModifier.randomizeVelocities(sequencer, drumIndex);
             if (success) {
                 parentPanel.updateStepButtonsForDrum(drumIndex);
             }
         });
+        
+        velocityMenu.add(ascendingVelItem);
+        velocityMenu.add(descendingVelItem);
+        velocityMenu.add(randomizeVelItem);
+        
+        fillParamsMenu.add(nudgeMenu);
+        fillParamsMenu.add(probabilityMenu);
+        fillParamsMenu.add(velocityMenu);
+        menu.add(fillParamsMenu);
+        menu.addSeparator();
 
-        // Add Copy to New sequence option
-        JMenuItem copyToNewItem = new JMenuItem("Copy Sequence to New...");
-        copyToNewItem.addActionListener(e -> copyToNewSequence(drumIndex));
-
-        // Add Double Pattern option
-        JMenuItem doublePatternItem = new JMenuItem("Double Pattern");
-        // Only enable if doubling is possible
-        int currentLength = sequencer.getPatternLength(drumIndex);
-        int maxLength = sequencer.getMaxPatternLength();
-        boolean canDouble = currentLength * 2 <= maxLength;
-        doublePatternItem.setEnabled(canDouble);
-        doublePatternItem.addActionListener(e -> doublePattern(drumIndex));
-
-        // Add Set Max Length option
-        JMenuItem setMaxLengthItem = new JMenuItem("Set Max Length...");
-        setMaxLengthItem.addActionListener(e -> {
-            // Use CommandBus for dialog creation
-            CommandBus.getInstance().publish(Commands.SHOW_MAX_LENGTH_DIALOG, this, sequencer);
+        // ----- Push/Pull Operations -----
+        JMenuItem pullBackItem = new JMenuItem("Pull Back");
+        pullBackItem.addActionListener(e -> {
+            boolean success = DrumSequenceModifier.pullPatternBackward(sequencer, drumIndex);
+            if (success) {
+                parentPanel.updateStepButtonsForDrum(drumIndex);
+            }
         });
-
-        // Add pattern generation items
-        JMenuItem patternItem = new JMenuItem("Apply Pattern...");
-        patternItem.addActionListener(e -> showPatternDialog(drumIndex));
-
-        // Add Euclidean Pattern option
-        JMenuItem euclideanItem = new JMenuItem("Euclidean Pattern...");
-        euclideanItem.addActionListener(e -> {
-            // Use CommandBus for dialog creation
-            Object[] params = new Object[]{sequencer, drumIndex};
-            CommandBus.getInstance().publish(Commands.SHOW_EUCLIDEAN_DIALOG, this, params);
+        
+        JMenuItem pushForwardItem = new JMenuItem("Push Forward");
+        pushForwardItem.addActionListener(e -> {
+            boolean success = DrumSequenceModifier.pushPatternForward(sequencer, drumIndex);
+            if (success) {
+                parentPanel.updateStepButtonsForDrum(drumIndex);
+            }
         });
+        
+        menu.add(pullBackItem);
+        menu.add(pushForwardItem);
 
-        menu.add(clearRowItem);
-        menu.add(randomizeVelocitiesItem);  // Add the new menu item
-        menu.add(copyToNewItem);
-        menu.addSeparator();
-        menu.add(doublePatternItem);
-        menu.addSeparator();
-
-        JMenu fillMenu = new JMenu("Fill..");
-        fillMenu.add(fillItem);
-        fillMenu.add(patternItem);
-        fillMenu.add(euclideanItem);
-        menu.add(fillMenu);
-
-        menu.addSeparator();
-        menu.add(setMaxLengthItem);
-
+        // Show menu at the requested position
         menu.show(component, x, y);
     }
 
