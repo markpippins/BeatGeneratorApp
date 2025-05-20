@@ -1,0 +1,920 @@
+./core/src/main/java/com/angrysurfer/core/api/AbstractBus.java:197://                case Commands.LOG_DEBUG -> logManager.debug(msg.source(), msg.message());
+./core/src/main/java/com/angrysurfer/core/api/AbstractBus.java:198://                case Commands.LOG_INFO -> logManager.info(msg.source(), msg.message());
+./core/src/main/java/com/angrysurfer/core/api/AbstractBus.java:199://                case Commands.LOG_WARN -> logManager.warn(msg.source(), msg.message());
+./core/src/main/java/com/angrysurfer/core/api/AbstractBus.java:200://                case Commands.LOG_ERROR -> {
+./core/src/main/java/com/angrysurfer/core/api/AbstractBus.java:213:        publish(Commands.LOG_DEBUG, this, new LogMessage(source, message));
+./core/src/main/java/com/angrysurfer/core/api/AbstractBus.java:217:        publish(Commands.LOG_INFO, this, new LogMessage(source, message));
+./core/src/main/java/com/angrysurfer/core/api/AbstractBus.java:221:        publish(Commands.LOG_WARN, this, new LogMessage(source, message));
+./core/src/main/java/com/angrysurfer/core/api/AbstractBus.java:225:        publish(Commands.LOG_ERROR, this, new LogMessage(source, message));
+./core/src/main/java/com/angrysurfer/core/api/AbstractBus.java:229:        publish(Commands.LOG_ERROR, this, new LogMessage(source, message, e));
+./core/src/main/java/com/angrysurfer/core/api/Commands.java:383:    // Add to Commands.java:
+./core/src/main/java/com/angrysurfer/core/api/Commands.java:386:    // In Commands.java
+./core/src/main/java/com/angrysurfer/core/api/TimingBus.java:67:        if (Commands.TIMING_UPDATE.equals(commandName)) {
+./core/src/main/java/com/angrysurfer/core/api/TimingBus.java:109:        Command command = new Command(Commands.TIMING_UPDATE, this, update);
+./core/src/main/java/com/angrysurfer/core/model/Player.java:179:                Commands.TIMING_UPDATE,      // For timing-based note triggers
+./core/src/main/java/com/angrysurfer/core/model/Player.java:180:                Commands.TRANSPORT_STOP,     // To disable when transport stops
+./core/src/main/java/com/angrysurfer/core/model/Player.java:181:                Commands.TRANSPORT_START,    // To re-enable when transport starts
+./core/src/main/java/com/angrysurfer/core/model/Player.java:182:                Commands.ALL_NOTES_OFF       // Optional - if you want to handle this globally
+./core/src/main/java/com/angrysurfer/core/model/Player.java:383:                    () -> CommandBus.getInstance().publish(Commands.PLAYER_ROW_REFRESH, this, this),
+./core/src/main/java/com/angrysurfer/core/model/Player.java:439:            CommandBus.getInstance().publish(Commands.PLAYER_ROW_REFRESH, this, this);
+./core/src/main/java/com/angrysurfer/core/model/Player.java:834:                case Commands.TIMING_UPDATE -> {
+./core/src/main/java/com/angrysurfer/core/model/Player.java:855:                case Commands.TRANSPORT_STOP -> {
+./core/src/main/java/com/angrysurfer/core/model/Player.java:859:                case Commands.TRANSPORT_START -> {
+./core/src/main/java/com/angrysurfer/core/model/Ratchet.java:61:            CommandBus.getInstance().publish(Commands.PLAYER_ADDED, this, this);
+./core/src/main/java/com/angrysurfer/core/model/Ratchet.java:65:        CommandBus.getInstance().register(this, new String[]{Commands.TIMING_UPDATE});
+./core/src/main/java/com/angrysurfer/core/model/Ratchet.java:72:        CommandBus.getInstance().publish(Commands.PLAYER_ADDED, this, this);
+./core/src/main/java/com/angrysurfer/core/model/Ratchet.java:84:            CommandBus.getInstance().publish(Commands.PLAYER_DELETED, this, this);
+./core/src/main/java/com/angrysurfer/core/model/Ratchet.java:101:    //     if (action.getCommand() == Commands.TIMING_TICK) {
+./core/src/main/java/com/angrysurfer/core/model/Sample.java:298:            CommandBus.getInstance().publish(Commands.PLAYER_ROW_REFRESH, this, this);
+./core/src/main/java/com/angrysurfer/core/model/Sample.java:318:                    CommandBus.getInstance().publish(Commands.PLAYER_ROW_REFRESH, this, this);
+./core/src/main/java/com/angrysurfer/core/model/Sample.java:342:        CommandBus.getInstance().publish(Commands.PLAYER_ROW_REFRESH, this, this);
+./core/src/main/java/com/angrysurfer/core/model/Sample.java:358:            case Commands.SAMPLE_LOOP_POINTS_CHANGED:
+./core/src/main/java/com/angrysurfer/core/model/Sample.java:371:            case Commands.SAMPLE_SELECTION_CHANGED:
+./core/src/main/java/com/angrysurfer/core/model/Session.java:134:        CommandBus.getInstance().register(this, new String[]{Commands.TIMING_PARAMETERS_CHANGED});
+./core/src/main/java/com/angrysurfer/core/model/Session.java:197:        CommandBus.getInstance().publish(Commands.PLAYER_ADDED, this, player);
+./core/src/main/java/com/angrysurfer/core/model/Session.java:216:        CommandBus.getInstance().publish(Commands.PLAYER_ADDED, this, player);
+./core/src/main/java/com/angrysurfer/core/model/Session.java:242:        CommandBus.getInstance().publish(Commands.SESSION_UPDATED, this, this);
+./core/src/main/java/com/angrysurfer/core/model/Session.java:365:        CommandBus.getInstance().publish(Commands.UPDATE_TEMPO, this, ticksPerBeat);
+./core/src/main/java/com/angrysurfer/core/model/Session.java:372:        CommandBus.getInstance().publish(Commands.SESSION_STARTING, this);
+./core/src/main/java/com/angrysurfer/core/model/Session.java:637:                case Commands.TIMING_PARAMETERS_CHANGED -> sequencerManager.updateTimingParameters(getTempoInBPM(),
+./core/src/main/java/com/angrysurfer/core/model/Session.java:654:                timingBus.publish(Commands.TIMING_BEAT, this,
+./core/src/main/java/com/angrysurfer/core/model/Session.java:657:                timingBus.publish(Commands.TIMING_BEAT, this,
+./core/src/main/java/com/angrysurfer/core/model/Session.java:666:                timingBus.publish(Commands.TIMING_BAR, this,
+./core/src/main/java/com/angrysurfer/core/model/Session.java:669:                timingBus.publish(Commands.TIMING_BAR, this,
+./core/src/main/java/com/angrysurfer/core/model/Session.java:680:                timingBus.publish(Commands.TIMING_PART, this,
+./core/src/main/java/com/angrysurfer/core/model/Session.java:683:                timingBus.publish(Commands.TIMING_PART, this,
+./core/src/main/java/com/angrysurfer/core/model/Session.java:690:        timingBus.publish(Commands.TIMING_UPDATE, this,
+./core/src/main/java/com/angrysurfer/core/model/Session.java:706:        CommandBus.getInstance().publish(Commands.SESSION_CHANGED, this, this);
+./core/src/main/java/com/angrysurfer/core/model/Session.java:712:        CommandBus.getInstance().publish(Commands.UPDATE_TEMPO, this, ticksPerBeat);
+./core/src/main/java/com/angrysurfer/core/model/Session.java:717:        CommandBus.getInstance().publish(Commands.SESSION_CHANGED, this, this);
+./core/src/main/java/com/angrysurfer/core/model/Session.java:726:        CommandBus.getInstance().publish(Commands.SESSION_CHANGED, this, this);
+./core/src/main/java/com/angrysurfer/core/model/Session.java:735:        CommandBus.getInstance().publish(Commands.SESSION_CHANGED, this, this);
+./core/src/main/java/com/angrysurfer/core/model/Session.java:744:        CommandBus.getInstance().publish(Commands.SESSION_CHANGED, this, this);
+./core/src/main/java/com/angrysurfer/core/model/Session.java:768:        CommandBus.getInstance().publish(Commands.SESSION_CHANGED, this, this);
+./core/src/main/java/com/angrysurfer/core/redis/DrumSequenceDataHelper.java:214:            CommandBus.getInstance().publish(Commands.DRUM_SEQUENCE_UPDATED, this, sequencer.getSequenceData().getId());
+./core/src/main/java/com/angrysurfer/core/redis/DrumSequenceDataHelper.java:283:            CommandBus.getInstance().publish(Commands.DRUM_SEQUENCE_SAVED, this, data.getId());
+./core/src/main/java/com/angrysurfer/core/redis/DrumSequenceDataHelper.java:500:                CommandBus.getInstance().publish(Commands.DRUM_SEQUENCE_DELETED, this, id);
+./core/src/main/java/com/angrysurfer/core/redis/MelodicSequenceDataHelper.java:248:                    Commands.MELODIC_SEQUENCE_LOADED,
+./core/src/main/java/com/angrysurfer/core/redis/MelodicSequenceDataHelper.java:309:            CommandBus.getInstance().publish(Commands.MELODIC_SEQUENCE_SAVED, this,
+./core/src/main/java/com/angrysurfer/core/redis/MelodicSequenceDataHelper.java:372:                    Commands.MELODIC_SEQUENCE_REMOVED,
+./core/src/main/java/com/angrysurfer/core/redis/RedisService.java:75:        CommandBus.getInstance().register(this, new String[]{Commands.CLEAR_DATABASE});
+./core/src/main/java/com/angrysurfer/core/redis/RedisService.java:356:            case Commands.CLEAR_DATABASE:
+./core/src/main/java/com/angrysurfer/core/redis/RedisService.java:369:            CommandBus.getInstance().publish(Commands.SESSION_LOADED, this, session);
+./core/src/main/java/com/angrysurfer/core/redis/RedisService.java:666:            CommandBus.getInstance().publish(Commands.MELODIC_SEQUENCE_UPDATED, this,
+./core/src/main/java/com/angrysurfer/core/redis/SessionHelper.java:180:            CommandBus.getInstance().publish(Commands.SESSION_DELETED, this, sessionId);
+./core/src/main/java/com/angrysurfer/core/sequencer/DrumSequencer.java:72:            Commands.REPAIR_MIDI_CONNECTIONS,
+./core/src/main/java/com/angrysurfer/core/sequencer/DrumSequencer.java:73:            Commands.TIMING_UPDATE,
+./core/src/main/java/com/angrysurfer/core/sequencer/DrumSequencer.java:74:            Commands.TRANSPORT_START,
+./core/src/main/java/com/angrysurfer/core/sequencer/DrumSequencer.java:75:            Commands.TRANSPORT_STOP,
+./core/src/main/java/com/angrysurfer/core/sequencer/DrumSequencer.java:76:            Commands.UPDATE_TEMPO,
+./core/src/main/java/com/angrysurfer/core/sequencer/DrumSequencer.java:77:            Commands.DRUM_PAD_SELECTED,
+./core/src/main/java/com/angrysurfer/core/sequencer/DrumSequencer.java:78:            Commands.DRUM_STEP_UPDATED,
+./core/src/main/java/com/angrysurfer/core/sequencer/DrumSequencer.java:79:            Commands.REFRESH_ALL_INSTRUMENTS,
+./core/src/main/java/com/angrysurfer/core/sequencer/DrumSequencer.java:80:            Commands.REFRESH_PLAYER_INSTRUMENT,
+./core/src/main/java/com/angrysurfer/core/sequencer/DrumSequencer.java:81:            Commands.PLAYER_UPDATED,
+./core/src/main/java/com/angrysurfer/core/sequencer/DrumSequencer.java:82:            Commands.PLAYER_INSTRUMENT_CHANGED
+./core/src/main/java/com/angrysurfer/core/sequencer/DrumSequencer.java:300:        CommandBus.getInstance().publish(Commands.DRUM_SEQUENCE_PARAMS_CHANGED, this, -1 // -1 indicates global
+./core/src/main/java/com/angrysurfer/core/sequencer/DrumSequencer.java:314:        CommandBus.getInstance().publish(Commands.DRUM_SEQUENCE_PARAMS_CHANGED, this, -1);
+./core/src/main/java/com/angrysurfer/core/sequencer/DrumSequencer.java:355:            CommandBus.getInstance().publish(Commands.DRUM_SEQUENCE_LOADED, this, sequenceData.getId());
+./core/src/main/java/com/angrysurfer/core/sequencer/DrumSequencer.java:487:            CommandBus.getInstance().publish(Commands.DRUM_PATTERN_SWITCHED, this,
+./core/src/main/java/com/angrysurfer/core/sequencer/DrumSequencer.java:796:            CommandBus.getInstance().publish(Commands.DRUM_STEP_UPDATED, this, event);
+./core/src/main/java/com/angrysurfer/core/sequencer/DrumSequencer.java:834:            CommandBus.getInstance().publish(Commands.DRUM_SEQUENCE_PARAMS_CHANGED, this, drumIndex);
+./core/src/main/java/com/angrysurfer/core/sequencer/DrumSequencer.java:905:            CommandBus.getInstance().publish(Commands.DRUM_SEQUENCE_PARAMS_CHANGED, this, drumIndex);
+./core/src/main/java/com/angrysurfer/core/sequencer/DrumSequencer.java:935:            CommandBus.getInstance().publish(Commands.DRUM_SEQUENCE_PARAMS_CHANGED, this, drumIndex);
+./core/src/main/java/com/angrysurfer/core/sequencer/DrumSequencer.java:966:            CommandBus.getInstance().publish(Commands.DRUM_SEQUENCE_PARAMS_CHANGED, this, drumIndex);
+./core/src/main/java/com/angrysurfer/core/sequencer/DrumSequencer.java:998:            CommandBus.getInstance().publish(Commands.DRUM_SEQUENCE_PARAMS_CHANGED, this, drumIndex);
+./core/src/main/java/com/angrysurfer/core/sequencer/DrumSequencer.java:1171:            CommandBus.getInstance().publish(Commands.DRUM_PAD_SELECTED, this,
+./core/src/main/java/com/angrysurfer/core/sequencer/DrumSequencer.java:1264:        CommandBus.getInstance().publish(Commands.DRUM_SEQUENCE_PARAMS_CHANGED, this, drumIndex);
+./core/src/main/java/com/angrysurfer/core/sequencer/DrumSequencer.java:1278:        CommandBus.getInstance().publish(Commands.DRUM_SEQUENCE_UPDATED, this, null);
+./core/src/main/java/com/angrysurfer/core/sequencer/DrumSequencer.java:1290:        CommandBus.getInstance().publish(Commands.DRUM_SEQUENCE_UPDATED, this, null);
+./core/src/main/java/com/angrysurfer/core/sequencer/DrumSequencer.java:1303:        if (Commands.REPAIR_MIDI_CONNECTIONS.equals(cmd.getCommand())) {
+./core/src/main/java/com/angrysurfer/core/sequencer/DrumSequencer.java:1309:        if (Commands.TIMING_UPDATE.equals(cmd.getCommand()) && cmd.getData() instanceof TimingUpdate) {
+./core/src/main/java/com/angrysurfer/core/sequencer/DrumSequencer.java:1316:            case Commands.TRANSPORT_START -> {
+./core/src/main/java/com/angrysurfer/core/sequencer/DrumSequencer.java:1322:            case Commands.TRANSPORT_STOP -> {
+./core/src/main/java/com/angrysurfer/core/sequencer/DrumSequencer.java:1326:            case Commands.UPDATE_TEMPO -> {
+./core/src/main/java/com/angrysurfer/core/sequencer/MelodicSequencer.java:57:            Commands.REPAIR_MIDI_CONNECTIONS,
+./core/src/main/java/com/angrysurfer/core/sequencer/MelodicSequencer.java:58:            Commands.TIMING_UPDATE,
+./core/src/main/java/com/angrysurfer/core/sequencer/MelodicSequencer.java:59:            Commands.TRANSPORT_START,
+./core/src/main/java/com/angrysurfer/core/sequencer/MelodicSequencer.java:60:            Commands.TRANSPORT_STOP,
+./core/src/main/java/com/angrysurfer/core/sequencer/MelodicSequencer.java:61:            Commands.REFRESH_ALL_INSTRUMENTS,
+./core/src/main/java/com/angrysurfer/core/sequencer/MelodicSequencer.java:62:            Commands.PLAYER_PRESET_CHANGE_EVENT,
+./core/src/main/java/com/angrysurfer/core/sequencer/MelodicSequencer.java:63:            Commands.PLAYER_PRESET_CHANGED,
+./core/src/main/java/com/angrysurfer/core/sequencer/MelodicSequencer.java:64:            Commands.PLAYER_INSTRUMENT_CHANGE_EVENT,
+./core/src/main/java/com/angrysurfer/core/sequencer/MelodicSequencer.java:65:            Commands.PLAYER_UPDATED,
+./core/src/main/java/com/angrysurfer/core/sequencer/MelodicSequencer.java:66:            Commands.REFRESH_PLAYER_INSTRUMENT
+./core/src/main/java/com/angrysurfer/core/sequencer/MelodicSequencer.java:159:        CommandBus.getInstance().publish(Commands.SEQUENCER_STATE_CHANGED, this,
+./core/src/main/java/com/angrysurfer/core/sequencer/MelodicSequencer.java:292:                        Commands.MELODIC_PATTERN_SWITCHED,
+./core/src/main/java/com/angrysurfer/core/sequencer/MelodicSequencer.java:409:                    Commands.MELODIC_NOTE_TRIGGERED,
+./core/src/main/java/com/angrysurfer/core/sequencer/MelodicSequencer.java:423:                Commands.MELODIC_PATTERN_UPDATED,
+./core/src/main/java/com/angrysurfer/core/sequencer/MelodicSequencer.java:679:        if (Commands.REPAIR_MIDI_CONNECTIONS.equals(action.getCommand())) {
+./core/src/main/java/com/angrysurfer/core/sequencer/MelodicSequencer.java:685:            case Commands.TIMING_UPDATE -> {
+./core/src/main/java/com/angrysurfer/core/sequencer/MelodicSequencer.java:727:                                                Commands.PLAYER_UPDATED,
+./core/src/main/java/com/angrysurfer/core/sequencer/MelodicSequencer.java:738:            case Commands.TRANSPORT_START -> {
+./core/src/main/java/com/angrysurfer/core/sequencer/MelodicSequencer.java:745:            case Commands.TRANSPORT_STOP -> {
+./core/src/main/java/com/angrysurfer/core/sequencer/MelodicSequencer.java:750:            case Commands.REFRESH_ALL_INSTRUMENTS, Commands.PLAYER_PRESET_CHANGE_EVENT,
+./core/src/main/java/com/angrysurfer/core/sequencer/MelodicSequencer.java:751:                 Commands.PLAYER_PRESET_CHANGED, Commands.PLAYER_INSTRUMENT_CHANGE_EVENT,
+./core/src/main/java/com/angrysurfer/core/sequencer/MelodicSequencer.java:752:                 Commands.PLAYER_UPDATED, Commands.REFRESH_PLAYER_INSTRUMENT -> {
+./core/src/main/java/com/angrysurfer/core/sequencer/SongEngine.java:62:        CommandBus.getInstance().publish(Commands.PATTERN_UPDATED, this, pattern);
+./core/src/main/java/com/angrysurfer/core/sequencer/SongEngine.java:85:        CommandBus.getInstance().publish(Commands.STEP_UPDATED, this, step);
+./core/src/main/java/com/angrysurfer/core/sequencer/SongEngine.java:93:        CommandBus.getInstance().publish(Commands.PATTERN_ADDED, this, pattern);
+./core/src/main/java/com/angrysurfer/core/sequencer/SongEngine.java:99:        CommandBus.getInstance().publish(Commands.PATTERN_REMOVED, this, pattern);
+./core/src/main/java/com/angrysurfer/core/sequencer/SongEngine.java:123:                    case Commands.SONG_SELECTED -> {
+./core/src/main/java/com/angrysurfer/core/sequencer/SongEngine.java:128:                    case Commands.SONG_UPDATED -> {
+./core/src/main/java/com/angrysurfer/core/sequencer/SongEngine.java:135:        }, new String[]{Commands.SONG_SELECTED, Commands.SONG_UPDATED});
+./core/src/main/java/com/angrysurfer/core/sequencer/SongEngine.java:141:            CommandBus.getInstance().publish(Commands.SONG_CHANGED, this, song);
+./core/src/main/java/com/angrysurfer/core/sequencer/SongEngine.java:148:            CommandBus.getInstance().publish(Commands.SONG_CHANGED, this, song);
+./core/src/main/java/com/angrysurfer/core/service/DeviceManager.java:32:        CommandBus.getInstance().register(this, new String[]{Commands.REFRESH_MIDI_DEVICES});
+./core/src/main/java/com/angrysurfer/core/service/DeviceManager.java:204:            case Commands.REFRESH_MIDI_DEVICES -> refreshDeviceList();
+./core/src/main/java/com/angrysurfer/core/service/DrumSequencerManager.java:46:        CommandBus.getInstance().register(this, new String[]{Commands.SAVE_DRUM_SEQUENCE,
+./core/src/main/java/com/angrysurfer/core/service/DrumSequencerManager.java:47:                Commands.LOAD_DRUM_SEQUENCE, Commands.REPAIR_MIDI_CONNECTIONS,
+./core/src/main/java/com/angrysurfer/core/service/DrumSequencerManager.java:48:                Commands.ENSURE_MIDI_CONNECTIONS});
+./core/src/main/java/com/angrysurfer/core/service/DrumSequencerManager.java:66:            case Commands.SAVE_DRUM_SEQUENCE -> {
+./core/src/main/java/com/angrysurfer/core/service/DrumSequencerManager.java:71:            case Commands.LOAD_DRUM_SEQUENCE -> {
+./core/src/main/java/com/angrysurfer/core/service/DrumSequencerManager.java:76:            case Commands.REPAIR_MIDI_CONNECTIONS -> {
+./core/src/main/java/com/angrysurfer/core/service/DrumSequencerManager.java:79:            case Commands.ENSURE_MIDI_CONNECTIONS -> {
+./core/src/main/java/com/angrysurfer/core/service/InstrumentManager.java:41:                Commands.INSTRUMENT_UPDATED, Commands.INSTRUMENTS_REFRESHED, Commands.USER_CONFIG_LOADED
+./core/src/main/java/com/angrysurfer/core/service/InstrumentManager.java:78:            case Commands.USER_CONFIG_LOADED -> {
+./core/src/main/java/com/angrysurfer/core/service/InstrumentManager.java:86:            case Commands.INSTRUMENT_UPDATED -> {
+./core/src/main/java/com/angrysurfer/core/service/InstrumentManager.java:94:            case Commands.INSTRUMENTS_REFRESHED -> {
+./core/src/main/java/com/angrysurfer/core/service/InstrumentManager.java:274:            CommandBus.getInstance().publish(Commands.INSTRUMENT_UPDATED, this, instrument);
+./core/src/main/java/com/angrysurfer/core/service/MelodicSequencerManager.java:55:        CommandBus.getInstance().publish(Commands.MELODIC_SEQUENCER_ADDED, this, sequencer);
+./core/src/main/java/com/angrysurfer/core/service/PlayerManager.java:55:                Commands.PLAYER_SELECTION_EVENT,
+./core/src/main/java/com/angrysurfer/core/service/PlayerManager.java:56:                Commands.PLAYER_UPDATE_EVENT,
+./core/src/main/java/com/angrysurfer/core/service/PlayerManager.java:57:                Commands.PLAYER_PRESET_CHANGE_EVENT,
+./core/src/main/java/com/angrysurfer/core/service/PlayerManager.java:58:                Commands.PLAYER_INSTRUMENT_CHANGE_EVENT,
+./core/src/main/java/com/angrysurfer/core/service/PlayerManager.java:59:                Commands.PLAYER_REFRESH_EVENT,
+./core/src/main/java/com/angrysurfer/core/service/PlayerManager.java:61:                Commands.PLAYER_ACTIVATION_REQUEST,
+./core/src/main/java/com/angrysurfer/core/service/PlayerManager.java:62:                Commands.PLAYER_UPDATE_REQUEST,
+./core/src/main/java/com/angrysurfer/core/service/PlayerManager.java:63:                Commands.PLAYER_PRESET_CHANGE_REQUEST,
+./core/src/main/java/com/angrysurfer/core/service/PlayerManager.java:64:                Commands.PLAYER_INSTRUMENT_CHANGE_REQUEST,
+./core/src/main/java/com/angrysurfer/core/service/PlayerManager.java:65:                Commands.REFRESH_ALL_INSTRUMENTS
+./core/src/main/java/com/angrysurfer/core/service/PlayerManager.java:82:                case Commands.PLAYER_SELECTION_EVENT -> handlePlayerSelectionEvent(action);
+./core/src/main/java/com/angrysurfer/core/service/PlayerManager.java:83:                case Commands.PLAYER_UPDATE_EVENT -> {
+./core/src/main/java/com/angrysurfer/core/service/PlayerManager.java:101:                case Commands.PLAYER_PRESET_CHANGE_EVENT -> {
+./core/src/main/java/com/angrysurfer/core/service/PlayerManager.java:106:                case Commands.PLAYER_INSTRUMENT_CHANGE_EVENT -> {
+./core/src/main/java/com/angrysurfer/core/service/PlayerManager.java:111:                case Commands.PLAYER_REFRESH_EVENT -> handlePlayerRefreshEvent(action);
+./core/src/main/java/com/angrysurfer/core/service/PlayerManager.java:113:                case Commands.PLAYER_ACTIVATION_REQUEST -> handleLegacyPlayerActivationRequest(action);
+./core/src/main/java/com/angrysurfer/core/service/PlayerManager.java:114:                case Commands.PLAYER_UPDATE_REQUEST -> handleLegacyPlayerUpdateRequest(action);
+./core/src/main/java/com/angrysurfer/core/service/PlayerManager.java:115:                case Commands.PLAYER_PRESET_CHANGE_REQUEST -> handleLegacyPresetChangeRequest(action);
+./core/src/main/java/com/angrysurfer/core/service/PlayerManager.java:116:                case Commands.PLAYER_INSTRUMENT_CHANGE_REQUEST -> handleLegacyInstrumentChangeRequest(action);
+./core/src/main/java/com/angrysurfer/core/service/PlayerManager.java:117:                case Commands.REFRESH_ALL_INSTRUMENTS -> handleLegacyRefreshRequest(action);
+./core/src/main/java/com/angrysurfer/core/service/PlayerManager.java:128:            CommandBus.getInstance().publish(Commands.PLAYER_ACTIVATED, this, event.getPlayer());
+./core/src/main/java/com/angrysurfer/core/service/PlayerManager.java:191:            CommandBus.getInstance().publish(Commands.PLAYER_PRESET_CHANGED, this, player);
+./core/src/main/java/com/angrysurfer/core/service/PlayerManager.java:192:            CommandBus.getInstance().publish(Commands.PLAYER_UPDATED, this, player);
+./core/src/main/java/com/angrysurfer/core/service/PlayerManager.java:257:        CommandBus.getInstance().publish(Commands.PLAYER_INSTRUMENT_CHANGED, this,
+./core/src/main/java/com/angrysurfer/core/service/PlayerManager.java:259:        CommandBus.getInstance().publish(Commands.PLAYER_UPDATED, this, player);
+./core/src/main/java/com/angrysurfer/core/service/PlayerManager.java:279:            CommandBus.getInstance().publish(Commands.PLAYER_SELECTION_EVENT, this, event);
+./core/src/main/java/com/angrysurfer/core/service/PlayerManager.java:284:                CommandBus.getInstance().publish(Commands.PLAYER_SELECTION_EVENT, this, event);
+./core/src/main/java/com/angrysurfer/core/service/PlayerManager.java:293:            CommandBus.getInstance().publish(Commands.PLAYER_UPDATE_EVENT, this, event);
+./core/src/main/java/com/angrysurfer/core/service/PlayerManager.java:311:                CommandBus.getInstance().publish(Commands.PLAYER_PRESET_CHANGE_EVENT, this, event);
+./core/src/main/java/com/angrysurfer/core/service/PlayerManager.java:325:                CommandBus.getInstance().publish(Commands.PLAYER_INSTRUMENT_CHANGE_EVENT, this, event);
+./core/src/main/java/com/angrysurfer/core/service/PlayerManager.java:334:            CommandBus.getInstance().publish(Commands.PLAYER_REFRESH_EVENT, this, event);
+./core/src/main/java/com/angrysurfer/core/service/PlayerManager.java:828:        CommandBus.getInstance().publish(Commands.PLAYER_RULE_UPDATE_EVENT, this, event);
+./core/src/main/java/com/angrysurfer/core/service/PlayerManager.java:832:                Commands.PLAYER_UPDATE_EVENT,
+./core/src/main/java/com/angrysurfer/core/service/SessionManager.java:55:            CommandBus.getInstance().publish(Commands.SESSION_SELECTED, this, getActiveSession());
+./core/src/main/java/com/angrysurfer/core/service/SessionManager.java:88:            CommandBus.getInstance().publish(Commands.SESSION_SELECTED, this, session);
+./core/src/main/java/com/angrysurfer/core/service/SessionManager.java:122:                        case Commands.SAVE_SESSION -> handleSessionSaveRequest();
+./core/src/main/java/com/angrysurfer/core/service/SessionManager.java:123:                        case Commands.SESSION_REQUEST -> handleSessionRequest();
+./core/src/main/java/com/angrysurfer/core/service/SessionManager.java:124:                        case Commands.TRANSPORT_REWIND -> moveBack();
+./core/src/main/java/com/angrysurfer/core/service/SessionManager.java:125:                        case Commands.TRANSPORT_FORWARD -> moveForward();
+./core/src/main/java/com/angrysurfer/core/service/SessionManager.java:126:                        case Commands.TRANSPORT_START -> {
+./core/src/main/java/com/angrysurfer/core/service/SessionManager.java:133:                        case Commands.TRANSPORT_STOP -> {
+./core/src/main/java/com/angrysurfer/core/service/SessionManager.java:141:                                CommandBus.getInstance().publish(Commands.RECORDING_STOPPED, this);
+./core/src/main/java/com/angrysurfer/core/service/SessionManager.java:144:                        case Commands.TRANSPORT_RECORD -> {
+./core/src/main/java/com/angrysurfer/core/service/SessionManager.java:149:                        case Commands.SHOW_PLAYER_EDITOR_OK -> processPlayerEdit((Player) action.getData());
+./core/src/main/java/com/angrysurfer/core/service/SessionManager.java:150:                        // case Commands.SHOW_RULE_EDITOR_OK -> processRuleEdit((Rule) action.getData());
+./core/src/main/java/com/angrysurfer/core/service/SessionManager.java:151:                        case Commands.PLAYER_DELETE_REQUEST -> {
+./core/src/main/java/com/angrysurfer/core/service/SessionManager.java:160:                        case Commands.TRANSPORT_RECORD_START -> {
+./core/src/main/java/com/angrysurfer/core/service/SessionManager.java:163:                            CommandBus.getInstance().publish(Commands.RECORDING_STARTED, this);
+./core/src/main/java/com/angrysurfer/core/service/SessionManager.java:165:                        case Commands.TRANSPORT_RECORD_STOP -> {
+./core/src/main/java/com/angrysurfer/core/service/SessionManager.java:168:                            CommandBus.getInstance().publish(Commands.RECORDING_STOPPED, this);
+./core/src/main/java/com/angrysurfer/core/service/SessionManager.java:170:                        case Commands.TRANSPOSE_UP -> {
+./core/src/main/java/com/angrysurfer/core/service/SessionManager.java:177:                                    CommandBus.getInstance().publish(Commands.SESSION_UPDATED, this, getActiveSession());
+./core/src/main/java/com/angrysurfer/core/service/SessionManager.java:181:                        case Commands.TRANSPOSE_DOWN -> {
+./core/src/main/java/com/angrysurfer/core/service/SessionManager.java:188:                                    CommandBus.getInstance().publish(Commands.SESSION_UPDATED, this, getActiveSession());
+./core/src/main/java/com/angrysurfer/core/service/SessionManager.java:193:                        case Commands.ALL_NOTES_OFF -> {
+./core/src/main/java/com/angrysurfer/core/service/SessionManager.java:201:                        case Commands.SESSION_TEMPO_CHANGED -> {
+./core/src/main/java/com/angrysurfer/core/service/SessionManager.java:237:                        CommandBus.getInstance().publish(Commands.PLAYER_DELETED, this);
+./core/src/main/java/com/angrysurfer/core/service/SessionManager.java:242:                Commands.SAVE_SESSION,
+./core/src/main/java/com/angrysurfer/core/service/SessionManager.java:243:                Commands.SESSION_REQUEST,
+./core/src/main/java/com/angrysurfer/core/service/SessionManager.java:244:                Commands.TRANSPORT_REWIND,
+./core/src/main/java/com/angrysurfer/core/service/SessionManager.java:245:                Commands.TRANSPORT_FORWARD,
+./core/src/main/java/com/angrysurfer/core/service/SessionManager.java:246:                Commands.TRANSPORT_START,
+./core/src/main/java/com/angrysurfer/core/service/SessionManager.java:247:                Commands.TRANSPORT_STOP,
+./core/src/main/java/com/angrysurfer/core/service/SessionManager.java:248:                Commands.TRANSPORT_RECORD,
+./core/src/main/java/com/angrysurfer/core/service/SessionManager.java:249:                Commands.SHOW_PLAYER_EDITOR_OK,
+./core/src/main/java/com/angrysurfer/core/service/SessionManager.java:250:                Commands.PLAYER_DELETE_REQUEST,
+./core/src/main/java/com/angrysurfer/core/service/SessionManager.java:251:                Commands.TRANSPORT_RECORD_START,
+./core/src/main/java/com/angrysurfer/core/service/SessionManager.java:252:                Commands.TRANSPORT_RECORD_STOP,
+./core/src/main/java/com/angrysurfer/core/service/SessionManager.java:253:                Commands.TRANSPOSE_UP,
+./core/src/main/java/com/angrysurfer/core/service/SessionManager.java:254:                Commands.TRANSPOSE_DOWN,
+./core/src/main/java/com/angrysurfer/core/service/SessionManager.java:255:                Commands.ALL_NOTES_OFF,
+./core/src/main/java/com/angrysurfer/core/service/SessionManager.java:256:                Commands.SESSION_TEMPO_CHANGED
+./core/src/main/java/com/angrysurfer/core/service/SessionManager.java:393:                CommandBus.getInstance().publish(Commands.SESSION_DELETED, this, id);
+./core/src/main/java/com/angrysurfer/core/service/SessionManager.java:427:        CommandBus.getInstance().publish(Commands.PLAYER_UPDATED, this, player);
+./core/src/main/java/com/angrysurfer/core/service/SessionManager.java:428:        CommandBus.getInstance().publish(Commands.SESSION_UPDATED, this, getActiveSession());
+./core/src/main/java/com/angrysurfer/core/service/SessionManager.java:434:    //         CommandBus.getInstance().publish(Commands.RULE_EDITED, this, PlayerManager.getInstance().getActivePlayer());
+./core/src/main/java/com/angrysurfer/core/service/SessionManager.java:485:            CommandBus.getInstance().publish(Commands.PLAYER_UPDATED, this, player);
+./core/src/main/java/com/angrysurfer/core/service/SessionManager.java:486:            CommandBus.getInstance().publish(Commands.SESSION_UPDATED, this, activeSession);
+./core/src/main/java/com/angrysurfer/core/service/SessionManager.java:554:            CommandBus.getInstance().publish(Commands.PLAYER_DELETED, this);
+./core/src/main/java/com/angrysurfer/core/service/SoundbankManager.java:36:                Commands.REFRESH_SOUNDBANKS, Commands.LOAD_SOUNDBANK});
+./core/src/main/java/com/angrysurfer/core/service/SoundbankManager.java:1106:                        Commands.PLAYER_PRESET_CHANGE_EVENT,
+./core/src/main/java/com/angrysurfer/core/service/SoundbankManager.java:1115:                        Commands.PLAYER_UPDATE_EVENT,
+./core/src/main/java/com/angrysurfer/core/service/SoundbankManager.java:1269:            case Commands.LOAD_SOUNDBANK:
+./core/src/main/java/com/angrysurfer/core/service/SoundbankManager.java:1274:                                Commands.SOUNDBANK_LOADED,
+./core/src/main/java/com/angrysurfer/core/service/SoundbankManager.java:1279:                                Commands.STATUS_UPDATE,
+./core/src/main/java/com/angrysurfer/core/service/SoundbankManager.java:1286:            case Commands.REFRESH_SOUNDBANKS:
+./core/src/main/java/com/angrysurfer/core/service/SoundbankManager.java:1289:                        Commands.SOUNDBANKS_REFRESHED,
+./core/src/main/java/com/angrysurfer/core/service/UserConfigManager.java:153:        CommandBus.getInstance().publish(Commands.USER_CONFIG_LOADED, this, null);
+./core/src/main/java/com/angrysurfer/core/service/UserConfigManager.java:176:                        CommandBus.getInstance().publish(Commands.USER_CONFIG_LOADED, this, this.currentConfig);
+./core/src/main/java/com/angrysurfer/core/service/UserConfigManager.java:210:                CommandBus.getInstance().publish(Commands.USER_CONFIG_LOADED, this, currentConfig);
+./core/src/main/java/com/angrysurfer/core/service/UserConfigManager.java:254:            CommandBus.getInstance().publish(Commands.USER_CONFIG_LOADED, this, currentConfig);
+./core/src/main/java/com/angrysurfer/core/service/UserConfigManager.java:532:                    CommandBus.getInstance().publish(Commands.USER_CONFIG_LOADED, this, currentConfig);
+./core/src/main/java/com/angrysurfer/core/service/UserConfigManager.java:645:            CommandBus.getInstance().publish(Commands.USER_CONFIG_UPDATED, this, currentConfig);
+./core/src/main/java/com/angrysurfer/core/service/UserConfigManager.java:918:            CommandBus.getInstance().publish(Commands.USER_CONFIG_LOADED, this, currentConfig);
+./core/src/main/java/com/angrysurfer/core/service/UserConfigManager.java:987:                CommandBus.getInstance().publish(Commands.USER_CONFIG_LOADED, this, currentConfig);
+./core/src/main/java/com/angrysurfer/core/service/UserConfigManager.java:1225:            case Commands.DEBUG_USER_CONFIG_SAVE -> {
+./core/src/main/java/com/angrysurfer/core/service/UserConfigManager.java:1232:                    CommandBus.getInstance().publish(Commands.USER_CONFIG_LOADED, this, currentConfig);
+./core/src/main/java/com/angrysurfer/core/util/MidiClockSource.java:50:                Commands.SESSION_SELECTED, Commands.METRONOME_START, Commands.METRONOME_STOP
+./core/src/main/java/com/angrysurfer/core/util/MidiClockSource.java:179:                CommandBus.getInstance().publish(Commands.TRANSPORT_STATE_CHANGED, this, true);
+./core/src/main/java/com/angrysurfer/core/util/MidiClockSource.java:203:                CommandBus.getInstance().publish(Commands.TRANSPORT_STATE_CHANGED, this, false);
+./core/src/main/java/com/angrysurfer/core/util/MidiClockSource.java:294:        if (action.getCommand() == Commands.SESSION_SELECTED) {
+./core/src/main/java/com/angrysurfer/core/util/MidiClockSource.java:297:        if (action.getCommand() == Commands.METRONOME_START) {
+./core/src/main/java/com/angrysurfer/core/util/MidiClockSource.java:302:        } else if (action.getCommand() == Commands.METRONOME_STOP) {
+./spring/src/main/java/com/angrysurfer/spring/service/SessionService.java:38:                Commands.TRANSPORT_START, Commands.TRANSPORT_STOP, Commands.TRANSPORT_PAUSE});
+./spring/src/main/java/com/angrysurfer/spring/service/SessionService.java:44:            case Commands.TRANSPORT_START -> play();
+./spring/src/main/java/com/angrysurfer/spring/service/SessionService.java:45:            case Commands.TRANSPORT_STOP -> stop();
+./spring/src/main/java/com/angrysurfer/spring/service/SessionService.java:46:            case Commands.TRANSPORT_PAUSE -> pause();
+./swing/beatsui/src/main/java/com/angrysurfer/beats/App.java:33:        CommandBus.getInstance().register(this, new String[]{Commands.CHANGE_THEME});
+./swing/beatsui/src/main/java/com/angrysurfer/beats/App.java:183:            CommandBus.getInstance().publish(Commands.SYSTEM_READY, App.class, null);
+./swing/beatsui/src/main/java/com/angrysurfer/beats/App.java:224:        if (Commands.CHANGE_THEME.equals(action.getCommand())) {
+./swing/beatsui/src/main/java/com/angrysurfer/beats/App.java:239:                    CommandBus.getInstance().publish(Commands.THEME_CHANGED, App.class, null);
+./swing/beatsui/src/main/java/com/angrysurfer/beats/diagnostic/DiagnosticsManager.java:609:            CommandBus.getInstance().publish(Commands.REPAIR_MIDI_CONNECTIONS, this);
+./swing/beatsui/src/main/java/com/angrysurfer/beats/DialogManager.java:43:                Commands.PLAYER_ADD_REQUEST,
+./swing/beatsui/src/main/java/com/angrysurfer/beats/DialogManager.java:44:                Commands.PLAYER_EDIT_REQUEST,
+./swing/beatsui/src/main/java/com/angrysurfer/beats/DialogManager.java:45:                Commands.RULE_ADD_REQUEST,
+./swing/beatsui/src/main/java/com/angrysurfer/beats/DialogManager.java:46:                Commands.RULE_EDIT_REQUEST,
+./swing/beatsui/src/main/java/com/angrysurfer/beats/DialogManager.java:47:                Commands.EDIT_PLAYER_PARAMETERS,
+./swing/beatsui/src/main/java/com/angrysurfer/beats/DialogManager.java:48:                Commands.CREATE_INSTRUMENT_FOR_PLAYER_REQUEST,
+./swing/beatsui/src/main/java/com/angrysurfer/beats/DialogManager.java:49:                Commands.LOAD_CONFIG,
+./swing/beatsui/src/main/java/com/angrysurfer/beats/DialogManager.java:50:                Commands.SAVE_CONFIG,
+./swing/beatsui/src/main/java/com/angrysurfer/beats/DialogManager.java:51:                Commands.SHOW_MAX_LENGTH_DIALOG,
+./swing/beatsui/src/main/java/com/angrysurfer/beats/DialogManager.java:52:                Commands.SHOW_EUCLIDEAN_DIALOG,
+./swing/beatsui/src/main/java/com/angrysurfer/beats/DialogManager.java:53:                Commands.SHOW_FILL_DIALOG,
+./swing/beatsui/src/main/java/com/angrysurfer/beats/DialogManager.java:54:                Commands.DRUM_PRESET_SELECTION_REQUEST
+./swing/beatsui/src/main/java/com/angrysurfer/beats/DialogManager.java:69:            case Commands.PLAYER_ADD_REQUEST -> handleAddPlayer();
+./swing/beatsui/src/main/java/com/angrysurfer/beats/DialogManager.java:70:            case Commands.PLAYER_EDIT_REQUEST -> handleEditPlayer((Player) action.getData());
+./swing/beatsui/src/main/java/com/angrysurfer/beats/DialogManager.java:71:            case Commands.RULE_ADD_REQUEST -> handleAddRule((Player) action.getData());
+./swing/beatsui/src/main/java/com/angrysurfer/beats/DialogManager.java:72:            case Commands.RULE_EDIT_REQUEST -> handleEditRule((Rule) action.getData());
+./swing/beatsui/src/main/java/com/angrysurfer/beats/DialogManager.java:73:            case Commands.EDIT_PLAYER_PARAMETERS -> handlePlayerParameters((Player) action.getData());
+./swing/beatsui/src/main/java/com/angrysurfer/beats/DialogManager.java:74:            case Commands.CREATE_INSTRUMENT_FOR_PLAYER_REQUEST ->
+./swing/beatsui/src/main/java/com/angrysurfer/beats/DialogManager.java:76:            case Commands.LOAD_CONFIG -> SwingUtilities.invokeLater(this::showConfigFileChooserDialog);
+./swing/beatsui/src/main/java/com/angrysurfer/beats/DialogManager.java:77:            case Commands.SAVE_CONFIG -> SwingUtilities.invokeLater(this::showConfigFileSaverDialog);
+./swing/beatsui/src/main/java/com/angrysurfer/beats/DialogManager.java:78:            case Commands.SHOW_MAX_LENGTH_DIALOG -> handleMaxLengthDialog((DrumSequencer) action.getData());
+./swing/beatsui/src/main/java/com/angrysurfer/beats/DialogManager.java:79:            case Commands.SHOW_EUCLIDEAN_DIALOG -> {
+./swing/beatsui/src/main/java/com/angrysurfer/beats/DialogManager.java:84:            case Commands.SHOW_FILL_DIALOG -> {
+./swing/beatsui/src/main/java/com/angrysurfer/beats/DialogManager.java:89:            case Commands.DRUM_PRESET_SELECTION_REQUEST -> {
+./swing/beatsui/src/main/java/com/angrysurfer/beats/DialogManager.java:127:                        CommandBus.getInstance().publish(Commands.PLAYER_ADDED, this, updatedPlayer);
+./swing/beatsui/src/main/java/com/angrysurfer/beats/DialogManager.java:235:                                    CommandBus.getInstance().publish(Commands.PLAYER_UPDATED, this, drumPlayer);
+./swing/beatsui/src/main/java/com/angrysurfer/beats/DialogManager.java:241:                        CommandBus.getInstance().publish(Commands.PLAYER_ACTIVATION_REQUEST, this, updatedPlayer);
+./swing/beatsui/src/main/java/com/angrysurfer/beats/DialogManager.java:242:                        CommandBus.getInstance().publish(Commands.PLAYER_UPDATE_REQUEST, this, updatedPlayer);
+./swing/beatsui/src/main/java/com/angrysurfer/beats/DialogManager.java:245:                        CommandBus.getInstance().publish(Commands.SHOW_PLAYER_EDITOR_OK, this, updatedPlayer);
+./swing/beatsui/src/main/java/com/angrysurfer/beats/DialogManager.java:272:                            CommandBus.getInstance().publish(Commands.RULE_ADDED, this, player);
+./swing/beatsui/src/main/java/com/angrysurfer/beats/DialogManager.java:273:                            CommandBus.getInstance().publish(Commands.PLAYER_ACTIVATION_REQUEST, this, player);
+./swing/beatsui/src/main/java/com/angrysurfer/beats/DialogManager.java:274:                            CommandBus.getInstance().publish(Commands.PLAYER_ROW_REFRESH, this, player);
+./swing/beatsui/src/main/java/com/angrysurfer/beats/DialogManager.java:275:                            // CommandBus.getInstance().publish(Commands.SESSION_UPDATED, this, session);
+./swing/beatsui/src/main/java/com/angrysurfer/beats/DialogManager.java:311:                        CommandBus.getInstance().publish(Commands.RULE_EDITED, this, updatedRule);
+./swing/beatsui/src/main/java/com/angrysurfer/beats/DialogManager.java:312:                        // CommandBus.getInstance().publish(Commands.PLAYER_UPDATED, this, player);
+./swing/beatsui/src/main/java/com/angrysurfer/beats/DialogManager.java:313:                        CommandBus.getInstance().publish(Commands.PLAYER_ACTIVATION_REQUEST, this, player);
+./swing/beatsui/src/main/java/com/angrysurfer/beats/DialogManager.java:314:                        // CommandBus.getInstance().publish(Commands.RULE_SELECTED, this, updatedRule);
+./swing/beatsui/src/main/java/com/angrysurfer/beats/DialogManager.java:315:                        CommandBus.getInstance().publish(Commands.PLAYER_ROW_REFRESH, this, player);
+./swing/beatsui/src/main/java/com/angrysurfer/beats/DialogManager.java:377:                            Commands.STATUS_UPDATE,
+./swing/beatsui/src/main/java/com/angrysurfer/beats/DialogManager.java:524:                CommandBus.getInstance().publish(Commands.MAX_LENGTH_SELECTED, this, maxLength);
+./swing/beatsui/src/main/java/com/angrysurfer/beats/DialogManager.java:568:                CommandBus.getInstance().publish(Commands.EUCLIDEAN_PATTERN_SELECTED, this, result);
+./swing/beatsui/src/main/java/com/angrysurfer/beats/DialogManager.java:627:                CommandBus.getInstance().publish(Commands.FILL_PATTERN_SELECTED, this, result);
+./swing/beatsui/src/main/java/com/angrysurfer/beats/DialogManager.java:711:                            Commands.DRUM_INSTRUMENTS_UPDATED,
+./swing/beatsui/src/main/java/com/angrysurfer/beats/DialogManager.java:717:                            Commands.DRUM_GRID_REFRESH_REQUESTED,
+./swing/beatsui/src/main/java/com/angrysurfer/beats/DialogManager.java:726:                        Commands.STATUS_UPDATE,
+./swing/beatsui/src/main/java/com/angrysurfer/beats/Frame.java:132:                    CommandBus.getInstance().publish(Commands.WINDOW_RESIZED, this);
+./swing/beatsui/src/main/java/com/angrysurfer/beats/Frame.java:195:                    CommandBus.getInstance().publish(Commands.TOGGLE_TRANSPORT, this);
+./swing/beatsui/src/main/java/com/angrysurfer/beats/Frame.java:214:                    String command = e.isShiftDown() ? Commands.KEY_HELD : Commands.KEY_PRESSED;
+./swing/beatsui/src/main/java/com/angrysurfer/beats/Frame.java:232:                            String command = e.isShiftDown() ? Commands.KEY_HELD : Commands.KEY_PRESSED;
+./swing/beatsui/src/main/java/com/angrysurfer/beats/Frame.java:259:                        String command = e.isShiftDown() ? Commands.KEY_HELD : Commands.KEY_PRESSED;
+./swing/beatsui/src/main/java/com/angrysurfer/beats/Frame.java:374:                CommandBus.getInstance().publish(Commands.WINDOW_CLOSING, this);
+./swing/beatsui/src/main/java/com/angrysurfer/beats/MenuBar.java:50:        addMenuItem(fileMenu, "New", Commands.NEW_FILE);
+./swing/beatsui/src/main/java/com/angrysurfer/beats/MenuBar.java:51:        addMenuItem(fileMenu, "Open", Commands.OPEN_FILE);
+./swing/beatsui/src/main/java/com/angrysurfer/beats/MenuBar.java:52:        addMenuItem(fileMenu, "Save", Commands.SAVE_FILE);
+./swing/beatsui/src/main/java/com/angrysurfer/beats/MenuBar.java:53:        addMenuItem(fileMenu, "Save As...", Commands.SAVE_AS);
+./swing/beatsui/src/main/java/com/angrysurfer/beats/MenuBar.java:55:        addMenuItem(fileMenu, "Exit", Commands.EXIT, e -> {
+./swing/beatsui/src/main/java/com/angrysurfer/beats/MenuBar.java:69:        addMenuItem(editMenu, "Cut", Commands.CUT);
+./swing/beatsui/src/main/java/com/angrysurfer/beats/MenuBar.java:70:        addMenuItem(editMenu, "Copy", Commands.COPY);
+./swing/beatsui/src/main/java/com/angrysurfer/beats/MenuBar.java:71:        addMenuItem(editMenu, "Paste", Commands.PASTE);
+./swing/beatsui/src/main/java/com/angrysurfer/beats/MenuBar.java:89:                CommandBus.getInstance().publish(Commands.CLEAR_DATABASE, this);
+./swing/beatsui/src/main/java/com/angrysurfer/beats/MenuBar.java:103:                CommandBus.getInstance().publish(Commands.CLEAR_INVALID_SESSIONS, this);
+./swing/beatsui/src/main/java/com/angrysurfer/beats/MenuBar.java:118:                CommandBus.getInstance().publish(Commands.DELETE_UNUSED_INSTRUMENTS, this);
+./swing/beatsui/src/main/java/com/angrysurfer/beats/MenuBar.java:130:            CommandBus.getInstance().publish(Commands.LOAD_CONFIG, this);
+./swing/beatsui/src/main/java/com/angrysurfer/beats/MenuBar.java:138:            CommandBus.getInstance().publish(Commands.SAVE_CONFIG, this);
+./swing/beatsui/src/main/java/com/angrysurfer/beats/MenuBar.java:662:                    case Commands.VISUALIZATION_REGISTERED:
+./swing/beatsui/src/main/java/com/angrysurfer/beats/MenuBar.java:674:                            addMenuItem(visualizationMenu, startVisualizationItem, Commands.START_VISUALIZATION, null,
+./swing/beatsui/src/main/java/com/angrysurfer/beats/MenuBar.java:676:                            addMenuItem(visualizationMenu, stopVisualizationItem, Commands.STOP_VISUALIZATION, null,
+./swing/beatsui/src/main/java/com/angrysurfer/beats/MenuBar.java:678:                            addMenuItem(visualizationMenu, lockVisualizationItem, Commands.LOCK_CURRENT_VISUALIZATION,
+./swing/beatsui/src/main/java/com/angrysurfer/beats/MenuBar.java:681:                                    Commands.UNLOCK_CURRENT_VISUALIZATION, null, null);
+./swing/beatsui/src/main/java/com/angrysurfer/beats/MenuBar.java:683:                                    Commands.VISUALIZATION_HANDLER_REFRESH_REQUESTED, null, null);
+./swing/beatsui/src/main/java/com/angrysurfer/beats/MenuBar.java:705:                            addMenuItem(visualizationMenu, newItem, Commands.VISUALIZATION_SELECTED, handler, null);
+./swing/beatsui/src/main/java/com/angrysurfer/beats/MenuBar.java:710:                            addMenuItem(categoryMenu, newItem, Commands.VISUALIZATION_SELECTED, handler, null);
+./swing/beatsui/src/main/java/com/angrysurfer/beats/MenuBar.java:717:                    case Commands.VISUALIZATION_STARTED:
+./swing/beatsui/src/main/java/com/angrysurfer/beats/MenuBar.java:725:                    case Commands.LOCK_CURRENT_VISUALIZATION:
+./swing/beatsui/src/main/java/com/angrysurfer/beats/MenuBar.java:727:                        CommandBus.getInstance().publish(Commands.VISUALIZATION_LOCKED, this);
+./swing/beatsui/src/main/java/com/angrysurfer/beats/MenuBar.java:730:                    case Commands.VISUALIZATION_LOCKED:
+./swing/beatsui/src/main/java/com/angrysurfer/beats/MenuBar.java:737:                    case Commands.UNLOCK_CURRENT_VISUALIZATION:
+./swing/beatsui/src/main/java/com/angrysurfer/beats/MenuBar.java:739:                        CommandBus.getInstance().publish(Commands.VISUALIZATION_UNLOCKED, this);
+./swing/beatsui/src/main/java/com/angrysurfer/beats/MenuBar.java:742:                    case Commands.VISUALIZATION_UNLOCKED:
+./swing/beatsui/src/main/java/com/angrysurfer/beats/MenuBar.java:749:                    case Commands.VISUALIZATION_STOPPED:
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/ComplexLFOPanel.java:505:        //        Commands.LFO_VALUE_CHANGED,
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/ControlPanel.java:133:        JPanel presetPanel = UIHelper.createVerticalAdjustPanel("Preset", "↑", "↓", Commands.PRESET_UP,
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/ControlPanel.java:134:                Commands.PRESET_DOWN);
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/ControlPanel.java:138:        JPanel offsetPanel = UIHelper.createVerticalAdjustPanel("Offset", "↑", "↓", Commands.TRANSPOSE_UP,
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/ControlPanel.java:139:                Commands.TRANSPOSE_DOWN);
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/ControlPanel.java:171:        noteSelectionDial.setCommand(Commands.NEW_VALUE_NOTE);
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/ControlPanel.java:175:        levelDial.setCommand(Commands.NEW_VALUE_LEVEL);
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/ControlPanel.java:178:        panDial.setCommand(Commands.NEW_VALUE_PAN);
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/ControlPanel.java:184:        velocityMinDial.setCommand(Commands.NEW_VALUE_VELOCITY_MIN);
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/ControlPanel.java:190:        velocityMaxDial.setCommand(Commands.NEW_VALUE_VELOCITY_MAX);
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/ControlPanel.java:196:        swingDial.setCommand(Commands.NEW_VALUE_SWING);
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/ControlPanel.java:202:        probabilityDial.setCommand(Commands.NEW_VALUE_PROBABILITY);
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/ControlPanel.java:208:        randomDial.setCommand(Commands.NEW_VALUE_RANDOM);
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/ControlPanel.java:214:        sparseDial.setCommand(Commands.NEW_VALUE_SPARSE);
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/ControlPanel.java:313:                    CommandBus.getInstance().publish(Commands.PLAYER_ROW_REFRESH, this, activePlayer);
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/ControlPanel.java:340:                    CommandBus.getInstance().publish(Commands.PLAYER_ROW_REFRESH, this, activePlayer);
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/ControlPanel.java:383:        prevScaleButton.setActionCommand(Commands.PREV_SCALE_SELECTED);
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/ControlPanel.java:385:            CommandBus.getInstance().publish(Commands.PREV_SCALE_SELECTED, this, Scale.SCALE_PATTERNS.keySet());
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/ControlPanel.java:391:        nextScaleButton.setActionCommand(Commands.NEXT_SCALE_SELECTED);
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/ControlPanel.java:393:            CommandBus.getInstance().publish(Commands.NEXT_SCALE_SELECTED, this, Scale.SCALE_PATTERNS.keySet());
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/ControlPanel.java:410:                case Commands.FIRST_SCALE_SELECTED -> prevScaleButton.setEnabled(false);
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/ControlPanel.java:411:                case Commands.LAST_SCALE_SELECTED -> nextScaleButton.setEnabled(false);
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/ControlPanel.java:412:                case Commands.SCALE_SELECTED -> {
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/ControlPanel.java:461:                case Commands.PLAYER_ACTIVATED -> dial.setEnabled(true);
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/ControlPanel.java:462:                // case Commands.PLAYER_UNSELECTED -> dial.setEnabled(false);
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/ControlPanel.java:527:                    if (Commands.PLAYER_ACTIVATED.equals(cmd)) {
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/ControlPanel.java:543:                    // else if (Commands.PLAYER_UNSELECTED.equals(cmd)) {
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/ControlPanel.java:573:            CommandBus.getInstance().publish(Commands.PLAYER_ROW_REFRESH, this, activePlayer);
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/ControlPanel.java:591:            CommandBus.getInstance().publish(Commands.PLAYER_ROW_REFRESH, this, activePlayer);
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/ControlPanel.java:606:            CommandBus.getInstance().publish(Commands.PLAYER_ROW_REFRESH, this, activePlayer);
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/ControlPanel.java:642:            CommandBus.getInstance().publish(Commands.PLAYER_ROW_REFRESH, this, activePlayer);
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/ControlPanel.java:678:            CommandBus.getInstance().publish(Commands.PLAYER_ROW_REFRESH, this, activePlayer);
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/ControlPanel.java:694:            CommandBus.getInstance().publish(Commands.PLAYER_ROW_REFRESH, this, activePlayer);
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/ControlPanel.java:710:            CommandBus.getInstance().publish(Commands.PLAYER_ROW_REFRESH, this, activePlayer);
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/ControlPanel.java:726:            CommandBus.getInstance().publish(Commands.PLAYER_ROW_REFRESH, this, activePlayer);
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/ControlPanel.java:742:            CommandBus.getInstance().publish(Commands.PLAYER_ROW_REFRESH, this, activePlayer);
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/GlobalMuteButtonsPanel.java:66:        CommandBus.getInstance().register(this, new String[]{Commands.DRUM_NOTE_TRIGGERED, Commands.MELODIC_NOTE_TRIGGERED});
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/GlobalMuteButtonsPanel.java:101:            case Commands.DRUM_NOTE_TRIGGERED -> {
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/GlobalMuteButtonsPanel.java:123:            case Commands.MELODIC_NOTE_TRIGGERED -> {
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/GlobalMuteButtonsPanel.java:517:                        Commands.PLAYER_LEVEL_CHANGED,
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/instrument/ControlCodeEditPanel.java:169:            CommandBus.getInstance().publish(isNew ? Commands.CAPTION_ADDED : Commands.CAPTION_UPDATED, this, updatedCaption);
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/instrument/ControlCodeEditPanel.java:187:            CommandBus.getInstance().publish(Commands.CAPTION_DELETED, this, caption);
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/instrument/CustomControlsPanel.java:87:                CommandBus.getInstance().publish(Commands.SAVE_CONFIG, this, currentInstrument);
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/instrument/CustomControlsPanel.java:125:                CommandBus.getInstance().publish(Commands.SEND_ALL_CONTROLS, this, current);
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/instrument/CustomControlsPanel.java:167:    CommandBus.getInstance().register(this, new String[] { Commands.WINDOW_RESIZED });
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/instrument/CustomControlsPanel.java:179:        if (Commands.WINDOW_RESIZED.equals(action.getCommand())) {
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/instrument/InstrumentsPanel.java:93:            if (Commands.LOAD_CONFIG.equals(command.getCommand())) {
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/instrument/InstrumentsPanel.java:96:        }, new String[] { Commands.LOAD_CONFIG });
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/instrument/InstrumentsPanel.java:289:                    Commands.STATUS_UPDATE,
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/instrument/InstrumentsPanel.java:304:                        Commands.STATUS_UPDATE,
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/instrument/InstrumentsPanel.java:337:                    Commands.STATUS_UPDATE,
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/instrument/InstrumentsPanel.java:345:                    Commands.STATUS_UPDATE,
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/instrument/InstrumentsPanel.java:358:                    Commands.STATUS_UPDATE,
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/instrument/InstrumentsPanel.java:368:                        Commands.STATUS_UPDATE,
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/instrument/InstrumentsPanel.java:380:                    Commands.STATUS_UPDATE,
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/instrument/InstrumentsPanel.java:388:                    Commands.STATUS_UPDATE,
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/instrument/InstrumentsPanel.java:401:                    Commands.STATUS_UPDATE,
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/instrument/InstrumentsPanel.java:411:                        Commands.STATUS_UPDATE,
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/instrument/InstrumentsPanel.java:423:                    Commands.STATUS_UPDATE,
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/instrument/InstrumentsPanel.java:431:                    Commands.STATUS_UPDATE,
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/instrument/InstrumentsPanel.java:820:                    Commands.STATUS_UPDATE,
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/instrument/InstrumentsPanel.java:943:                CommandBus.getInstance().publish(Commands.INSTRUMENT_UPDATED, this, updatedInstrument);
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/instrument/InstrumentsPanel.java:959:                        Commands.STATUS_UPDATE,
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/instrument/InstrumentsPanel.java:969:                    Commands.STATUS_UPDATE,
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/instrument/InstrumentsPanel.java:1090:                    Commands.STATUS_UPDATE,
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/instrument/InstrumentsPanel.java:1099:            CommandBus.getInstance().publish(Commands.INSTRUMENTS_REFRESHED, this, null);
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/instrument/InstrumentsPanel.java:1341:                            Commands.STATUS_UPDATE,
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/instrument/InstrumentsPanel.java:1356:                        Commands.STATUS_UPDATE,
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/instrument/InstrumentsPanel.java:1413:            CommandBus.getInstance().publish(Commands.INSTRUMENT_UPDATED, this, instrument);
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/instrument/InstrumentsPanel.java:1419:                    Commands.STATUS_UPDATE,
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/instrument/InstrumentsPanel.java:1426:                    Commands.STATUS_UPDATE,
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/instrument/InstrumentsPanel.java:1468:                    Commands.STATUS_UPDATE,
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/instrument/InstrumentsPanel.java:1484:                            Commands.STATUS_UPDATE,
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/instrument/InstrumentsPanel.java:1510:                            Commands.STATUS_UPDATE,
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/instrument/InstrumentsPanel.java:1515:                            Commands.STATUS_UPDATE,
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/instrument/InstrumentsPanel.java:1521:                        Commands.STATUS_UPDATE,
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/instrument/InstrumentsPanel.java:1528:                    Commands.STATUS_UPDATE,
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/internalsynth/InternalSynthPianoPanel.java:115:                    Commands.STATUS_UPDATE,
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/internalsynth/InternalSynthPianoPanel.java:130:                    Commands.STATUS_UPDATE,
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/internalsynth/InternalSynthPianoPanel.java:275:                    case Commands.KEY_PRESSED -> {
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/internalsynth/InternalSynthPianoPanel.java:280:                    case Commands.KEY_HELD -> {
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/internalsynth/InternalSynthPianoPanel.java:285:                    case Commands.KEY_RELEASED -> {
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/internalsynth/InternalSynthPianoPanel.java:290:                    case Commands.SCALE_SELECTED -> {
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/internalsynth/InternalSynthPianoPanel.java:296:                    case Commands.ROOT_NOTE_SELECTED -> {
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/internalsynth/InternalSynthPianoPanel.java:311:                    Commands.STATUS_UPDATE,
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/internalsynth/InternalSynthPianoPanel.java:334:            CommandBus.getInstance().publish(Commands.CLEAR_STATUS, this, null);
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/internalsynth/InternalSynthPianoPanel.java:338:                    Commands.STATUS_UPDATE,
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/internalsynth/InternalSynthPianoPanel.java:353:            CommandBus.getInstance().publish(Commands.CLEAR_STATUS, this, null);
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/internalsynth/InternalSynthPianoPanel.java:363:                Commands.STATUS_UPDATE,
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/internalsynth/InternalSynthPianoPanel.java:371:        CommandBus.getInstance().publish(Commands.CLEAR_STATUS, this, null);
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/internalsynth/InternalSynthPianoPanel.java:589:                    Commands.STATUS_UPDATE,
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/internalsynth/InternalSynthPresetPanel.java:941:            CommandBus.getInstance().publish(Commands.PLAYER_ROW_REFRESH, this, player);
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/internalsynth/InternalSynthPresetPanel.java:1008:            CommandBus.getInstance().publish(Commands.PLAYER_ROW_REFRESH, this, player);
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/internalsynth/InternalSynthPresetPanel.java:1086:                if (Commands.INSTRUMENT_UPDATED.equals(action.getCommand())
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/internalsynth/InternalSynthPresetPanel.java:1087:                        || Commands.USER_CONFIG_LOADED.equals(action.getCommand())) {
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/LaunchPanel.java:24:        CommandBus.getInstance().register(this, new String[]{Commands.CHANGE_THEME});
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/LaunchPanel.java:30:        if (Commands.CHANGE_THEME.equals(action.getCommand())) {
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/LaunchPanel.java:100:                    Commands.STATUS_UPDATE,
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/MainPanel.java:65:                Commands.SEQUENCER_STEP_UPDATE, Commands.SCALE_SELECTED, Commands.TOGGLE_TRANSPORT, Commands.ROOT_NOTE_SELECTED,
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/MainPanel.java:66:                Commands.SESSION_UPDATED, Commands.TRANSPORT_STOP, Commands.TRANSPORT_START
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/MainPanel.java:326:                    Commands.PLAYER_ACTIVATION_REQUEST,
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/MainPanel.java:448:            CommandBus.getInstance().publish(Commands.DRUM_NOTE_TRIGGERED, drumSequencerPanel.getSequencer(),
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/MainPanel.java:479:                CommandBus.getInstance().publish(Commands.MELODIC_NOTE_TRIGGERED, sequencer, noteEvent);
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/MainPanel.java:555:                        Commands.DRUM_NOTE_TRIGGERED,
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/MainPanel.java:575:                            Commands.MELODIC_NOTE_TRIGGERED,
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/MainPanel.java:596:            case Commands.TRANSPORT_START -> {
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/MainPanel.java:600:            case Commands.TRANSPORT_STOP -> {
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/MainPanel.java:604:            case Commands.SESSION_UPDATED -> {
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/MainPanel.java:608:            case Commands.ROOT_NOTE_SELECTED -> {
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/MainPanel.java:614:            case Commands.SCALE_SELECTED -> {
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/MainPanel.java:620:            case Commands.SEQUENCER_STEP_UPDATE -> {
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/MainPanel.java:627:            case Commands.TOGGLE_TRANSPORT -> {
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/MainPanel.java:635:                    CommandBus.getInstance().publish(Commands.TRANSPORT_STOP, this);
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/MainPanel.java:639:                    CommandBus.getInstance().publish(Commands.TRANSPORT_START, this);
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/MainPanel.java:682:            CommandBus.getInstance().publish(isSelected ? Commands.METRONOME_START : Commands.METRONOME_STOP, this);
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/MainPanel.java:690:                case Commands.METRONOME_STARTED:
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/MainPanel.java:699:                case Commands.METRONOME_STOPPED:
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/MainPanel.java:708:        }, new String[]{Commands.METRONOME_STARTED, Commands.METRONOME_STOPPED});
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/MainPanel.java:762:                    isLooping ? Commands.GLOBAL_LOOPING_ENABLED : Commands.GLOBAL_LOOPING_DISABLED,
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/MainPanel.java:795:            CommandBus.getInstance().publish(Commands.ALL_NOTES_OFF, this);
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/MiniLaunchPanel.java:40:        CommandBus.getInstance().register(this, new String[]{Commands.CHANGE_THEME,
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/MiniLaunchPanel.java:41:                Commands.MINI_NOTE_SELECTED});
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/MiniLaunchPanel.java:50:            case Commands.CHANGE_THEME -> SwingUtilities.invokeLater(this::repaint);
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/MiniLaunchPanel.java:52:            case Commands.MINI_NOTE_SELECTED -> {
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/MiniLaunchPanel.java:146:            CommandBus.getInstance().publish(Commands.MINI_NOTE_SELECTED, this, midiNote);
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/MiniLaunchPanel.java:181:            CommandBus.getInstance().publish(Commands.NEW_VALUE_NOTE, this, midiNote);
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/MiniLaunchPanel.java:182:            CommandBus.getInstance().publish(Commands.PLAYER_ROW_REFRESH, this, getTargetPlayer());
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/MixerPanel.java:633:            case Commands.TRANSPORT_START:
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/MixerPanel.java:637:            case Commands.TRANSPORT_STOP:
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/modulation/oscillator/LFOPanel.java:520:                    // Commands.LFO_VALUE_CHANGED,
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/modulation/oscillator/LFOPanel.java:563:                    if (action.getCommand() == Commands.TIMING_UPDATE && syncMode) {
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/PianoPanel.java:159:                    case Commands.KEY_PRESSED -> {
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/PianoPanel.java:165:                    case Commands.KEY_HELD -> {
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/PianoPanel.java:171:                    case Commands.KEY_RELEASED -> {
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/PianoPanel.java:179:                    case Commands.PLAYER_ACTIVATED -> {
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/PianoPanel.java:186:                    case Commands.NEW_VALUE_NOTE -> {
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/PianoPanel.java:194:                    case Commands.SCALE_SELECTED -> {
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/PianoPanel.java:201:                    case Commands.ROOT_NOTE_SELECTED -> {
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/PianoPanel.java:217:                    Commands.STATUS_UPDATE,
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/PianoPanel.java:246:            CommandBus.getInstance().publish(Commands.CLEAR_STATUS, this, null);
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/PianoPanel.java:253:                    Commands.STATUS_UPDATE,
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/PianoPanel.java:273:            CommandBus.getInstance().publish(Commands.CLEAR_STATUS, this, null);
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/PianoPanel.java:302:                Commands.STATUS_UPDATE,
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/PianoPanel.java:308:            CommandBus.getInstance().publish(Commands.NEW_VALUE_NOTE, this, note);
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/PianoPanel.java:309:            CommandBus.getInstance().publish(Commands.PLAYER_ROW_REFRESH, this,
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/PianoPanel.java:335:        CommandBus.getInstance().publish(Commands.CLEAR_STATUS, this, null);
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/PianoPanel.java:526:                    Commands.STATUS_UPDATE,
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/PianoPanel.java:572:                    case Commands.PLAYER_ACTIVATED:
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/PianoPanel.java:573:                        // case Commands.PLAYER_UNSELECTED:
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/PianoPanel.java:742:                    Commands.STATUS_UPDATE,
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/PianoPanel.java:762:                    Commands.STATUS_UPDATE,
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/player/ChannelComboPanel.java:43:            //        Commands.DRUM_GRID_REFRESH_REQUESTED,
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/player/PlayerEditBasicPropertiesPanel.java:517:                    Commands.PLAYER_UPDATE_EVENT,
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/player/PlayerEditBasicPropertiesPanel.java:591:            CommandBus.getInstance().publish(Commands.LOAD_SOUNDBANK, this, file);
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/player/PlayerEditBasicPropertiesPanel.java:595:                if (Commands.SOUNDBANK_LOADED.equals(action.getCommand()) &&
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/player/PlayerEditBasicPropertiesPanel.java:600:            }, new String[]{Commands.SOUNDBANK_LOADED});
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/player/PlayerEditDetailPanel.java:154:        noteDial.setCommand(Commands.NEW_VALUE_NOTE);
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/player/PlayerEditDetailPanel.java:267:            CommandBus.getInstance().publish(Commands.NEW_VALUE_RATCHET_COUNT, this,
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/player/PlayerEditDetailPanel.java:274:            CommandBus.getInstance().publish(Commands.NEW_VALUE_RATCHET_INTERVAL, this,
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/player/PlayerEditDetailPanel.java:333:                    Commands.PLAYER_UPDATE_EVENT,
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/player/PlayerEditDetailPanel.java:352:                    Commands.PLAYER_UPDATE_EVENT,
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/player/PlayerEditDetailPanel.java:363:                if (action.getSender() != this && action.getCommand() == Commands.NEW_VALUE_NOTE) {
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/player/PlayerEditDetailPanel.java:367:        }, new String[] { Commands.NEW_VALUE_NOTE });
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/player/PlayerEditDetailPanel.java:383:                CommandBus.getInstance().publish(Commands.NEW_VALUE_VELOCITY_MIN, this,
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/player/PlayerEditDetailPanel.java:404:                CommandBus.getInstance().publish(Commands.NEW_VALUE_VELOCITY_MAX, this,
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/player/PlayerInstrumentPanel.java:281:                CommandBus.getInstance().publish(Commands.PLAYER_UPDATED, this, player);
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/player/PlayerInstrumentPanel.java:284:                CommandBus.getInstance().publish(Commands.PLAYER_INSTRUMENT_CHANGED, this,
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/player/PlayerInstrumentPanel.java:289:                        Commands.STATUS_UPDATE,
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/player/PlayerInstrumentPanel.java:308:                    Commands.STATUS_UPDATE,
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/player/PlayersPanel.java:62:                Commands.PLAYER_ADD_REQUEST,
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/player/PlayersPanel.java:63:                Commands.PLAYER_EDIT_REQUEST,
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/player/PlayersPanel.java:64:                Commands.PLAYER_DELETE_REQUEST);
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/player/PlayersPanel.java:66:                Commands.PLAYER_ADD_REQUEST,
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/player/PlayersPanel.java:67:                Commands.PLAYER_EDIT_REQUEST,
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/player/PlayersPanel.java:68:                Commands.PLAYER_DELETE_REQUEST);
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/player/PlayersPanel.java:113:                CommandBus.getInstance().publish(Commands.SAVE_SESSION, this);
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/player/PlayersPanel.java:122:                CommandBus.getInstance().publish(Commands.PLAYER_TABLE_REFRESH_REQUEST, this);
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/player/PlayersPanel.java:131:                CommandBus.getInstance().publish(Commands.PLAYER_COPY_EDIT_REQUEST, this);
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/player/PlayersPanel.java:163:                CommandBus.getInstance().publish(Commands.EDIT_PLAYER_PARAMETERS, this, selectedPlayer);
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/player/PlayersPanel.java:198:                case Commands.PLAYER_ADD_REQUEST -> {
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/player/PlayersPanel.java:199:                    CommandBus.getInstance().publish(Commands.PLAYER_ADD_REQUEST, this, null);
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/player/PlayersPanel.java:201:                case Commands.PLAYER_EDIT_REQUEST -> {
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/player/PlayersPanel.java:205:                        CommandBus.getInstance().publish(Commands.PLAYER_EDIT_REQUEST, this, selectedPlayer);
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/player/PlayersPanel.java:208:                case Commands.PLAYER_DELETE_REQUEST -> {
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/player/PlayersPanel.java:268:                        Commands.PLAYER_DELETE_REQUEST,
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/player/PlayersPanel.java:285:                CommandBus.getInstance().publish(Commands.SAVE_SESSION, this);
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/player/PlayersPanel.java:335:                        Commands.PLAYER_DELETE_REQUEST,
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/player/PlayersPanel.java:352:                CommandBus.getInstance().publish(Commands.SAVE_SESSION, this);
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/player/PlayersPanel.java:365:                CommandBus.getInstance().publish(Commands.EDIT_PLAYER_PARAMETERS, this, selectedPlayer);
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/player/PlayersPanel.java:374:            if (command.equals(Commands.PLAYER_ADD_REQUEST)) {
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/player/PlayersPanel.java:419:                        // case Commands.TIMING_TICK:
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/player/PlayersPanel.java:420:                        case Commands.PLAYER_TABLE_REFRESH_REQUEST:
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/player/PlayersPanel.java:421:                        case Commands.SESSION_SELECTED:
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/player/PlayersPanel.java:422:                        case Commands.SESSION_CHANGED:
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/player/PlayersPanel.java:423:                        case Commands.SESSION_LOADED: {
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/player/PlayersPanel.java:451:                        case Commands.PLAYER_ROW_REFRESH: {
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/player/PlayersPanel.java:459:                        case Commands.PLAYER_ADDED: {
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/player/PlayersPanel.java:473:                        case Commands.SHOW_PLAYER_EDITOR_OK: {
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/player/PlayersPanel.java:483:                        case Commands.PLAYER_DELETED: {
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/player/PlayersPanel.java:493:                                    // CommandBus.getInstance().publish(Commands.PLAYER_UNSELECTED,
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/player/PlayersPanel.java:500:                        case Commands.NEW_VALUE_LEVEL:
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/player/PlayersPanel.java:501:                        case Commands.NEW_VALUE_NOTE:
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/player/PlayersPanel.java:502:                        case Commands.NEW_VALUE_SWING:
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/player/PlayersPanel.java:503:                        case Commands.NEW_VALUE_PROBABILITY:
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/player/PlayersPanel.java:504:                        case Commands.NEW_VALUE_VELOCITY_MIN:
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/player/PlayersPanel.java:505:                        case Commands.NEW_VALUE_VELOCITY_MAX:
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/player/PlayersPanel.java:506:                        case Commands.NEW_VALUE_RANDOM:
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/player/PlayersPanel.java:507:                        case Commands.NEW_VALUE_PAN:
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/player/PlayersPanel.java:508:                        case Commands.NEW_VALUE_SPARSE:
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/player/PlayersPanel.java:509:                        case Commands.PLAYER_UPDATED: {
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/player/PlayersPanel.java:531:        Commands.PLAYER_TABLE_REFRESH_REQUEST,
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/player/PlayersPanel.java:532:        Commands.SESSION_SELECTED,
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/player/PlayersPanel.java:533:        Commands.SESSION_CHANGED,
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/player/PlayersPanel.java:534:        Commands.SESSION_LOADED,
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/player/PlayersPanel.java:535:        Commands.PLAYER_ROW_REFRESH,
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/player/PlayersPanel.java:536:        Commands.PLAYER_ADDED,
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/player/PlayersPanel.java:537:        Commands.SHOW_PLAYER_EDITOR_OK,
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/player/PlayersPanel.java:538:        Commands.PLAYER_DELETED,
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/player/PlayersPanel.java:539:        Commands.NEW_VALUE_LEVEL,
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/player/PlayersPanel.java:540:        Commands.NEW_VALUE_NOTE,
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/player/PlayersPanel.java:541:        Commands.NEW_VALUE_SWING,
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/player/PlayersPanel.java:542:        Commands.NEW_VALUE_PROBABILITY, 
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/player/PlayersPanel.java:543:        Commands.NEW_VALUE_VELOCITY_MIN,
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/player/PlayersPanel.java:544:        Commands.NEW_VALUE_VELOCITY_MAX,
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/player/PlayersPanel.java:545:        Commands.NEW_VALUE_RANDOM,
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/player/PlayersPanel.java:546:        Commands.NEW_VALUE_PAN,
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/player/PlayersPanel.java:547:        Commands.NEW_VALUE_SPARSE,
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/player/PlayersPanel.java:548:        Commands.PLAYER_UPDATED
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/player/PlayersPanel.java:614:                CommandBus.getInstance().publish(Commands.PLAYER_DELETE_REQUEST, this,
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/player/PlayersPanel.java:627:                CommandBus.getInstance().publish(Commands.PLAYER_ACTIVATION_REQUEST, this, selectedPlayer);
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/player/PlayersPanel.java:785:                    CommandBus.getInstance().publish(Commands.PLAYER_ACTIVATION_REQUEST, this, player);
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/player/PlayersPanel.java:787:                    // CommandBus.getInstance().publish(Commands.PLAYER_UNSELECTED, this, null);
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/player/PlayerTimelinePanel.java:732:                case Commands.PLAYER_ACTIVATED -> {
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/player/PlayerTimelinePanel.java:738:                // case Commands.PLAYER_UNSELECTED -> {
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/player/PlayerTimelinePanel.java:745:                case Commands.PLAYER_UPDATED -> {
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/player/PlayerTimelinePanel.java:753:                case Commands.NEW_VALUE_NOTE, Commands.PRESET_UP, Commands.PRESET_DOWN, Commands.PLAYER_ROW_REFRESH ->
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/player/PlayerTimelinePanel.java:756:                case Commands.SESSION_CHANGED -> {
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/player/RulesPanel.java:54:                Commands.RULE_ADD_REQUEST,
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/player/RulesPanel.java:55:                Commands.RULE_EDIT_REQUEST,
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/player/RulesPanel.java:56:                Commands.RULE_DELETE_REQUEST);
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/player/RulesPanel.java:58:                Commands.RULE_ADD_REQUEST,
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/player/RulesPanel.java:59:                Commands.RULE_EDIT_REQUEST,
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/player/RulesPanel.java:60:                Commands.RULE_DELETE_REQUEST);
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/player/RulesPanel.java:147:                        CommandBus.getInstance().publish(Commands.RULE_EDIT_REQUEST, this, selectedRule);
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/player/RulesPanel.java:158:                    CommandBus.getInstance().publish(Commands.RULE_SELECTED, this, selectedRule);
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/player/RulesPanel.java:160:                    CommandBus.getInstance().publish(Commands.RULE_UNSELECTED, this, null);
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/player/RulesPanel.java:175:                case Commands.RULE_ADD_REQUEST -> {
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/player/RulesPanel.java:179:                        CommandBus.getInstance().publish(Commands.RULE_ADD_REQUEST, this, player);
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/player/RulesPanel.java:184:                case Commands.RULE_EDIT_REQUEST -> {
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/player/RulesPanel.java:188:                        CommandBus.getInstance().publish(Commands.RULE_EDIT_REQUEST, this, selectedRule);
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/player/RulesPanel.java:193:                case Commands.RULE_DELETE_REQUEST -> {
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/player/RulesPanel.java:200:                        CommandBus.getInstance().publish(Commands.RULE_DELETE_REQUEST, this, selectedRules);
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/player/RulesPanel.java:220:                case Commands.RULE_ADD_REQUEST -> {
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/player/RulesPanel.java:224:                        CommandBus.getInstance().publish(Commands.RULE_ADD_REQUEST, this, player);
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/player/RulesPanel.java:227:                case Commands.RULE_EDIT_REQUEST -> {
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/player/RulesPanel.java:231:                        CommandBus.getInstance().publish(Commands.RULE_EDIT_REQUEST, this, selectedRule);
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/player/RulesPanel.java:234:                case Commands.RULE_DELETE_REQUEST -> {
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/player/RulesPanel.java:238:                        CommandBus.getInstance().publish(Commands.RULE_DELETE_REQUEST, this, selectedRules);
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/player/RulesPanel.java:268:                                    Commands.RULE_DELETE_REQUEST,
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/player/RulesPanel.java:341:                case Commands.PLAYER_RULE_UPDATE_EVENT -> {
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/player/RulesPanel.java:386:                case Commands.RULE_ADDED -> {
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/player/RulesPanel.java:417:                case Commands.RULE_EDITED -> {
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/player/RulesPanel.java:444:                case Commands.RULE_DELETED -> {
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/player/RulesPanel.java:469:                                    CommandBus.getInstance().publish(Commands.RULE_UNSELECTED, this);
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/player/SoundParametersPanel.java:102:                            Commands.PLAYER_PRESET_CHANGE_EVENT,
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/player/SoundParametersPanel.java:153:                            Commands.PLAYER_PRESET_CHANGE_EVENT,
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/player/SoundParametersPanel.java:221:                        com.angrysurfer.core.api.Commands.PLAYER_EDIT_REQUEST,
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/player/SoundParametersPanel.java:238:                    Commands.DRUM_PRESET_SELECTION_REQUEST,
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/player/SoundParametersPanel.java:247:                    Commands.DRUM_PRESET_SELECTION_REQUEST,
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/player/SoundParametersPanel.java:259://                    Commands.DRUM_PRESET_SELECTION_REQUEST,
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/PlayerAwarePanel.java:36:        CommandBus.getInstance().register(this, new String[]{Commands.PLAYER_ACTIVATED,
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/PlayerAwarePanel.java:37:                Commands.PLAYER_UPDATED, Commands.PLAYER_SELECTION_EVENT, Commands.PLAYER_UPDATE_EVENT});
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/PlayerAwarePanel.java:52:                case Commands.PLAYER_SELECTION_EVENT -> {
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/PlayerAwarePanel.java:59:                case Commands.PLAYER_UPDATE_EVENT -> {
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/PlayerAwarePanel.java:66:                case Commands.PLAYER_ACTIVATED -> {
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/PlayerAwarePanel.java:72:                case Commands.PLAYER_UPDATED -> {
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/PlayerAwarePanel.java:178:                    Commands.PLAYER_REFRESH_EVENT,
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/PlayerAwarePanel.java:191:                    Commands.PLAYER_UPDATE_EVENT,
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/sample/SampleBrowserPanel.java:49:        CommandBus.getInstance().register(this, new String[]{Commands.THEME_CHANGED});
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/sample/SampleBrowserPanel.java:107:            case Commands.THEME_CHANGED -> {
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/sequencer/mono/MelodicSequenceNavigationPanel.java:182:                    Commands.MELODIC_SEQUENCE_UPDATED,
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/sequencer/mono/MelodicSequenceNavigationPanel.java:209:                    Commands.MELODIC_SEQUENCE_LOADED,
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/sequencer/mono/MelodicSequenceNavigationPanel.java:287:                Commands.MELODIC_SEQUENCE_SAVED,
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/sequencer/mono/MelodicSequenceParametersPanel.java:177:                    Commands.PATTERN_UPDATED,
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/sequencer/mono/MelodicSequenceParametersPanel.java:192:                    Commands.PATTERN_UPDATED,
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/sequencer/mono/MelodicSequenceParametersPanel.java:219:                    Commands.PATTERN_UPDATED,
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/sequencer/mono/MelodicSequencerGeneratorPanel.java:117:                    Commands.PATTERN_UPDATED,
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/sequencer/mono/MelodicSequencerPanel.java:94:        Commands.MELODIC_SEQUENCE_LOADED,
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/sequencer/mono/MelodicSequencerPanel.java:95:        Commands.MELODIC_SEQUENCE_CREATED,
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/sequencer/mono/MelodicSequencerPanel.java:96:        Commands.MELODIC_SEQUENCE_SELECTED,
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/sequencer/mono/MelodicSequencerPanel.java:97:        Commands.MELODIC_SEQUENCE_UPDATED,
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/sequencer/mono/MelodicSequencerPanel.java:98:        Commands.SCALE_SELECTED,
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/sequencer/mono/MelodicSequencerPanel.java:99:        Commands.PATTERN_UPDATED,
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/sequencer/mono/MelodicSequencerPanel.java:100:        Commands.PLAYER_UPDATED,
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/sequencer/mono/MelodicSequencerPanel.java:101:        Commands.INSTRUMENT_CHANGED
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/sequencer/mono/MelodicSequencerPanel.java:156:                            Commands.MELODIC_SEQUENCE_LOADED,
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/sequencer/mono/MelodicSequencerPanel.java:203:                    Commands.MELODIC_SEQUENCE_CREATED,
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/sequencer/mono/MelodicSequencerPanel.java:321:                    Commands.REFRESH_ALL_INSTRUMENTS,
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/sequencer/mono/MelodicSequencerPanel.java:362:                    com.angrysurfer.core.api.Commands.STATUS_UPDATE,
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/sequencer/mono/MelodicSequencerPanel.java:391:                        com.angrysurfer.core.api.Commands.PLAYER_REFRESH_EVENT,
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/sequencer/mono/MelodicSequencerPanel.java:398:                        com.angrysurfer.core.api.Commands.STATUS_UPDATE,
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/sequencer/mono/MelodicSequencerPanel.java:491:            case Commands.MELODIC_SEQUENCE_LOADED,
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/sequencer/mono/MelodicSequencerPanel.java:492:                 Commands.MELODIC_SEQUENCE_CREATED,
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/sequencer/mono/MelodicSequencerPanel.java:493:                 Commands.MELODIC_SEQUENCE_SELECTED,
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/sequencer/mono/MelodicSequencerPanel.java:494:                 Commands.MELODIC_SEQUENCE_UPDATED -> {
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/sequencer/mono/MelodicSequencerPanel.java:507:            case Commands.SCALE_SELECTED -> {
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/sequencer/mono/MelodicSequencerPanel.java:540:            case Commands.PATTERN_UPDATED -> {
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/sequencer/mono/MelodicSequencerPanel.java:548:            case Commands.PLAYER_UPDATED, Commands.INSTRUMENT_CHANGED -> {
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/sequencer/mono/MelodicSequencerScalePanel.java:95:                    Commands.ROOT_NOTE_SELECTED,
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/sequencer/mono/MelodicSequencerScalePanel.java:140:                    Commands.SCALE_SELECTED,
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/sequencer/MuteSequencerPanel.java:125:            case Commands.TIMING_UPDATE -> {
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/sequencer/MuteSequencerPanel.java:130:            case Commands.DRUM_PAD_SELECTED -> {
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/sequencer/MuteSequencerPanel.java:136:            case Commands.PLAYER_ACTIVATED -> {
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/sequencer/MuteSequencerPanel.java:141:            case Commands.TRANSPORT_STOP -> resetHighlighting();
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/sequencer/MuteSequencerPanel.java:377:                    Commands.PLAYER_UPDATED,
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/sequencer/poly/DrumEffectsSequencerPanel.java:285:                                    Commands.DRUM_STEP_EFFECTS_CHANGED,
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/sequencer/poly/DrumEffectsSequencerPanel.java:480:                            Commands.PLAYER_ACTIVATION_REQUEST,
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/sequencer/poly/DrumEffectsSequencerPanel.java:499:                    Commands.DRUM_PAD_SELECTED,
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/sequencer/poly/DrumEffectsSequencerPanel.java:640:            case Commands.CHANGE_THEME -> {
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/sequencer/poly/DrumEffectsSequencerPanel.java:673:            case Commands.TIMING_UPDATE -> {
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/sequencer/poly/DrumEffectsSequencerPanel.java:693:            case Commands.TRANSPORT_START -> {
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/sequencer/poly/DrumEffectsSequencerPanel.java:700:            case Commands.TRANSPORT_STOP -> {
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/sequencer/poly/DrumEffectsSequencerPanel.java:710:            case Commands.STEP_UPDATED -> {
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/sequencer/poly/DrumEffectsSequencerPanel.java:718:            case Commands.DRUM_SEQUENCE_LOADED, Commands.DRUM_SEQUENCE_CREATED, Commands.DRUM_SEQUENCE_UPDATED -> {
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/sequencer/poly/DrumEffectsSequencerPanel.java:729:            case Commands.DRUM_PAD_SELECTED -> {
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/sequencer/poly/DrumEffectsSequencerPanel.java:798:            CommandBus.getInstance().publish(Commands.DRUM_SEQUENCE_UPDATED, null, this);
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/sequencer/poly/DrumParamsSequencerPanel.java:281:                                    Commands.DRUM_STEP_PARAMETERS_CHANGED,
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/sequencer/poly/DrumParamsSequencerPanel.java:310:                                    Commands.DRUM_STEP_PARAMETERS_CHANGED,
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/sequencer/poly/DrumParamsSequencerPanel.java:339:                                    Commands.DRUM_STEP_PARAMETERS_CHANGED,
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/sequencer/poly/DrumParamsSequencerPanel.java:369:                                    Commands.DRUM_STEP_PARAMETERS_CHANGED,
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/sequencer/poly/DrumParamsSequencerPanel.java:631:            case Commands.CHANGE_THEME -> {
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/sequencer/poly/DrumParamsSequencerPanel.java:664:            case Commands.TIMING_UPDATE -> {
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/sequencer/poly/DrumParamsSequencerPanel.java:684:            case Commands.TRANSPORT_START -> {
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/sequencer/poly/DrumParamsSequencerPanel.java:691:            case Commands.TRANSPORT_STOP -> {
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/sequencer/poly/DrumParamsSequencerPanel.java:701:            case Commands.STEP_UPDATED -> {
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/sequencer/poly/DrumParamsSequencerPanel.java:709:            case Commands.DRUM_SEQUENCE_LOADED, Commands.DRUM_SEQUENCE_CREATED, Commands.DRUM_SEQUENCE_UPDATED -> {
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/sequencer/poly/DrumParamsSequencerPanel.java:720:            case Commands.DRUM_PAD_SELECTED -> {
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/sequencer/poly/DrumParamsSequencerPanel.java:742://            case Commands.PLAYER_UPDATED, Commands.INSTRUMENT_CHANGED -> {
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/sequencer/poly/DrumParamsSequencerPanel.java:802:            CommandBus.getInstance().publish(Commands.DRUM_SEQUENCE_UPDATED, null, this);
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/sequencer/poly/DrumParamsSequencerPanel.java:832:                            Commands.STATUS_UPDATE,
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/sequencer/poly/DrumParamsSequencerPanel.java:837:                            Commands.PLAYER_ACTIVATION_REQUEST,
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/sequencer/poly/DrumParamsSequencerPanel.java:856:                    Commands.DRUM_PAD_SELECTED,
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/sequencer/poly/DrumPresetPanel.java:242:                Commands.DRUM_INSTRUMENTS_UPDATED,
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/sequencer/poly/DrumSelectorPanel.java:70:            case Commands.PLAYER_UPDATED:
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/sequencer/poly/DrumSelectorPanel.java:80:            case Commands.PLAYER_UPDATE_EVENT:
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/sequencer/poly/DrumSelectorPanel.java:90:            case Commands.PLAYER_PRESET_CHANGED:
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/sequencer/poly/DrumSelectorPanel.java:112:            case Commands.PLAYER_PRESET_CHANGE_EVENT:
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/sequencer/poly/DrumSelectorPanel.java:132:            case Commands.PLAYER_INSTRUMENT_CHANGED:
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/sequencer/poly/DrumSelectorPanel.java:152:            case Commands.DRUM_PLAYER_INSTRUMENT_CHANGED:
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/sequencer/poly/DrumSelectorPanel.java:168:            case Commands.SOUNDBANK_CHANGED:
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/sequencer/poly/DrumSequenceGeneratorPanel.java:80:                    Commands.DRUM_GRID_REFRESH_REQUESTED,
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/sequencer/poly/DrumSequenceNavigationPanel.java:148:                    Commands.PATTERN_LOADED,
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/sequencer/poly/DrumSequenceNavigationPanel.java:192:                CommandBus.getInstance().publish(Commands.DRUM_SEQUENCE_UPDATED, this, nextId);
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/sequencer/poly/DrumSequenceNavigationPanel.java:230:                Commands.DRUM_SEQUENCE_SAVED,
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/sequencer/poly/DrumSequenceNavigationPanel.java:257:                        Commands.DRUM_SEQUENCE_UPDATED,
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/sequencer/poly/DrumSequencerGridPanel.java:65:                Commands.DRUM_STEP_UPDATED, Commands.DRUM_STEP_PARAMETERS_CHANGED, Commands.DRUM_STEP_EFFECTS_CHANGED});
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/sequencer/poly/DrumSequencerGridPanel.java:408:            case Commands.DRUM_STEP_UPDATED:
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/sequencer/poly/DrumSequencerGridPanel.java:415:            case Commands.DRUM_STEP_PARAMETERS_CHANGED:
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/sequencer/poly/DrumSequencerGridPanel.java:429:            case Commands.DRUM_STEP_EFFECTS_CHANGED:
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/sequencer/poly/DrumSequencerMaxLengthPanel.java:76:            CommandBus.getInstance().publish(Commands.DRUM_SEQUENCE_MAX_LENGTH_CHANGED, this, newMaxLength);
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/sequencer/poly/DrumSequencerMaxLengthPanel.java:79:            CommandBus.getInstance().publish(Commands.DRUM_SEQUENCE_GRID_RECREATE_REQUESTED, this, newMaxLength);
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/sequencer/poly/DrumSequencerPanel.java:203:        //             Commands.DRUM_PRESET_SELECTION_REQUEST,
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/sequencer/poly/DrumSequencerPanel.java:250:                        com.angrysurfer.core.api.Commands.STATUS_UPDATE,
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/sequencer/poly/DrumSequencerPanel.java:317:                    Commands.PLAYER_ACTIVATION_REQUEST,
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/sequencer/poly/DrumSequencerPanel.java:323:                    Commands.DRUM_PAD_SELECTED,
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/sequencer/poly/DrumSequencerPanel.java:380:            case Commands.DRUM_SEQUENCE_LOADED, Commands.DRUM_SEQUENCE_UPDATED -> {
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/sequencer/poly/DrumSequencerPanel.java:399:            case Commands.DRUM_PAD_SELECTED -> {
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/sequencer/poly/DrumSequencerPanel.java:405:            case Commands.TRANSPORT_START -> {
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/sequencer/poly/DrumSequencerPanel.java:413:            case Commands.TRANSPORT_STOP -> {
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/sequencer/poly/DrumSequencerPanel.java:421:            case Commands.MAX_LENGTH_SELECTED -> {
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/sequencer/poly/DrumSequencerPanel.java:440:            case Commands.EUCLIDEAN_PATTERN_SELECTED -> {
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/sequencer/poly/DrumSequencerPanel.java:456:            case Commands.FILL_PATTERN_SELECTED -> {
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/sequencer/poly/DrumSequencerPanel.java:489:            case Commands.DRUM_STEP_BUTTONS_UPDATE_REQUESTED -> {
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/sequencer/poly/DrumSequencerPanel.java:498:            case Commands.DRUM_GRID_REFRESH_REQUESTED -> {
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/sequencer/poly/DrumSequencerPanel.java:505:            case Commands.DRUM_PATTERN_CLEAR_REQUESTED -> {
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/sequencer/poly/DrumSequencerParametersPanel.java:93:                Commands.DRUM_STEP_BUTTONS_UPDATE_REQUESTED,
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/sequencer/poly/DrumSequencerParametersPanel.java:176:                Commands.DRUM_GRID_REFRESH_REQUESTED,
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/sequencer/poly/DrumSequencerParametersPanel.java:192:                Commands.DRUM_GRID_REFRESH_REQUESTED,
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/sequencer/poly/DrumSequencerParametersPanel.java:219:                Commands.DRUM_PATTERN_CLEAR_REQUESTED,
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/sequencer/SongPanel.java:405:            CommandBus.getInstance().publish(Commands.TRANSPORT_START, this);
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/sequencer/SongPanel.java:412:            CommandBus.getInstance().publish(Commands.TRANSPORT_STOP, this);
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/sequencer/SongPanel.java:429:            case Commands.TIMING_BAR -> {
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/sequencer/SongPanel.java:451:            case Commands.DRUM_PATTERN_SWITCHED, Commands.MELODIC_PATTERN_SWITCHED -> {
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/sequencer/SongPanel.java:453:                    String type = action.getCommand() == Commands.DRUM_PATTERN_SWITCHED ? "Drum" : "Melodic";
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/session/SessionControlPanel.java:55:                    case Commands.PREV_SCALE_SELECTED:
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/session/SessionControlPanel.java:63:                                CommandBus.getInstance().publish(Commands.FIRST_SCALE_SELECTED, this,
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/session/SessionControlPanel.java:69:                    case Commands.NEXT_SCALE_SELECTED:
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/session/SessionControlPanel.java:77:                                CommandBus.getInstance().publish(Commands.LAST_SCALE_SELECTED, this,
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/session/SessionControlPanel.java:127:                CommandBus.getInstance().publish(Commands.SESSION_UPDATED, this, currentSession);
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/session/SessionControlPanel.java:143:                CommandBus.getInstance().publish(Commands.SESSION_UPDATED, this, currentSession);
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/session/SessionControlPanel.java:221:                CommandBus.getInstance().publish(Commands.SESSION_UPDATED, this, currentSession);
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/session/SessionControlPanel.java:250:                CommandBus.getInstance().publish(Commands.SCALE_SELECTED, this, selectedScale);
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/session/SessionControlPanel.java:253:                    CommandBus.getInstance().publish(Commands.FIRST_SCALE_SELECTED, this, selectedScale);
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/session/SessionControlPanel.java:255:                    CommandBus.getInstance().publish(Commands.LAST_SCALE_SELECTED, this, selectedScale);
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/session/SessionControlPanel.java:261:                            Commands.GLOBAL_SCALE_SELECTED,
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/session/SessionControlPanel.java:287:                CommandBus.getInstance().publish(Commands.ROOT_NOTE_SELECTED, this, (String) combo.getSelectedItem());
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/session/SessionDisplayPanel.java:237:                        case Commands.TIMING_UPDATE -> {
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/session/SessionDisplayPanel.java:297:                        case Commands.TIMING_RESET -> {
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/session/SessionDisplayPanel.java:301:                        case Commands.SESSION_STOPPED,
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/session/SessionDisplayPanel.java:302:                             Commands.TRANSPORT_STOP -> {
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/session/SessionDisplayPanel.java:325:                        case Commands.SESSION_CREATED, Commands.SESSION_SELECTED, Commands.SESSION_LOADED -> {
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/session/SessionDisplayPanel.java:335:                        case Commands.SESSION_UPDATED -> {
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/session/SessionDisplayPanel.java:343:                        case Commands.TRANSPORT_STOP -> {
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/session/SessionDisplayPanel.java:344:                            // Commands.TRANSPORT_RESET -> {
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/session/SessionDisplayPanel.java:352:                        case Commands.TRANSPORT_START -> {
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/session/SessionDisplayPanel.java:362:                        case Commands.SESSION_STOPPED -> {
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/session/SessionPanel.java:140:        case Commands.PLAYER_ACTIVATED:
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/session/SessionPanel.java:143:        // case Commands.PLAYER_UNSELECTED:
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/session/SessionPanel.java:147:        case Commands.SESSION_UPDATED:
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/session/SessionPanel.java:148:        case Commands.SESSION_CHANGED:
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/session/SessionPanel.java:149:        case Commands.SESSION_SELECTED:
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/SystemsPanel.java:185:                    Commands.STATUS_UPDATE,
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/SystemsPanel.java:196:                Commands.STATUS_UPDATE,
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/SystemsPanel.java:370:                        Commands.STATUS_UPDATE,
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/SystemsPanel.java:404:                    Commands.STATUS_UPDATE,
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/SystemsPanel.java:413:                    Commands.STATUS_UPDATE,
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/SystemsPanel.java:430:                        Commands.STATUS_UPDATE,
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/SystemsPanel.java:452:                    Commands.STATUS_UPDATE,
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/SystemsPanel.java:461:                    Commands.STATUS_UPDATE,
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/SystemsPanel.java:478:                        Commands.STATUS_UPDATE,
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/SystemsPanel.java:500:                    Commands.STATUS_UPDATE,
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/SystemsPanel.java:509:                    Commands.STATUS_UPDATE,
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/TransportIndicatorPanel.java:97:        Commands.PLAYER_UPDATED,
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/TransportIndicatorPanel.java:98:        Commands.TIMING_UPDATE,
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/TransportIndicatorPanel.java:99:        Commands.TEMPO_CHANGE,
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/TransportIndicatorPanel.java:100:        Commands.TIME_SIGNATURE_CHANGE,
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/TransportIndicatorPanel.java:101:        Commands.TIMING_RESET,
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/TransportIndicatorPanel.java:102:        Commands.TRANSPORT_START,
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/TransportIndicatorPanel.java:103:        Commands.TRANSPORT_STOP,
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/TransportIndicatorPanel.java:104:        Commands.TRANSPORT_RECORD,
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/TransportIndicatorPanel.java:105:        Commands.TRANSPORT_PAUSE,
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/TransportIndicatorPanel.java:106:        Commands.SESSION_LOADED,
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/TransportIndicatorPanel.java:107:        Commands.SESSION_CHANGED
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/TransportIndicatorPanel.java:113:            CommandBus.getInstance().publish(Commands.SESSION_REQUEST, this);
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/TransportIndicatorPanel.java:114:            CommandBus.getInstance().publish(Commands.TRANSPORT_STATE_REQUEST, this);
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/TransportIndicatorPanel.java:115:            CommandBus.getInstance().publish(Commands.ACTIVE_PLAYER_REQUEST, this);
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/TransportIndicatorPanel.java:244:                case Commands.PLAYER_UPDATED -> {
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/TransportIndicatorPanel.java:251:                case Commands.TIMING_UPDATE -> {
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/TransportIndicatorPanel.java:256:                case Commands.TEMPO_CHANGE -> {
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/TransportIndicatorPanel.java:262:                case Commands.TIME_SIGNATURE_CHANGE -> {
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/TransportIndicatorPanel.java:268:                case Commands.TIMING_RESET -> {
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/TransportIndicatorPanel.java:271:                case Commands.TRANSPORT_START -> {
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/TransportIndicatorPanel.java:276:                case Commands.TRANSPORT_STOP -> {
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/TransportIndicatorPanel.java:281:                case Commands.TRANSPORT_RECORD -> {
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/TransportIndicatorPanel.java:286:                case Commands.TRANSPORT_PAUSE -> {
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/TransportPanel.java:83:        rewindButton = createToolbarButton(Commands.TRANSPORT_REWIND, "⏮", "Previous Session");
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/TransportPanel.java:84:        pauseButton = createToolbarButton(Commands.TRANSPORT_PAUSE, "⏸", "Pause");
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/TransportPanel.java:85:        stopButton = createToolbarButton(Commands.TRANSPORT_STOP, "⏹", "Stop");
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/TransportPanel.java:86:        recordButton = createToolbarButton(Commands.TRANSPORT_RECORD, "⏺", "Record");
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/TransportPanel.java:87:        playButton = createToolbarButton(Commands.TRANSPORT_START, "▶", "Play");
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/TransportPanel.java:88:        forwardButton = createToolbarButton(Commands.TRANSPORT_FORWARD, "⏭", "Next Session");
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/TransportPanel.java:173:                    // CommandBus.getInstance().publish(Commands.SHOW_STATUS, this, "Session saved");
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/TransportPanel.java:179:                // CommandBus.getInstance().publish(Commands.SHOW_ERROR, this, "Error saving session: " +
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/TransportPanel.java:186:            CommandBus.getInstance().publish(Commands.TRANSPORT_RECORD_START, this);
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/TransportPanel.java:188:            CommandBus.getInstance().publish(Commands.TRANSPORT_RECORD_STOP, this);
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/TransportPanel.java:272:                            CommandBus.getInstance().publish(Commands.TRANSPORT_RECORD_START, TransportPanel.this);
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/TransportPanel.java:279:                    case Commands.TRANSPORT_STATE_CHANGED:
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/TransportPanel.java:288:                    case Commands.TRANSPORT_START:
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/TransportPanel.java:292:                    case Commands.TRANSPORT_STOP:
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/TransportPanel.java:298:                    case Commands.TRANSPORT_RECORD_START:
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/TransportPanel.java:302:                    case Commands.TRANSPORT_RECORD_STOP:
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/TransportPanel.java:306:                    case Commands.SESSION_CREATED:
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/TransportPanel.java:307:                    case Commands.SESSION_SELECTED:
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/TransportPanel.java:308:                    case Commands.SESSION_LOADED:
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/TransportPanel.java:317:                            if (cmd.equals(Commands.SESSION_CREATED)) {
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/TransportPanel.java:343:        return cmd.equals(Commands.TRANSPORT_REWIND) ||
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/TransportPanel.java:344:                cmd.equals(Commands.TRANSPORT_FORWARD) ||
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/TransportPanel.java:345:                cmd.equals(Commands.SESSION_CREATED) ||
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/TransportPanel.java:346:                cmd.equals(Commands.SESSION_SELECTED) ||
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/TransportPanel.java:347:                cmd.equals(Commands.SESSION_LOADED) ||
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/TransportPanel.java:348:                cmd.equals(Commands.SESSION_REQUEST);
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/TransportPanel.java:359:            case Commands.PLAYER_ADDED, Commands.PLAYER_UPDATED, Commands.PLAYER_DELETED -> true;
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/TransportPanel.java:363:            case Commands.RULE_ADDED, Commands.RULE_UPDATED, Commands.RULE_DELETED, Commands.RULE_ADDED_TO_PLAYER,
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/TransportPanel.java:364:                 Commands.RULE_REMOVED_FROM_PLAYER -> true;
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/TransportPanel.java:368:            case Commands.NEW_VALUE_LEVEL, Commands.NEW_VALUE_NOTE, Commands.NEW_VALUE_SWING,
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/TransportPanel.java:369:                 Commands.NEW_VALUE_PROBABILITY, Commands.NEW_VALUE_VELOCITY_MIN, Commands.NEW_VALUE_VELOCITY_MAX,
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/TransportPanel.java:370:                 Commands.NEW_VALUE_RANDOM, Commands.NEW_VALUE_PAN, Commands.NEW_VALUE_SPARSE -> true;
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/TransportPanel.java:374:            case Commands.SESSION_UPDATED -> true;
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/TransportPanel.java:378:            case Commands.PRESET_CHANGED, Commands.UPDATE_TEMPO, Commands.UPDATE_TIME_SIGNATURE,
+./swing/beatsui/src/main/java/com/angrysurfer/beats/panel/TransportPanel.java:379:                 Commands.TIMING_PARAMETERS_CHANGED, Commands.TRANSPOSE_UP, Commands.TRANSPOSE_DOWN -> true;
+./swing/beatsui/src/main/java/com/angrysurfer/beats/StatusBar.java:68:        CommandBus.getInstance().register(this, new String[]{Commands.SESSION_REQUEST,
+./swing/beatsui/src/main/java/com/angrysurfer/beats/StatusBar.java:69:                Commands.TRANSPORT_STATE_REQUEST, Commands.ACTIVE_PLAYER_REQUEST});
+./swing/beatsui/src/main/java/com/angrysurfer/beats/StatusBar.java:74:            CommandBus.getInstance().publish(Commands.SESSION_REQUEST, this);
+./swing/beatsui/src/main/java/com/angrysurfer/beats/StatusBar.java:75:            CommandBus.getInstance().publish(Commands.TRANSPORT_STATE_REQUEST, this);
+./swing/beatsui/src/main/java/com/angrysurfer/beats/StatusBar.java:76:            CommandBus.getInstance().publish(Commands.ACTIVE_PLAYER_REQUEST, this);
+./swing/beatsui/src/main/java/com/angrysurfer/beats/StatusBar.java:289:                case Commands.STATUS_UPDATE -> {
+./swing/beatsui/src/main/java/com/angrysurfer/beats/ThemeManager.java:114:        CommandBus.getInstance().publish(Commands.CHANGE_THEME, this, themeName);
+./swing/beatsui/src/main/java/com/angrysurfer/beats/ToolBar.java:42:                        case Commands.SESSION_SELECTED:
+./swing/beatsui/src/main/java/com/angrysurfer/beats/ToolBar.java:43:                        case Commands.SESSION_UPDATED:
+./swing/beatsui/src/main/java/com/angrysurfer/beats/ToolBar.java:44:                        case Commands.SESSION_CREATED:
+./swing/beatsui/src/main/java/com/angrysurfer/beats/ToolBar.java:62:                CommandBus.getInstance().publish(Commands.SESSION_SELECTED, this, currentSession);
+./swing/beatsui/src/main/java/com/angrysurfer/beats/ToolBar.java:64:                CommandBus.getInstance().publish(Commands.SESSION_REQUEST, this);
+./swing/beatsui/src/main/java/com/angrysurfer/beats/util/UIHelper.java:371:        if (upCommand.equals(Commands.TRANSPOSE_UP) || upCommand.equals(Commands.TRANSPOSE_DOWN)) {
+./swing/beatsui/src/main/java/com/angrysurfer/beats/util/UIHelper.java:383:        if (downCommand.equals(Commands.TRANSPOSE_UP) || downCommand.equals(Commands.TRANSPOSE_DOWN)) {
+./swing/beatsui/src/main/java/com/angrysurfer/beats/util/UIHelper.java:518:                    Commands.PLAYER_REFRESH_EVENT,
+./swing/beatsui/src/main/java/com/angrysurfer/beats/util/UIHelper.java:525:                    Commands.STATUS_UPDATE,
+./swing/beatsui/src/main/java/com/angrysurfer/beats/util/UIHelper.java:559:                    Commands.PLAYER_SELECTION_EVENT,
+./swing/beatsui/src/main/java/com/angrysurfer/beats/util/UIHelper.java:633:                    Commands.PLAYER_UPDATE_EVENT,
+./swing/beatsui/src/main/java/com/angrysurfer/beats/visualization/handler/music/ScrollingSequencerVisualization.java:400:            case Commands.TRANSPORT_START, Commands.METRONOME_START -> {
+./swing/beatsui/src/main/java/com/angrysurfer/beats/visualization/handler/music/ScrollingSequencerVisualization.java:405:            case Commands.TRANSPORT_STOP, Commands.METRONOME_STOP -> {
+./swing/beatsui/src/main/java/com/angrysurfer/beats/visualization/handler/music/ScrollingSequencerVisualization.java:411:            case Commands.TRANSPORT_STATE_CHANGED -> {
+./swing/beatsui/src/main/java/com/angrysurfer/beats/visualization/handler/music/ScrollingSequencerVisualization.java:424:            case Commands.TIMING_UPDATE -> {
+./swing/beatsui/src/main/java/com/angrysurfer/beats/visualization/handler/music/ScrollingSequencerVisualization.java:433:            case Commands.UPDATE_TEMPO, Commands.TIMING_PARAMETERS_CHANGED, Commands.SESSION_CHANGED -> {
+./swing/beatsui/src/main/java/com/angrysurfer/beats/visualization/handler/music/ScrollingSequencerVisualization.java:445:            case Commands.PLAYER_ADDED, Commands.PLAYER_DELETED, 
+./swing/beatsui/src/main/java/com/angrysurfer/beats/visualization/handler/music/ScrollingSequencerVisualization.java:446:                 Commands.RULE_ADDED, Commands.RULE_EDITED, Commands.RULE_DELETED,
+./swing/beatsui/src/main/java/com/angrysurfer/beats/visualization/handler/music/ScrollingSequencerVisualization.java:447:                 Commands.SESSION_UPDATED, Commands.PLAYER_UPDATED -> {
+./swing/beatsui/src/main/java/com/angrysurfer/beats/visualization/IVisualizationHandler.java:24:        CommandBus.getInstance().publish(Commands.LOCK_CURRENT_VISUALIZATION);
+./swing/beatsui/src/main/java/com/angrysurfer/beats/visualization/IVisualizationHandler.java:28:        CommandBus.getInstance().publish(Commands.UNLOCK_CURRENT_VISUALIZATION);
+./swing/beatsui/src/main/java/com/angrysurfer/beats/visualization/LockHandler.java:19:        CommandBus.getInstance().publish(Commands.LOCK_CURRENT_VISUALIZATION);
+./swing/beatsui/src/main/java/com/angrysurfer/beats/visualization/LockHandler.java:24:        CommandBus.getInstance().publish(Commands.UNLOCK_CURRENT_VISUALIZATION);
+./swing/beatsui/src/main/java/com/angrysurfer/beats/visualization/Visualizer.java:41:                Commands.START_VISUALIZATION,
+./swing/beatsui/src/main/java/com/angrysurfer/beats/visualization/Visualizer.java:42:                Commands.STOP_VISUALIZATION,
+./swing/beatsui/src/main/java/com/angrysurfer/beats/visualization/Visualizer.java:43:                Commands.LOCK_CURRENT_VISUALIZATION,
+./swing/beatsui/src/main/java/com/angrysurfer/beats/visualization/Visualizer.java:44:                Commands.UNLOCK_CURRENT_VISUALIZATION,
+./swing/beatsui/src/main/java/com/angrysurfer/beats/visualization/Visualizer.java:45:                Commands.VISUALIZATION_SELECTED,
+./swing/beatsui/src/main/java/com/angrysurfer/beats/visualization/Visualizer.java:46:                Commands.VISUALIZATION_HANDLER_REFRESH_REQUESTED,
+./swing/beatsui/src/main/java/com/angrysurfer/beats/visualization/Visualizer.java:47:                Commands.TRANSPORT_START,
+./swing/beatsui/src/main/java/com/angrysurfer/beats/visualization/Visualizer.java:48:                Commands.TRANSPORT_STATE_CHANGED,
+./swing/beatsui/src/main/java/com/angrysurfer/beats/visualization/Visualizer.java:49:                Commands.PLAYER_ACTIVATED,
+./swing/beatsui/src/main/java/com/angrysurfer/beats/visualization/Visualizer.java:50:                Commands.TRANSPORT_STOP
+./swing/beatsui/src/main/java/com/angrysurfer/beats/visualization/Visualizer.java:61:            case Commands.START_VISUALIZATION:
+./swing/beatsui/src/main/java/com/angrysurfer/beats/visualization/Visualizer.java:66:            case Commands.STOP_VISUALIZATION:
+./swing/beatsui/src/main/java/com/angrysurfer/beats/visualization/Visualizer.java:72:            case Commands.LOCK_CURRENT_VISUALIZATION:
+./swing/beatsui/src/main/java/com/angrysurfer/beats/visualization/Visualizer.java:77:            case Commands.UNLOCK_CURRENT_VISUALIZATION:
+./swing/beatsui/src/main/java/com/angrysurfer/beats/visualization/Visualizer.java:83:            case Commands.VISUALIZATION_SELECTED:
+./swing/beatsui/src/main/java/com/angrysurfer/beats/visualization/Visualizer.java:87:            case Commands.VISUALIZATION_HANDLER_REFRESH_REQUESTED:
+./swing/beatsui/src/main/java/com/angrysurfer/beats/visualization/Visualizer.java:91:            case Commands.TRANSPORT_START:
+./swing/beatsui/src/main/java/com/angrysurfer/beats/visualization/Visualizer.java:92:            case Commands.TRANSPORT_STATE_CHANGED: // <-- Add this case
+./swing/beatsui/src/main/java/com/angrysurfer/beats/visualization/Visualizer.java:94:                // if (Commands.TRANSPORT_STATE_CHANGED.equals(action.getCommand())
+./swing/beatsui/src/main/java/com/angrysurfer/beats/visualization/Visualizer.java:110:            case Commands.PLAYER_ACTIVATED:
+./swing/beatsui/src/main/java/com/angrysurfer/beats/visualization/Visualizer.java:122:            case Commands.TRANSPORT_STOP:
+./swing/beatsui/src/main/java/com/angrysurfer/beats/visualization/Visualizer.java:136:            CommandBus.getInstance().publish(Commands.VISUALIZATION_REGISTERED, this, handler);
+./swing/beatsui/src/main/java/com/angrysurfer/beats/visualization/Visualizer.java:263:        CommandBus.getInstance().publish(Commands.VISUALIZATION_STARTED, this, handler);
+./swing/beatsui/src/main/java/com/angrysurfer/beats/visualization/Visualizer.java:268:        CommandBus.getInstance().publish(Commands.VISUALIZATION_STOPPED, this, null);
+./swing/beatsui/src/main/java/com/angrysurfer/beats/visualization/Visualizer.java:306:                Commands.STATUS_UPDATE,
+./swing/beatsui/src/main/java/com/angrysurfer/beats/widget/AddInstrumentButton.java:38:        CommandBus.getInstance().register(this, new String[]{Commands.PLAYER_ACTIVATED});
+./swing/beatsui/src/main/java/com/angrysurfer/beats/widget/AddInstrumentButton.java:58:                    Commands.STATUS_UPDATE,
+./swing/beatsui/src/main/java/com/angrysurfer/beats/widget/AddInstrumentButton.java:66:        CommandBus.getInstance().publish(Commands.CREATE_INSTRUMENT_FOR_PLAYER_REQUEST, this, currentPlayer);
+./swing/beatsui/src/main/java/com/angrysurfer/beats/widget/AddInstrumentButton.java:78:        if (action.getCommand().equals(Commands.PLAYER_ACTIVATED)) {
+./swing/beatsui/src/main/java/com/angrysurfer/beats/widget/ChannelCombo.java:35:        CommandBus.getInstance().register(this, new String[]{Commands.PLAYER_ACTIVATED,
+./swing/beatsui/src/main/java/com/angrysurfer/beats/widget/ChannelCombo.java:36:                Commands.PLAYER_UPDATED, Commands.CHANNEL_ASSIGNMENT_CHANGED});
+./swing/beatsui/src/main/java/com/angrysurfer/beats/widget/ChannelCombo.java:113:            case Commands.PLAYER_ACTIVATED:
+./swing/beatsui/src/main/java/com/angrysurfer/beats/widget/ChannelCombo.java:119:            case Commands.PLAYER_UPDATED:
+./swing/beatsui/src/main/java/com/angrysurfer/beats/widget/ChannelCombo.java:128:            case Commands.CHANNEL_ASSIGNMENT_CHANGED:
+./swing/beatsui/src/main/java/com/angrysurfer/beats/widget/ChannelCombo.java:195:            CommandBus.getInstance().publish(Commands.PLAYER_CHANNEL_CHANGE_REQUEST, this, currentPlayer);
+./swing/beatsui/src/main/java/com/angrysurfer/beats/widget/DrumButton.java:40:        CommandBus.getInstance().register(this, new String[]{Commands.DRUM_BUTTON_SELECTED});
+./swing/beatsui/src/main/java/com/angrysurfer/beats/widget/DrumButton.java:48:                CommandBus.getInstance().publish(Commands.DRUM_BUTTON_SELECTED, this);
+./swing/beatsui/src/main/java/com/angrysurfer/beats/widget/DrumButton.java:60:        if (Commands.DRUM_BUTTON_SELECTED.equals(action.getCommand())) {
+./swing/beatsui/src/main/java/com/angrysurfer/beats/widget/DrumSelectorButton.java:57:        CommandBus.getInstance().register(this, new String[]{Commands.DRUM_PAD_SELECTED});
+./swing/beatsui/src/main/java/com/angrysurfer/beats/widget/DrumSelectorButton.java:245:        if (Commands.DRUM_PAD_SELECTED.equals(action.getCommand())) {
+./swing/beatsui/src/main/java/com/angrysurfer/beats/widget/DrumSequencerGridPanelContextHandler.java:57:            CommandBus.getInstance().publish(Commands.SHOW_FILL_DIALOG, this, params);
+./swing/beatsui/src/main/java/com/angrysurfer/beats/widget/DrumSequencerGridPanelContextHandler.java:80:            CommandBus.getInstance().publish(Commands.SHOW_MAX_LENGTH_DIALOG, this, sequencer);
+./swing/beatsui/src/main/java/com/angrysurfer/beats/widget/DrumSequencerGridPanelContextHandler.java:92:            CommandBus.getInstance().publish(Commands.SHOW_EUCLIDEAN_DIALOG, this, params);
+./swing/beatsui/src/main/java/com/angrysurfer/beats/widget/DrumSequencerGridPanelContextHandler.java:219:                Commands.DRUM_SEQUENCE_UPDATED, 
+./swing/beatsui/src/main/java/com/angrysurfer/beats/widget/InstrumentCombo.java:39:        CommandBus.getInstance().register(this, new String[]{Commands.PLAYER_ACTIVATED,
+./swing/beatsui/src/main/java/com/angrysurfer/beats/widget/InstrumentCombo.java:40:                Commands.INSTRUMENTS_REFRESHED, Commands.INSTRUMENT_UPDATED, Commands.PLAYER_UPDATED,
+./swing/beatsui/src/main/java/com/angrysurfer/beats/widget/InstrumentCombo.java:41:                Commands.PLAYER_INSTRUMENT_CHANGED});
+./swing/beatsui/src/main/java/com/angrysurfer/beats/widget/InstrumentCombo.java:118:            case Commands.PLAYER_ACTIVATED:
+./swing/beatsui/src/main/java/com/angrysurfer/beats/widget/InstrumentCombo.java:124:            case Commands.PLAYER_UPDATED:
+./swing/beatsui/src/main/java/com/angrysurfer/beats/widget/InstrumentCombo.java:137:            case Commands.PLAYER_INSTRUMENT_CHANGED:
+./swing/beatsui/src/main/java/com/angrysurfer/beats/widget/InstrumentCombo.java:152:            case Commands.INSTRUMENTS_REFRESHED:
+./swing/beatsui/src/main/java/com/angrysurfer/beats/widget/InstrumentCombo.java:153:            case Commands.INSTRUMENT_UPDATED:
+./swing/beatsui/src/main/java/com/angrysurfer/beats/widget/InstrumentCombo.java:413:        CommandBus.getInstance().publish(Commands.PLAYER_INSTRUMENT_CHANGE_EVENT, this, event);
+./swing/beatsui/src/main/java/com/angrysurfer/beats/widget/PlayerRowRenderer.java:47:            case Commands.SESSION_UPDATED:
+./swing/beatsui/src/main/java/com/angrysurfer/beats/widget/PlayerRowRenderer.java:48:            case Commands.SESSION_SELECTED:
+./swing/beatsui/src/main/java/com/angrysurfer/beats/widget/PlayerRowRenderer.java:55:            case Commands.TRANSPOSE_UP:
+./swing/beatsui/src/main/java/com/angrysurfer/beats/widget/PlayerRowRenderer.java:60:            case Commands.TRANSPOSE_DOWN:
+./swing/beatsui/src/main/java/com/angrysurfer/beats/widget/PlayersTable.java:242:                            CommandBus.getInstance().publish(Commands.PLAYER_EDIT_REQUEST, this, player);
+./swing/beatsui/src/main/java/com/angrysurfer/beats/widget/PlayersTable.java:258:                    case Commands.PLAYER_ADDED:
+./swing/beatsui/src/main/java/com/angrysurfer/beats/widget/PlayersTable.java:273:                    case Commands.PLAYER_DELETED:
+./swing/beatsui/src/main/java/com/angrysurfer/beats/widget/PlayersTable.java:289:                    case Commands.PLAYER_ROW_REFRESH:
+./swing/beatsui/src/main/java/com/angrysurfer/beats/widget/PlayersTable.java:297:                    case Commands.SESSION_UPDATED:
+./swing/beatsui/src/main/java/com/angrysurfer/beats/widget/PlayersTable.java:298:                    case Commands.SESSION_SELECTED:
+./swing/beatsui/src/main/java/com/angrysurfer/beats/widget/PlayersTable.java:299:                    case Commands.SESSION_LOADED:
+./swing/beatsui/src/main/java/com/angrysurfer/beats/widget/PlayersTable.java:307:                    case Commands.NEW_VALUE_VELOCITY_MIN:
+./swing/beatsui/src/main/java/com/angrysurfer/beats/widget/PlayersTable.java:308:                    case Commands.NEW_VALUE_VELOCITY_MAX:
+./swing/beatsui/src/main/java/com/angrysurfer/beats/widget/PlayersTable.java:327:                    case Commands.PLAYER_ACTIVATED:
+./swing/beatsui/src/main/java/com/angrysurfer/beats/widget/PlayersTable.java:393:                CommandBus.getInstance().publish(Commands.PLAYER_ACTIVATION_REQUEST, this, player);
+./swing/beatsui/src/main/java/com/angrysurfer/beats/widget/PlayersTable.java:395:                // CommandBus.getInstance().publish(Commands.PLAYER_UNSELECTED, this, null);
+./swing/beatsui/src/main/java/com/angrysurfer/beats/widget/PlayersTableModel.java:293:        case Commands.NEW_VALUE_VELOCITY_MIN, Commands.NEW_VALUE_VELOCITY_MAX -> {
+./swing/beatsui/src/main/java/com/angrysurfer/beats/widget/RulesTable.java:76:                            Commands.RULE_SELECTED, 
+./swing/beatsui/src/main/java/com/angrysurfer/beats/widget/RulesTable.java:84:                        Commands.RULE_UNSELECTED,
+./swing/beatsui/src/main/java/com/angrysurfer/beats/widget/RulesTable.java:104:                                Commands.RULE_EDIT_REQUEST, 
+./swing/beatsui/src/main/java/com/angrysurfer/beats/widget/RulesTable.java:122:                    case Commands.RULE_ADDED:
+./swing/beatsui/src/main/java/com/angrysurfer/beats/widget/RulesTable.java:138:                    case Commands.RULE_EDITED:
+./swing/beatsui/src/main/java/com/angrysurfer/beats/widget/RulesTable.java:154:                    case Commands.RULE_DELETED:
+./swing/beatsui/src/main/java/com/angrysurfer/beats/widget/RulesTable.java:174:                    case Commands.PLAYER_ACTIVATED:
+./swing/beatsui/src/main/java/com/angrysurfer/beats/widget/RulesTable.java:187:                    // case Commands.PLAYER_UNSELECTED:
