@@ -1,5 +1,6 @@
 package com.angrysurfer.core.redis;
 
+import com.angrysurfer.core.Constants;
 import com.angrysurfer.core.config.UserConfig;
 import com.angrysurfer.core.model.InstrumentWrapper;
 import com.angrysurfer.core.model.Player;
@@ -71,10 +72,13 @@ public class UserConfigHelper {
                             instrument.getIsDefault());
                 });
 
-                config.setDefaultStrikes(new ArrayList<>());
-                config.setDefaultNotes(new ArrayList<>());
-                config.setInstruments(new ArrayList<>());
-                config.setHasDefaults(false);
+                if (Constants.RESET_USER_CONFIG) {
+                    config.setDefaultStrikes(new ArrayList<>());
+                    config.setDefaultNotes(new ArrayList<>());
+                    config.setInstruments(new ArrayList<>());
+                    config.setHasDefaults(false);
+                }
+
                 return config;
             } else {
                 logger.debug("No UserConfig found with ID {}", id);

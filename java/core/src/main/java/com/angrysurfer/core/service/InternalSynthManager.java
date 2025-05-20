@@ -334,36 +334,36 @@ public class InternalSynthManager {
                     channel, bankIndex, preset);
 
             // Make sure synth is initialized
-            if (synthesizer == null || !synthesizer.isOpen()) {
-                initializeSynthesizer();
-            }
+//            if (synthesizer == null || !synthesizer.isOpen()) {
+//                initializeSynthesizer();
+//            }
 
             boolean success = false;
 
             if (synthesizer != null && synthesizer.isOpen()) {
                 // First apply through the synth's MidiChannels directly
-                MidiChannel[] channels = synthesizer.getChannels();
-                if (channels != null && channel < channels.length) {
-                    channels[channel].controlChange(0, (bankIndex >> 7) & MidiControlMessageEnum.POLY_MODE_ON);
-                    channels[channel].controlChange(32, bankIndex & MidiControlMessageEnum.POLY_MODE_ON);
-                    channels[channel].programChange(preset);
-
-                    // For percussion channel, ensure drum mode is enabled
-                    if (channel == SequencerConstants.MIDI_DRUM_CHANNEL) {
-                        channels[channel].controlChange(0, 120);
-                    }
-
-                    logger.info("Applied preset via direct synth channel: ch={}, bank={}, program={}",
-                            channel, bankIndex, preset);
-
-                    success = true;
-                } else {
-                    logger.warn("Could not access synthesizer channel {}", channel);
-                }
+//                MidiChannel[] channels = synthesizer.getChannels();
+//                if (channels != null && channel < channels.length) {
+//                    channels[channel].controlChange(0, (bankIndex >> 7) & MidiControlMessageEnum.POLY_MODE_ON);
+//                    channels[channel].controlChange(32, bankIndex & MidiControlMessageEnum.POLY_MODE_ON);
+//                    channels[channel].programChange(preset);
+//
+//                    // For percussion channel, ensure drum mode is enabled
+//                    if (channel == SequencerConstants.MIDI_DRUM_CHANNEL) {
+//                        channels[channel].controlChange(0, 120);
+//                    }
+//
+//                    logger.info("Applied preset via direct synth channel: ch={}, bank={}, program={}",
+//                            channel, bankIndex, preset);
+//
+//                    success = true;
+//                } else {
+//                    logger.warn("Could not access synthesizer channel {}", channel);
+//                }
 
                 // Also try through Receiver for completeness
                 try {
-                    Receiver receiver = synthesizer.getReceiver();
+                    Receiver receiver = instrument.getReceiver();
                     if (receiver != null) {
                         // Bank select MSB
                         javax.sound.midi.ShortMessage bankMSB = new javax.sound.midi.ShortMessage();

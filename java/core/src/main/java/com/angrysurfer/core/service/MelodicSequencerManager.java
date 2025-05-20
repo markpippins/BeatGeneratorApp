@@ -1,12 +1,16 @@
 package com.angrysurfer.core.service;
 
+import com.angrysurfer.core.Constants;
+import com.angrysurfer.core.api.Command;
 import com.angrysurfer.core.api.CommandBus;
 import com.angrysurfer.core.api.Commands;
+import com.angrysurfer.core.api.DefaultBusListener;
 import com.angrysurfer.core.api.midi.MidiControlMessageEnum;
 import com.angrysurfer.core.model.InstrumentWrapper;
 import com.angrysurfer.core.model.Note;
 import com.angrysurfer.core.model.Player;
 import com.angrysurfer.core.model.Session;
+import com.angrysurfer.core.redis.MelodicSequenceDataHelper;
 import com.angrysurfer.core.redis.RedisService;
 import com.angrysurfer.core.sequencer.*;
 import org.slf4j.Logger;
@@ -22,7 +26,7 @@ import java.util.concurrent.ConcurrentHashMap;
  * Manager for MelodicSequencer instances. Maintains a collection of sequencers
  * and provides methods to create and access them.
  */
-public class MelodicSequencerManager {
+public class MelodicSequencerManager extends DefaultBusListener {
 
     private static final Logger logger = LoggerFactory.getLogger(MelodicSequencerManager.class);
 
@@ -48,6 +52,10 @@ public class MelodicSequencerManager {
         for (int i = 0; i < SequencerConstants.MELODIC_CHANNELS.length; i++) {
             sequenceDataMap.put(i, new HashMap<>());
         }
+
+        loadAllMelodicSequenceData();
+
+        registerCommand(Commands.SAVE_ALL_MELODIC, this::handleSaveAll);
     }
 
     // Singleton access method
@@ -130,6 +138,14 @@ public class MelodicSequencerManager {
     public void loadAllMelodicSequenceData() {
         // Clear existing data
         sequenceDataMap.values().forEach(Map::clear);
+        if (Constants.DEBUG) {
+            for (int sequencerId = 0; sequencerId < SequencerConstants.MELODIC_CHANNELS.length; sequencerId++) {
+                int finalSequencerId = sequencerId;
+                RedisService.getInstance().getMelodicSequencerHelper().getAllMelodicSequenceIds(finalSequencerId)
+                        .forEach(id -> RedisService.getInstance().getMelodicSequencerHelper()
+                                .deleteMelodicSequence(finalSequencerId, id));
+            }
+        }
 
         // For each possible sequencer ID
         for (int sequencerId = 0; sequencerId < SequencerConstants.MELODIC_CHANNELS.length; sequencerId++) {
@@ -702,4 +718,29 @@ public class MelodicSequencerManager {
                 player.getInstrument().getPreset(), player.getInstrument().getBankIndex(), player.getInstrument().getSoundbankName());
     }
 
+    private void handleSaveAll(Command cmd) {
+        getAllSequencers().forEach(seq -> {
+            RedisService.getInstance().saveMelodicSequence(seq);
+        });
+    }
+
+    /**
+     * Delete all melodic sequences from the database
+     *
+     * @return The number of sequences deleted, or -1 if an error occurred
+     */
+    public void deleteAllSequences() {
+        try {
+            // Get the helper that interacts with the database
+            MelodicSequenceDataHelper helper = RedisService.getInstance().getMelodicSequencerHelper();
+
+            // Get all sequence IDs first to count them
+            for (int[] id = new int[]{0}; id[0] < 15; id[0]++) {
+                helper.getAllMelodicSequenceIds(id[0]).forEach(sequenceId -> helper.deleteMelodicSequence(id[0],
+                        sequenceId));
+            }
+        } catch (Exception e) {
+            logger.error("Error deleting all melodic sequences", e);
+        }
+    }
 }

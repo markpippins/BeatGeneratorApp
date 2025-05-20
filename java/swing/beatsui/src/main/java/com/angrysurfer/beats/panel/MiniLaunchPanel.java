@@ -16,7 +16,7 @@ import java.awt.*;
 import java.util.HashMap;
 import java.util.Map;
 
-public class MiniLaunchPanel extends PlayerAwarePanel implements IBusListener {
+public class MiniLaunchPanel extends LivePanel implements IBusListener {
 
     private static final Logger logger = LoggerFactory.getLogger(MiniLaunchPanel.class);
 
@@ -172,31 +172,31 @@ public class MiniLaunchPanel extends PlayerAwarePanel implements IBusListener {
      */
     public boolean sendNoteToActivePlayer(int midiNote) {
 
-        if (getTargetPlayer() == null) {
+        if (getPlayer() == null) {
             logger.debug("No active player to receive MIDI note: {}", midiNote);
             return false;
         }
 
         if (SessionManager.getInstance().isRecording()) {
             CommandBus.getInstance().publish(Commands.NEW_VALUE_NOTE, this, midiNote);
-            CommandBus.getInstance().publish(Commands.PLAYER_ROW_REFRESH, this, getTargetPlayer());
+            CommandBus.getInstance().publish(Commands.PLAYER_ROW_REFRESH, this, getPlayer());
         }
 
 
         try {
             // Use the player's instrument, channel, and a reasonable velocity
-            InstrumentWrapper instrument = getTargetPlayer().getInstrument();
+            InstrumentWrapper instrument = getPlayer().getInstrument();
             if (instrument == null) {
                 logger.debug("Active player has no instrument");
                 return false;
             }
 
-            int channel = getTargetPlayer().getChannel();
+            int channel = getPlayer().getChannel();
 
             // Only send program change if preset has changed for this channel
-            if (getTargetPlayer().getPreset() != null) {
+            if (getPlayer().getPreset() != null) {
                 Integer lastPreset = lastSentPresets.get(channel);
-                Integer currentPreset = getTargetPlayer().getPreset();
+                Integer currentPreset = getPlayer().getPreset();
 
                 // Send program change only if the preset has changed for this channel
                 if (lastPreset == null || !lastPreset.equals(currentPreset)) {
@@ -214,10 +214,10 @@ public class MiniLaunchPanel extends PlayerAwarePanel implements IBusListener {
             }
 
             // Calculate velocity from player settings
-            int velocity = (int) Math.round((getTargetPlayer().getMinVelocity() + getTargetPlayer().getMaxVelocity()) / 2.0);
+            int velocity = (int) Math.round((getPlayer().getMinVelocity() + getPlayer().getMaxVelocity()) / 2.0);
 
             // Just update the note in memory temporarily - don't save to Redis
-            getTargetPlayer().setRootNote(midiNote);
+            getPlayer().setRootNote(midiNote);
 
             // Send the note to the device
             logger.debug("Sending note: note={}, channel={}, velocity={}", midiNote, channel, velocity);

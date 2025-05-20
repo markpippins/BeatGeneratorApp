@@ -433,6 +433,38 @@ public class DrumSequenceModifier {
     }
 
     /**
+     * Randomizes velocities for all active steps in a pattern
+     * 
+     * @param sequencer The drum sequencer to modify
+     * @param drumIndex The index of the drum to update
+     * @return True if velocities were randomized successfully
+     */
+    public static boolean randomizeVelocities(DrumSequencer sequencer, int drumIndex) {
+        try {
+            int patternLength = sequencer.getPatternLength(drumIndex);
+            
+            // Go through each step in the pattern
+            for (int step = 0; step < patternLength; step++) {
+                // Only modify active steps
+                if (sequencer.isStepActive(drumIndex, step)) {
+                    // Generate random velocity between 50-127 for better musical results
+                    int randomVelocity = 50 + random.nextInt(78);
+                    sequencer.setStepVelocity(drumIndex, step, randomVelocity);
+                }
+            }
+            
+            // Notify that the pattern has changed
+            notifyPatternChanged(sequencer, drumIndex);
+            
+            logger.info("Randomized velocities for active steps in drum {}", drumIndex);
+            return true;
+        } catch (Exception e) {
+            logger.error("Error randomizing velocities for drum {}", drumIndex, e);
+            return false;
+        }
+    }
+
+    /**
      * Make this method public so it can be called from other classes
      */
     public static void notifyPatternChanged(DrumSequencer sequencer, int drumIndex) {

@@ -39,7 +39,7 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
-public class MainPanel extends PlayerAwarePanel implements AutoCloseable, IBusListener {
+public class MainPanel extends LivePanel implements AutoCloseable, IBusListener {
     private static final Logger logger = LoggerFactory.getLogger(MainPanel.class.getName());
 
     static {

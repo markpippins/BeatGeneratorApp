@@ -7,31 +7,34 @@ import com.angrysurfer.core.api.IBusListener;
 import com.angrysurfer.core.event.PlayerSelectionEvent;
 import com.angrysurfer.core.event.PlayerUpdateEvent;
 import com.angrysurfer.core.model.Player;
+import com.angrysurfer.core.sequencer.DrumSequencer;
+import com.angrysurfer.core.sequencer.MelodicSequencer;
 import lombok.Getter;
 import lombok.Setter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
+import java.util.Objects;
 
 /**
  * Base class for panels that work with a specific player
  */
 @Getter
 @Setter
-public abstract class PlayerAwarePanel extends JPanel implements IBusListener {
+public abstract class LivePanel extends JPanel implements IBusListener {
 
     private static final long serialVersionUID = 1L;
-    private static final Logger logger = LoggerFactory.getLogger(PlayerAwarePanel.class);
+    private static final Logger logger = LoggerFactory.getLogger(LivePanel.class);
     // Flag to prevent recursive calls during initialization
     protected boolean isInitializing = false;
     // The player this panel is working with
-    private Player targetPlayer;
+    private Player player;
 
     /**
      * Constructor
      */
-    public PlayerAwarePanel() {
+    public LivePanel() {
         super();
         CommandBus.getInstance().register(this, new String[]{
                 Commands.PLAYER_SELECTION_EVENT,
@@ -40,6 +43,49 @@ public abstract class PlayerAwarePanel extends JPanel implements IBusListener {
                 Commands.PLAYER_UPDATED
         });
     }
+
+    public boolean hasPlayer() {
+        return Objects.nonNull(player);
+    }
+
+    public boolean hasNoPlayer() {
+        return Objects.isNull(player);
+    }
+
+    public boolean hasMelodicPlayer() {
+        return Objects.nonNull(player) && (player.isMelodicPlayer() || player.getOwner() instanceof MelodicSequencer);
+    }
+
+    public boolean hasDrumPlayer() {
+        return Objects.nonNull(player) && (player.isDrumPlayer() || player.getOwner() instanceof DrumSequencer);
+    }
+
+    public boolean hasMelodicSequencer() {
+        return Objects.nonNull(player) && (Objects.nonNull(player.getOwner()) &&
+                player.getOwner() instanceof MelodicSequencer);
+    }
+
+    public boolean hasDrumSequwncer() {
+        return Objects.nonNull(player) && (Objects.nonNull(player.getOwner()) &&
+                player.getOwner() instanceof DrumSequencer);
+    }
+
+    public MelodicSequencer getMelodicSequencer() {
+        if (Objects.nonNull(player) && (Objects.nonNull(player.getOwner()) &&
+                player.getOwner() instanceof MelodicSequencer))
+            return (MelodicSequencer) player.getOwner();
+
+        return null;
+    }
+
+    public DrumSequencer getDrumSequencer() {
+        if (Objects.nonNull(player) && (Objects.nonNull(player.getOwner()) &&
+                player.getOwner() instanceof DrumSequencer))
+            return (DrumSequencer) player.getOwner();
+
+        return null;
+    }
+
 
     /**
      * Handle command bus events
@@ -100,9 +146,9 @@ public abstract class PlayerAwarePanel extends JPanel implements IBusListener {
         Player newPlayer = event.getPlayer();
 
         // Only process if this is a different player
-        if (targetPlayer == null || !targetPlayer.getId().equals(newPlayer.getId())) {
+        if (player == null || !player.getId().equals(newPlayer.getId())) {
             logger.debug("Player selected: {} (ID: {})", newPlayer.getName(), newPlayer.getId());
-            targetPlayer = newPlayer;
+            player = newPlayer;
             handlePlayerActivated();
         }
     }
@@ -118,9 +164,9 @@ public abstract class PlayerAwarePanel extends JPanel implements IBusListener {
         Player updatedPlayer = event.getPlayer();
 
         // Only process if this is our target player
-        if (targetPlayer != null && targetPlayer.getId().equals(updatedPlayer.getId())) {
+        if (player != null && player.getId().equals(updatedPlayer.getId())) {
             logger.debug("Target player updated: {} (ID: {})", updatedPlayer.getName(), updatedPlayer.getId());
-            targetPlayer = updatedPlayer;
+            player = updatedPlayer;
             handlePlayerUpdated();
         }
     }
@@ -134,9 +180,9 @@ public abstract class PlayerAwarePanel extends JPanel implements IBusListener {
         }
 
         // Only process if this is a different player
-        if (targetPlayer == null || !targetPlayer.getId().equals(player.getId())) {
+        if (this.player == null || !this.player.getId().equals(player.getId())) {
             logger.debug("Legacy player activated: {} (ID: {})", player.getName(), player.getId());
-            targetPlayer = player;
+            this.player = player;
             handlePlayerActivated();
         }
     }
@@ -150,9 +196,9 @@ public abstract class PlayerAwarePanel extends JPanel implements IBusListener {
         }
 
         // Only process if this is our target player
-        if (targetPlayer != null && targetPlayer.getId().equals(player.getId())) {
+        if (this.player != null && this.player.getId().equals(player.getId())) {
             logger.debug("Legacy player updated: {} (ID: {})", player.getName(), player.getId());
-            targetPlayer = player;
+            this.player = player;
             handlePlayerUpdated();
         }
     }
@@ -167,9 +213,9 @@ public abstract class PlayerAwarePanel extends JPanel implements IBusListener {
             return;
         }
 
-        boolean differentPlayer = targetPlayer == null || !targetPlayer.getId().equals(player.getId());
+        boolean differentPlayer = this.player == null || !this.player.getId().equals(player.getId());
 
-        targetPlayer = player;
+        this.player = player;
 
         if (differentPlayer) {
             handlePlayerActivated();
@@ -182,11 +228,11 @@ public abstract class PlayerAwarePanel extends JPanel implements IBusListener {
      * Request player refresh (force instrument preset application)
      */
     protected void requestPlayerRefresh() {
-        if (targetPlayer != null && targetPlayer.getInstrument() != null) {
+        if (player != null && player.getInstrument() != null) {
             CommandBus.getInstance().publish(
                     Commands.PLAYER_REFRESH_EVENT,
                     this,
-                    new com.angrysurfer.core.event.PlayerRefreshEvent(targetPlayer)
+                    new com.angrysurfer.core.event.PlayerRefreshEvent(player)
             );
         }
     }
@@ -195,11 +241,11 @@ public abstract class PlayerAwarePanel extends JPanel implements IBusListener {
      * Send a player update event
      */
     protected void requestPlayerUpdate() {
-        if (targetPlayer != null) {
+        if (player != null) {
             CommandBus.getInstance().publish(
                     Commands.PLAYER_UPDATE_EVENT,
                     this,
-                    new com.angrysurfer.core.event.PlayerUpdateEvent(targetPlayer)
+                    new com.angrysurfer.core.event.PlayerUpdateEvent(player)
             );
         }
     }

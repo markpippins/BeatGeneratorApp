@@ -129,15 +129,14 @@ public class LoggingPanel extends JPanel {
     private void initializeUI() {
         // Main log display
         logTextPane.setFont(new Font("Monospaced", Font.PLAIN, 12));
-        
-        // Enable word wrapping
         logTextPane.setEditable(false);
         
-        // This makes the text pane fit the width of the scroll pane
+        // Force word wrapping - KEY FIX
+        // 1. Create a new JTextPane with tracking viewport width
         JTextPane wrappedTextPane = new JTextPane() {
             @Override
             public boolean getScrollableTracksViewportWidth() {
-                return true;
+                return true; // This forces the component to use viewport width
             }
         };
         
@@ -150,15 +149,12 @@ public class LoggingPanel extends JPanel {
         // Replace the reference
         logTextPane = wrappedTextPane;
 
-        // Scroll pane
+        // Scroll pane - critical for word wrapping
         scrollPane = new JScrollPane(logTextPane);
         scrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
-        scrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
-        scrollPane.getVerticalScrollBar().addAdjustmentListener(e -> {
-            if (autoScroll && !e.getValueIsAdjusting()) {
-                e.getAdjustable().setValue(e.getAdjustable().getMaximum());
-            }
-        });
+        
+        // Force NEVER for horizontal scrollbar to ensure wrapping
+        scrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
 
         // Add mouse wheel listener for smooth scrolling
         logTextPane.addMouseWheelListener(e -> {

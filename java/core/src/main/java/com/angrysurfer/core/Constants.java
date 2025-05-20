@@ -59,5 +59,6 @@ public class Constants {
     public static final String PLAY_SEQUENCE = "/sequence/play";
     public static final String APPLICATION_FRAME = "APPLICATION_FRAME";
     public static final String PLAYER = "PLAYER";
-    public static boolean DEBUG = true;
+    public static boolean DEBUG = false;
+    public static boolean RESET_USER_CONFIG = true;
 }

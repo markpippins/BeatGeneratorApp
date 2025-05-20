@@ -20,17 +20,17 @@ import java.awt.event.KeyEvent;
 import java.util.List;
 import java.util.*;
 
-public class PianoPanel extends PlayerAwarePanel {
+public class PianoPanel extends LivePanel {
     private static final String DEFAULT_ROOT = "C";
     private static final Logger logger = LoggerFactory.getLogger(PianoPanel.class.getName());
     private final Set<Integer> heldNotes = new HashSet<>();
     private final ColorAnimator colorAnimator;
+    private final Map<Integer, JButton> noteToKeyMap = new HashMap<>();
+    private final JButton followScaleBtn;
     private String currentRoot = DEFAULT_ROOT; // Add root note tracking
     private String currentScale = "Chromatic"; // Default scale
-    private final Map<Integer, JButton> noteToKeyMap = new HashMap<>();
     private JButton activeButton = null; // Add this field to track active button
     private int currentOctave = 5; // Default octave (C5 = MIDI note 60)
-    private final JButton followScaleBtn;
     // Optional: Add player state indicator to the panel
     private JLabel playerStatusIndicator;
 
@@ -155,7 +155,7 @@ public class PianoPanel extends PlayerAwarePanel {
                     return;
 
                 switch (action.getCommand()) {
-                    
+
                     case Commands.KEY_PRESSED -> {
                         if (action.getData() instanceof Integer note) {
                             logger.info("Piano panel received KEY_PRESSED: " + note);
@@ -205,14 +205,14 @@ public class PianoPanel extends PlayerAwarePanel {
                     }
                 }
             }
-        }, new String[] {
-            Commands.KEY_PRESSED, 
-            Commands.KEY_HELD, 
-            Commands.KEY_RELEASED,
-            Commands.PLAYER_ACTIVATED,
-            Commands.NEW_VALUE_NOTE,
-            Commands.SCALE_SELECTED,
-            Commands.ROOT_NOTE_SELECTED
+        }, new String[]{
+                Commands.KEY_PRESSED,
+                Commands.KEY_HELD,
+                Commands.KEY_RELEASED,
+                Commands.PLAYER_ACTIVATED,
+                Commands.NEW_VALUE_NOTE,
+                Commands.SCALE_SELECTED,
+                Commands.ROOT_NOTE_SELECTED
         });
     }
 
@@ -238,7 +238,7 @@ public class PianoPanel extends PlayerAwarePanel {
 
     private void handleKeyHold(int note) {
 
-        if (getTargetPlayer() == null)
+        if (getPlayer() == null)
             logger.info("No player available");
 
         // Toggle behavior: if note is already held, release it
@@ -252,7 +252,7 @@ public class PianoPanel extends PlayerAwarePanel {
             CommandBus.getInstance().publish(Commands.CLEAR_STATUS, this, null);
         } else {
             // Add to held notes and play
-            String playerInfo = getTargetPlayer() != null ? " through " + getTargetPlayer().getName() : " (no active player)";
+            String playerInfo = getPlayer() != null ? " through " + getPlayer().getName() : " (no active player)";
 
             // Update status using CommandBus
             CommandBus.getInstance().publish(
@@ -302,7 +302,7 @@ public class PianoPanel extends PlayerAwarePanel {
 
     private void playNote(int note) {
         // Update status with player information
-        String playerInfo = getTargetPlayer() != null ? " through " + getTargetPlayer().getName() : " (no active player)";
+        String playerInfo = getPlayer() != null ? " through " + getPlayer().getName() : " (no active player)";
 
         CommandBus.getInstance().publish(
                 Commands.STATUS_UPDATE,
@@ -313,7 +313,7 @@ public class PianoPanel extends PlayerAwarePanel {
         if (SessionManager.getInstance().isRecording()) {
             CommandBus.getInstance().publish(Commands.NEW_VALUE_NOTE, this, note);
             CommandBus.getInstance().publish(Commands.PLAYER_ROW_REFRESH, this,
-                    getTargetPlayer());
+                    getPlayer());
         }
 
         // Send MIDI note to active player
@@ -578,7 +578,7 @@ public class PianoPanel extends PlayerAwarePanel {
                     updatePlayerStatusIndicator();
                 }
             }
-        }, new String[] { Commands.PLAYER_ACTIVATED });
+        }, new String[]{Commands.PLAYER_ACTIVATED});
 
         // Set initial state
         updatePlayerStatusIndicator();
@@ -586,10 +586,10 @@ public class PianoPanel extends PlayerAwarePanel {
 
     private void updatePlayerStatusIndicator() {
         SwingUtilities.invokeLater(() -> {
-            boolean hasActivePlayer = getTargetPlayer() != null;
+            boolean hasActivePlayer = getPlayer() != null;
             playerStatusIndicator.setForeground(hasActivePlayer ? Color.GREEN : Color.RED);
             playerStatusIndicator.setToolTipText(
-                    hasActivePlayer ? "Active player: " + getTargetPlayer().getName() : "No active player selected");
+                    hasActivePlayer ? "Active player: " + getPlayer().getName() : "No active player selected");
         });
     }
 
