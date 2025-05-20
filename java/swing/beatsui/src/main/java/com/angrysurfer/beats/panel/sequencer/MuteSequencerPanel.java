@@ -4,6 +4,7 @@ import com.angrysurfer.beats.util.UIHelper;
 import com.angrysurfer.beats.widget.MuteButton;
 import com.angrysurfer.core.api.*;
 import com.angrysurfer.core.event.DrumPadSelectionEvent;
+import com.angrysurfer.core.event.MelodicSequencerEvent;
 import com.angrysurfer.core.model.Player;
 import com.angrysurfer.core.sequencer.DrumSequencer;
 import com.angrysurfer.core.sequencer.MelodicSequencer;
@@ -111,12 +112,12 @@ public class MuteSequencerPanel extends JPanel implements IBusListener {
         add(buttonPanel, BorderLayout.CENTER);
 
         // Register with command bus for events
-        CommandBus.getInstance().register(this, new String[] {
-        Commands.TIMING_UPDATE,
-        Commands.DRUM_PAD_SELECTED,
-        Commands.PLAYER_ACTIVATED,
-        Commands.TRANSPORT_STOP
-    });
+        CommandBus.getInstance().register(this, new String[]{
+                Commands.TIMING_UPDATE,
+                Commands.DRUM_PAD_SELECTED,
+                Commands.PLAYER_ACTIVATED,
+                Commands.TRANSPORT_STOP
+        });
         TimingBus.getInstance().register(this);
     }
 
@@ -144,6 +145,27 @@ public class MuteSequencerPanel extends JPanel implements IBusListener {
                 }
             }
             case Commands.TRANSPORT_STOP -> resetHighlighting();
+
+            // Add these cases
+            case Commands.MELODIC_SEQUENCE_LOADED,
+                 Commands.MELODIC_SEQUENCE_CREATED,
+                 Commands.MELODIC_SEQUENCE_UPDATED -> {
+                // Check if this event is for our sequencer
+                if (action.getData() instanceof MelodicSequencerEvent event &&
+                        sequencer instanceof MelodicSequencer melodicSeq) {
+
+                    if (event.getSequencerId().equals(melodicSeq.getId())) {
+                        logger.debug("Received sequence event: {}", action.getCommand());
+                        // Sync with the sequencer's mute values
+                        SwingUtilities.invokeLater(this::syncWithSequencer);
+                    }
+                } else {
+                    // Generic update - sync anyway if we're a melodic sequencer
+                    if (sequencer instanceof MelodicSequencer) {
+                        SwingUtilities.invokeLater(this::syncWithSequencer);
+                    }
+                }
+            }
         }
     }
 
@@ -443,4 +465,37 @@ public class MuteSequencerPanel extends JPanel implements IBusListener {
         }
     }
 
+    /**
+     * Synchronize this panel with the current sequencer's mute values
+     */
+    public void syncWithSequencer() {
+        if (sequencer instanceof MelodicSequencer melodicSequencer) {
+            List<Integer> muteValues = melodicSequencer.getMuteValues();
+            logger.debug("Syncing mute panel with sequencer - found {} mute values",
+                    muteValues != null ? muteValues.size() : 0);
+
+            // Update UI to reflect loaded pattern
+            SwingUtilities.invokeLater(() -> {
+                for (int i = 0; i < muteButtons.size(); i++) {
+                    boolean isMuted = muteValues != null && i < muteValues.size() && muteValues.get(i) > 0;
+                    muteButtons.get(i).setSelected(isMuted);
+                    muteButtons.get(i).repaint();
+                }
+            });
+        } else if (sequencer instanceof DrumSequencer drumSequencer) {
+            // Handle drum sequencer syncing
+            int padIndex = drumSequencer.getSelectedPadIndex();
+            if (padIndex >= 0) {
+                List<Integer> muteValues = drumSequencer.getSequenceData().getMuteValues(padIndex);
+
+                SwingUtilities.invokeLater(() -> {
+                    for (int i = 0; i < muteButtons.size(); i++) {
+                        boolean isMuted = muteValues != null && i < muteValues.size() && muteValues.get(i) > 0;
+                        muteButtons.get(i).setSelected(isMuted);
+                        muteButtons.get(i).repaint();
+                    }
+                });
+            }
+        }
+    }
 }

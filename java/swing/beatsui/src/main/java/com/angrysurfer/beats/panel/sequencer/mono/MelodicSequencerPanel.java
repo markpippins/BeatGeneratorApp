@@ -53,6 +53,8 @@ public class MelodicSequencerPanel extends JPanel implements IBusListener {
 
     private TiltSequencerPanel tiltSequencerPanel;
 
+    private MuteSequencerPanel muteSequencerPanel;
+
     private MelodicSequencerGridPanel gridPanel;
 
     private MelodicSequencerScalePanel scalePanel;
@@ -89,23 +91,15 @@ public class MelodicSequencerPanel extends JPanel implements IBusListener {
         // Try to load the first sequence for this sequencer
         loadFirstSequenceIfExists();
 
-        // Register with command bus for other UI updates (not step highlighting)
         CommandBus.getInstance().register(this, new String[]{
-                Commands.MELODIC_SEQUENCE_LOADED,
-                Commands.MELODIC_SEQUENCE_CREATED,
-                Commands.MELODIC_SEQUENCE_SELECTED,
+                Commands.TIMING_UPDATE,
+                Commands.DRUM_PAD_SELECTED,
+                Commands.PLAYER_ACTIVATED,
+                Commands.TRANSPORT_STOP,
+                Commands.MELODIC_SEQUENCE_LOADED,    // Add these events
                 Commands.MELODIC_SEQUENCE_UPDATED,
-                Commands.SCALE_SELECTED,
-                Commands.PATTERN_UPDATED,
-                Commands.PLAYER_UPDATED,
-                Commands.INSTRUMENT_CHANGED,
-                Commands.HIGHLIGHT_STEP
+                Commands.MELODIC_SEQUENCE_CREATED
         });
-
-        logger.info("MelodicSequencerPanel registered for specific sequencer events");
-
-
-        logger.info("Created MelodicSequencerPanel with index {}", index);
     }
 
     /**
@@ -149,6 +143,10 @@ public class MelodicSequencerPanel extends JPanel implements IBusListener {
                         // Be sure to update tilt panel after UI sync
                         if (tiltSequencerPanel != null) {
                             tiltSequencerPanel.syncWithSequencer();
+                        }
+
+                        if (muteSequencerPanel != null) {
+                            muteSequencerPanel.syncWithSequencer();
                         }
                     });
 
@@ -196,6 +194,9 @@ public class MelodicSequencerPanel extends JPanel implements IBusListener {
                 syncUIWithSequencer();
                 if (tiltSequencerPanel != null) {
                     tiltSequencerPanel.syncWithSequencer();
+                }
+                if (muteSequencerPanel != null) {
+                    muteSequencerPanel.syncWithSequencer();
                 }
             });
 
@@ -281,7 +282,8 @@ public class MelodicSequencerPanel extends JPanel implements IBusListener {
 
         tiltSequencerPanel = new TiltSequencerPanel(sequencer);
         topPanel.add(tiltSequencerPanel, BorderLayout.SOUTH);
-        sequencersPanel.add(new MuteSequencerPanel(sequencer), BorderLayout.NORTH);
+        muteSequencerPanel = new MuteSequencerPanel(sequencer);
+        sequencersPanel.add(muteSequencerPanel, BorderLayout.NORTH);
         // Create bottom panel with BorderLayout for proper positioning
         JPanel bottomPanel = new JPanel(new BorderLayout(2, 1));
 
@@ -428,7 +430,6 @@ public class MelodicSequencerPanel extends JPanel implements IBusListener {
     private void syncUIWithSequencer() {
         updatingUI = true;
         try {
-
             // Update sequence parameters panel
             if (sequenceParamsPanel != null) {
                 sequenceParamsPanel.updateUI(sequencer);
@@ -444,27 +445,30 @@ public class MelodicSequencerPanel extends JPanel implements IBusListener {
                 gridPanel.syncWithSequencer();
             }
 
-            // Update tilt sequencer panel - THIS WAS MISSING
+            // Update tilt sequencer panel
             if (tiltSequencerPanel != null) {
                 logger.debug("Syncing tilt panel with sequencer values: {}",
                         sequencer.getHarmonicTiltValues().size());
                 tiltSequencerPanel.syncWithSequencer();
             }
 
-            // Update swing panel - THIS WAS MISSING
+            if (muteSequencerPanel != null) {
+                logger.debug("Syncing mute panel with sequencer values: {}",
+                        sequencer.getHarmonicTiltValues().size());
+                muteSequencerPanel.syncWithSequencer();
+            }
+
+            // Update swing panel
             if (swingPanel != null) {
                 swingPanel.updateControls();
             }
 
-            // Update navigation panel - THIS WAS MISSING
+            // Update navigation panel
             if (navigationPanel != null) {
                 navigationPanel.updateSequenceIdDisplay();
             }
 
-            // Update instrument info label - THIS WAS MISSING
-            // updateInstrumentInfoLabel();
-
-            // Check and update latch toggle button if needed - THIS WAS MISSING
+            // Check and update latch toggle button if needed
             if (latchToggleButton != null)
                 latchToggleButton.setSelected(sequencer.isLatchEnabled());
 
