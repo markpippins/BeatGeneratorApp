@@ -1,6 +1,6 @@
 package com.angrysurfer.beats.panel.player;
 
-import com.angrysurfer.beats.panel.PlayerAwarePanel;
+import com.angrysurfer.beats.panel.LivePanel;
 import com.angrysurfer.core.api.Command;
 import com.angrysurfer.core.api.CommandBus;
 import com.angrysurfer.core.api.Commands;
@@ -26,7 +26,7 @@ import java.util.Set;
 
 @Getter
 @Setter
-public class PlayerTimelinePanel extends PlayerAwarePanel implements IBusListener {
+public class PlayerTimelinePanel extends LivePanel implements IBusListener {
 
     private static final Color GRID_BACKGROUND = Color.WHITE;
     private static final Color BAR_LINE_COLOR = new Color(100, 100, 120);
@@ -86,14 +86,14 @@ public class PlayerTimelinePanel extends PlayerAwarePanel implements IBusListene
         initEmptyComponents();
 
         // Register for specific events only
-        CommandBus.getInstance().register(this, new String[] {
-            Commands.PLAYER_ACTIVATED,
-            Commands.PLAYER_UPDATED,
-            Commands.NEW_VALUE_NOTE,
-            Commands.PRESET_UP,
-            Commands.PRESET_DOWN,
-            Commands.PLAYER_ROW_REFRESH,
-            Commands.SESSION_CHANGED
+        CommandBus.getInstance().register(this, new String[]{
+                Commands.PLAYER_ACTIVATED,
+                Commands.PLAYER_UPDATED,
+                Commands.NEW_VALUE_NOTE,
+                Commands.PRESET_UP,
+                Commands.PRESET_DOWN,
+                Commands.PLAYER_ROW_REFRESH,
+                Commands.SESSION_CHANGED
         });
     }
 

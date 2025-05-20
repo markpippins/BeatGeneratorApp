@@ -17,7 +17,7 @@ import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import java.awt.*;
 
-public class ControlPanel extends PlayerAwarePanel {
+public class ControlPanel extends LivePanel {
     private static final Logger logger = LoggerFactory.getLogger(ControlPanel.class.getName());
     private static final int BUTTON_SIZE = 30;
     private static final int PANEL_HEIGHT = 100; // Increased from 90 to 100px
@@ -287,7 +287,7 @@ public class ControlPanel extends PlayerAwarePanel {
                     noteSelectionDial.setValue(newNote, false);
 
                     // Save the change and notify UI
-                    getTargetPlayer().setRootNote(newNote);
+                    getPlayer().setRootNote(newNote);
 
                     // Request row refresh in players panel
                     CommandBus.getInstance().publish(Commands.PLAYER_ROW_REFRESH, this, activePlayer);
@@ -314,7 +314,7 @@ public class ControlPanel extends PlayerAwarePanel {
                     noteSelectionDial.setValue(newNote, false);
 
                     // Save the change and notify UI
-                    getTargetPlayer().setRootNote(newNote);
+                    getPlayer().setRootNote(newNote);
 
                     // Request row refresh in players panel
                     CommandBus.getInstance().publish(Commands.PLAYER_ROW_REFRESH, this, activePlayer);
@@ -430,7 +430,7 @@ public class ControlPanel extends PlayerAwarePanel {
                 Dial sourceDial = (Dial) e.getSource();
                 if (sourceDial.getCommand() != null) {
                     CommandBus.getInstance().publish(sourceDial.getCommand(),
-                            getTargetPlayer(), sourceDial.getValue());
+                            getPlayer(), sourceDial.getValue());
                 }
             }
         });
@@ -535,7 +535,7 @@ public class ControlPanel extends PlayerAwarePanel {
             activePlayer.setLevel(value);
 
             // Save the change and notify UI
-            getTargetPlayer().setLevel(value);
+            getPlayer().setLevel(value);
 
             // Request row refresh in players panel (important!)
             CommandBus.getInstance().publish(Commands.PLAYER_ROW_REFRESH, this, activePlayer);
@@ -553,7 +553,7 @@ public class ControlPanel extends PlayerAwarePanel {
             activePlayer.setSwing(value);
 
             // Save the change and notify UI
-            getTargetPlayer().setSwing(value);
+            getPlayer().setSwing(value);
 
             // Request row refresh
             CommandBus.getInstance().publish(Commands.PLAYER_ROW_REFRESH, this, activePlayer);
@@ -568,7 +568,7 @@ public class ControlPanel extends PlayerAwarePanel {
             logger.info("Updating player probability to: " + value);
 
             // Update player and save
-            getTargetPlayer().setProbability(value);
+            getPlayer().setProbability(value);
 
             // Request row refresh
             CommandBus.getInstance().publish(Commands.PLAYER_ROW_REFRESH, this, activePlayer);
@@ -604,7 +604,7 @@ public class ControlPanel extends PlayerAwarePanel {
             activePlayer.setMinVelocity(minValue);
 
             // Save the changes and notify UI
-            getTargetPlayer().setMinVelocity(minValue);
+            getPlayer().setMinVelocity(minValue);
 
             // Request row refresh
             CommandBus.getInstance().publish(Commands.PLAYER_ROW_REFRESH, this, activePlayer);
@@ -640,7 +640,7 @@ public class ControlPanel extends PlayerAwarePanel {
             activePlayer.setMaxVelocity(maxValue);
 
             // Save the changes and notify UI
-            getTargetPlayer().setMaxVelocity(maxValue);
+            getPlayer().setMaxVelocity(maxValue);
 
             // Request row refresh
             CommandBus.getInstance().publish(Commands.PLAYER_ROW_REFRESH, this, activePlayer);
@@ -656,7 +656,7 @@ public class ControlPanel extends PlayerAwarePanel {
 
             // Update player and save
             activePlayer.setPanPosition(value);
-            getTargetPlayer().setPan(value);
+            getPlayer().setPan(value);
 
             // Request row refresh
             CommandBus.getInstance().publish(Commands.PLAYER_ROW_REFRESH, this, activePlayer);
@@ -672,7 +672,7 @@ public class ControlPanel extends PlayerAwarePanel {
 
             // Update player and save
             activePlayer.setRandomDegree(value);
-            getTargetPlayer().setRandomDegree(value);
+            getPlayer().setRandomDegree(value);
 
             // Request row refresh
             CommandBus.getInstance().publish(Commands.PLAYER_ROW_REFRESH, this, activePlayer);
@@ -688,7 +688,7 @@ public class ControlPanel extends PlayerAwarePanel {
 
             // Update player and save
             activePlayer.setSparse(value / 100.0); // Convert to 0-1.0 range
-            getTargetPlayer().setSparse(value);
+            getPlayer().setSparse(value);
 
             // Request row refresh
             CommandBus.getInstance().publish(Commands.PLAYER_ROW_REFRESH, this, activePlayer);
@@ -704,7 +704,7 @@ public class ControlPanel extends PlayerAwarePanel {
 
             // Update player and save
             activePlayer.setRootNote(value);
-            getTargetPlayer().setRootNote(value);
+            getPlayer().setRootNote(value);
 
             // Request row refresh
             CommandBus.getInstance().publish(Commands.PLAYER_ROW_REFRESH, this, activePlayer);

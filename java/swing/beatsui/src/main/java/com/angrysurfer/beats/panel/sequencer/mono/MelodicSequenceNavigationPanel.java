@@ -1,6 +1,6 @@
 package com.angrysurfer.beats.panel.sequencer.mono;
 
-import com.angrysurfer.beats.panel.PlayerAwarePanel;
+import com.angrysurfer.beats.panel.LivePanel;
 import com.angrysurfer.beats.util.UIHelper;
 import com.angrysurfer.core.api.Command;
 import com.angrysurfer.core.api.CommandBus;
@@ -25,7 +25,7 @@ import java.util.List;
  */
 @Getter
 @Setter
-public class MelodicSequenceNavigationPanel extends PlayerAwarePanel {
+public class MelodicSequenceNavigationPanel extends LivePanel {
 
     private static final Logger logger = LoggerFactory.getLogger(MelodicSequenceNavigationPanel.class);
     private MelodicSequencer sequencer;
@@ -370,8 +370,8 @@ public class MelodicSequenceNavigationPanel extends PlayerAwarePanel {
 
     @Override
     public void handlePlayerActivated() {
-        if (getTargetPlayer().isMelodicPlayer()) {
-            setSequencer(((MelodicSequencer) getTargetPlayer().getOwner()));
+        if (getPlayer().isMelodicPlayer()) {
+            setSequencer(((MelodicSequencer) getPlayer().getOwner()));
             updateSequenceIdDisplay();
             updateBorderTitle();
         }
@@ -379,8 +379,8 @@ public class MelodicSequenceNavigationPanel extends PlayerAwarePanel {
 
     @Override
     public void handlePlayerUpdated() {
-        if (getTargetPlayer().isMelodicPlayer()) {
-            setSequencer(((MelodicSequencer) getTargetPlayer().getOwner()));
+        if (getPlayer().isMelodicPlayer()) {
+            setSequencer(((MelodicSequencer) getPlayer().getOwner()));
             updateSequenceIdDisplay();
             updateBorderTitle();
         }

@@ -109,6 +109,15 @@ public class DrumSequencerGridPanelContextHandler implements IBusListener {
         JMenuItem clearRowItem = new JMenuItem("Clear Row");
         clearRowItem.addActionListener(e -> parentPanel.clearRow(drumIndex));
 
+        // Add randomize velocities menu item
+        JMenuItem randomizeVelocitiesItem = new JMenuItem("Randomize Velocities");
+        randomizeVelocitiesItem.addActionListener(e -> {
+            boolean success = DrumSequenceModifier.randomizeVelocities(sequencer, drumIndex);
+            if (success) {
+                parentPanel.updateStepButtonsForDrum(drumIndex);
+            }
+        });
+
         // Add Copy to New sequence option
         JMenuItem copyToNewItem = new JMenuItem("Copy Sequence to New...");
         copyToNewItem.addActionListener(e -> copyToNewSequence(drumIndex));
@@ -142,6 +151,7 @@ public class DrumSequencerGridPanelContextHandler implements IBusListener {
         });
 
         menu.add(clearRowItem);
+        menu.add(randomizeVelocitiesItem);  // Add the new menu item
         menu.add(copyToNewItem);
         menu.addSeparator();
         menu.add(doublePatternItem);

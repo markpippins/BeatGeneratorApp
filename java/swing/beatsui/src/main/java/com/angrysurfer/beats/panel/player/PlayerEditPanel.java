@@ -1,6 +1,6 @@
 package com.angrysurfer.beats.panel.player;
 
-import com.angrysurfer.beats.panel.PlayerAwarePanel;
+import com.angrysurfer.beats.panel.LivePanel;
 import com.angrysurfer.core.model.InstrumentWrapper;
 import com.angrysurfer.core.model.Player;
 import com.angrysurfer.core.sequencer.DrumSequencer;
@@ -15,7 +15,7 @@ import java.awt.*;
 /**
  * Panel for editing player properties using the PlayerAwarePanel pattern
  */
-public class PlayerEditPanel extends PlayerAwarePanel {
+public class PlayerEditPanel extends LivePanel {
     private static final Logger logger = LoggerFactory.getLogger(PlayerEditPanel.class);
     // Services
     private final PlayerManager playerManager = PlayerManager.getInstance();
@@ -32,7 +32,7 @@ public class PlayerEditPanel extends PlayerAwarePanel {
      */
     public PlayerEditPanel(Player player) {
         super();
-        setTargetPlayer(player);
+        setPlayer(player);
         initComponents();
         layoutComponents();
     }
@@ -42,10 +42,10 @@ public class PlayerEditPanel extends PlayerAwarePanel {
      */
     @Override
     public void handlePlayerActivated() {
-        logger.info("Player activated in edit panel: {}", getTargetPlayer() != null ? getTargetPlayer().getName() : "null");
+        logger.info("Player activated in edit panel: {}", getPlayer() != null ? getPlayer().getName() : "null");
 
         // Cache initial state for comparison when saving
-        Player player = getTargetPlayer();
+        Player player = getPlayer();
         if (player != null) {
             initialIsDrumPlayer = player.getChannel() == SequencerConstants.MIDI_DRUM_CHANNEL;
             initialInstrument = player.getInstrument();
@@ -67,7 +67,7 @@ public class PlayerEditPanel extends PlayerAwarePanel {
      */
     @Override
     public void handlePlayerUpdated() {
-        logger.info("Player updated in edit panel: {}", getTargetPlayer() != null ? getTargetPlayer().getName() : "null");
+        logger.info("Player updated in edit panel: {}", getPlayer() != null ? getPlayer().getName() : "null");
         updatePanels();
     }
 
@@ -76,8 +76,8 @@ public class PlayerEditPanel extends PlayerAwarePanel {
      */
     private void initComponents() {
         // Create panels - will be updated when a player is activated
-        basicPropertiesPanel = new PlayerEditBasicPropertiesPanel(getTargetPlayer());
-        detailPanel = new PlayerEditDetailPanel(getTargetPlayer());
+        basicPropertiesPanel = new PlayerEditBasicPropertiesPanel(getPlayer());
+        detailPanel = new PlayerEditDetailPanel(getPlayer());
     }
 
     /**
@@ -101,7 +101,7 @@ public class PlayerEditPanel extends PlayerAwarePanel {
      * Update all panels with latest player data
      */
     private void updatePanels() {
-        Player player = getTargetPlayer();
+        Player player = getPlayer();
         if (player == null) {
             return;
         }
@@ -119,14 +119,14 @@ public class PlayerEditPanel extends PlayerAwarePanel {
         applyAllChanges();
 
         // Return the current player from PlayerAwarePanel
-        return getTargetPlayer();
+        return getPlayer();
     }
 
     /**
      * Apply all changes from UI components to player model
      */
     public void applyAllChanges() {
-        Player player = getTargetPlayer();
+        Player player = getPlayer();
         if (player == null) {
             return;
         }
@@ -155,7 +155,7 @@ public class PlayerEditPanel extends PlayerAwarePanel {
      * Handle changes for drum players
      */
     private void handleDrumPlayerChanges() {
-        Player player = getTargetPlayer();
+        Player player = getPlayer();
         if (player == null) {
             return;
         }

@@ -1,7 +1,7 @@
 package com.angrysurfer.beats.util;
 
 import com.angrysurfer.beats.Symbols;
-import com.angrysurfer.beats.panel.PlayerAwarePanel;
+import com.angrysurfer.beats.panel.LivePanel;
 import com.angrysurfer.beats.widget.Dial;
 import com.angrysurfer.core.api.CommandBus;
 import com.angrysurfer.core.api.Commands;
@@ -325,9 +325,9 @@ public class UIHelper {
     /**
      * Creates a panel with up/down buttons for adjustments
      */
-    public static PlayerAwarePanel createVerticalAdjustPanel(String label, String upLabel, String downLabel, String upCommand,
-                                                             String downCommand) {
-        PlayerAwarePanel navPanel = new PlayerAwarePanel() {
+    public static LivePanel createVerticalAdjustPanel(String label, String upLabel, String downLabel, String upCommand,
+                                                      String downCommand) {
+        LivePanel navPanel = new LivePanel() {
             @Override
             public void handlePlayerActivated() {
 
@@ -352,7 +352,7 @@ public class UIHelper {
         } else {
             // Original code path for other commands
             prevButton.addActionListener(e -> CommandBus.getInstance().publish(e.getActionCommand(), UIHelper.class,
-                    navPanel.getTargetPlayer()));
+                    navPanel.getPlayer()));
         }
 
         // Similar change for the down button
@@ -363,7 +363,7 @@ public class UIHelper {
                     e -> CommandBus.getInstance().publish(e.getActionCommand(), UIHelper.class, null));
         } else {
             nextButton.addActionListener(e -> CommandBus.getInstance().publish(e.getActionCommand(), UIHelper.class,
-                    navPanel.getTargetPlayer()));
+                    navPanel.getPlayer()));
         }
 
         // Enable/disable buttons based on player selection
