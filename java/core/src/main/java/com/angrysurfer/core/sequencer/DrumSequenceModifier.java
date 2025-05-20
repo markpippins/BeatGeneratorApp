@@ -434,7 +434,7 @@ public class DrumSequenceModifier {
 
     /**
      * Randomizes velocities for all active steps in a pattern
-     * 
+     *
      * @param sequencer The drum sequencer to modify
      * @param drumIndex The index of the drum to update
      * @return True if velocities were randomized successfully
@@ -442,7 +442,7 @@ public class DrumSequenceModifier {
     public static boolean randomizeVelocities(DrumSequencer sequencer, int drumIndex) {
         try {
             int patternLength = sequencer.getPatternLength(drumIndex);
-            
+
             // Go through each step in the pattern
             for (int step = 0; step < patternLength; step++) {
                 // Only modify active steps
@@ -452,14 +452,254 @@ public class DrumSequenceModifier {
                     sequencer.setStepVelocity(drumIndex, step, randomVelocity);
                 }
             }
-            
+
             // Notify that the pattern has changed
             notifyPatternChanged(sequencer, drumIndex);
-            
+
             logger.info("Randomized velocities for active steps in drum {}", drumIndex);
             return true;
         } catch (Exception e) {
             logger.error("Error randomizing velocities for drum {}", drumIndex, e);
+            return false;
+        }
+    }
+
+    /**
+     * Randomizes nudge values for all active steps in a pattern
+     */
+    public static boolean randomizeNudgeValues(DrumSequencer sequencer, int drumIndex) {
+        try {
+            int patternLength = sequencer.getPatternLength(drumIndex);
+
+            // Go through each step in the pattern
+            for (int step = 0; step < patternLength; step++) {
+                // Only modify active steps
+                if (sequencer.isStepActive(drumIndex, step)) {
+                    // Generate random nudge between -25 and 25
+                    int randomNudge = random.nextInt(51) - 25;
+                    sequencer.setStepNudge(drumIndex, step, randomNudge);
+                }
+            }
+
+            // Notify that the pattern has changed
+            notifyPatternChanged(sequencer, drumIndex);
+
+            logger.info("Randomized nudge values for active steps in drum {}", drumIndex);
+            return true;
+        } catch (Exception e) {
+            logger.error("Error randomizing nudge values for drum {}", drumIndex, e);
+            return false;
+        }
+    }
+
+    /**
+     * Randomizes probability values for all active steps in a pattern
+     */
+    public static boolean randomizeProbabilities(DrumSequencer sequencer, int drumIndex) {
+        try {
+            int patternLength = sequencer.getPatternLength(drumIndex);
+
+            // Go through each step in the pattern
+            for (int step = 0; step < patternLength; step++) {
+                // Only modify active steps
+                if (sequencer.isStepActive(drumIndex, step)) {
+                    // Generate random probability between 50 and 100 (for musical results)
+                    int randomProb = 50 + random.nextInt(51);
+                    sequencer.setStepProbability(drumIndex, step, randomProb);
+                }
+            }
+
+            // Notify that the pattern has changed
+            notifyPatternChanged(sequencer, drumIndex);
+
+            logger.info("Randomized probabilities for active steps in drum {}", drumIndex);
+            return true;
+        } catch (Exception e) {
+            logger.error("Error randomizing probabilities for drum {}", drumIndex, e);
+            return false;
+        }
+    }
+
+    /**
+     * Sets ascending velocity pattern for active steps
+     */
+    public static boolean setAscendingVelocities(DrumSequencer sequencer, int drumIndex) {
+        try {
+            int patternLength = sequencer.getPatternLength(drumIndex);
+
+            // Count active steps to calculate velocity range
+            int activeCount = 0;
+            for (int step = 0; step < patternLength; step++) {
+                if (sequencer.isStepActive(drumIndex, step)) {
+                    activeCount++;
+                }
+            }
+
+            if (activeCount == 0) {
+                logger.warn("No active steps to apply ascending velocities to");
+                return false;
+            }
+
+            // Calculate velocity increment
+            int velocityStart = 50;
+            int velocityRange = 77; // Up to 127
+            int increment = velocityRange / Math.max(1, activeCount - 1);
+
+            // Apply ascending velocities to active steps
+            int currentVelocity = velocityStart;
+            for (int step = 0; step < patternLength; step++) {
+                if (sequencer.isStepActive(drumIndex, step)) {
+                    sequencer.setStepVelocity(drumIndex, step, currentVelocity);
+                    currentVelocity = Math.min(127, currentVelocity + increment);
+                }
+            }
+
+            // Notify that the pattern has changed
+            notifyPatternChanged(sequencer, drumIndex);
+
+            logger.info("Applied ascending velocities for active steps in drum {}", drumIndex);
+            return true;
+        } catch (Exception e) {
+            logger.error("Error applying ascending velocities for drum {}", drumIndex, e);
+            return false;
+        }
+    }
+
+    /**
+     * Sets descending velocity pattern for active steps
+     */
+    public static boolean setDescendingVelocities(DrumSequencer sequencer, int drumIndex) {
+        try {
+            int patternLength = sequencer.getPatternLength(drumIndex);
+
+            // Count active steps to calculate velocity range
+            int activeCount = 0;
+            for (int step = 0; step < patternLength; step++) {
+                if (sequencer.isStepActive(drumIndex, step)) {
+                    activeCount++;
+                }
+            }
+
+            if (activeCount == 0) {
+                logger.warn("No active steps to apply descending velocities to");
+                return false;
+            }
+
+            // Calculate velocity decrement
+            int velocityStart = 127;
+            int velocityRange = 77; // Down to 50
+            int decrement = velocityRange / Math.max(1, activeCount - 1);
+
+            // Apply descending velocities to active steps
+            int currentVelocity = velocityStart;
+            for (int step = 0; step < patternLength; step++) {
+                if (sequencer.isStepActive(drumIndex, step)) {
+                    sequencer.setStepVelocity(drumIndex, step, currentVelocity);
+                    currentVelocity = Math.max(50, currentVelocity - decrement);
+                }
+            }
+
+            // Notify that the pattern has changed
+            notifyPatternChanged(sequencer, drumIndex);
+
+            logger.info("Applied descending velocities for active steps in drum {}", drumIndex);
+            return true;
+        } catch (Exception e) {
+            logger.error("Error applying descending velocities for drum {}", drumIndex, e);
+            return false;
+        }
+    }
+
+    /**
+     * Applies a pattern from a specific start step using the every-Nth approach
+     */
+    public static boolean applyPatternEveryNFromStep(DrumSequencer sequencer, int drumIndex, int startStep, int stepInterval) {
+        try {
+            int patternLength = sequencer.getPatternLength(drumIndex);
+
+            // Clear steps from start position
+            for (int i = startStep; i < patternLength; i++) {
+                if (sequencer.isStepActive(drumIndex, i)) {
+                    sequencer.toggleStep(drumIndex, i);
+                }
+            }
+
+            // Apply every-N pattern from start step
+            for (int i = startStep; i < patternLength; i += stepInterval) {
+                sequencer.toggleStep(drumIndex, i);
+
+                // Set default parameters
+                sequencer.setStepVelocity(drumIndex, i, SequencerConstants.DEFAULT_VELOCITY);
+                sequencer.setStepDecay(drumIndex, i, SequencerConstants.DEFAULT_DECAY);
+                sequencer.setStepProbability(drumIndex, i, SequencerConstants.DEFAULT_PROBABILITY);
+            }
+
+            // Notify that the pattern has changed
+            notifyPatternChanged(sequencer, drumIndex);
+
+            logger.info("Applied 1/{} pattern from step {} for drum {}", stepInterval, startStep, drumIndex);
+            return true;
+        } catch (Exception e) {
+            logger.error("Error applying pattern every {} steps from step {} for drum {}",
+                    stepInterval, startStep, drumIndex, e);
+            return false;
+        }
+    }
+
+    /**
+     * Creates a bouncing pattern by alternating direction
+     */
+    public static boolean createBouncePattern(DrumSequencer sequencer, int drumIndex) {
+        try {
+            int patternLength = sequencer.getPatternLength(drumIndex);
+            boolean[] originalPattern = new boolean[patternLength];
+            int[] originalVelocities = new int[patternLength];
+            int[] originalDecays = new int[patternLength];
+            int[] originalProbabilities = new int[patternLength];
+
+            // Save original pattern with parameters
+            for (int i = 0; i < patternLength; i++) {
+                originalPattern[i] = sequencer.isStepActive(drumIndex, i);
+                originalVelocities[i] = sequencer.getStepVelocity(drumIndex, i);
+                originalDecays[i] = sequencer.getStepDecay(drumIndex, i);
+                originalProbabilities[i] = sequencer.getStepProbability(drumIndex, i);
+            }
+
+            // Clear and create new pattern with double length if possible
+            int newLength = Math.min(sequencer.getMaxPatternLength(), patternLength * 2);
+            clearDrumTrack(sequencer, drumIndex);
+            sequencer.setPatternLength(drumIndex, newLength);
+
+            // First copy original pattern
+            for (int i = 0; i < patternLength; i++) {
+                if (originalPattern[i]) {
+                    sequencer.toggleStep(drumIndex, i);
+                    sequencer.setStepVelocity(drumIndex, i, originalVelocities[i]);
+                    sequencer.setStepDecay(drumIndex, i, originalDecays[i]);
+                    sequencer.setStepProbability(drumIndex, i, originalProbabilities[i]);
+                }
+            }
+
+            // Then add reversed pattern
+            for (int i = 0; i < patternLength && (patternLength + i) < newLength; i++) {
+                int srcIndex = patternLength - 1 - i;
+                int destIndex = patternLength + i;
+
+                if (srcIndex >= 0 && originalPattern[srcIndex]) {
+                    sequencer.toggleStep(drumIndex, destIndex);
+                    sequencer.setStepVelocity(drumIndex, destIndex, originalVelocities[srcIndex]);
+                    sequencer.setStepDecay(drumIndex, destIndex, originalDecays[srcIndex]);
+                    sequencer.setStepProbability(drumIndex, destIndex, originalProbabilities[srcIndex]);
+                }
+            }
+
+            // Notify that the pattern has changed
+            notifyPatternChanged(sequencer, drumIndex);
+
+            logger.info("Created bounce pattern for drum {} with new length {}", drumIndex, newLength);
+            return true;
+        } catch (Exception e) {
+            logger.error("Error creating bounce pattern for drum {}", drumIndex, e);
             return false;
         }
     }
@@ -470,23 +710,23 @@ public class DrumSequenceModifier {
     public static void notifyPatternChanged(DrumSequencer sequencer, int drumIndex) {
         // Send event to update UI
         CommandBus.getInstance().publish(
-            Commands.DRUM_STEP_BUTTONS_UPDATE_REQUESTED, 
-            DrumSequenceModifier.class,
-            drumIndex
+                Commands.DRUM_STEP_BUTTONS_UPDATE_REQUESTED,
+                DrumSequenceModifier.class,
+                drumIndex
         );
-        
+
         // Also publish a pattern updated event
         CommandBus.getInstance().publish(
-            Commands.PATTERN_UPDATED,
-            DrumSequenceModifier.class,
-            sequencer.getSequenceData()
+                Commands.PATTERN_UPDATED,
+                DrumSequenceModifier.class,
+                sequencer.getSequenceData()
         );
-        
+
         // Add a direct UI update event
         CommandBus.getInstance().publish(
-            Commands.DRUM_SEQUENCE_UPDATED,
-            DrumSequenceModifier.class,
-            drumIndex
+                Commands.DRUM_SEQUENCE_UPDATED,
+                DrumSequenceModifier.class,
+                drumIndex
         );
     }
 }
