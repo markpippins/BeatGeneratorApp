@@ -151,7 +151,7 @@ public class MelodicSequencer implements IBusListener {
                 stepUpdateListener.accept(new StepUpdateEvent(prevStep, currentStep));
             }
 
-            if (player.getEnabled())
+            if (player.getEnabled() & player.getLevel() > 0)
                 triggerNote(currentStep);
         }
     }
