@@ -4,6 +4,7 @@ import com.angrysurfer.beats.panel.MainPanel;
 import com.angrysurfer.beats.panel.player.SoundParametersPanel;
 import com.angrysurfer.beats.panel.sequencer.MuteSequencerPanel;
 import com.angrysurfer.beats.util.UIHelper;
+import com.angrysurfer.beats.widget.AccentButton;
 import com.angrysurfer.beats.widget.Dial;
 import com.angrysurfer.beats.widget.TriggerButton;
 import com.angrysurfer.core.api.*;
@@ -13,9 +14,7 @@ import com.angrysurfer.core.event.NoteEvent;
 import com.angrysurfer.core.model.Player;
 import com.angrysurfer.core.sequencer.DrumSequencer;
 import com.angrysurfer.core.sequencer.TimingUpdate;
-import com.angrysurfer.core.service.DeviceManager;
 import com.angrysurfer.core.service.DrumSequencerManager;
-import com.angrysurfer.core.service.PlayerManager;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -39,6 +38,7 @@ public class DrumEffectsSequencerPanel extends JPanel implements IBusListener {
 
     // UI Components
     private final List<TriggerButton> selectorButtons = new ArrayList<>();
+    private final List<AccentButton> accentButtons = new ArrayList<>();
     private final List<Dial> panDials = new ArrayList<>();
     private final List<Dial> delayDials = new ArrayList<>();
     private final List<Dial> chorusDials = new ArrayList<>();
@@ -77,15 +77,6 @@ public class DrumEffectsSequencerPanel extends JPanel implements IBusListener {
             logger.info("Creating new drum sequencer through manager");
             sequencer = DrumSequencerManager.getInstance().newSequencer(noteEventConsumer);
         }
-
-        // Register with CommandBus for updates
-        CommandBus.getInstance().register(this, new String[]{
-                Commands.DRUM_PAD_SELECTED,
-                Commands.DRUM_STEP_SELECTED,
-                Commands.DRUM_INSTRUMENTS_UPDATED,
-                Commands.HIGHLIGHT_STEP
-        });
-        TimingBus.getInstance().register(this);
 
         // Initialize UI components
         initialize();
@@ -127,14 +118,19 @@ public class DrumEffectsSequencerPanel extends JPanel implements IBusListener {
             }
         });
 
-        // NOTE: Don't select the first drum here, it will be done in
-        // initializeDrumPads()
-        // which will execute after all buttons are created
         SwingUtilities.invokeLater(() -> {
             drumPadPanel.selectDrumPad(0);
             handleDrumPadSelected(0);
         });
 
+        // Register with CommandBus for updates
+        CommandBus.getInstance().register(this, new String[]{
+                Commands.DRUM_PAD_SELECTED,
+                Commands.DRUM_STEP_SELECTED,
+                Commands.DRUM_INSTRUMENTS_UPDATED,
+                Commands.HIGHLIGHT_STEP
+        });
+        TimingBus.getInstance().register(this);
     }
 
     /**
@@ -258,6 +254,21 @@ public class DrumEffectsSequencerPanel extends JPanel implements IBusListener {
         column.setLayout(new BoxLayout(column, BoxLayout.Y_AXIS));
         // REDUCED: from 5,2,5,2 to 2,1,2,1
         column.setBorder(BorderFactory.createEmptyBorder(2, 1, 2, 1));
+
+        // Add only the trigger button - not the drum button
+        AccentButton accentButton = new AccentButton(Integer.toString(index + 1));
+        accentButton.setName("AccentButton-" + index);
+        accentButton.setToolTipText("Step " + (index + 1));
+        accentButton.setEnabled(true);
+        accentButton.setPreferredSize(new Dimension(20, 20));
+        accentButton.setMaximumSize(new Dimension(20, 20));
+        // accentButton.addActionListener(e -> toggleStepForActivePad(index));
+        accentButtons.add(accentButton);
+
+        // Center the button horizontally
+        JPanel accentPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 0, 0));
+        accentPanel.add(accentButton);
+        column.add(accentPanel);
 
         for (int i = 0; i < 4; i++) {
             JLabel label = new JLabel(getKnobLabel(i));
@@ -389,11 +400,19 @@ public class DrumEffectsSequencerPanel extends JPanel implements IBusListener {
             button.setHighlighted(false);
         }
 
+        for (AccentButton button : accentButtons) {
+            button.setHighlighted(false);
+        }
+
         // Then highlight only the current step
         if (newStep >= 0 && newStep < selectorButtons.size()) {
             TriggerButton newButton = selectorButtons.get(newStep);
             newButton.setHighlighted(true);
             newButton.repaint();
+
+            AccentButton newAccentButton = accentButtons.get(newStep);
+            newAccentButton.setHighlighted(true);
+            newAccentButton.repaint();
 
             // Debug output
             // System.out.println("Highlighting drum effect step: " + newStep);
@@ -460,34 +479,35 @@ public class DrumEffectsSequencerPanel extends JPanel implements IBusListener {
             if (padIndex >= 0 && padIndex < sequencer.getPlayers().length) {
                 Player player = sequencer.getPlayers()[padIndex];
 
-                if (player != null && player.getInstrument() != null) {
-                    // Ensure device is connected and open
-                    if (player.getInstrument().getDevice() == null || !player.getInstrument().getDevice().isOpen()) {
-                        player.getInstrument().setDevice(DeviceManager.getMidiDevice(player.getInstrument().getDeviceName()));
+//                if (player != null && player.getInstrument() != null) {
+//                    // Ensure device is connected and open
+//                    if (player.getInstrument().getDevice() == null || !player.getInstrument().getDevice().isOpen()) {
+//                        player.getInstrument().setDevice(DeviceManager.getMidiDevice(player.getInstrument().getDeviceName()));
+//
+//                        // Ensure device is open
+//                        if (player.getInstrument().getDevice() != null && !player.getInstrument().getDevice().isOpen()) {
+//                            try {
+//                                player.getInstrument().getDevice().open();
+//                            } catch (Exception e) {
+//                                logger.warning("Error opening MIDI device: " + e.getMessage());
+//                            }
+//                        }
+//                    }
+//
+//                    // Apply instrument preset BEFORE playing the note
+//                    PlayerManager.getInstance().applyInstrumentPreset(player);
+//
+//                }
 
-                        // Ensure device is open
-                        if (player.getInstrument().getDevice() != null && !player.getInstrument().getDevice().isOpen()) {
-                            try {
-                                player.getInstrument().getDevice().open();
-                            } catch (Exception e) {
-                                logger.warning("Error opening MIDI device: " + e.getMessage());
-                            }
-                        }
-                    }
+                // Play the sound with proper note
+                // player.drumNoteOn(player.getRootNote());
 
-                    // Apply instrument preset BEFORE playing the note
-                    PlayerManager.getInstance().applyInstrumentPreset(player);
-
-                    // Play the sound with proper note
-                    player.drumNoteOn(player.getRootNote());
-
-                    // Request activation
-                    CommandBus.getInstance().publish(
-                            Commands.PLAYER_ACTIVATION_REQUEST,
-                            this,
-                            player
-                    );
-                }
+                // Request activation
+                CommandBus.getInstance().publish(
+                        Commands.PLAYER_ACTIVATION_REQUEST,
+                        this,
+                        player
+                );
             }
 
             // Update UI in a specific order

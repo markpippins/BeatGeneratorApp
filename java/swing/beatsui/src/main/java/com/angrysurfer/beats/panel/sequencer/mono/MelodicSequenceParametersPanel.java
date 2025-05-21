@@ -74,7 +74,7 @@ public class MelodicSequenceParametersPanel extends JPanel {
     private void createFollowHarmonicTiltControls(JPanel controlsPanel) {
         JPanel followPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 2, 0));
 
-        JLabel label = new JLabel("Note Source:");
+        JLabel label = new JLabel("Tilt:");
 
         followSequenceCombo = new JComboBox<>(getOtherSequencerIds());
         followSequenceCombo.setPreferredSize(new Dimension(UIHelper.LARGE_CONTROL_WIDTH, UIHelper.CONTROL_HEIGHT));
@@ -91,7 +91,7 @@ public class MelodicSequenceParametersPanel extends JPanel {
                     logger.info("Setting a master sequencer for Harmonic Tilt");
                     sequencer.getSequenceData().setFollowTiltSequencerId(followId);
                 }
-                CommandBus.getInstance().publish(Commands.SEQUENCER_FOLLOW_EVENT, sequencer, followId);
+                CommandBus.getInstance().publish(Commands.SEQUENCER_TILT_FOLLOW_EVENT, sequencer, followId);
             }
         });
 
@@ -121,7 +121,7 @@ public class MelodicSequenceParametersPanel extends JPanel {
                     logger.info("Setting a master sequencer for this one");
                     sequencer.getSequenceData().setFollowNoteSequencerId(followId);
                 }
-                CommandBus.getInstance().publish(Commands.SEQUENCER_FOLLOW_EVENT, sequencer, followId);
+                CommandBus.getInstance().publish(Commands.SEQUENCER_NOTE_FOLLOW_EVENT, sequencer, followId);
             }
         });
 

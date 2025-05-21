@@ -28,9 +28,30 @@ import java.util.List;
  */
 public class DrumSelectorPanel extends JPanel implements IBusListener {
     private static final Logger logger = LoggerFactory.getLogger(DrumSelectorPanel.class);
+
+    // Create drum buttons for standard drum kit sounds
+    private static final String[] drumNames = {
+            "Kick", "Snare", "Closed HH", "Open HH",
+            "Tom 1", "Tom 2", "Tom 3", "Crash",
+            "Ride", "Rim", "Clap", "Cow",
+            "Clave", "Shaker", "Perc 1", "Perc 2"
+    };
+
+    private static final int MIDI_DRUM_NOTE_OFFSET = SequencerConstants.MIDI_DRUM_NOTE_OFFSET;
+
+    // Default MIDI notes for General MIDI drums
+    private static final int[] defaultNotes = {
+            MIDI_DRUM_NOTE_OFFSET, MIDI_DRUM_NOTE_OFFSET + 2, MIDI_DRUM_NOTE_OFFSET + 6, MIDI_DRUM_NOTE_OFFSET + 10,
+            MIDI_DRUM_NOTE_OFFSET + 5, MIDI_DRUM_NOTE_OFFSET + 7, MIDI_DRUM_NOTE_OFFSET + 9,
+            MIDI_DRUM_NOTE_OFFSET + 13,
+            MIDI_DRUM_NOTE_OFFSET + 15, MIDI_DRUM_NOTE_OFFSET + 1, MIDI_DRUM_NOTE_OFFSET + 3,
+            MIDI_DRUM_NOTE_OFFSET + 20,
+            MIDI_DRUM_NOTE_OFFSET + 39, MIDI_DRUM_NOTE_OFFSET + 34, MIDI_DRUM_NOTE_OFFSET + 24,
+            MIDI_DRUM_NOTE_OFFSET + 25
+    };
+
     // Constants
     private static final int DRUM_PAD_COUNT = SequencerConstants.DRUM_PAD_COUNT;
-    private static final int MIDI_DRUM_NOTE_OFFSET = SequencerConstants.MIDI_DRUM_NOTE_OFFSET;
     // Reference to the sequencer and parent panel
     private final DrumSequencer sequencer;
     private final DrumSequencerPanel parentPanel;
@@ -269,18 +290,6 @@ public class DrumSelectorPanel extends JPanel implements IBusListener {
                 if (player.getInstrument() != null) {
                     String instrumentInfo = "";
 
-                    // Add preset name/number if available
-//                    if (player.getInstrument().getPreset() != null) {
-//                        instrumentInfo = " (" + player.getInstrument().getPreset();
-//
-//                        // Add bank if available and not default
-//                        if (player.getInstrument().getBankIndex() != null && player.getInstrument().getBankIndex() != 0) {
-//                            instrumentInfo += "/" + player.getInstrument().getBankIndex();
-//                        }
-//
-//                        instrumentInfo += ")";
-//                    }
-
                     // If button text would be too long, use a shorter representation
                     if ((buttonText + instrumentInfo).length() > 25) {
                         buttonText = buttonText.substring(0, Math.min(buttonText.length(), 20)) +
@@ -337,24 +346,7 @@ public class DrumSelectorPanel extends JPanel implements IBusListener {
      * Initialize all drum selector buttons
      */
     private void initializeButtons() {
-        // Create drum buttons for standard drum kit sounds
-        String[] drumNames = {
-                "Kick", "Snare", "Closed HH", "Open HH",
-                "Tom 1", "Tom 2", "Tom 3", "Crash",
-                "Ride", "Rim", "Clap", "Cow",
-                "Clave", "Shaker", "Perc 1", "Perc 2"
-        };
 
-        // Default MIDI notes for General MIDI drums
-        int[] defaultNotes = {
-                MIDI_DRUM_NOTE_OFFSET, MIDI_DRUM_NOTE_OFFSET + 2, MIDI_DRUM_NOTE_OFFSET + 6, MIDI_DRUM_NOTE_OFFSET + 10,
-                MIDI_DRUM_NOTE_OFFSET + 5, MIDI_DRUM_NOTE_OFFSET + 7, MIDI_DRUM_NOTE_OFFSET + 9,
-                MIDI_DRUM_NOTE_OFFSET + 13,
-                MIDI_DRUM_NOTE_OFFSET + 15, MIDI_DRUM_NOTE_OFFSET + 1, MIDI_DRUM_NOTE_OFFSET + 3,
-                MIDI_DRUM_NOTE_OFFSET + 20,
-                MIDI_DRUM_NOTE_OFFSET + 39, MIDI_DRUM_NOTE_OFFSET + 34, MIDI_DRUM_NOTE_OFFSET + 24,
-                MIDI_DRUM_NOTE_OFFSET + 25
-        };
 
         for (int i = 0; i < DRUM_PAD_COUNT; i++) {
             final int drumIndex = i;
@@ -398,7 +390,9 @@ public class DrumSelectorPanel extends JPanel implements IBusListener {
             drumButton.setToolTipText("Select " + buttonText + " (Note: " + noteNumber + ")");
 
             // Rest of the button setup remains the same
-            drumButton.addActionListener(e -> parentPanel.selectDrumPad(drumIndex));
+            drumButton.addActionListener(e -> {
+                parentPanel.selectDrumPad(drumIndex);
+            });
 
             // Add double-click support to navigate to params panel
             drumButton.addMouseListener(new MouseAdapter() {
@@ -486,12 +480,6 @@ public class DrumSelectorPanel extends JPanel implements IBusListener {
         return null;
     }
 
-    /**
-     * Get the list of drum buttons
-     */
-    public List<DrumSelectorButton> getDrumButtons() {
-        return drumButtons;
-    }
 
     /**
      * Update the appearance of all drum buttons

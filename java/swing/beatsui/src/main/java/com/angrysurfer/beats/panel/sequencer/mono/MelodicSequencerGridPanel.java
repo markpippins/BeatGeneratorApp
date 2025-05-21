@@ -136,6 +136,7 @@ public class MelodicSequencerGridPanel extends JPanel implements IBusListener {
                 }
                 case 1 -> {
                     gateDials.add(dial);
+                    dial.setMaximum(500);
                     dial.setKnobColor(UIHelper.getDialColor("gate"));
                 }
                 case 2 -> {
@@ -452,6 +453,7 @@ public class MelodicSequencerGridPanel extends JPanel implements IBusListener {
         listenersEnabled = false;
         try {
             forceSync();
+            updateNoteDialsDisplay(sequencer.getSequenceData().getFollowNoteSequencerId());
             // Make sure dial sizes are appropriate
             // updateDialSizes();
         } finally {
@@ -542,7 +544,7 @@ public class MelodicSequencerGridPanel extends JPanel implements IBusListener {
                 Commands.SCALE_SELECTED,
                 Commands.HIGHLIGHT_SCALE_NOTE,
                 Commands.WINDOW_RESIZED,
-                Commands.SEQUENCER_FOLLOW_EVENT  // Add this event
+                Commands.SEQUENCER_NOTE_FOLLOW_EVENT  // Add this event
         });
 
         logger.debug("MelodicSequencerGridPanel registered for specific events");
@@ -570,7 +572,7 @@ public class MelodicSequencerGridPanel extends JPanel implements IBusListener {
                 logger.debug("Grid panel updated due to pattern/sequence change");
                 break;
 
-            case Commands.SEQUENCER_FOLLOW_EVENT:
+            case Commands.SEQUENCER_NOTE_FOLLOW_EVENT:
                 // Check if this event is for our sequencer
                 if (action.getSender() == sequencer ||
                         (action.getSender() instanceof MelodicSequencer ms && ms.getId().equals(sequencer.getId()))) {

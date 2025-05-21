@@ -1,6 +1,8 @@
 package com.angrysurfer.beats.panel.sequencer.mono;
 
 import com.angrysurfer.beats.util.UIHelper;
+import com.angrysurfer.core.api.CommandBus;
+import com.angrysurfer.core.api.Commands;
 import com.angrysurfer.core.sequencer.MelodicSequenceData;
 import com.angrysurfer.core.sequencer.MelodicSequencer;
 import org.slf4j.Logger;
@@ -121,7 +123,10 @@ public class MelodicSequencerGeneratorPanel extends JPanel {
 
                 // Save the changes to the sequence data
                 // MelodicSequencerManager.getInstance().saveSequence(sequencer);
-
+                CommandBus.getInstance().publish(
+                        Commands.MELODIC_PATTERN_UPDATED,
+                        sequencer,
+                        data);
 
                 logger.info("Pattern successfully generated and applied");
             } else {

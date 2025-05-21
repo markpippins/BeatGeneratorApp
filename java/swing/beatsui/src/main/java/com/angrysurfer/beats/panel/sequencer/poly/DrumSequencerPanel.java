@@ -106,6 +106,30 @@ public class DrumSequencerPanel extends JPanel implements IBusListener {
                 event -> gridPanel.updateStepHighlighting(event.getDrumIndex(), event.getOldStep(),
                         event.getNewStep()));
 
+
+        // Initialize UI components
+        initialize();
+
+        // When the panel gains focus or becomes visible, request focus
+        addFocusListener(new FocusAdapter() {
+            @Override
+            public void focusGained(FocusEvent e) {
+                requestFocusInWindow();
+//                selectDrumPad(DrumSequencerManager.getInstance().getSelectedPadIndex());
+            }
+        });
+
+        // Request focus when the panel becomes visible
+        addComponentListener(new ComponentAdapter() {
+            @Override
+            public void componentShown(ComponentEvent e) {
+                requestFocusInWindow();
+                if (DrumSequencerManager.getInstance().getSelectedPadIndex() == -1)
+                    SwingUtilities.invokeLater(() -> selectDrumPad(0));
+            }
+        });
+
+
         // Add as listener
         CommandBus.getInstance().register(this, new String[]{
                 Commands.DRUM_STEP_UPDATED,
@@ -118,25 +142,6 @@ public class DrumSequencerPanel extends JPanel implements IBusListener {
         });
         logger.info("DrumSequencerPanel registered as listener");
 
-        // Initialize UI components
-        initialize();
-
-        // When the panel gains focus or becomes visible, request focus
-        addFocusListener(new FocusAdapter() {
-            @Override
-            public void focusGained(FocusEvent e) {
-                requestFocusInWindow();
-                selectDrumPad(DrumSequencerManager.getInstance().getSelectedPadIndex());
-            }
-        });
-
-        // Request focus when the panel becomes visible
-        addComponentListener(new ComponentAdapter() {
-            @Override
-            public void componentShown(ComponentEvent e) {
-                requestFocusInWindow();
-            }
-        });
     }
 
     /**

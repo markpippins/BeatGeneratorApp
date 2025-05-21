@@ -52,7 +52,7 @@ public class DrumSequencerGridPanel extends JPanel implements IBusListener {
 
         // Use GridLayout for perfect grid alignment
         // REDUCED: from 2,2 to 1,1 - tighter grid spacing for more compact appearance
-        setLayout(new GridLayout(DRUM_PAD_COUNT, sequencer.getDefaultPatternLength(), 1, 1));
+        setLayout(new GridLayout(DRUM_PAD_COUNT, sequencer.getDefaultPatternLength(), 4, 4));
         // REDUCED: from 5,5,5,5 to 2,2,2,2 - consistent with other panels
         // setBorder(BorderFactory.createEmptyBorder(2, 2, 2, 2));
         // setBorder(BorderFactory.createLoweredBevelBorder());
@@ -141,7 +141,7 @@ public class DrumSequencerGridPanel extends JPanel implements IBusListener {
         button.addActionListener(e -> {
             sequencer.toggleStep(drumIndex, step);
             button.setSelected(sequencer.isStepActive(drumIndex, step));
-            
+
             // IMPORTANT: Update parameters after toggle to ensure defaults are applied
             button.setStepParameters(
                     sequencer.getStepVelocity(drumIndex, step),
@@ -571,7 +571,7 @@ public class DrumSequencerGridPanel extends JPanel implements IBusListener {
                                 // In backward phase
                                 drumPreviousStep = drumCurrentStep + 1;
                             }
-                            
+
                             // Update highlighting using the regular method - bounce mode works well with it
                             updateStepHighlighting(drumIndex, drumPreviousStep, drumCurrentStep);
                         } else if (direction == Direction.BACKWARD) {

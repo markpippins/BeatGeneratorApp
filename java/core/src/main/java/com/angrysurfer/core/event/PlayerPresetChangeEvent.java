@@ -8,21 +8,18 @@ import com.angrysurfer.core.model.Player;
 public class PlayerPresetChangeEvent extends PlayerEvent {
     private final Integer presetNumber;
     private final Integer bankIndex;
-    
-    public PlayerPresetChangeEvent(Player player, Integer presetNumber) {
-        this(player, null, presetNumber);
-    }
-    
-    public PlayerPresetChangeEvent(Player player, Integer bankIndex, Integer presetNumber) {
-        super(player);
+
+
+    public PlayerPresetChangeEvent(Object creator, Player player, Integer bankIndex, Integer presetNumber) {
+        super(creator, player);
         this.bankIndex = bankIndex;
         this.presetNumber = presetNumber;
     }
-    
+
     public Integer getPresetNumber() {
         return presetNumber;
     }
-    
+
     public Integer getBankIndex() {
         return bankIndex;
     }

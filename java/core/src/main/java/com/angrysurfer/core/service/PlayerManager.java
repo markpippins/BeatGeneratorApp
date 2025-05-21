@@ -275,12 +275,12 @@ public class PlayerManager implements IBusListener {
     @Deprecated
     private void handleLegacyPlayerActivationRequest(Command action) {
         if (action.getData() instanceof Player player) {
-            PlayerSelectionEvent event = new PlayerSelectionEvent(player);
+            PlayerSelectionEvent event = new PlayerSelectionEvent(this, player);
             CommandBus.getInstance().publish(Commands.PLAYER_SELECTION_EVENT, this, event);
         } else if (action.getData() instanceof Long playerId) {
             Player player = getPlayerById(playerId);
             if (player != null) {
-                PlayerSelectionEvent event = new PlayerSelectionEvent(player);
+                PlayerSelectionEvent event = new PlayerSelectionEvent(this, player);
                 CommandBus.getInstance().publish(Commands.PLAYER_SELECTION_EVENT, this, event);
             }
         }
@@ -289,7 +289,7 @@ public class PlayerManager implements IBusListener {
     @Deprecated
     private void handleLegacyPlayerUpdateRequest(Command action) {
         if (action.getData() instanceof Player player) {
-            PlayerUpdateEvent event = new PlayerUpdateEvent(player);
+            PlayerUpdateEvent event = new PlayerUpdateEvent(this, player);
             CommandBus.getInstance().publish(Commands.PLAYER_UPDATE_EVENT, this, event);
         }
     }
@@ -307,7 +307,7 @@ public class PlayerManager implements IBusListener {
 
             Player player = getPlayerById(playerId);
             if (player != null) {
-                PlayerPresetChangeEvent event = new PlayerPresetChangeEvent(player, bankIndex, presetNumber);
+                PlayerPresetChangeEvent event = new PlayerPresetChangeEvent(this, player, bankIndex, presetNumber);
                 CommandBus.getInstance().publish(Commands.PLAYER_PRESET_CHANGE_EVENT, this, event);
             }
         }
@@ -321,7 +321,7 @@ public class PlayerManager implements IBusListener {
 
             Player player = getPlayerById(playerId);
             if (player != null && instrument != null) {
-                PlayerInstrumentChangeEvent event = new PlayerInstrumentChangeEvent(player, instrument);
+                PlayerInstrumentChangeEvent event = new PlayerInstrumentChangeEvent(this, player, instrument);
                 CommandBus.getInstance().publish(Commands.PLAYER_INSTRUMENT_CHANGE_EVENT, this, event);
             }
         }
@@ -330,7 +330,7 @@ public class PlayerManager implements IBusListener {
     @Deprecated
     private void handleLegacyRefreshRequest(Command action) {
         if (action.getData() instanceof Player player) {
-            PlayerRefreshEvent event = new PlayerRefreshEvent(player);
+            PlayerRefreshEvent event = new PlayerRefreshEvent(this, player);
             CommandBus.getInstance().publish(Commands.PLAYER_REFRESH_EVENT, this, event);
         }
     }
@@ -831,7 +831,7 @@ public class PlayerManager implements IBusListener {
         CommandBus.getInstance().publish(
                 Commands.PLAYER_UPDATE_EVENT,
                 this,
-                new PlayerUpdateEvent(player)
+                new PlayerUpdateEvent(this, player)
         );
     }
 

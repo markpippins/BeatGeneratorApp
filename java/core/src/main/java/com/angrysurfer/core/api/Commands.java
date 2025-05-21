@@ -408,7 +408,9 @@ public class Commands {
     // Add this constant for sequencer-specific root note changes
     public static final String SEQUENCER_ROOT_NOTE_SELECTED = "SEQUENCER_ROOT_NOTE_SELECTED";
     public static final String TOGGLE_LOOPING = "TOGGLE_LOOPING";
-    public static final String SEQUENCER_FOLLOW_EVENT = "SEQUENCER_FOLLOW_EVENT";
     public static final String SET_MAX_LENGTH = "SET_MAX_LENGTH";
     public static final String SAVE_ALL_MELODIC = "SAVE_ALL_MELODIC";
+
+    public static final String SEQUENCER_TILT_FOLLOW_EVENT = "SEQUENCER_TILT_FOLLOW_EVENT";
+    public static final String SEQUENCER_NOTE_FOLLOW_EVENT = "SEQUENCER_NOTE_FOLLOW_EVENT";
 }

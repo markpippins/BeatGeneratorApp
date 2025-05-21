@@ -516,7 +516,7 @@ public class PlayerEditBasicPropertiesPanel extends JPanel {
             CommandBus.getInstance().publish(
                     Commands.PLAYER_UPDATE_EVENT,
                     this,
-                    new PlayerUpdateEvent(player)
+                    new PlayerUpdateEvent(this, player)
             );
         } catch (Exception e) {
             logger.error("Error applying changes: {}", e.getMessage(), e);

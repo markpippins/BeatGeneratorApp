@@ -151,6 +151,8 @@ public abstract class LivePanel extends JPanel implements IBusListener {
             player = newPlayer;
             handlePlayerActivated();
         }
+//        CommandBus.getInstance().publish(Commands.STATUS_UPDATE, new StatusUpdate(player.getName() +
+//                " activated."));
     }
 
     /**
@@ -232,7 +234,7 @@ public abstract class LivePanel extends JPanel implements IBusListener {
             CommandBus.getInstance().publish(
                     Commands.PLAYER_REFRESH_EVENT,
                     this,
-                    new com.angrysurfer.core.event.PlayerRefreshEvent(player)
+                    new com.angrysurfer.core.event.PlayerRefreshEvent(this, player)
             );
         }
     }
@@ -245,7 +247,7 @@ public abstract class LivePanel extends JPanel implements IBusListener {
             CommandBus.getInstance().publish(
                     Commands.PLAYER_UPDATE_EVENT,
                     this,
-                    new com.angrysurfer.core.event.PlayerUpdateEvent(player)
+                    new com.angrysurfer.core.event.PlayerUpdateEvent(this, player)
             );
         }
     }
