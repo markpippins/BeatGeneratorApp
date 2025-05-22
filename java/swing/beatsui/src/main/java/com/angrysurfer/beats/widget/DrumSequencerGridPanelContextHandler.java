@@ -117,7 +117,7 @@ public class DrumSequencerGridPanelContextHandler implements IBusListener {
 
         // ----- Direction Submenu -----
         JMenu directionMenu = new JMenu("Direction");
-        
+
         JMenuItem forwardItem = new JMenuItem("Forward");
         forwardItem.addActionListener(e -> {
             boolean success = DrumSequenceModifier.pushPatternForward(sequencer, drumIndex);
@@ -125,7 +125,7 @@ public class DrumSequencerGridPanelContextHandler implements IBusListener {
                 parentPanel.updateStepButtonsForDrum(drumIndex);
             }
         });
-        
+
         JMenuItem backwardItem = new JMenuItem("Backward");
         backwardItem.addActionListener(e -> {
             boolean success = DrumSequenceModifier.pullPatternBackward(sequencer, drumIndex);
@@ -133,7 +133,7 @@ public class DrumSequencerGridPanelContextHandler implements IBusListener {
                 parentPanel.updateStepButtonsForDrum(drumIndex);
             }
         });
-        
+
         JMenuItem bounceItem = new JMenuItem("Bounce");
         bounceItem.addActionListener(e -> {
             boolean success = DrumSequenceModifier.createBouncePattern(sequencer, drumIndex);
@@ -141,7 +141,7 @@ public class DrumSequencerGridPanelContextHandler implements IBusListener {
                 parentPanel.updateStepButtonsForDrum(drumIndex);
             }
         });
-        
+
         JMenuItem randomDirItem = new JMenuItem("Random");
         randomDirItem.addActionListener(e -> {
             int density = 50; // Default density of 50%
@@ -150,7 +150,7 @@ public class DrumSequencerGridPanelContextHandler implements IBusListener {
                 parentPanel.updateStepButtonsForDrum(drumIndex);
             }
         });
-        
+
         directionMenu.add(forwardItem);
         directionMenu.add(backwardItem);
         directionMenu.add(bounceItem);
@@ -160,7 +160,7 @@ public class DrumSequencerGridPanelContextHandler implements IBusListener {
 
         // ----- Fill Submenu -----
         JMenu fillMenu = new JMenu("Fill");
-        
+
         JMenuItem fillAllItem = new JMenuItem("All");
         fillAllItem.addActionListener(e -> {
             boolean success = DrumSequenceModifier.applyFillPattern(sequencer, drumIndex, 0, "all");
@@ -168,7 +168,7 @@ public class DrumSequencerGridPanelContextHandler implements IBusListener {
                 parentPanel.updateStepButtonsForDrum(drumIndex);
             }
         });
-        
+
         JMenuItem fill2ndItem = new JMenuItem("Every 2nd");
         fill2ndItem.addActionListener(e -> {
             boolean success = DrumSequenceModifier.applyPatternEveryN(sequencer, drumIndex, 2);
@@ -176,7 +176,7 @@ public class DrumSequencerGridPanelContextHandler implements IBusListener {
                 parentPanel.updateStepButtonsForDrum(drumIndex);
             }
         });
-        
+
         JMenuItem fill3rdItem = new JMenuItem("Every 3rd");
         fill3rdItem.addActionListener(e -> {
             boolean success = DrumSequenceModifier.applyPatternEveryN(sequencer, drumIndex, 3);
@@ -184,7 +184,7 @@ public class DrumSequencerGridPanelContextHandler implements IBusListener {
                 parentPanel.updateStepButtonsForDrum(drumIndex);
             }
         });
-        
+
         JMenuItem fill4thItem = new JMenuItem("Every 4th");
         fill4thItem.addActionListener(e -> {
             boolean success = DrumSequenceModifier.applyPatternEveryN(sequencer, drumIndex, 4);
@@ -192,14 +192,14 @@ public class DrumSequencerGridPanelContextHandler implements IBusListener {
                 parentPanel.updateStepButtonsForDrum(drumIndex);
             }
         });
-        
+
         JMenuItem fillEuclideanItem = new JMenuItem("Euclidean");
         fillEuclideanItem.addActionListener(e -> {
             // Use CommandBus for dialog creation - Euclidean for entire row
             Object[] params = new Object[]{sequencer, drumIndex};
             CommandBus.getInstance().publish(Commands.SHOW_EUCLIDEAN_DIALOG, this, params);
         });
-        
+
         fillMenu.add(fillAllItem);
         fillMenu.add(fill2ndItem);
         fillMenu.add(fill3rdItem);
@@ -210,7 +210,7 @@ public class DrumSequencerGridPanelContextHandler implements IBusListener {
 
         // ----- Fill From Here Submenu -----
         JMenu fillFromHereMenu = new JMenu("Fill From Here...");
-        
+
         JMenuItem fillFromHereAllItem = new JMenuItem("All");
         fillFromHereAllItem.addActionListener(e -> {
             boolean success = DrumSequenceModifier.applyFillPattern(sequencer, drumIndex, step, "all");
@@ -218,7 +218,7 @@ public class DrumSequencerGridPanelContextHandler implements IBusListener {
                 parentPanel.updateStepButtonsForDrum(drumIndex);
             }
         });
-        
+
         JMenuItem fillFromHere2ndItem = new JMenuItem("Every 2nd");
         fillFromHere2ndItem.addActionListener(e -> {
             boolean success = DrumSequenceModifier.applyPatternEveryNFromStep(sequencer, drumIndex, step, 2);
@@ -226,7 +226,7 @@ public class DrumSequencerGridPanelContextHandler implements IBusListener {
                 parentPanel.updateStepButtonsForDrum(drumIndex);
             }
         });
-        
+
         JMenuItem fillFromHere3rdItem = new JMenuItem("Every 3rd");
         fillFromHere3rdItem.addActionListener(e -> {
             boolean success = DrumSequenceModifier.applyPatternEveryNFromStep(sequencer, drumIndex, step, 3);
@@ -234,7 +234,7 @@ public class DrumSequencerGridPanelContextHandler implements IBusListener {
                 parentPanel.updateStepButtonsForDrum(drumIndex);
             }
         });
-        
+
         JMenuItem fillFromHere4thItem = new JMenuItem("Every 4th");
         fillFromHere4thItem.addActionListener(e -> {
             boolean success = DrumSequenceModifier.applyPatternEveryNFromStep(sequencer, drumIndex, step, 4);
@@ -242,14 +242,14 @@ public class DrumSequencerGridPanelContextHandler implements IBusListener {
                 parentPanel.updateStepButtonsForDrum(drumIndex);
             }
         });
-        
+
         JMenuItem fillFromHereEuclideanItem = new JMenuItem("Euclidean");
         fillFromHereEuclideanItem.addActionListener(e -> {
             // Use CommandBus for dialog creation - Euclidean from specific step
             Object[] params = new Object[]{sequencer, drumIndex, step};
             CommandBus.getInstance().publish(Commands.SHOW_EUCLIDEAN_DIALOG, this, params);
         });
-        
+
         fillFromHereMenu.add(fillFromHereAllItem);
         fillFromHereMenu.add(fillFromHere2ndItem);
         fillFromHereMenu.add(fillFromHere3rdItem);
@@ -260,7 +260,7 @@ public class DrumSequencerGridPanelContextHandler implements IBusListener {
 
         // ----- Fill Params Submenu -----
         JMenu fillParamsMenu = new JMenu("Fill Params");
-        
+
         JMenu nudgeMenu = new JMenu("Nudge");
         JMenuItem randomizeNudgeItem = new JMenuItem("Randomize");
         randomizeNudgeItem.addActionListener(e -> {
@@ -270,7 +270,7 @@ public class DrumSequencerGridPanelContextHandler implements IBusListener {
             }
         });
         nudgeMenu.add(randomizeNudgeItem);
-        
+
         JMenu probabilityMenu = new JMenu("Probability");
         JMenuItem randomizeProbItem = new JMenuItem("Randomize");
         randomizeProbItem.addActionListener(e -> {
@@ -280,7 +280,7 @@ public class DrumSequencerGridPanelContextHandler implements IBusListener {
             }
         });
         probabilityMenu.add(randomizeProbItem);
-        
+
         JMenu velocityMenu = new JMenu("Velocity");
         JMenuItem ascendingVelItem = new JMenuItem("Ascending");
         ascendingVelItem.addActionListener(e -> {
@@ -289,7 +289,7 @@ public class DrumSequencerGridPanelContextHandler implements IBusListener {
                 parentPanel.updateStepButtonsForDrum(drumIndex);
             }
         });
-        
+
         JMenuItem descendingVelItem = new JMenuItem("Descending");
         descendingVelItem.addActionListener(e -> {
             boolean success = DrumSequenceModifier.setDescendingVelocities(sequencer, drumIndex);
@@ -297,19 +297,28 @@ public class DrumSequencerGridPanelContextHandler implements IBusListener {
                 parentPanel.updateStepButtonsForDrum(drumIndex);
             }
         });
-        
+
         JMenuItem randomizeVelItem = new JMenuItem("Randomize");
         randomizeVelItem.addActionListener(e -> {
             boolean success = DrumSequenceModifier.randomizeVelocities(sequencer, drumIndex);
             if (success) {
+                // Update grid buttons
                 parentPanel.updateStepButtonsForDrum(drumIndex);
+
+                // Force refresh of any parameter panels
+                CommandBus.getInstance().publish(
+                        Commands.DRUM_GRID_REFRESH_REQUESTED,
+                        this,
+                        drumIndex
+                );
             }
         });
-        
+
+
         velocityMenu.add(ascendingVelItem);
         velocityMenu.add(descendingVelItem);
         velocityMenu.add(randomizeVelItem);
-        
+
         fillParamsMenu.add(nudgeMenu);
         fillParamsMenu.add(probabilityMenu);
         fillParamsMenu.add(velocityMenu);
@@ -324,7 +333,7 @@ public class DrumSequencerGridPanelContextHandler implements IBusListener {
                 parentPanel.updateStepButtonsForDrum(drumIndex);
             }
         });
-        
+
         JMenuItem pushForwardItem = new JMenuItem("Push Forward");
         pushForwardItem.addActionListener(e -> {
             boolean success = DrumSequenceModifier.pushPatternForward(sequencer, drumIndex);
@@ -332,7 +341,7 @@ public class DrumSequencerGridPanelContextHandler implements IBusListener {
                 parentPanel.updateStepButtonsForDrum(drumIndex);
             }
         });
-        
+
         menu.add(pullBackItem);
         menu.add(pushForwardItem);
 

@@ -5,6 +5,7 @@ import com.angrysurfer.beats.panel.player.SoundParametersPanel;
 import com.angrysurfer.beats.panel.sequencer.MuteSequencerPanel;
 import com.angrysurfer.beats.util.UIHelper;
 import com.angrysurfer.beats.widget.AccentButton;
+import com.angrysurfer.beats.widget.Dial;
 import com.angrysurfer.beats.widget.TriggerButton;
 import com.angrysurfer.core.api.*;
 import com.angrysurfer.core.event.DrumPadSelectionEvent;
@@ -91,14 +92,25 @@ public abstract class PolyPanel extends JPanel implements IBusListener {
                 Commands.DRUM_PAD_SELECTED,
                 Commands.DRUM_STEP_SELECTED,
                 Commands.DRUM_INSTRUMENTS_UPDATED,
-                Commands.HIGHLIGHT_STEP
+                Commands.HIGHLIGHT_STEP,
+
+                // Add these events to respond to DrumSequenceModifier operations
+                Commands.DRUM_STEP_BUTTONS_UPDATE_REQUESTED,
+                Commands.PATTERN_UPDATED,
+                Commands.DRUM_STEP_PARAMETERS_CHANGED,
+                Commands.DRUM_STEP_EFFECTS_CHANGED,
+                Commands.DRUM_GRID_REFRESH_REQUESTED,
+
+                // Add these to respond to dialog results
+                Commands.FILL_PATTERN_SELECTED,
+                Commands.EUCLIDEAN_PATTERN_SELECTED,
+                Commands.MAX_LENGTH_SELECTED
         });
 
         logger.info("DrumParamsSequencerPanel registered for specific events");
 
         TimingBus.getInstance().register(this);
     }
-
 
     abstract void createDialLists();
 
@@ -194,7 +206,8 @@ public abstract class PolyPanel extends JPanel implements IBusListener {
                 }
             }
 
-            case Commands.DRUM_SEQUENCE_LOADED, Commands.DRUM_SEQUENCE_CREATED, Commands.DRUM_SEQUENCE_UPDATED -> {
+            case Commands.DRUM_SEQUENCE_LOADED, Commands.DRUM_SEQUENCE_CREATED,
+                 Commands.DRUM_SEQUENCE_UPDATED -> {
                 // When sequence changes, refresh the grid for the current selection
                 if (selectedPadIndex >= 0) {
                     refreshTriggerButtonsForPad(selectedPadIndex);
@@ -212,9 +225,9 @@ public abstract class PolyPanel extends JPanel implements IBusListener {
                     int newSelection = event.getNewSelection();
 
                     // Check if index is valid and different
-                    if (newSelection != selectedPadIndex &&
-                            newSelection >= 0 &&
-                            newSelection < drumPadPanel.getButtonCount()) {
+                    if (newSelection != selectedPadIndex
+                            && newSelection >= 0
+                            && newSelection < drumPadPanel.getButtonCount()) {
 
                         // Skip heavy operations - just update necessary state
                         selectedPadIndex = newSelection;
@@ -227,6 +240,27 @@ public abstract class PolyPanel extends JPanel implements IBusListener {
                     }
                 }
             }
+
+//            case Commands.DRUM_SEQUENCE_UPDATED -> {
+//                // Check if this is for our selected drum
+//                if (action.getData() instanceof Integer drumIndex) {
+//                    if (drumIndex == selectedPadIndex) {
+//                        // Force refresh of all dial values
+//                        SwingUtilities.invokeLater(() -> {
+//                            refreshDialsForPad(selectedPadIndex);
+//                            updateDialsForSelectedPad();
+//                        });
+//                    }
+//                } else {
+//                    // If no specific drum index, refresh for selected pad anyway
+//                    if (selectedPadIndex >= 0) {
+//                        SwingUtilities.invokeLater(() -> {
+//                            refreshDialsForPad(selectedPadIndex);
+//                            updateDialsForSelectedPad();
+//                        });
+//                    }
+//                }
+//            }
         }
     }
 
@@ -273,7 +307,7 @@ public abstract class PolyPanel extends JPanel implements IBusListener {
         for (TriggerButton button : selectorButtons) {
             button.setHighlighted(false);
         }
-        
+
         for (AccentButton button : accentButtons) {
             button.setHighlighted(false);
         }
@@ -283,7 +317,7 @@ public abstract class PolyPanel extends JPanel implements IBusListener {
             TriggerButton newButton = selectorButtons.get(newStep);
             newButton.setHighlighted(true);
             newButton.repaint();
-            
+
             // Highlight accent button too
             if (newStep < accentButtons.size()) {
                 AccentButton accentButton = accentButtons.get(newStep);
@@ -302,7 +336,6 @@ public abstract class PolyPanel extends JPanel implements IBusListener {
         selectorButtons.clear();
 
         // clearDials();
-
         // REDUCED: from 5,5 to 2,2
         setLayout(new BorderLayout(2, 2));
         UIHelper.setPanelBorder(this);
@@ -352,27 +385,16 @@ public abstract class PolyPanel extends JPanel implements IBusListener {
         drumSection.add(new MuteSequencerPanel(sequencer), BorderLayout.NORTH);
         drumSection.add(drumPadPanel, BorderLayout.CENTER);
 
-        // Add the drum section to the SOUTH of the centerPanel
         UIHelper.addSafely(centerPanel, drumSection, BorderLayout.SOUTH);
-
-        // Add the center panel to the main layout
         UIHelper.addSafely(this, centerPanel, BorderLayout.CENTER);
 
-        // Create a panel for the bottom controls
-        // REDUCED: from 5,5 to 2,2
         JPanel bottomPanel = new JPanel(new BorderLayout(2, 2));
-
-        // Add sequence parameters panel
         sequenceParamsPanel = new DrumSequencerParametersPanel(sequencer);
-        bottomPanel.add(sequenceParamsPanel, BorderLayout.CENTER);
+        bottomPanel.add(sequenceParamsPanel, BorderLayout.WEST);
 
-        // Add MaxLengthPanel to the WEST position
         maxLengthPanel = new DrumSequencerMaxLengthPanel(sequencer);
-        bottomPanel.add(maxLengthPanel, BorderLayout.WEST);
-
-        // Create a container for the right-side panels
-        // REDUCED: from 5,0 to 2,0
         JPanel rightPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 2, 0));
+        rightPanel.add(maxLengthPanel);
 
         generatorPanel = new DrumSequenceGeneratorPanel(sequencer);
         rightPanel.add(generatorPanel);
@@ -424,8 +446,9 @@ public abstract class PolyPanel extends JPanel implements IBusListener {
     private void handleDrumPadSelected(int padIndex) {
         // Don't process if already selected or we're in the middle of handling a
         // selection
-        if (padIndex == selectedPadIndex || isHandlingSelection)
+        if (padIndex == selectedPadIndex || isHandlingSelection) {
             return;
+        }
 
         try {
             // Set flag to prevent recursive calls
@@ -439,7 +462,7 @@ public abstract class PolyPanel extends JPanel implements IBusListener {
                 Player player = sequencer.getPlayers()[padIndex];
 
                 if (player != null && player.getInstrument() != null) {
-                    player.drumNoteOn(player.getRootNote());
+                    player.noteOn(player.getRootNote(), 100, 100);
                     CommandBus.getInstance().publish(Commands.STATUS_UPDATE, this, new StatusUpdate("Selected pad: " + player.getName()));
                     CommandBus.getInstance().publish(Commands.PLAYER_ACTIVATION_REQUEST, this, player);
                 }
@@ -463,7 +486,6 @@ public abstract class PolyPanel extends JPanel implements IBusListener {
             isHandlingSelection = false;
         }
     }
-
 
     void refreshTriggerButtonsForPad(int padIndex) {
         // Handle no selection case
@@ -518,7 +540,6 @@ public abstract class PolyPanel extends JPanel implements IBusListener {
         buttonPanel.add(triggerButton);
         return buttonPanel;
     }
-
 
     void toggleStepForActivePad(int stepIndex) {
         if (selectedPadIndex >= 0) {
@@ -589,7 +610,30 @@ public abstract class PolyPanel extends JPanel implements IBusListener {
             case 5 -> "Tone";
             default -> "";
         };
+    }
 
+    /**
+     * Check if we need to update controls based on pattern length change
+     */
+    private void checkPatternLengthChanges() {
+        if (selectedPadIndex >= 0) {
+            int currentPatternLength = sequencer.getPatternLength(selectedPadIndex);
+
+            // Update sequence params panel with new length
+            if (sequenceParamsPanel != null) {
+                sequenceParamsPanel.updateControls(selectedPadIndex);
+            }
+
+            // Update max length panel display
+            if (maxLengthPanel != null) {
+                maxLengthPanel.updateControls();
+            }
+
+            // Make sure all buttons reflect the current pattern length
+            for (int i = 0; i < selectorButtons.size(); i++) {
+                selectorButtons.get(i).setEnabled(i < currentPatternLength);
+            }
+        }
     }
 
     // Helper method to find the MainPanel ancestor
@@ -602,6 +646,18 @@ public abstract class PolyPanel extends JPanel implements IBusListener {
             parent = parent.getParent();
         }
         return null;
+    }
+
+    Dial createDial(String name, int index, int minimum, int maximum, int defaultValue) {
+        Dial dial = new Dial();
+
+        dial.setMinimum(minimum);
+        dial.setMaximum(maximum);
+        dial.setValue(defaultValue);
+        dial.setKnobColor(UIHelper.getDialColor(name)); // Set knob color
+        dial.setName(getKnobLabel(index) + "-" + index);
+
+        return dial;
     }
 
 }

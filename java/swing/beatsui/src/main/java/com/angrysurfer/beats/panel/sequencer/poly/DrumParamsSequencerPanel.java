@@ -1,11 +1,11 @@
 package com.angrysurfer.beats.panel.sequencer.poly;
 
-import com.angrysurfer.beats.util.UIHelper;
 import com.angrysurfer.beats.widget.Dial;
 import com.angrysurfer.core.api.Command;
 import com.angrysurfer.core.api.CommandBus;
 import com.angrysurfer.core.api.Commands;
 import com.angrysurfer.core.api.IBusListener;
+import com.angrysurfer.core.event.DrumStepParametersEvent;
 import com.angrysurfer.core.event.NoteEvent;
 import lombok.Getter;
 import lombok.Setter;
@@ -14,6 +14,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.function.Consumer;
 import java.util.logging.Logger;
 
@@ -51,14 +52,6 @@ public class DrumParamsSequencerPanel extends PolyPanel implements IBusListener 
         nudgeDials = new ArrayList<>();
     }
 
-//    @Override
-//    void clearDials() {
-//        velocityDials.clear();
-//        decayDials.clear();
-//        probabilityDials.clear();
-//        nudgeDials.clear();
-//    }
-
     /**
      * Create a column for the sequencer (modified to remove drum buttons)
      */
@@ -82,124 +75,78 @@ public class DrumParamsSequencerPanel extends PolyPanel implements IBusListener 
             column.add(labelPanel);
 
             // Create dial with appropriate settings based on type
-            Dial dial = new Dial();
-            dial.setName(getKnobLabel(i) + "-" + index);
+            Dial dial = null;
 
             // Configure dial based on its type
             switch (i) {
                 case 0: // Velocity
-                    dial.setMinimum(0);
-                    dial.setMaximum(127);
-                    dial.setValue(100); // Default value
-                    dial.setKnobColor(UIHelper.getDialColor("velocity")); // Set knob color
-                    // dial.setColors(new Color(0, 180, 255), new Color(0, 100, 200), Color.WHITE);
-                    // Add to collection and event listener
+                    dial = createDial("velocity", index, 0, 127, 100);
                     velocityDials.add(dial);
                     dial.addChangeListener(e -> {
                         if (!isUpdatingControls() && getSelectedPadIndex() >= 0) {
                             int value = ((Dial) e.getSource()).getValue();
                             getSequencer().setStepVelocity(getSelectedPadIndex(), index, value);
 
-                            // Publish an event for parameter change
+                            // Publish event using sequencer-based constructor
                             CommandBus.getInstance().publish(
                                     Commands.DRUM_STEP_PARAMETERS_CHANGED,
                                     this,
-                                    new Object[]{
-                                            getSelectedPadIndex(),
-                                            index,
-                                            value,
-                                            getSequencer().getStepDecay(getSelectedPadIndex(), index),
-                                            getSequencer().getStepProbability(getSelectedPadIndex(), index),
-                                            getSequencer().getStepNudge(getSelectedPadIndex(), index)
-                                    }
+                                    new DrumStepParametersEvent(getSequencer(), getSelectedPadIndex(), index)
                             );
                         }
                     });
                     break;
 
                 case 1: // Decay
-                    dial.setMinimum(0);
-                    dial.setMaximum(1000);
-                    dial.setValue(250); // Default value
-                    dial.setKnobColor(UIHelper.getDialColor("decay")); // Set knob color
-                    // Add to collection and event listener
+                    dial = createDial("decay", index, 0, 1000, 250);
                     decayDials.add(dial);
                     dial.addChangeListener(e -> {
                         if (!isUpdatingControls() && getSelectedPadIndex() >= 0) {
                             int value = ((Dial) e.getSource()).getValue();
                             getSequencer().setStepDecay(getSelectedPadIndex(), index, value);
 
-                            // Publish an event for parameter change
+                            // Publish event using sequencer-based constructor
                             CommandBus.getInstance().publish(
                                     Commands.DRUM_STEP_PARAMETERS_CHANGED,
                                     this,
-                                    new Object[]{
-                                            getSelectedPadIndex(),
-                                            index,
-                                            getSequencer().getStepVelocity(getSelectedPadIndex(), index),
-                                            value,
-                                            getSequencer().getStepProbability(getSelectedPadIndex(), index),
-                                            getSequencer().getStepNudge(getSelectedPadIndex(), index)
-                                    }
+                                    new DrumStepParametersEvent(getSequencer(), getSelectedPadIndex(), index)
                             );
                         }
                     });
                     break;
 
+
                 case 2: // Probability
-                    dial.setMinimum(0);
-                    dial.setMaximum(100);
-                    dial.setValue(100); // Default value
-                    dial.setKnobColor(UIHelper.getDialColor("probability")); // Set knob color
-                    // Add to collection and event listener
+                    dial = createDial("probability", index, 0, 100, 100);
                     probabilityDials.add(dial);
                     dial.addChangeListener(e -> {
                         if (!isUpdatingControls() && getSelectedPadIndex() >= 0) {
                             int value = ((Dial) e.getSource()).getValue();
                             getSequencer().setStepProbability(getSelectedPadIndex(), index, value);
 
-                            // Publish an event for parameter change
+                            // Publish event using sequencer-based constructor
                             CommandBus.getInstance().publish(
                                     Commands.DRUM_STEP_PARAMETERS_CHANGED,
                                     this,
-                                    new Object[]{
-                                            getSelectedPadIndex(),
-                                            index,
-                                            getSequencer().getStepVelocity(getSelectedPadIndex(), index),
-                                            getSequencer().getStepDecay(getSelectedPadIndex(), index),
-                                            value,
-                                            getSequencer().getStepNudge(getSelectedPadIndex(), index)
-                                    }
+                                    new DrumStepParametersEvent(getSequencer(), getSelectedPadIndex(), index)
                             );
                         }
                     });
                     break;
 
                 case 3: // Nudge
-                    dial.setMinimum(-50);
-                    dial.setMaximum(50);
-                    dial.setValue(0); // Default value
-                    dial.setKnobColor(UIHelper.getDialColor("nudge")); // Set knob color
-
-                    // Add to collection and event listener
+                    dial = createDial("nudge", index, -50, 50, 0);
                     nudgeDials.add(dial);
                     dial.addChangeListener(e -> {
                         if (!isUpdatingControls() && getSelectedPadIndex() >= 0) {
                             int value = ((Dial) e.getSource()).getValue();
                             getSequencer().setStepNudge(getSelectedPadIndex(), index, value);
 
-                            // Publish an event for parameter change
+                            // Publish event using sequencer-based constructor
                             CommandBus.getInstance().publish(
                                     Commands.DRUM_STEP_PARAMETERS_CHANGED,
                                     this,
-                                    new Object[]{
-                                            getSelectedPadIndex(),
-                                            index,
-                                            getSequencer().getStepVelocity(getSelectedPadIndex(), index),
-                                            getSequencer().getStepDecay(getSelectedPadIndex(), index),
-                                            getSequencer().getStepProbability(getSelectedPadIndex(), index),
-                                            value
-                                    }
+                                    new DrumStepParametersEvent(getSequencer(), getSelectedPadIndex(), index)
                             );
                         }
                     });
@@ -208,7 +155,8 @@ public class DrumParamsSequencerPanel extends PolyPanel implements IBusListener 
 
             // Center the dial horizontally
             JPanel dialPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 0, 0));
-            dialPanel.add(dial);
+            if (Objects.nonNull(dial))
+                dialPanel.add(dial);
             column.add(dialPanel);
         }
 
@@ -318,9 +266,51 @@ public class DrumParamsSequencerPanel extends PolyPanel implements IBusListener 
 
     }
 
+    /**
+     * Force refresh of all dial values from the sequencer
+     */
+    public void forceRefreshDials() {
+        if (getSelectedPadIndex() >= 0) {
+            setUpdatingControls(true);
+            try {
+                // Directly set values for each dial type from the sequencer
+                for (int i = 0; i < velocityDials.size(); i++) {
+                    velocityDials.get(i).setValue(getSequencer().getStepVelocity(getSelectedPadIndex(), i));
+                }
+
+                for (int i = 0; i < decayDials.size(); i++) {
+                    decayDials.get(i).setValue(getSequencer().getStepDecay(getSelectedPadIndex(), i));
+                }
+
+                for (int i = 0; i < probabilityDials.size(); i++) {
+                    probabilityDials.get(i).setValue(getSequencer().getStepProbability(getSelectedPadIndex(), i));
+                }
+
+                for (int i = 0; i < nudgeDials.size(); i++) {
+                    nudgeDials.get(i).setValue(getSequencer().getStepNudge(getSelectedPadIndex(), i));
+                }
+
+                repaint();
+            } finally {
+                setUpdatingControls(false);
+            }
+        }
+    }
+
     @Override
     public void onAction(Command action) {
         super.onAction(action);
+
+        // Add specific handling for direct refresh
+        if (action.getCommand() != null &&
+                action.getCommand().equals(Commands.DRUM_GRID_REFRESH_REQUESTED)) {
+
+            if (action.getData() instanceof Integer drumIndex) {
+                if (drumIndex == getSelectedPadIndex()) {
+                    SwingUtilities.invokeLater(this::forceRefreshDials);
+                }
+            }
+        }
     }
 
     @Override
