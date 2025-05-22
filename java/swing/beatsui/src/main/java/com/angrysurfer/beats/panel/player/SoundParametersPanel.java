@@ -259,12 +259,6 @@ public class SoundParametersPanel extends LivePanel {
         playNoteButton.setMaximumSize(new Dimension(UIHelper.SMALL_CONTROL_WIDTH, UIHelper.CONTROL_HEIGHT));
         playNoteButton.addActionListener(e -> {
             getPlayer().noteOn(60, 100);
-            // getTargetPlayer().noteOn(60,100);
-
-//            CommandBus.getInstance().publish(
-//                    Commands.DRUM_PRESET_SELECTION_REQUEST,
-//                    this,
-//                    getTargetPlayer().getOwner());
         });
 
 
@@ -273,20 +267,9 @@ public class SoundParametersPanel extends LivePanel {
         presetPanel.add(editButton);
         presetPanel.add(drumPresetsButton);
 
-
-        // 3. Create edit button panel
-        // JPanel editButtonPanel = new JPanel(new BorderLayout(5, 0));
-        // UIHelper.setWidgetPanelBorder(editButtonPanel, "Action");
-
-
-        InstrumentComboPanel instrumentComboPanel = new InstrumentComboPanel();
+        horizontalPanel.add(new InstrumentComboPanel());
         horizontalPanel.add(channelComboPanel);
-        instrumentComboPanel.setMaximumSize(new Dimension(instrumentComboPanel.getPreferredSize().width, instrumentComboPanel.getPreferredSize().height));
-
-        horizontalPanel.add(instrumentComboPanel);
-
         horizontalPanel.add(presetPanel);
-
         horizontalPanel.add(soundbankPanel);
 
         horizontalPanel.add(bankPanel);

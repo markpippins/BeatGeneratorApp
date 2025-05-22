@@ -26,6 +26,7 @@ public class InstrumentComboPanel extends LivePanel {
         UIHelper.setWidgetPanelBorder(this, "Instrument");
 
         initializeComponents();
+        setMaximumSize(new Dimension(getPreferredSize().width, getPreferredSize().height));
     }
 
     @Override
