@@ -78,7 +78,8 @@ public class Ratchet extends Strike {
     public void onTick(TimingUpdate timingUpdate) {
 
         if (isProbable()) {
-            drumNoteOn((getRootNote() + (Objects.nonNull(getSession()) ? getSession().getNoteOffset() : 0)));
+            noteOn((getRootNote() + (Objects.nonNull(getSession()) ? getSession().getNoteOffset() : 0)),
+                    getLevel());
         }
 
         if (timingUpdate.tickCount() > targetTick + 1) {

@@ -61,21 +61,13 @@ public class Strike extends Player {
 
     @Override
     public void onTick(TimingUpdate timingUpdate) {
-        // Get additional timing values from the session
-//        Session session = getSession();
-//        if (session == null) {
-//            System.err.println("Strike.onTick: No session available");
-//            return;
-//        }
 
         // Check if we should play based on the current timing
-        boolean shouldPlayResult = shouldPlay(timingUpdate);
-
-        if (shouldPlayResult) {
+        if (shouldPlay(timingUpdate)) {
             try {
                 int noteToPlay = getRootNote();
                 // System.out.println("Strike.onTick playing note: " + noteToPlay);
-                drumNoteOn(noteToPlay);
+                noteOn(noteToPlay, getLevel());
             } catch (Exception e) {
                 System.err.println("Error in Strike.onTick: " + e.getMessage());
                 e.printStackTrace();
