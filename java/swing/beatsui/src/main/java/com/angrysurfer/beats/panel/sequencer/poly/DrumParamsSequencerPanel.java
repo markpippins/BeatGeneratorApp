@@ -14,6 +14,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.function.Consumer;
 import java.util.logging.Logger;
 
@@ -55,8 +56,8 @@ public class DrumParamsSequencerPanel extends PolyPanel implements IBusListener 
         JPanel accentPanel = createAccentPanel(index);
         column.add(accentPanel);
 
-        for (int i = 0; i < 4; i++) {
-            JLabel label = new JLabel(getKnobLabel(i));
+        for (int rowIndex = 0; rowIndex < 4; rowIndex++) {
+            JLabel label = new JLabel(getKnobLabel(rowIndex));
             label.setBorder(BorderFactory.createEmptyBorder(2, 2, 2, 2));
             label.setAlignmentX(Component.CENTER_ALIGNMENT);
 
@@ -65,87 +66,19 @@ public class DrumParamsSequencerPanel extends PolyPanel implements IBusListener 
             column.add(labelPanel);
 
             // Create dial with appropriate settings based on type
-            Dial dial = null;
+            Dial dial = switch (rowIndex) {
+                case 0 -> createVelocityDial(index);
+                case 1 -> createDecayDial(index);
+                case 2 -> createProbabilityDial(index);
+                case 3 -> createNudgeDial(index);
+                default -> createDial(rowIndex, 0, 127, 100);
+            };
 
-            // Configure dial based on its type
-            switch (i) {
-                case 0: // Velocity
-                    dial = createDial("velocity", index, 0, 127, 100);
-                    velocityDials.add(dial);
-                    dial.addChangeListener(e -> {
-                        if (!isUpdatingControls() && getSelectedPadIndex() >= 0) {
-                            int value = ((Dial) e.getSource()).getValue();
-                            getSequencer().setStepVelocity(getSelectedPadIndex(), index, value);
-
-                            // Publish event using sequencer-based constructor
-                            CommandBus.getInstance().publish(
-                                    Commands.DRUM_STEP_PARAMETERS_CHANGED,
-                                    this,
-                                    new DrumStepParametersEvent(getSequencer(), getSelectedPadIndex(), index)
-                            );
-                        }
-                    });
-                    break;
-
-                case 1: // Decay
-                    dial = createDial("decay", index, 0, 1000, 250);
-                    decayDials.add(dial);
-                    dial.addChangeListener(e -> {
-                        if (!isUpdatingControls() && getSelectedPadIndex() >= 0) {
-                            int value = ((Dial) e.getSource()).getValue();
-                            getSequencer().setStepDecay(getSelectedPadIndex(), index, value);
-
-                            // Publish event using sequencer-based constructor
-                            CommandBus.getInstance().publish(
-                                    Commands.DRUM_STEP_PARAMETERS_CHANGED,
-                                    this,
-                                    new DrumStepParametersEvent(getSequencer(), getSelectedPadIndex(), index)
-                            );
-                        }
-                    });
-                    break;
-
-
-                case 2: // Probability
-                    dial = createDial("probability", index, 0, 100, 100);
-                    probabilityDials.add(dial);
-                    dial.addChangeListener(e -> {
-                        if (!isUpdatingControls() && getSelectedPadIndex() >= 0) {
-                            int value = ((Dial) e.getSource()).getValue();
-                            getSequencer().setStepProbability(getSelectedPadIndex(), index, value);
-
-                            // Publish event using sequencer-based constructor
-                            CommandBus.getInstance().publish(
-                                    Commands.DRUM_STEP_PARAMETERS_CHANGED,
-                                    this,
-                                    new DrumStepParametersEvent(getSequencer(), getSelectedPadIndex(), index)
-                            );
-                        }
-                    });
-                    break;
-
-                case 3: // Nudge
-                    dial = createDial("nudge", index, -50, 50, 0);
-                    nudgeDials.add(dial);
-                    dial.addChangeListener(e -> {
-                        if (!isUpdatingControls() && getSelectedPadIndex() >= 0) {
-                            int value = ((Dial) e.getSource()).getValue();
-                            getSequencer().setStepNudge(getSelectedPadIndex(), index, value);
-
-                            // Publish event using sequencer-based constructor
-                            CommandBus.getInstance().publish(
-                                    Commands.DRUM_STEP_PARAMETERS_CHANGED,
-                                    this,
-                                    new DrumStepParametersEvent(getSequencer(), getSelectedPadIndex(), index)
-                            );
-                        }
-                    });
-                    break;
-            }
 
             // Center the dial horizontally
             JPanel dialPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 0, 0));
-            dialPanel.add(dial);
+            if (Objects.nonNull(dial))
+                dialPanel.add(dial);
             column.add(dialPanel);
         }
 
@@ -157,6 +90,86 @@ public class DrumParamsSequencerPanel extends PolyPanel implements IBusListener 
         column.add(buttonPanel);
 
         return column;
+    }
+
+    private Dial createVelocityDial(int index) {
+        Dial dial = createDial(index, 0, 127, 100);
+        velocityDials.add(dial);
+        dial.addChangeListener(e -> {
+            if (!isUpdatingControls() && getSelectedPadIndex() >= 0) {
+                int value = ((Dial) e.getSource()).getValue();
+                getSequencer().setStepVelocity(getSelectedPadIndex(), index, value);
+
+                // Publish event using sequencer-based constructor
+                CommandBus.getInstance().publish(
+                        Commands.DRUM_STEP_PARAMETERS_CHANGED,
+                        this,
+                        new DrumStepParametersEvent(getSequencer(), getSelectedPadIndex(), index)
+                );
+            }
+        });
+
+        return dial;
+    }
+
+    private Dial createNudgeDial(int index) {
+        Dial dial = createDial(index, -50, 50, 0);
+        nudgeDials.add(dial);
+        dial.addChangeListener(e -> {
+            if (!isUpdatingControls() && getSelectedPadIndex() >= 0) {
+                int value = ((Dial) e.getSource()).getValue();
+                getSequencer().setStepNudge(getSelectedPadIndex(), index, value);
+
+                // Publish event using sequencer-based constructor
+                CommandBus.getInstance().publish(
+                        Commands.DRUM_STEP_PARAMETERS_CHANGED,
+                        this,
+                        new DrumStepParametersEvent(getSequencer(), getSelectedPadIndex(), index)
+                );
+            }
+        });
+
+        return dial;
+    }
+
+    private Dial createDecayDial(int index) {
+        Dial dial = createDial(index, 0, 1000, 250);
+        decayDials.add(dial);
+        dial.addChangeListener(e -> {
+            if (!isUpdatingControls() && getSelectedPadIndex() >= 0) {
+                int value = ((Dial) e.getSource()).getValue();
+                getSequencer().setStepDecay(getSelectedPadIndex(), index, value);
+
+                // Publish event using sequencer-based constructor
+                CommandBus.getInstance().publish(
+                        Commands.DRUM_STEP_PARAMETERS_CHANGED,
+                        this,
+                        new DrumStepParametersEvent(getSequencer(), getSelectedPadIndex(), index)
+                );
+            }
+        });
+
+        return dial;
+    }
+
+    private Dial createProbabilityDial(int index) {
+        Dial dial = createDial(index, 0, 100, 100);
+        probabilityDials.add(dial);
+        dial.addChangeListener(e -> {
+            if (!isUpdatingControls() && getSelectedPadIndex() >= 0) {
+                int value = ((Dial) e.getSource()).getValue();
+                getSequencer().setStepProbability(getSelectedPadIndex(), index, value);
+
+                // Publish event using sequencer-based constructor
+                CommandBus.getInstance().publish(
+                        Commands.DRUM_STEP_PARAMETERS_CHANGED,
+                        this,
+                        new DrumStepParametersEvent(getSequencer(), getSelectedPadIndex(), index)
+                );
+            }
+        });
+
+        return dial;
     }
 
     void updateControlsFromSequencer() {
@@ -201,17 +214,22 @@ public class DrumParamsSequencerPanel extends PolyPanel implements IBusListener 
     @Override
     public void onAction(Command action) {
         super.onAction(action);
-
-        // Add specific handling for direct refresh
-        if (action.getCommand() != null &&
-                action.getCommand().equals(Commands.DRUM_GRID_REFRESH_REQUESTED)) {
-
-            if (action.getData() instanceof Integer drumIndex) {
-                if (drumIndex == getSelectedPadIndex()) {
-                    SwingUtilities.invokeLater(this::updateControlsFromSequencer);
-                }
-            }
-        }
     }
 
+    /**
+     * Get the knob label for a specific index
+     */
+    @Override
+    public String getKnobLabel(int i) {
+        return switch (i) {
+            case 0 -> "Velocity";
+            case 1 -> "Decay";
+            case 2 -> "Probability";
+            case 3 -> "Nudge";
+            case 4 -> "Drive";
+            case 5 -> "Tone";
+            default -> "";
+        };
+
+    }
 }

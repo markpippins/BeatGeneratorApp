@@ -118,6 +118,7 @@ public class DrumSequencerGridPanelContextHandler implements IBusListener {
         // ----- Direction Submenu -----
         JMenu directionMenu = new JMenu("Direction");
 
+
         JMenuItem forwardItem = new JMenuItem("Forward");
         forwardItem.addActionListener(e -> {
             boolean success = DrumSequenceModifier.pushPatternForward(sequencer, drumIndex);

@@ -65,6 +65,8 @@ public abstract class PolyPanel extends JPanel implements IBusListener {
         setup();
     }
 
+    abstract String getKnobLabel(int index);
+
     private void setup() {
         // Get the shared sequencer instance from DrumSequencerManager
         sequencer = DrumSequencerManager.getInstance().getSequencer(0);
@@ -381,9 +383,11 @@ public abstract class PolyPanel extends JPanel implements IBusListener {
         JPanel bottomPanel = new JPanel(new BorderLayout(2, 2));
         sequenceParamsPanel = new DrumSequencerParametersPanel(sequencer);
         bottomPanel.add(sequenceParamsPanel, BorderLayout.WEST);
+        bottomPanel.add(sequenceParamsPanel, BorderLayout.WEST);
 
         maxLengthPanel = new DrumSequencerMaxLengthPanel(sequencer);
         JPanel rightPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 2, 0));
+        rightPanel.add(maxLengthPanel);
         rightPanel.add(maxLengthPanel);
 
         generatorPanel = new DrumSequenceGeneratorPanel(sequencer);
@@ -640,21 +644,6 @@ public abstract class PolyPanel extends JPanel implements IBusListener {
         return sequencer.getPatternLength(selectedPadIndex);
     }
 
-    /**
-     * Get the knob label for a specific index
-     */
-    String getKnobLabel(int i) {
-        return switch (i) {
-            case 0 -> "Velocity";
-            case 1 -> "Decay";
-            case 2 -> "Probability";
-            case 3 -> "Nudge";
-            case 4 -> "Drive";
-            case 5 -> "Tone";
-            default -> "";
-        };
-    }
-
     // Helper method to find the MainPanel ancestor
     MainPanel findMainPanel() {
         Container parent = getParent();
@@ -667,16 +656,15 @@ public abstract class PolyPanel extends JPanel implements IBusListener {
         return null;
     }
 
-    Dial createDial(String name, int index, int minimum, int maximum, int defaultValue) {
+    Dial createDial(int index, int minimum, int maximum, int defaultValue) {
         Dial dial = new Dial();
-
         dial.setMinimum(minimum);
         dial.setMaximum(maximum);
         dial.setValue(defaultValue);
-        dial.setKnobColor(UIHelper.getDialColor(name)); // Set knob color
+        dial.setKnobColor(UIHelper.getDialColor(getKnobLabel(index).toLowerCase())); // Set knob color
         dial.setName(getKnobLabel(index) + "-" + index);
-
         return dial;
     }
+
 
 }
