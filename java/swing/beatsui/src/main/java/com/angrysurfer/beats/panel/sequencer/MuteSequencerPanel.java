@@ -293,7 +293,7 @@ public class MuteSequencerPanel extends JPanel implements IBusListener {
                 }
 
                 // Update the sequencer
-                drumSequencer.getSequenceData().setMuteValues(padIndex, muteValues);
+                //drumSequencer.getSequenceData().setMuteValues(padIndex, muteValues);
             }
         } else {
             // For other sequencers, use existing map approach
@@ -332,16 +332,16 @@ public class MuteSequencerPanel extends JPanel implements IBusListener {
 
             if (padIndex >= 0) {
                 // Get mute values for the selected drum
-                List<Integer> muteValues = drumSequencer.getSequenceData().getMuteValues(padIndex);
-
-                // Update UI to reflect loaded pattern
-                SwingUtilities.invokeLater(() -> {
-                    for (int i = 0; i < muteButtons.size(); i++) {
-                        boolean isMuted = i < muteValues.size() && muteValues.get(i) > 0;
-                        muteButtons.get(i).setSelected(isMuted);
-                        muteButtons.get(i).repaint();
-                    }
-                });
+//                List<Integer> muteValues = drumSequencer.getSequenceData().getMuteValues(padIndex);
+//
+//                // Update UI to reflect loaded pattern
+//                SwingUtilities.invokeLater(() -> {
+//                    for (int i = 0; i < muteButtons.size(); i++) {
+//                        boolean isMuted = i < muteValues.size() && muteValues.get(i) > 0;
+//                        muteButtons.get(i).setSelected(isMuted);
+//                        muteButtons.get(i).repaint();
+//                    }
+//                });
             } else {
                 // No drum selected, clear buttons
                 SwingUtilities.invokeLater(() -> {
@@ -443,18 +443,18 @@ public class MuteSequencerPanel extends JPanel implements IBusListener {
 
             if (padIndex >= 0) {
                 // Get current mute values
-                List<Integer> muteValues = new ArrayList<>(drumSequencer.getSequenceData().getMuteValues(padIndex));
-
-                // Ensure list is large enough
-                while (muteValues.size() <= step) {
-                    muteValues.add(0);
-                }
-
-                // Update the mute value
-                muteValues.set(step, muted ? 1 : 0);
-
-                // Save back to sequencer
-                drumSequencer.getSequenceData().setMuteValues(padIndex, muteValues);
+//                List<Integer> muteValues = new ArrayList<>(drumSequencer.getSequenceData().getMuteValues(padIndex));
+//
+//                // Ensure list is large enough
+//                while (muteValues.size() <= step) {
+//                    muteValues.add(0);
+//                }
+//
+//                // Update the mute value
+//                muteValues.set(step, muted ? 1 : 0);
+//
+//                // Save back to sequencer
+//                drumSequencer.getSequenceData().setMuteValues(padIndex, muteValues);
             }
         } else {
             // For other sequencers, use the existing pattern approach
@@ -486,15 +486,15 @@ public class MuteSequencerPanel extends JPanel implements IBusListener {
             // Handle drum sequencer syncing
             int padIndex = drumSequencer.getSelectedPadIndex();
             if (padIndex >= 0) {
-                List<Integer> muteValues = drumSequencer.getSequenceData().getMuteValues(padIndex);
-
-                SwingUtilities.invokeLater(() -> {
-                    for (int i = 0; i < muteButtons.size(); i++) {
-                        boolean isMuted = muteValues != null && i < muteValues.size() && muteValues.get(i) > 0;
-                        muteButtons.get(i).setSelected(isMuted);
-                        muteButtons.get(i).repaint();
-                    }
-                });
+//                List<Integer> muteValues = drumSequencer.getSequenceData().getMuteValues(padIndex);
+//
+//                SwingUtilities.invokeLater(() -> {
+//                    for (int i = 0; i < muteButtons.size(); i++) {
+//                        boolean isMuted = muteValues != null && i < muteValues.size() && muteValues.get(i) > 0;
+//                        muteButtons.get(i).setSelected(isMuted);
+//                        muteButtons.get(i).repaint();
+//                    }
+//                });
             }
         }
     }

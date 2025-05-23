@@ -2,6 +2,8 @@ package com.angrysurfer.core.sequencer;
 
 import com.angrysurfer.core.api.CommandBus;
 import com.angrysurfer.core.api.Commands;
+import com.angrysurfer.core.event.DrumStepParametersEvent;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -450,6 +452,18 @@ public class DrumSequenceModifier {
                     // Generate random velocity between 50-127 for better musical results
                     int randomVelocity = 50 + random.nextInt(78);
                     sequencer.setStepVelocity(drumIndex, step, randomVelocity);
+                }
+            }
+
+            // Publish parameter-specific event to update dials
+            for (int step = 0; step < patternLength; step++) {
+                if (sequencer.isStepActive(drumIndex, step)) {
+                    // Publish change event for each active step
+                    CommandBus.getInstance().publish(
+                        Commands.DRUM_STEP_PARAMETERS_CHANGED,
+                        DrumSequenceModifier.class,
+                        new DrumStepParametersEvent(sequencer, drumIndex, step)
+                    );
                 }
             }
 

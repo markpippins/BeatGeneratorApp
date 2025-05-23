@@ -1,6 +1,9 @@
 package com.angrysurfer.core.api;
 
+import com.angrysurfer.core.model.Player;
 import com.angrysurfer.core.service.LogManager;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.*;
 import java.util.concurrent.*;
@@ -9,7 +12,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 public abstract class AbstractBus {
 
     public static String WILDCARD = "*";
-
+    static Logger logger = LoggerFactory.getLogger(Player.class.getCanonicalName());
     private final Map<String, List<IBusListener>> listenerMap = new ConcurrentHashMap<>();
 
     private final List<IBusListener> listeners = new CopyOnWriteArrayList<>();
@@ -90,6 +93,7 @@ public abstract class AbstractBus {
         List<IBusListener> listeners = listenerMap.get(command);
         if (listeners != null) {
             for (IBusListener listener : listeners) {
+                logger.info("Notifying: " + listener.getClass().getSimpleName());
                 listener.onAction(cmd);
             }
         }
@@ -97,6 +101,7 @@ public abstract class AbstractBus {
         listeners = listenerMap.get("*");
         if (listeners != null) {
             for (IBusListener listener : listeners) {
+                logger.info("Notifying: " + listener.getClass().getSimpleName());
                 listener.onAction(cmd);
             }
         }

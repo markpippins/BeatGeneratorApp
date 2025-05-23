@@ -204,9 +204,9 @@ class DrumSequenceDataHelper {
             // Apply mute values if available
             for (int i = 0; i < SequencerConstants.DRUM_PAD_COUNT; i++) {
                 int drumIndex = i;
-                List<Integer> muteValues = data.getMuteValues(drumIndex);
+                List<Boolean> muteValues = data.getStepMuteValues(drumIndex);
                 if (muteValues != null && !muteValues.isEmpty()) {
-                    sequencer.getSequenceData().setMuteValues(drumIndex, muteValues);
+                    sequencer.getSequenceData().setStepMuteValues(drumIndex, muteValues);
                     logger.debug("Applied {} mute values to drum {}", muteValues.size(), drumIndex);
                 }
             }
@@ -267,8 +267,8 @@ class DrumSequenceDataHelper {
 
             // Save mute values for each drum
             for (int i = 0; i < SequencerConstants.DRUM_PAD_COUNT; i++) {
-                List<Integer> muteValues = sequencer.getSequenceData().getMuteValues(i);
-                data.setMuteValues(i, muteValues);
+                List<Boolean> muteValues = sequencer.getSequenceData().getStepMuteValues(i);
+                data.setStepMuteValues(i, muteValues);
             }
 
             // Save to Redis

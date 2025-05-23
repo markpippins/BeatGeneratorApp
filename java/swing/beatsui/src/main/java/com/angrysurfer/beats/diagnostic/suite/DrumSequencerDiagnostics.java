@@ -115,32 +115,6 @@ public class DrumSequencerDiagnostics {
                 log.addError("No open MIDI devices found");
             }
 
-            // 4. Attempt to trigger a test note
-            log.addSection("4. Test Note Trigger");
-            try {
-                // Find first valid drum
-                boolean noteTriggered = false;
-                for (int i = 0; i < SequencerConstants.DRUM_PAD_COUNT; i++) {
-                    Player player = sequencer.getPlayer(i);
-                    if (player != null && player.getInstrument() != null &&
-                            player.getDevice() != null &&
-                            player.getDevice().isOpen()) {
-
-                        log.addIndentedLine("Triggering test note on drum " + i, 1);
-                        sequencer.playDrumNote(i, 100);
-                        noteTriggered = true;
-                        Thread.sleep(200);
-                        break;
-                    }
-                }
-
-                if (!noteTriggered) {
-                    log.addWarning("Could not find a valid drum to trigger");
-                }
-            } catch (Exception e) {
-                log.addError("Error triggering test note: " + e.getMessage());
-            }
-
             log.addLine("\nDrumSequencer diagnostics completed.");
 
         } catch (Exception e) {

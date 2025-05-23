@@ -319,7 +319,7 @@ public class MelodicSequencer implements IBusListener {
             noteValue = quantizeNote(noteValue);
         }
 
-        noteValue = noteValue + currentTilt;
+        noteValue = noteValue + currentTilt + (player.getFollowSessionOffset() ? SessionManager.getInstance().getActiveSession().getNoteOffset() : 0);
 
         try {
             long currentTime = System.currentTimeMillis();
@@ -509,31 +509,10 @@ public class MelodicSequencer implements IBusListener {
                 }
             }
 
-            case Commands.SCALE_SELECTED -> {
-                // Handle sequencer-specific scale changes
-                if (action.getData() instanceof MelodicScaleSelectionEvent event) {
-                    // Only apply if it's meant for this sequencer
-                    if (event.getSequencerId() != null && event.getSequencerId().equals(id)) {
-                        sequenceData.setScale(event.getScale());
-                        updateQuantizer();
-                        logger.info("Applied sequencer-specific scale change: {}", event.getScale());
-                    }
-                } else if (action.getData() instanceof String scale) {
-                    // Legacy support for string-only data
-                    sequenceData.setScale(scale);
-                    updateQuantizer();
-                    logger.info("Applied scale change to sequencer {}: {}", id, scale);
-                }
-            }
+            case Commands.SCALE_SELECTED -> handleScaleSelected(action);
 
-            case Commands.ROOT_NOTE_SELECTED -> {
-                // Apply root note changes
-                if (action.getData() instanceof String rootNote) {
-                    sequenceData.setRootNoteFromString(rootNote);
-                    updateQuantizer();
-                    logger.info("Applied root note change to sequencer {}: {}", id, rootNote);
-                }
-            }
+
+            case Commands.ROOT_NOTE_SELECTED -> handleRootNoteSelected(action);
 
             case Commands.REPAIR_MIDI_CONNECTIONS -> {
                 MelodicSequencerManager.getInstance().repairMidiConnections(this);
@@ -542,13 +521,9 @@ public class MelodicSequencer implements IBusListener {
             case Commands.SYSTEM_READY -> {
 
                 // initializePlayer(player);
-                player.noteOn(player.getRootNote(), 100);
+                //player.noteOn(player.getRootNote(), 100);
             }
-            case Commands.TIMING_UPDATE -> {
-                if (action.getData() instanceof TimingUpdate update) {
-                    handleTimingUpdate(update);
-                }
-            }
+            case Commands.TIMING_UPDATE -> handleTimingUpdate(action);
 
             case Commands.TRANSPORT_START -> {
                 logger.info("Received TRANSPORT_START command");
@@ -572,59 +547,88 @@ public class MelodicSequencer implements IBusListener {
         }
     }
 
+    private void handleRootNoteSelected(Command action) {
+        // Apply root note changes
+        if (action.getData() instanceof String rootNote) {
+            sequenceData.setRootNoteFromString(rootNote);
+            updateQuantizer();
+            logger.info("Applied root note change to sequencer {}: {}", id, rootNote);
+        }
+    }
+
+    private void handleScaleSelected(Command action) {
+        // Handle sequencer-specific scale changes
+        if (action.getData() instanceof MelodicScaleSelectionEvent event) {
+            // Only apply if it's meant for this sequencer
+            if (event.getSequencerId() != null && event.getSequencerId().equals(id)) {
+                sequenceData.setScale(event.getScale());
+                updateQuantizer();
+                logger.info("Applied sequencer-specific scale change: {}", event.getScale());
+            }
+        } else if (action.getData() instanceof String scale) {
+            // Legacy support for string-only data
+            sequenceData.setScale(scale);
+            updateQuantizer();
+            logger.info("Applied scale change to sequencer {}: {}", id, scale);
+        }
+    }
+
     /**
      * Handle a timing update from the transport
      *
-     * @param update The timing update containing tick and bar info
+     * @param action the Command containing the timing update with tick and bar info
      */
-    private void handleTimingUpdate(TimingUpdate update) {
-        // Process tick for note sequencing
-        if (update.tick() != null && isPlaying) {
-            processTick(update.tick());
-        }
+    private void handleTimingUpdate(Command action) {
 
-        // Process bar for tilt and mute updates
-        if (update.bar() != null) {
-            int newBar = update.bar() - 1; // Adjust for 0-based index
+        if (action.getData() instanceof TimingUpdate update) {
+            // Process tick for note sequencing
+            if (update.tick() != null && isPlaying) {
+                processTick(update.tick());
+            }
 
-            // Only process if bar actually changed
-            if (currentBar == null || newBar != currentBar) {
-                currentBar = newBar;
-                logger.debug("Current bar updated to {}", currentBar);
+            // Process bar for tilt and mute updates
+            if (update.bar() != null) {
+                int newBar = update.bar() - 1; // Adjust for 0-based index
 
-                // Process tilt values
-                if (getHarmonicTiltValues() != null && getHarmonicTiltValues().size() > currentBar) {
-                    currentTilt = getHarmonicTiltValues().get(currentBar);
-                    logger.debug("Current tilt value for bar {}: {}", currentBar, currentTilt);
-                }
+                // Only process if bar actually changed
+                if (currentBar == null || newBar != currentBar) {
+                    currentBar = newBar;
+                    logger.debug("Current bar updated to {}", currentBar);
 
-                // Process mute values - only need to do this once per bar
-                if (sequenceData.getMuteValues() != null && sequenceData.getMuteValues().size() > currentBar) {
-                    int muteValue = sequenceData.getMuteValue(currentBar);
-                    boolean shouldMute = muteValue > 0;
+                    // Process tilt values
+                    if (getHarmonicTiltValues() != null && getHarmonicTiltValues().size() > currentBar) {
+                        currentTilt = getHarmonicTiltValues().get(currentBar);
+                        logger.debug("Current tilt value for bar {}: {}", currentBar, currentTilt);
+                    }
 
-                    // Only update if mute state changes
-                    if (shouldMute != muted) {
-                        muted = shouldMute;
-//
-//                        // Apply mute state if player exists (for UI updates)
-//                        if (player != null) {
-//                            int originalLevel = player.getOriginalLevel() > 0 ?
-//                                    player.getOriginalLevel() : 100;
-//
-//                            player.setLevel(shouldMute ? 0 : originalLevel);
-//
-                        player.setEnabled(!shouldMute);
-                        logger.debug("Bar {}: Player {} {}",
-                                currentBar, player.getName(),
-                                shouldMute ? "muted" : "unmuted");
-//
-//                            // Notify system of level change
-//                            CommandBus.getInstance().publish(
-//                                    Commands.PLAYER_UPDATED,
-//                                    this,
-//                                    player);
-//                        }
+                    // Process mute values - only need to do this once per bar
+                    if (sequenceData.getMuteValues() != null && sequenceData.getMuteValues().size() > currentBar) {
+                        int muteValue = sequenceData.getMuteValue(currentBar);
+                        boolean shouldMute = muteValue > 0;
+
+                        // Only update if mute state changes
+                        if (shouldMute != muted) {
+                            muted = shouldMute;
+                            //
+                            //                        // Apply mute state if player exists (for UI updates)
+                            //                        if (player != null) {
+                            //                            int originalLevel = player.getOriginalLevel() > 0 ?
+                            //                                    player.getOriginalLevel() : 100;
+                            //
+                            //                            player.setLevel(shouldMute ? 0 : originalLevel);
+                            //
+                            player.setEnabled(!shouldMute);
+                            logger.debug("Bar {}: Player {} {}",
+                                    currentBar, player.getName(),
+                                    shouldMute ? "muted" : "unmuted");
+                            //
+                            //                            // Notify system of level change
+                            //                            CommandBus.getInstance().publish(
+                            //                                    Commands.PLAYER_UPDATED,
+                            //                                    this,
+                            //                                    player);
+                            //                        }
+                        }
                     }
                 }
             }

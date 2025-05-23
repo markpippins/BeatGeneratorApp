@@ -612,10 +612,6 @@ public class MelodicSequencerManager extends DefaultBusListener {
                 player.getInstrument().controlChange(32, bankIndex & MidiControlMessageEnum.POLY_MODE_ON);
                 player.getInstrument().programChange(preset, 0);
 
-                // Send explicit bank select and program change
-                // instrument.controlChange(0, (bankIndex >> 7) & MidiControlMessageEnum.POLY_MODE_ON);  // Bank MSB
-                // instrument.controlChange(32, bankIndex & MidiControlMessageEnum.POLY_MODE_ON);        // Bank LSB
-                // instrument.programChange(preset, 0);
 
                 logger.info("Explicitly set instrument {} to bank {} program {} on channel {}",
                         instrument.getName(), bankIndex, preset, channel);

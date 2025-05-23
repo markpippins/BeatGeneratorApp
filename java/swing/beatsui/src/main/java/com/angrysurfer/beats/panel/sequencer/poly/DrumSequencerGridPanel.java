@@ -4,6 +4,7 @@ import com.angrysurfer.beats.util.UIHelper;
 import com.angrysurfer.beats.widget.DrumGridButton;
 import com.angrysurfer.beats.widget.DrumSequencerGridPanelContextHandler;
 import com.angrysurfer.core.api.*;
+import com.angrysurfer.core.event.DrumStepParametersEvent;
 import com.angrysurfer.core.event.DrumStepUpdateEvent;
 import com.angrysurfer.core.sequencer.Direction;
 import com.angrysurfer.core.sequencer.DrumSequencer;
@@ -609,6 +610,9 @@ public class DrumSequencerGridPanel extends JPanel implements IBusListener {
 
             // Existing cases for parameters and effects
             case Commands.DRUM_STEP_PARAMETERS_CHANGED:
+                if (action.getData() instanceof DrumStepParametersEvent event) {
+                    updateStepButtonParameters(event.getDrumIndex(), event.getStepIndex(), event.getVelocity(), event.getDecay(), event.getProbability(), event.getNudge());
+                }
                 if (action.getData() instanceof Object[] data && data.length >= 5) {
                     int drumIndex = (Integer) data[0];
                     int stepIndex = (Integer) data[1];

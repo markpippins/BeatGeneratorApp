@@ -5,7 +5,6 @@ import com.angrysurfer.core.model.feature.Pad;
 import com.angrysurfer.core.sequencer.Scale;
 import com.angrysurfer.core.sequencer.SequencerConstants;
 import com.angrysurfer.core.sequencer.TimingUpdate;
-import com.angrysurfer.core.service.InternalSynthManager;
 import com.angrysurfer.core.util.Cycler;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.Transient;
@@ -122,23 +121,23 @@ public abstract class Player implements Serializable, IBusListener {
     private Boolean armForNextTick = false;
     private Set<Rule> rules = new HashSet<>();
     private List<Integer> allowedControlMessages = new ArrayList<>();
+
     @JsonIgnore
     private InstrumentWrapper instrument;
+
     @JsonIgnore
     private Session session;
+
     @JsonIgnore
     private transient Object owner;
-    // Add UI update throttling
+
     @JsonIgnore
     private long lastUiUpdateTime = 0;
-    // Add a new optimized method
+
     private boolean usingInternalSynth = true;
-    private InternalSynthManager internalSynthManager = null;
+
     private long lastNoteTime = 0;
-    // public Long getSubPosition() {
-    // return getSub();
-    // }
-    // Add this property to the Player class
+
     @JsonIgnore
     private boolean isPlaying = false;
     @JsonIgnore
@@ -146,6 +145,9 @@ public abstract class Player implements Serializable, IBusListener {
     // Add this property to the Player class
     @JsonIgnore
     private long lastTriggeredTick = -1;
+
+    private Boolean followRules = false;
+    private Boolean followSessionOffset = false;
 
     // Add cleanup method to shutdown pools on application exit
     public static void shutdownExecutors() {
@@ -450,13 +452,10 @@ public abstract class Player implements Serializable, IBusListener {
             return false;
         }
 
-        // CRITICAL CHANGE: Let sequencers play without rule checks
-        if (isMelodicPlayer() || isDrumPlayer()) {
+        // Let sequencers play without unnecessary rule checks
+        if ((isMelodicPlayer() || isDrumPlayer()) && !followRules) {
             return true;
         }
-
-        // Rest of the method remains the same for players with rules
-        // ...
 
         boolean debug = false; // Set to true for verbose logging
         if (debug) {

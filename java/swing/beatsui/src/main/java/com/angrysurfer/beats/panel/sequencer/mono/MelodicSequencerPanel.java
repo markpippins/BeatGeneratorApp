@@ -421,57 +421,37 @@ public class MelodicSequencerPanel extends JPanel implements IBusListener {
         updatingUI = true;
         try {
             // Update sequence parameters panel
-            if (sequenceParamsPanel != null) {
+            if (sequenceParamsPanel != null) 
                 sequenceParamsPanel.updateUI(sequencer);
-            }
 
-            // Update scale panel
-            if (scalePanel != null) {
+            if (scalePanel != null)
                 scalePanel.updateUI(sequencer);
-            }
 
-            // Update grid panel
-            if (gridPanel != null) {
+            if (gridPanel != null) 
                 gridPanel.syncWithSequencer();
-            }
 
-            // Update tilt sequencer panel
-            if (tiltSequencerPanel != null) {
-                logger.debug("Syncing tilt panel with sequencer values: {}",
-                        sequencer.getHarmonicTiltValues().size());
+            if (tiltSequencerPanel != null) 
                 tiltSequencerPanel.syncWithSequencer();
-            }
 
-            if (muteSequencerPanel != null) {
-                logger.debug("Syncing mute panel with sequencer values: {}",
-                        sequencer.getHarmonicTiltValues().size());
+            if (muteSequencerPanel != null) 
                 muteSequencerPanel.syncWithSequencer();
-            }
 
-            // Update swing panel
-            if (swingPanel != null) {
+            if (swingPanel != null) 
                 swingPanel.updateControls();
-            }
 
-            // Update navigation panel
-            if (navigationPanel != null) {
+            if (navigationPanel != null)
                 navigationPanel.updateSequenceIdDisplay();
-            }
-
-            // Check and update latch toggle button if needed
+ 
             if (latchToggleButton != null)
                 latchToggleButton.setSelected(sequencer.isLatchEnabled());
 
-            // Update generator panel
-            if (generatorPanel != null) {
+            if (generatorPanel != null) 
                 generatorPanel.syncWithSequencer();
-            }
 
         } finally {
             updatingUI = false;
         }
 
-        // Force revalidate and repaint
         revalidate();
         repaint();
     }

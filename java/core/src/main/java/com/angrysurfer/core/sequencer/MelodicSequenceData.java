@@ -59,6 +59,9 @@ public class MelodicSequenceData {
     private int[] nudgeValues = new int[MAX_STEPS];
     private int[] tiltValues = new int[MAX_BARS];
     private int[] muteValues = new int[MAX_BARS];
+    private int[] muteBarsValues = new int[MAX_BARS];
+
+    private int[] mutesBarCountValues = new int[MAX_BARS];
 
     /**
      * Default constructor
@@ -80,6 +83,8 @@ public class MelodicSequenceData {
         Arrays.fill(nudgeValues, 0);
         Arrays.fill(tiltValues, 0);
         Arrays.fill(muteValues, 0); // Initialize mute values to 0 (unmuted)
+        Arrays.fill(muteBarsValues, 1); // Initialize mute values to 0 (unmuted)
+        Arrays.fill(mutesBarCountValues, 0); // Initialize mute values to 0 (unmuted)
     }
 
     /**
@@ -634,6 +639,50 @@ public class MelodicSequenceData {
         if (step >= 0 && step < MAX_BARS) {
             // Mute values are typically 0 (unmuted) or 1 (muted)
             muteValues[step] = value;
+        } else {
+            logger.warn("Attempted to set mute value for invalid step: {}", step);
+        }
+    }
+
+    /**
+     * Get mute value for step
+     */
+    public int getMutesBarsValue(int step) {
+        if (step >= 0 && step < MAX_BARS) {
+            return muteBarsValues[step];
+        }
+        return 0;
+    }
+
+    /**
+     * Set mute value for step
+     */
+    public void setMutesBarsValue(int step, int value) {
+        if (step >= 0 && step < MAX_BARS) {
+            // Mute values are typically 0 (unmuted) or 1 (muted)
+            muteBarsValues[step] = value;
+        } else {
+            logger.warn("Attempted to set mute value for invalid step: {}", step);
+        }
+    }
+
+    /**
+     * Get mute value for step
+     */
+    public int getMutesBarsCountValue(int step) {
+        if (step >= 0 && step < MAX_BARS) {
+            return mutesBarCountValues[step];
+        }
+        return 0;
+    }
+
+    /**
+     * Set mute value for step
+     */
+    public void setMutesBarsCountValue(int step, int value) {
+        if (step >= 0 && step < MAX_BARS) {
+            // Mute values are typically 0 (unmuted) or 1 (muted)
+            mutesBarCountValues[step] = value;
         } else {
             logger.warn("Attempted to set mute value for invalid step: {}", step);
         }
