@@ -581,10 +581,6 @@ public class MelodicSequencer implements IBusListener {
     private void handleTimingUpdate(Command action) {
 
         if (action.getData() instanceof TimingUpdate update) {
-            // Process tick for note sequencing
-            if (update.tick() != null && isPlaying) {
-                processTick(update.tick());
-            }
 
             // Process bar for tilt and mute updates
             if (update.bar() != null) {
@@ -601,7 +597,6 @@ public class MelodicSequencer implements IBusListener {
                         logger.debug("Current tilt value for bar {}: {}", currentBar, currentTilt);
                     }
 
-                    // Process mute values - only need to do this once per bar
                     if (sequenceData.getMuteValues() != null && sequenceData.getMuteValues().size() > currentBar) {
                         int muteValue = sequenceData.getMuteValue(currentBar);
                         boolean shouldMute = muteValue > 0;
@@ -609,28 +604,21 @@ public class MelodicSequencer implements IBusListener {
                         // Only update if mute state changes
                         if (shouldMute != muted) {
                             muted = shouldMute;
-                            //
-                            //                        // Apply mute state if player exists (for UI updates)
-                            //                        if (player != null) {
-                            //                            int originalLevel = player.getOriginalLevel() > 0 ?
-                            //                                    player.getOriginalLevel() : 100;
-                            //
-                            //                            player.setLevel(shouldMute ? 0 : originalLevel);
-                            //
+                            // int originalLevel = player.getOriginalLevel() > 0 ?
+                            //player.getOriginalLevel() : 100;
+                            // player.setLevel(shouldMute ? 0 : originalLevel);
                             player.setEnabled(!shouldMute);
                             logger.debug("Bar {}: Player {} {}",
                                     currentBar, player.getName(),
                                     shouldMute ? "muted" : "unmuted");
-                            //
-                            //                            // Notify system of level change
-                            //                            CommandBus.getInstance().publish(
-                            //                                    Commands.PLAYER_UPDATED,
-                            //                                    this,
-                            //                                    player);
-                            //                        }
+                            // CommandBus.getInstance().publish(  Commands.PLAYER_UPDATED, this, player); }
                         }
                     }
                 }
+            }
+            // Process tick for note sequencing
+            if (update.tick() != null && isPlaying) {
+                processTick(update.tick());
             }
         }
     }

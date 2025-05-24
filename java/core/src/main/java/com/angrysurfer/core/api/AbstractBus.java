@@ -93,24 +93,20 @@ public abstract class AbstractBus {
         List<IBusListener> listeners = listenerMap.get(command);
         if (listeners != null) {
             for (IBusListener listener : listeners) {
-                logger.info("Notifying: " + listener.getClass().getSimpleName());
-                listener.onAction(cmd);
+                // logger.info("Notifying: " + listener.getClass().getSimpleName());
+                if (!listener.equals(sender))
+                    listener.onAction(cmd);
             }
         }
 
         listeners = listenerMap.get("*");
         if (listeners != null) {
             for (IBusListener listener : listeners) {
-                logger.info("Notifying: " + listener.getClass().getSimpleName());
-                listener.onAction(cmd);
+                // logger.info("Notifying: " + listener.getClass().getSimpleName());
+                if (!listener.equals(sender))
+                    listener.onAction(cmd);
             }
         }
-
-        // for (IBusListener listener : listeners) {
-        //     // System.out.println("AbstractBus: Sending " + command + " to " +  listener.getClass().getName());
-        //     if (listener != sender)
-        //         listener.onAction(cmd);
-        // }
     }
 
     /**

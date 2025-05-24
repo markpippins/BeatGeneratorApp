@@ -33,26 +33,20 @@ import java.util.logging.Logger;
 public abstract class PolyPanel extends JPanel implements IBusListener {
 
     private static final Logger logger = Logger.getLogger(PolyPanel.class.getName());
-
+    private static DrumStepParametersEvent reusableParamChangeEvent = new DrumStepParametersEvent();
     private final List<TriggerButton> selectorButtons = new ArrayList<>();
     private final List<AccentButton> accentButtons = new ArrayList<>();
-
     private DrumSequenceNavigationPanel navigationPanel;
     private DrumSequencerParametersPanel sequenceParamsPanel; // Changed from DrumParamsSequencerParametersPanel
     private DrumSequencerMaxLengthPanel maxLengthPanel; // New field
     private DrumSequenceGeneratorPanel generatorPanel; // New field
     private DrumSequencerSwingPanel swingPanel;
-
     private DrumButtonsPanel drumPadPanel;
-
     private int selectedPadIndex = -1; // Default to no selection
     private boolean updatingControls = false;
     private boolean isHandlingSelection = false;
-
     private DrumSequencer sequencer;
-
     private Consumer<NoteEvent> noteEventConsumer;
-
     private MuteSequencerPanel muteSequencerPanel; // Add this field to PolyPanel
 
     public PolyPanel() {
@@ -66,6 +60,17 @@ public abstract class PolyPanel extends JPanel implements IBusListener {
     }
 
     abstract String getKnobLabel(int index);
+
+    protected DrumStepParametersEvent createDrumStepParametersEvent(DrumSequencer sequencer, int drumIndex, int stepIndex) {
+        reusableParamChangeEvent.setDrumIndex(drumIndex);
+        reusableParamChangeEvent.setStepIndex(stepIndex);
+        reusableParamChangeEvent.setAccented(sequencer.isStepAccented(drumIndex, stepIndex));
+        reusableParamChangeEvent.setDecay(sequencer.getStepDecay(drumIndex, stepIndex));
+        reusableParamChangeEvent.setNudge(sequencer.getStepNudge(drumIndex, stepIndex));
+        reusableParamChangeEvent.setProbability(sequencer.getStepProbability(drumIndex, stepIndex));
+        reusableParamChangeEvent.setVelocity(sequencer.getStepVelocity(drumIndex, stepIndex));
+        return reusableParamChangeEvent;
+    }
 
     private void setup() {
         // Get the shared sequencer instance from DrumSequencerManager
@@ -123,9 +128,15 @@ public abstract class PolyPanel extends JPanel implements IBusListener {
             refreshAccentButtonsForPad(selectedPadIndex);
             refreshTriggerButtonsForPad(selectedPadIndex);
             updateControlsFromSequencer();
-        }
 
-        updateControlsFromSequencer();
+            if (muteSequencerPanel != null) {
+                muteSequencerPanel.syncWithSequencer();
+            }
+
+            if (sequenceParamsPanel != null) {
+                sequenceParamsPanel.updateControls(selectedPadIndex);
+            }
+        }
     }
 
     @Override
@@ -466,18 +477,7 @@ public abstract class PolyPanel extends JPanel implements IBusListener {
             // Update UI in a specific order
             setAccentButtonsEnabled(true);
             setTriggerButtonsEnabled(true);
-            refreshAccentButtonsForPad(selectedPadIndex);
-            refreshTriggerButtonsForPad(selectedPadIndex);
-
-            // Update mute panel for the newly selected drum pad
-            if (muteSequencerPanel != null) {
-                muteSequencerPanel.syncWithSequencer();
-            }
-
-            // Then do other updates
-            if (sequenceParamsPanel != null) {
-                sequenceParamsPanel.updateControls(padIndex);
-            }
+            refreshControls();
 
             // Publish drum pad event LAST and only if we're handling a direct user
             // selection
@@ -597,6 +597,8 @@ public abstract class PolyPanel extends JPanel implements IBusListener {
             // Verify the toggle took effect
             boolean isNowActive = sequencer.isStepActive(selectedPadIndex, stepIndex);
             boolean hasAccent = sequencer.getSequenceData().isStepAccented(selectedPadIndex, stepIndex);
+            if (hasAccent && wasActive)
+                sequencer.toggleAccent(selectedPadIndex, stepIndex);
 
             if (wasActive == isNowActive) {
                 System.err.println("WARNING: Toggle step failed for pad " + selectedPadIndex + ", step " + stepIndex);
@@ -607,12 +609,8 @@ public abstract class PolyPanel extends JPanel implements IBusListener {
             triggerButton.setSelected(isNowActive);
             triggerButton.repaint();
 
-            // If the step is now active, update the dials to reflect the step parameters
-            if (isNowActive) {
-                toggleStepForActivePad(stepIndex);
-            }
-
-            CommandBus.getInstance().publish(Commands.DRUM_SEQUENCE_UPDATED, null, this);
+            // Notify the system of the sequence update
+            CommandBus.getInstance().publish(Commands.DRUM_SEQUENCE_UPDATED, this, sequencer);
         }
     }
 
@@ -665,6 +663,5 @@ public abstract class PolyPanel extends JPanel implements IBusListener {
         dial.setName(getKnobLabel(index) + "-" + index);
         return dial;
     }
-
 
 }

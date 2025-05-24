@@ -5,7 +5,6 @@ import com.angrysurfer.core.api.Command;
 import com.angrysurfer.core.api.CommandBus;
 import com.angrysurfer.core.api.Commands;
 import com.angrysurfer.core.api.IBusListener;
-import com.angrysurfer.core.event.DrumStepParametersEvent;
 import com.angrysurfer.core.event.NoteEvent;
 import lombok.Getter;
 import lombok.Setter;
@@ -14,7 +13,6 @@ import javax.swing.*;
 import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
 import java.util.function.Consumer;
 import java.util.logging.Logger;
 
@@ -77,8 +75,7 @@ public class DrumParamsSequencerPanel extends PolyPanel implements IBusListener 
 
             // Center the dial horizontally
             JPanel dialPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 0, 0));
-            if (Objects.nonNull(dial))
-                dialPanel.add(dial);
+            dialPanel.add(dial);
             column.add(dialPanel);
         }
 
@@ -99,13 +96,8 @@ public class DrumParamsSequencerPanel extends PolyPanel implements IBusListener 
             if (!isUpdatingControls() && getSelectedPadIndex() >= 0) {
                 int value = ((Dial) e.getSource()).getValue();
                 getSequencer().setStepVelocity(getSelectedPadIndex(), index, value);
-
-                // Publish event using sequencer-based constructor
-                CommandBus.getInstance().publish(
-                        Commands.DRUM_STEP_PARAMETERS_CHANGED,
-                        this,
-                        new DrumStepParametersEvent(getSequencer(), getSelectedPadIndex(), index)
-                );
+                CommandBus.getInstance().publish(Commands.DRUM_STEP_PARAMETERS_CHANGED, this,
+                        createDrumStepParametersEvent(getSequencer(), getSelectedPadIndex(), index));
             }
         });
 
@@ -119,13 +111,8 @@ public class DrumParamsSequencerPanel extends PolyPanel implements IBusListener 
             if (!isUpdatingControls() && getSelectedPadIndex() >= 0) {
                 int value = ((Dial) e.getSource()).getValue();
                 getSequencer().setStepNudge(getSelectedPadIndex(), index, value);
-
-                // Publish event using sequencer-based constructor
-                CommandBus.getInstance().publish(
-                        Commands.DRUM_STEP_PARAMETERS_CHANGED,
-                        this,
-                        new DrumStepParametersEvent(getSequencer(), getSelectedPadIndex(), index)
-                );
+                CommandBus.getInstance().publish(Commands.DRUM_STEP_PARAMETERS_CHANGED, this,
+                        createDrumStepParametersEvent(getSequencer(), getSelectedPadIndex(), index));
             }
         });
 
@@ -139,18 +126,14 @@ public class DrumParamsSequencerPanel extends PolyPanel implements IBusListener 
             if (!isUpdatingControls() && getSelectedPadIndex() >= 0) {
                 int value = ((Dial) e.getSource()).getValue();
                 getSequencer().setStepDecay(getSelectedPadIndex(), index, value);
-
-                // Publish event using sequencer-based constructor
-                CommandBus.getInstance().publish(
-                        Commands.DRUM_STEP_PARAMETERS_CHANGED,
-                        this,
-                        new DrumStepParametersEvent(getSequencer(), getSelectedPadIndex(), index)
-                );
+                CommandBus.getInstance().publish(Commands.DRUM_STEP_PARAMETERS_CHANGED, this,
+                        createDrumStepParametersEvent(getSequencer(), getSelectedPadIndex(), index));
             }
         });
 
         return dial;
     }
+
 
     private Dial createProbabilityDial(int index) {
         Dial dial = createDial(index, 0, 100, 100);
@@ -159,13 +142,8 @@ public class DrumParamsSequencerPanel extends PolyPanel implements IBusListener 
             if (!isUpdatingControls() && getSelectedPadIndex() >= 0) {
                 int value = ((Dial) e.getSource()).getValue();
                 getSequencer().setStepProbability(getSelectedPadIndex(), index, value);
-
-                // Publish event using sequencer-based constructor
-                CommandBus.getInstance().publish(
-                        Commands.DRUM_STEP_PARAMETERS_CHANGED,
-                        this,
-                        new DrumStepParametersEvent(getSequencer(), getSelectedPadIndex(), index)
-                );
+                CommandBus.getInstance().publish(Commands.DRUM_STEP_PARAMETERS_CHANGED, this,
+                        createDrumStepParametersEvent(getSequencer(), getSelectedPadIndex(), index));
             }
         });
 

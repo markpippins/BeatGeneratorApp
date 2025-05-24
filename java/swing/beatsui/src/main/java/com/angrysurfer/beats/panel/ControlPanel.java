@@ -17,7 +17,7 @@ import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import java.awt.*;
 
-public class ControlPanel extends LivePanel {
+public class ControlPanel extends LivePanel implements IBusListener {
     private static final Logger logger = LoggerFactory.getLogger(ControlPanel.class.getName());
     private static final int BUTTON_SIZE = 30;
     private static final int PANEL_HEIGHT = 100; // Increased from 90 to 100px
@@ -379,28 +379,6 @@ public class ControlPanel extends LivePanel {
         prevScaleButton.setEnabled(true);
         nextScaleButton.setEnabled(true);
 
-        // Add command bus listener for scale events
-        CommandBus.getInstance().register(new IBusListener() {
-            @Override
-            public void onAction(Command action) {
-                if (action.getSender() == ControlPanel.this) {
-                    return;
-                }
-                switch (action.getCommand()) {
-                    case Commands.FIRST_SCALE_SELECTED -> prevScaleButton.setEnabled(false);
-                    case Commands.LAST_SCALE_SELECTED -> nextScaleButton.setEnabled(false);
-                    case Commands.SCALE_SELECTED -> {
-                        prevScaleButton.setEnabled(true);
-                        nextScaleButton.setEnabled(true);
-                    }
-                }
-            }
-        }, new String[]{
-                Commands.FIRST_SCALE_SELECTED,
-                Commands.LAST_SCALE_SELECTED,
-                Commands.SCALE_SELECTED
-        });
-
         // Layout buttons vertically
         JPanel buttonPanel = new JPanel(new GridLayout(2, 1, 0, 2));
         buttonPanel.add(prevScaleButton);
@@ -410,6 +388,28 @@ public class ControlPanel extends LivePanel {
         scalePanel.add(buttonPanel, BorderLayout.CENTER);
 
         return scalePanel;
+    }
+
+    @Override
+    public void onAction(Command action) {
+        if (action.getSender() == ControlPanel.this) {
+            return;
+        }
+        if (action.getCommand() == null)
+            return;
+        String cmd = action.getCommand();
+        switch (cmd) {
+            case Commands.FIRST_SCALE_SELECTED -> prevScaleButton.setEnabled(false);
+            case Commands.LAST_SCALE_SELECTED -> nextScaleButton.setEnabled(false);
+            case Commands.SCALE_SELECTED -> {
+                prevScaleButton.setEnabled(true);
+                nextScaleButton.setEnabled(true);
+            }
+            case Commands.PLAYER_ACTIVATED -> {
+                // Enable dials when player is activated
+                enableDials();
+            }
+        }
     }
 
     private Dial createDial(String propertyName, long value, int min, int max, int majorTick) {
@@ -434,18 +434,6 @@ public class ControlPanel extends LivePanel {
                 }
             }
         });
-
-        CommandBus.getInstance().register(new IBusListener() {
-            @Override
-            public void onAction(Command action) {
-                if (action.getCommand() == null)
-                    return;
-
-                switch (action.getCommand()) {
-                    case Commands.PLAYER_ACTIVATED -> dial.setEnabled(true);
-                }
-            }
-        }, new String[]{Commands.PLAYER_ACTIVATED});
         return dial;
     }
 
@@ -498,27 +486,12 @@ public class ControlPanel extends LivePanel {
     }
 
     private void setupCommandBusListener() {
-        CommandBus.getInstance().register(new IBusListener() {
-            @Override
-            public void onAction(Command action) {
-                if (action.getCommand() == null)
-                    return;
-
-                String cmd = action.getCommand();
-
-                try {
-                    if (Commands.PLAYER_ACTIVATED.equals(cmd)) {
-                        // Existing implementation...
-                    }
-                    // Other cases...
-                } catch (Exception e) {
-                    logger.error("Error in command handler: " + e.getMessage());
-                    e.printStackTrace();
-                }
-            }
-        }, new String[]{
-                Commands.PLAYER_ACTIVATED
-                // Add other commands if needed
+        // Register this panel as a listener for all needed commands
+        CommandBus.getInstance().register(this, new String[]{
+                Commands.PLAYER_ACTIVATED,
+                Commands.FIRST_SCALE_SELECTED,
+                Commands.LAST_SCALE_SELECTED,
+                Commands.SCALE_SELECTED
         });
     }
 

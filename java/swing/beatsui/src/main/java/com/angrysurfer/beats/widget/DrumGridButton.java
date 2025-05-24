@@ -34,6 +34,9 @@ public class DrumGridButton extends JButton {
     // Step index within pattern (for debugging)
     private int stepIndex = -1;
 
+    // Accent property
+    private boolean accented = false;
+
     /**
      * Create a new trigger button with label
      *
@@ -53,6 +56,25 @@ public class DrumGridButton extends JButton {
     }
 
     /**
+     * Check if this step is accented
+     *
+     * @return true if accented
+     */
+    public boolean isAccented() {
+        return accented;
+    }
+
+    /**
+     * Set whether this step is accented
+     *
+     * @param accented true if accented, false otherwise
+     */
+    public void setAccented(boolean accented) {
+        this.accented = accented;
+        repaint();
+    }
+
+    /**
      * Initialize common properties
      */
     private void initialize() {
@@ -65,18 +87,20 @@ public class DrumGridButton extends JButton {
         setBorder(BorderFactory.createEmptyBorder(2, 2, 2, 2));
     }
 
-    // Add step index setter
     public void setStepIndex(int index) {
         this.stepIndex = index;
     }
 
     // Add parameter setters
-    public void setStepParameters(int velocity, int decay, int probability, int nudge) {
+    public void setStepParameters(boolean active, boolean isAccented, int velocity, int decay, int probability, int nudge) {
+        setActiveQuietly(active);
         this.velocity = velocity;
         this.decay = decay;
         this.probability = probability;
         this.nudge = nudge;
-        repaint(); // Request repaint to show new parameter values
+        this.accented = isAccented;
+        invalidate();
+        repaint();
     }
 
     // Add effects parameter setters
@@ -392,6 +416,13 @@ public class DrumGridButton extends JButton {
                 g2d.setFont(new Font("Monospaced", Font.PLAIN, 9));
                 g2d.drawString(String.valueOf(stepIndex + 1), width / 2 - 3, height / 2 + 3);
             }
+        }
+
+        // If accented, draw a small red square in the top right corner
+        if (accented) {
+            g2d.setColor(Color.RED);
+            int squareSize = Math.max(4, Math.min(width, height) / 5);
+            g2d.fillRect(width - squareSize - 1, 1, squareSize, squareSize);
         }
 
         // If using temporary state, draw a border

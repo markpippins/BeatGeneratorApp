@@ -286,14 +286,13 @@ public class MuteSequencerPanel extends JPanel implements IBusListener {
 
             if (padIndex >= 0) {
                 // Gather mute values from UI
-                List<Integer> muteValues = new ArrayList<>();
+                List<Boolean> muteValues = new ArrayList<>();
 
-                for (MuteButton muteButton : muteButtons) {
-                    muteValues.add(muteButton.isSelected() ? 1 : 0);
-                }
+                for (MuteButton muteButton : muteButtons)
+                    muteValues.add(muteButton.isSelected());
 
                 // Update the sequencer
-                //drumSequencer.getSequenceData().setMuteValues(padIndex, muteValues);
+                drumSequencer.getSequenceData().setStepMuteValues(padIndex, muteValues);
             }
         } else {
             // For other sequencers, use existing map approach
@@ -443,18 +442,12 @@ public class MuteSequencerPanel extends JPanel implements IBusListener {
 
             if (padIndex >= 0) {
                 // Get current mute values
-//                List<Integer> muteValues = new ArrayList<>(drumSequencer.getSequenceData().getMuteValues(padIndex));
-//
-//                // Ensure list is large enough
-//                while (muteValues.size() <= step) {
-//                    muteValues.add(0);
-//                }
-//
-//                // Update the mute value
-//                muteValues.set(step, muted ? 1 : 0);
-//
-//                // Save back to sequencer
-//                drumSequencer.getSequenceData().setMuteValues(padIndex, muteValues);
+                List<Boolean> muteValues = new ArrayList<>(drumSequencer.getSequenceData().getStepMuteValues(padIndex));
+                while (muteValues.size() <= step) {
+                    muteValues.add(false);
+                }
+                muteValues.set(step, muted);
+                drumSequencer.getSequenceData().setStepMuteValues(padIndex, muteValues);
             }
         } else {
             // For other sequencers, use the existing pattern approach

@@ -44,6 +44,7 @@ public class DrumSequencer implements IBusListener {
     private Consumer<NoteEvent> noteEventPublisher;
     // Add field to track if we're using internal synth
     private boolean usingInternalSynth = false;
+    private Integer currentBar = null;
 
     /**
      * Creates a new drum sequencer with per-drum parameters
@@ -555,6 +556,13 @@ public class DrumSequencer implements IBusListener {
      * @param stepIndex The step index
      */
     private void triggerDrumStep(int drumIndex, int stepIndex) {
+
+        // Get player
+        Player player = players[drumIndex];
+        if (player == null || player.isMuted()) {
+            return;
+        }
+
         // Skip if step is inactive
         if (!sequenceData.isStepActive(drumIndex, stepIndex)) {
             return;
@@ -577,11 +585,6 @@ public class DrumSequencer implements IBusListener {
             return;
         }
 
-        // Get player
-        Player player = players[drumIndex];
-        if (player == null) {
-            return;
-        }
 
         // Set instrument if needed
         if (player.getInstrument() == null && player.getInstrumentId() != null) {
@@ -1333,17 +1336,12 @@ public class DrumSequencer implements IBusListener {
         }
         // Handle other commands
         switch (cmd.getCommand()) {
-            // Process timing updates
             case Commands.TIMING_UPDATE -> handleTimingUpdate(cmd);
+            case Commands.UPDATE_TEMPO -> handleTempoUpdate(cmd);
             case Commands.REPAIR_MIDI_CONNECTIONS ->
                     DrumSequencerManager.getInstance().repairSequencerConnections(this);
-
-            case Commands.TRANSPORT_START -> {
-                start();
-            }
-
+            case Commands.TRANSPORT_START -> start();
             case Commands.TRANSPORT_STOP -> reset();
-            case Commands.UPDATE_TEMPO -> handleTempoUpdate(cmd);
         }
     }
 
@@ -1358,8 +1356,48 @@ public class DrumSequencer implements IBusListener {
     }
 
     private void handleTimingUpdate(Command action) {
-        if (action.getData() instanceof TimingUpdate update)
-            processTick(update.tickCount());
+        if (action.getData() instanceof TimingUpdate update) {
+            // Process bar for tilt and mute updates
+            if (update.bar() != null) {
+                int newBar = update.bar() - 1; // Adjust for 0-based index
+
+                // Only process if bar actually changed
+                if (currentBar == null || newBar != currentBar) {
+                    currentBar = newBar;
+                    logger.debug("Current bar updated to {}", currentBar);
+
+                    // Process tilt values
+//                    if (getHarmonicTiltValues() != null && getHarmonicTiltValues().size() > currentBar) {
+//                        currentTilt = getHarmonicTiltValues().get(currentBar);
+//                        logger.debug("Current tilt value for bar {}: {}", currentBar, currentTilt);
+//                    }
+
+                    if (sequenceData.getMuteValues() != null && sequenceData.getMuteValues().length > currentBar) {
+                        for (int i = 0; i < SequencerConstants.DRUM_PAD_COUNT; i++) {
+                            Player player = players[i];
+
+                            boolean shouldMute = sequenceData.getMuteValue(i, currentBar);
+
+                            // Only update if mute state changes
+                            if (shouldMute != player.isMuted()) {
+                                player.setMuted(shouldMute);
+                                // int originalLevel = player.getOriginalLevel() > 0 ?
+                                //player.getOriginalLevel() : 100;
+                                // player.setLevel(shouldMute ? 0 : originalLevel);
+                                logger.debug("Bar {}: Player {} {}",
+                                        currentBar, player.getName(),
+                                        shouldMute ? "muted" : "unmuted");
+                                // CommandBus.getInstance().publish(  Commands.PLAYER_UPDATED, this, player); }
+                            }
+                        }
+                    }
+                }
+            }
+            // Process tick for note sequencing
+            if (update.tick() != null && sequenceData.isPlaying()) {
+                processTick(update.tick());
+            }
+        }
     }
 
     /**
@@ -1529,5 +1567,9 @@ public class DrumSequencer implements IBusListener {
             PlayerManager.getInstance().initializeInternalInstrument(players[i], true, players[i].getId().intValue());
         }
 
+    }
+
+    public boolean isStepAccented(int drumIndex, int step) {
+        return sequenceData.isStepAccented(drumIndex, step);
     }
 }
