@@ -6,6 +6,7 @@ import com.angrysurfer.core.api.*;
 import com.angrysurfer.core.event.DrumPadSelectionEvent;
 import com.angrysurfer.core.event.MelodicSequencerEvent;
 import com.angrysurfer.core.model.Player;
+import com.angrysurfer.core.sequencer.DrumSequenceData;
 import com.angrysurfer.core.sequencer.DrumSequencer;
 import com.angrysurfer.core.sequencer.MelodicSequencer;
 import com.angrysurfer.core.sequencer.TimingUpdate;
@@ -276,23 +277,33 @@ public class MuteSequencerPanel extends JPanel implements IBusListener {
 
             for (MuteButton muteButton : muteButtons) {
                 muteValues.add(muteButton.isSelected() ? 1 : 0);
-            }
-
-            // Update the sequencer
+            }            // Update the sequencer
             melodicSequencer.setMuteValues(muteValues);
-
         } else if (sequencer instanceof DrumSequencer drumSequencer) {
             int padIndex = drumSequencer.getSelectedPadIndex();
 
             if (padIndex >= 0) {
-                // Gather mute values from UI
-                List<Boolean> muteValues = new ArrayList<>();
+                try {
+                    // Get sequence data
+                    DrumSequenceData sequenceData = drumSequencer.getSequenceData();
+                    if (sequenceData == null) {
+                        logger.error("Sequence data is null in DrumSequencer");
+                        return;
+                    }
+                    
+                    // Gather mute values from UI
+                    List<Boolean> muteValues = new ArrayList<>();
 
-                for (MuteButton muteButton : muteButtons)
-                    muteValues.add(muteButton.isSelected());
+                    for (MuteButton muteButton : muteButtons)
+                        muteValues.add(muteButton.isSelected());
+                    
+                    logger.debug("Storing {} mute values for drum pad: {}", muteValues.size(), padIndex);
 
-                // Update the sequencer
-                drumSequencer.getSequenceData().setBarMuteValues(padIndex, muteValues);
+                    // Update the sequencer
+                    sequenceData.setBarMuteValues(padIndex, muteValues);
+                } catch (Exception e) {
+                    logger.error("Error storing mute pattern for drum pad {}: {}", padIndex, e.getMessage(), e);
+                }
             }
         } else {
             // For other sequencers, use existing map approach
@@ -315,32 +326,43 @@ public class MuteSequencerPanel extends JPanel implements IBusListener {
 
         if (sequencer instanceof MelodicSequencer melodicSequencer) {
             List<Integer> muteValues = melodicSequencer.getMuteValues();
-
+            
             // Update UI to reflect loaded pattern
             SwingUtilities.invokeLater(() -> {
                 for (int i = 0; i < muteButtons.size(); i++) {
-                    boolean isMuted = i < muteValues.size() && muteValues.get(i) > 0;
+                    boolean isMuted = muteValues != null && i < muteValues.size() && muteValues.get(i) > 0;
                     muteButtons.get(i).setSelected(isMuted);
                     muteButtons.get(i).repaint();
                 }
             });
-
         } else if (sequencer instanceof DrumSequencer drumSequencer) {
             // Get drum sequencer and selected pad
             int padIndex = drumSequencer.getSelectedPadIndex();
 
             if (padIndex >= 0) {
-                // Get mute values for the selected drum
-//                List<Integer> muteValues = drumSequencer.getSequenceData().getMuteValues(padIndex);
-//
-//                // Update UI to reflect loaded pattern
-//                SwingUtilities.invokeLater(() -> {
-//                    for (int i = 0; i < muteButtons.size(); i++) {
-//                        boolean isMuted = i < muteValues.size() && muteValues.get(i) > 0;
-//                        muteButtons.get(i).setSelected(isMuted);
-//                        muteButtons.get(i).repaint();
-//                    }
-//                });
+                try {
+                    // Get mute values for the selected drum
+                    DrumSequenceData sequenceData = drumSequencer.getSequenceData();
+                    if (sequenceData == null) {
+                        logger.error("Sequence data is null in DrumSequencer");
+                        return;
+                    }
+                    
+                    List<Boolean> muteValues = sequenceData.getBarMuteValues(padIndex);
+                    logger.debug("Loading mute pattern for drum pad: {} - found {} mute values", 
+                        padIndex, muteValues != null ? muteValues.size() : 0);
+
+                    // Update UI to reflect loaded pattern
+                    SwingUtilities.invokeLater(() -> {
+                        for (int i = 0; i < muteButtons.size(); i++) {
+                            boolean isMuted = i < muteValues.size() && muteValues.get(i);
+                            muteButtons.get(i).setSelected(isMuted);
+                            muteButtons.get(i).repaint();
+                        }
+                    });
+                } catch (Exception e) {
+                    logger.error("Error loading mute pattern for drum pad {}: {}", padIndex, e.getMessage(), e);
+                }
             } else {
                 // No drum selected, clear buttons
                 SwingUtilities.invokeLater(() -> {
@@ -429,25 +451,47 @@ public class MuteSequencerPanel extends JPanel implements IBusListener {
             }
 
             // Update the mute value at this position
-            muteValues.set(step, muted ? 1 : 0);
-
-            // Save back to sequencer
+            muteValues.set(step, muted ? 1 : 0);            // Save back to sequencer
             melodicSequencer.setMuteValues(muteValues);
 
             // We don't need to apply mute directly here, as that will happen
-            // when the sequencer processes the next bar update
-
+            // when the sequencer processes the next bar update        
         } else if (sequencer instanceof DrumSequencer drumSequencer) {
             int padIndex = drumSequencer.getSelectedPadIndex();
 
             if (padIndex >= 0) {
-                // Get current mute values
-                List<Boolean> muteValues = new ArrayList<>(drumSequencer.getSequenceData().getBarMuteValues(padIndex));
-                while (muteValues.size() <= step) {
-                    muteValues.add(false);
+                try {
+                    DrumSequenceData sequenceData = drumSequencer.getSequenceData();
+                    if (sequenceData == null) {
+                        logger.error("Sequence data is null in DrumSequencer");
+                        return;
+                    }
+                    
+                    // Get current mute values
+                    List<Boolean> muteValues = new ArrayList<>();
+                    List<Boolean> existingValues = sequenceData.getBarMuteValues(padIndex);
+                    
+                    // Add existing values if available
+                    if (existingValues != null) {
+                        muteValues.addAll(existingValues);
+                    }
+                    
+                    // Make sure list is large enough
+                    while (muteValues.size() <= step) {
+                        muteValues.add(false);
+                    }
+                    
+                    // Set the new mute value
+                    muteValues.set(step, muted);
+                    
+                    // Update the sequencer
+                    sequenceData.setBarMuteValues(padIndex, muteValues);
+                    
+                    logger.debug("Set mute for drum {} step {} to {}", padIndex, step, muted);
+                } catch (Exception e) {
+                    logger.error("Error setting mute for drum {} step {}: {}", 
+                        padIndex, step, e.getMessage(), e);
                 }
-                muteValues.set(step, muted);
-                drumSequencer.getSequenceData().setBarMuteValues(padIndex, muteValues);
             }
         } else {
             // For other sequencers, use the existing pattern approach
@@ -456,15 +500,13 @@ public class MuteSequencerPanel extends JPanel implements IBusListener {
                 pattern[step] = muted;
             }
         }
-    }
-
-    /**
+    }    /**
      * Synchronize this panel with the current sequencer's mute values
-     */
+     */    
     public void syncWithSequencer() {
         if (sequencer instanceof MelodicSequencer melodicSequencer) {
             List<Integer> muteValues = melodicSequencer.getMuteValues();
-            logger.debug("Syncing mute panel with sequencer - found {} mute values",
+            logger.debug("Syncing mute panel with melodic sequencer - found {} mute values",
                     muteValues != null ? muteValues.size() : 0);
 
             // Update UI to reflect loaded pattern
@@ -479,15 +521,29 @@ public class MuteSequencerPanel extends JPanel implements IBusListener {
             // Handle drum sequencer syncing
             int padIndex = drumSequencer.getSelectedPadIndex();
             if (padIndex >= 0) {
-//                List<Integer> muteValues = drumSequencer.getSequenceData().getMuteValues(padIndex);
-//
-//                SwingUtilities.invokeLater(() -> {
-//                    for (int i = 0; i < muteButtons.size(); i++) {
-//                        boolean isMuted = muteValues != null && i < muteValues.size() && muteValues.get(i) > 0;
-//                        muteButtons.get(i).setSelected(isMuted);
-//                        muteButtons.get(i).repaint();
-//                    }
-//                });
+                try {
+                    DrumSequenceData sequenceData = drumSequencer.getSequenceData();
+                    if (sequenceData == null) {
+                        logger.error("Sequence data is null in DrumSequencer");
+                        return;
+                    }
+                    
+                    List<Boolean> muteValues = sequenceData.getBarMuteValues(padIndex);
+                    logger.debug("Syncing mute panel with drum sequencer - pad: {} - found {} mute values",
+                        padIndex, muteValues != null ? muteValues.size() : 0);
+                    
+                    SwingUtilities.invokeLater(() -> {
+                        for (int i = 0; i < muteButtons.size(); i++) {
+                            boolean isMuted = muteValues != null && i < muteValues.size() && muteValues.get(i);
+                            muteButtons.get(i).setSelected(isMuted);
+                            muteButtons.get(i).repaint();
+                        }
+                    });
+                } catch (Exception e) {
+                    logger.error("Error syncing mute panel with drum sequencer: {}", e.getMessage(), e);
+                }
+            } else {
+                logger.debug("No drum pad selected, cannot sync mute panel");
             }
         }
     }
