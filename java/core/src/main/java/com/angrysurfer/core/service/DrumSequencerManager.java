@@ -1,5 +1,6 @@
 package com.angrysurfer.core.service;
 
+import com.angrysurfer.core.Constants;
 import com.angrysurfer.core.api.Command;
 import com.angrysurfer.core.api.CommandBus;
 import com.angrysurfer.core.api.Commands;
@@ -41,8 +42,11 @@ public class DrumSequencerManager implements IBusListener {
     // Private constructor for singleton pattern
     private DrumSequencerManager() {
         this.redisService = RedisService.getInstance();
-
         this.sequencers = new ArrayList<>();
+
+        if (Constants.DEBUG)
+            RedisService.getInstance().deleteAllDrumSequences();
+
         CommandBus.getInstance().register(this, new String[]{Commands.SAVE_DRUM_SEQUENCE,
                 Commands.LOAD_DRUM_SEQUENCE, Commands.REPAIR_MIDI_CONNECTIONS,
                 Commands.ENSURE_MIDI_CONNECTIONS});

@@ -10,6 +10,7 @@ import com.angrysurfer.core.sequencer.DrumSequencer;
 import com.angrysurfer.core.sequencer.MelodicSequenceData;
 import com.angrysurfer.core.sequencer.MelodicSequencer;
 import com.angrysurfer.core.util.SessionDeserializer;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
@@ -479,7 +480,7 @@ public class RedisService implements IBusListener {
     }
 
     // Drum sequence methods
-    public DrumSequenceData findDrumSequenceById(Long id) {
+    public DrumSequenceData findDrumSequenceById(Long id) throws JsonProcessingException {
         return drumSequenceHelper.findDrumSequenceById(id);
     }
 
@@ -619,5 +620,9 @@ public class RedisService implements IBusListener {
 
     public Player findPlayerById(Long id) {
         return playerHelper.findPlayerById(id);
+    }
+
+    public void deleteAllDrumSequences() {
+        drumSequenceHelper.deleteAllDrumSequences();
     }
 }

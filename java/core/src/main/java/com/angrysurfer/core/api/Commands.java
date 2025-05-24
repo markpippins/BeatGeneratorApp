@@ -269,8 +269,7 @@ public class Commands {
     /**
      * Command for drum pad selection events
      */
-    public static final String DRUM_PAD_SELECTED = "DRUM_PAD_SELECTED";
-    public static final String DRUM_SEQUENCE_SAVED = "DRUM_SEQUENCE_SAVED";
+    public static final String DRUM_PAD_SELECTED = "DRUM_PAD_SELECTED";    public static final String DRUM_SEQUENCE_SAVED = "DRUM_SEQUENCE_SAVED";
     public static final String DRUM_SEQUENCE_UPDATED = "DRUM_SEQUENCE_UPDATED";
     public static final String DRUM_SEQUENCE_REMOVED = "DRUM_SEQUENCE_REMOVED";
     public static final String DRUM_SEQUENCE_ADDED = "DRUM_SEQUENCE_ADDED";
@@ -279,6 +278,7 @@ public class Commands {
     public static final String LOAD_DRUM_SEQUENCE = "LOAD_DRUM_SEQUENCE";
     public static final String DRUM_SEQUENCE_PARAMS_CHANGED = "DRUM_SEQUENCE_PARAMS_CHANGED";
     public static final String DRUM_SEQUENCE_LOADED = "DRUM_SEQUENCE_LOADED";
+    public static final String DRUM_SEQUENCES_ALL_DELETED = "DRUM_SEQUENCES_ALL_DELETED";
 
     public static final String MELODIC_SEQUENCE_SAVED = "MELODIC_SEQUENCE_SAVED";
     public static final String MELODIC_SEQUENCE_UPDATED = "MELODIC_SEQUENCE_UPDATED";

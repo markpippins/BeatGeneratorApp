@@ -21,7 +21,7 @@ import java.util.logging.Logger;
  */
 @Getter
 @Setter
-public class DrumParamsSequencerPanel extends PolyPanel implements IBusListener {
+public class DrumParamsSequencerPanel extends DrumSequencerPanel implements IBusListener {
 
     // UI Components
     final static List<Dial> velocityDials = new ArrayList<>();
@@ -96,10 +96,10 @@ public class DrumParamsSequencerPanel extends PolyPanel implements IBusListener 
     // parent class's implementation handles everything properly now with the rowType parameter
 
     // Improved versions of the createXDial methods that explicitly specify the row type
-      private Dial createVelocityDial(int columnIndex) {
+    private Dial createVelocityDial(int columnIndex) {
         // Use the new overloaded method with explicit row type 0 (velocity)
         Dial dial = super.createDial(columnIndex, 0, 127, 100, 0);
-        
+
         // Add to collection and set up listeners
         velocityDials.add(dial);
         dial.addChangeListener(e -> {
@@ -112,10 +112,12 @@ public class DrumParamsSequencerPanel extends PolyPanel implements IBusListener 
         });
 
         return dial;
-    }    private Dial createDecayDial(int columnIndex) {
+    }
+
+    private Dial createDecayDial(int columnIndex) {
         // Use the new overloaded method with explicit row type 1 (decay)
         Dial dial = super.createDial(columnIndex, 0, 1000, 250, 1);
-        
+
         decayDials.add(dial);
         dial.addChangeListener(e -> {
             if (!isUpdatingControls() && getSelectedPadIndex() >= 0) {
@@ -127,10 +129,12 @@ public class DrumParamsSequencerPanel extends PolyPanel implements IBusListener 
         });
 
         return dial;
-    }    private Dial createProbabilityDial(int columnIndex) {
+    }
+
+    private Dial createProbabilityDial(int columnIndex) {
         // Use the new overloaded method with explicit row type 2 (probability)
         Dial dial = super.createDial(columnIndex, 0, 100, 100, 2);
-        
+
         probabilityDials.add(dial);
         dial.addChangeListener(e -> {
             if (!isUpdatingControls() && getSelectedPadIndex() >= 0) {
@@ -142,10 +146,12 @@ public class DrumParamsSequencerPanel extends PolyPanel implements IBusListener 
         });
 
         return dial;
-    }    private Dial createNudgeDial(int columnIndex) {
+    }
+
+    private Dial createNudgeDial(int columnIndex) {
         // Use the new overloaded method with explicit row type 3 (nudge)
         Dial dial = super.createDial(columnIndex, -50, 50, 0, 3);
-        
+
         nudgeDials.add(dial);
         dial.addChangeListener(e -> {
             if (!isUpdatingControls() && getSelectedPadIndex() >= 0) {
@@ -218,7 +224,9 @@ public class DrumParamsSequencerPanel extends PolyPanel implements IBusListener 
             default -> "";
         };
 
-    }    /**
+    }
+
+    /**
      * This method is now deprecated since we're using the explicit row type parameter
      * in createDial instead of stack analysis.
      *

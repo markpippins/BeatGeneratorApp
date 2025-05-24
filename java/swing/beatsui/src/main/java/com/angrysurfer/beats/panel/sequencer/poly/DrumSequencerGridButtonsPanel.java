@@ -32,7 +32,7 @@ public class DrumSequencerGridButtonsPanel extends JPanel implements IBusListene
     private final List<DrumGridButton> triggerButtons = new ArrayList<>();
     private final DrumGridButton[][] gridButtons;
     private final DrumSequencer sequencer;
-    private final DrumSequencerPanel parentPanel;
+    private final DrumSequencerGridPanel parentPanel;
     private final DrumSequencerGridPanelContextHandler contextMenuHandler;
     // UI state
     private boolean isPlaying = false;
@@ -44,7 +44,7 @@ public class DrumSequencerGridButtonsPanel extends JPanel implements IBusListene
      * @param sequencer   The drum sequencer
      * @param parentPanel The parent panel for callbacks
      */
-    public DrumSequencerGridButtonsPanel(DrumSequencer sequencer, DrumSequencerPanel parentPanel) {
+    public DrumSequencerGridButtonsPanel(DrumSequencer sequencer, DrumSequencerGridPanel parentPanel) {
         this.sequencer = sequencer;
         this.parentPanel = parentPanel;
 

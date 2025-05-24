@@ -10,6 +10,7 @@ import com.angrysurfer.core.service.DeviceManager;
 import com.angrysurfer.core.service.InstrumentManager;
 import com.angrysurfer.core.service.InternalSynthManager;
 import com.angrysurfer.core.service.PlayerManager;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.Getter;
 import lombok.Setter;
@@ -39,7 +40,7 @@ class DrumSequenceDataHelper {
     /**
      * Find a drum sequence by ID
      */
-    public DrumSequenceData findDrumSequenceById(Long id) {
+    public DrumSequenceData findDrumSequenceById(Long id) throws JsonProcessingException {
         try (Jedis jedis = jedisPool.getResource()) {
             String json = jedis.get("drumseq:" + id);
             if (json != null) {
@@ -48,9 +49,9 @@ class DrumSequenceDataHelper {
                 return data;
             }
             return null;
-        } catch (Exception e) {
-            logger.error("Error finding drum sequence: " + e.getMessage(), e);
-            throw new RuntimeException("Failed to find drum sequence", e);
+        } catch (JsonProcessingException e) {
+            logger.error(e.getMessage());
+            throw e;
         }
     }
 
@@ -204,9 +205,9 @@ class DrumSequenceDataHelper {
             // Apply mute values if available
             for (int i = 0; i < SequencerConstants.DRUM_PAD_COUNT; i++) {
                 int drumIndex = i;
-                List<Boolean> muteValues = data.getStepMuteValues(drumIndex);
+                List<Boolean> muteValues = data.getBarMuteValues(drumIndex);
                 if (muteValues != null && !muteValues.isEmpty()) {
-                    sequencer.getSequenceData().setStepMuteValues(drumIndex, muteValues);
+                    sequencer.getSequenceData().setBarMuteValues(i, muteValues);
                     logger.debug("Applied {} mute values to drum {}", muteValues.size(), drumIndex);
                 }
             }
@@ -267,8 +268,8 @@ class DrumSequenceDataHelper {
 
             // Save mute values for each drum
             for (int i = 0; i < SequencerConstants.DRUM_PAD_COUNT; i++) {
-                List<Boolean> muteValues = sequencer.getSequenceData().getStepMuteValues(i);
-                data.setStepMuteValues(i, muteValues);
+                List<Boolean> muteValues = sequencer.getSequenceData().getBarMuteValues(i);
+                data.setBarMuteValues(i, muteValues);
             }
 
             // Save to Redis
@@ -507,6 +508,51 @@ class DrumSequenceDataHelper {
         } catch (Exception e) {
             logger.error("Error deleting drum sequence with ID {}: {}", id, e.getMessage(), e);
             return false;
+        }
+    }
+
+    /**
+     * Delete all drum sequences
+     *
+     * @return The number of sequences successfully deleted
+     */
+    public int deleteAllDrumSequences() {
+        try (Jedis jedis = jedisPool.getResource()) {
+            // Get all sequence keys
+            Set<String> keys = jedis.keys("drumseq:*");
+            if (keys == null || keys.isEmpty()) {
+                logger.info("No drum sequences to delete");
+                return 0;
+            }
+
+            int deletedCount = 0;
+            for (String key : keys) {
+                try {
+                    // Extract the ID from the key
+                    String idStr = key.split(":")[1];
+                    Long id = Long.parseLong(idStr);
+
+                    // Use existing delete method to ensure proper cleanup
+                    if (deleteDrumSequence(id)) {
+                        deletedCount++;
+                    }
+                } catch (Exception e) {
+                    logger.error("Error deleting drum sequence with key {}: {}", key, e.getMessage(), e);
+                }
+            }
+
+            // Also clear the hash if it exists
+            jedis.del("drum-sequences");
+
+            logger.info("Successfully deleted {} drum sequences", deletedCount);
+
+            // Notify listeners that all sequences were deleted
+            CommandBus.getInstance().publish(Commands.DRUM_SEQUENCES_ALL_DELETED, this, deletedCount);
+
+            return deletedCount;
+        } catch (Exception e) {
+            logger.error("Error deleting all drum sequences: {}", e.getMessage(), e);
+            return 0;
         }
     }
 }

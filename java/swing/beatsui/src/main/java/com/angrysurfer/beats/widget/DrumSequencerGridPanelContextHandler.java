@@ -1,6 +1,6 @@
 package com.angrysurfer.beats.widget;
 
-import com.angrysurfer.beats.panel.sequencer.poly.DrumSequencerPanel;
+import com.angrysurfer.beats.panel.sequencer.poly.DrumSequencerGridPanel;
 import com.angrysurfer.core.api.Command;
 import com.angrysurfer.core.api.CommandBus;
 import com.angrysurfer.core.api.Commands;
@@ -23,7 +23,7 @@ public class DrumSequencerGridPanelContextHandler implements IBusListener {
 
     // References to required components
     private final DrumSequencer sequencer;
-    private final DrumSequencerPanel parentPanel;
+    private final DrumSequencerGridPanel parentPanel;
 
     /**
      * Create a new context menu handler
@@ -31,7 +31,7 @@ public class DrumSequencerGridPanelContextHandler implements IBusListener {
      * @param sequencer   The drum sequencer
      * @param parentPanel The parent panel for callbacks
      */
-    public DrumSequencerGridPanelContextHandler(DrumSequencer sequencer, DrumSequencerPanel parentPanel) {
+    public DrumSequencerGridPanelContextHandler(DrumSequencer sequencer, DrumSequencerGridPanel parentPanel) {
         this.sequencer = sequencer;
         this.parentPanel = parentPanel;
 

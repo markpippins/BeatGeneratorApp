@@ -54,7 +54,7 @@ public class DrumSelectorPanel extends JPanel implements IBusListener {
     private static final int DRUM_PAD_COUNT = SequencerConstants.DRUM_PAD_COUNT;
     // Reference to the sequencer and parent panel
     private final DrumSequencer sequencer;
-    private final DrumSequencerPanel parentPanel;
+    private final DrumSequencerGridPanel parentPanel;
     // UI components
     private final List<DrumSelectorButton> drumButtons = new ArrayList<>();
 
@@ -64,7 +64,7 @@ public class DrumSelectorPanel extends JPanel implements IBusListener {
      * @param sequencer   The drum sequencer
      * @param parentPanel The parent panel for callbacks
      */
-    public DrumSelectorPanel(DrumSequencer sequencer, DrumSequencerPanel parentPanel) {
+    public DrumSelectorPanel(DrumSequencer sequencer, DrumSequencerGridPanel parentPanel) {
         this.sequencer = sequencer;
         this.parentPanel = parentPanel;
 

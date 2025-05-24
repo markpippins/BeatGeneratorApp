@@ -5,10 +5,6 @@ import lombok.Setter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
-import com.fasterxml.jackson.databind.util.StdConverter;
-
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -99,10 +95,10 @@ public class DrumSequenceData {
     // Root notes for each drum pad
     private int[] rootNotes; // Store root note for each drum pad
 
-    // Mute state for each step of each drum
-    private boolean[] muteValues; // Mute state for each step of each drum [drumIndex][barIndex]
+    // private boolean[] muteValues; // Mute state for each step of each drum [drumIndex][barIndex]
 
-    private Boolean[][] stepMuteValues = new Boolean[SequencerConstants.DRUM_PAD_COUNT][SequencerConstants.MAX_BAR_COUNT];
+    // Mute state for each step of each drum
+    private Boolean[][] barMuteValues = new Boolean[SequencerConstants.DRUM_PAD_COUNT][SequencerConstants.MAX_BAR_COUNT];
 
     private Integer sequencerId = -1;
 
@@ -156,7 +152,7 @@ public class DrumSequenceData {
         lastDecayValues = new int[SequencerConstants.DRUM_PAD_COUNT][maxPatternLength];
 
         // Initialize mute arrays
-        muteValues = new boolean[SequencerConstants.DRUM_PAD_COUNT];
+        //muteValues = new boolean[SequencerConstants.DRUM_PAD_COUNT];
         instrumentIds = new Long[SequencerConstants.DRUM_PAD_COUNT];
         soundbankNames = new String[SequencerConstants.DRUM_PAD_COUNT];
         presets = new Integer[SequencerConstants.DRUM_PAD_COUNT];
@@ -171,7 +167,7 @@ public class DrumSequenceData {
         Arrays.fill(timingDivisions, TimingDivision.NORMAL);
         Arrays.fill(loopingFlags, true);
         Arrays.fill(bounceDirections, 1);
-        Arrays.fill(muteValues, false);
+        //Arrays.fill(muteValues, false);
 
         // Set master tempo default
         masterTempo = SequencerConstants.DEFAULT_MASTER_TEMPO;
@@ -221,7 +217,7 @@ public class DrumSequenceData {
 
         // Initialize mute values - default is 0 (unmuted)
         for (int drumIndex = 0; drumIndex < SequencerConstants.DRUM_PAD_COUNT; drumIndex++) {
-            Arrays.fill(stepMuteValues[drumIndex], false);
+            Arrays.fill(barMuteValues[drumIndex], false);
         }
     }
 
@@ -449,28 +445,12 @@ public class DrumSequenceData {
      * @param barIndex  The index of the bar
      * @return The mute value (0=unmuted, 1=muted)
      */
-    public boolean getMuteValue(int drumIndex, int barIndex) {
+    public boolean getStepMuteValue(int drumIndex, int barIndex) {
         if (drumIndex >= 0 && drumIndex < SequencerConstants.DRUM_PAD_COUNT &&
                 barIndex >= 0 && barIndex < SequencerConstants.MAX_BAR_COUNT) {
-            return stepMuteValues[drumIndex][barIndex];
+            return barMuteValues[drumIndex][barIndex];
         }
         return false;
-    }
-
-    /**
-     * Set mute value for a specific drum at a specific bar
-     *
-     * @param drumIndex The index of the drum
-     * @param barIndex  The index of the bar
-     * @param value     The mute value (0=unmuted, 1=muted)
-     */
-    public void setMuteValue(int drumIndex, int barIndex, boolean value) {
-        if (drumIndex >= 0 && drumIndex < SequencerConstants.DRUM_PAD_COUNT &&
-                barIndex >= 0 && barIndex < SequencerConstants.MAX_BAR_COUNT) {
-            stepMuteValues[drumIndex][barIndex] = value;
-        } else {
-            logger.warn("Attempted to set mute value for invalid drum:{} or bar:{}", drumIndex, barIndex);
-        }
     }
 
     /**
@@ -479,9 +459,9 @@ public class DrumSequenceData {
      * @param drumIndex The drum track index
      * @return List of mute values for each bar
      */
-    public List<Boolean> getStepMuteValues(int drumIndex) {
+    public List<Boolean> getBarMuteValues(int drumIndex) {
         if (drumIndex >= 0 && drumIndex < SequencerConstants.DRUM_PAD_COUNT) {
-            return Arrays.stream(stepMuteValues[drumIndex]).collect(Collectors.toList());
+            return Arrays.stream(barMuteValues[drumIndex]).collect(Collectors.toList());
         }
         return new ArrayList<>();
     }
@@ -492,53 +472,13 @@ public class DrumSequenceData {
      * @param drumIndex The drum track index
      * @param values    List of mute values
      */
-    public void setStepMuteValues(int drumIndex, List<Boolean> values) {
+    public void setBarMuteValues(int drumIndex, List<Boolean> values) {
         if (drumIndex >= 0 && drumIndex < SequencerConstants.DRUM_PAD_COUNT && values != null) {
             for (int i = 0; i < Math.min(values.size(), SequencerConstants.MAX_BAR_COUNT); i++) {
-                stepMuteValues[drumIndex][i] = values.get(i);
+                barMuteValues[drumIndex][i] = values.get(i);
             }
         } else {
             logger.warn("Attempted to set null or invalid mute values for drum {}", drumIndex);
-        }
-    }
-
-    /**
-     * Get 2D array of mute values (for serialization)
-     */
-    public Boolean[][] getMuteValuesArray() {
-        return stepMuteValues;
-    }    /**
-     * Set 2D array of mute values (for deserialization)
-     */
-    public void setMuteValuesArray(Boolean[][] values) {
-        if (values != null) {
-            int minDrums = Math.min(values.length, SequencerConstants.DRUM_PAD_COUNT);
-
-            for (int drumIndex = 0; drumIndex < minDrums; drumIndex++) {
-                if (values[drumIndex] != null) {
-                    int minBars = Math.min(values[drumIndex].length, SequencerConstants.MAX_BAR_COUNT);
-                    System.arraycopy(values[drumIndex], 0, stepMuteValues[drumIndex], 0, minBars);
-                }
-            }
-        }
-    }
-    
-    /**
-     * Alternative method for deserialization of mute values from integer arrays
-     * This handles the case where values come in as int[][] instead of Boolean[][]
-     */
-    public void setMuteValuesArray(int[][] values) {
-        if (values != null) {
-            int minDrums = Math.min(values.length, SequencerConstants.DRUM_PAD_COUNT);
-
-            for (int drumIndex = 0; drumIndex < minDrums; drumIndex++) {
-                if (values[drumIndex] != null) {
-                    int minBars = Math.min(values[drumIndex].length, SequencerConstants.MAX_BAR_COUNT);
-                    for (int barIndex = 0; barIndex < minBars; barIndex++) {
-                        stepMuteValues[drumIndex][barIndex] = values[drumIndex][barIndex] != 0;
-                    }
-                }
-            }
         }
     }
 

@@ -1357,7 +1357,7 @@ public class DrumSequencer implements IBusListener {
 
     private void handleTimingUpdate(Command action) {
         if (action.getData() instanceof TimingUpdate update) {
-            // Process bar for tilt and mute updates
+
             if (update.bar() != null) {
                 int newBar = update.bar() - 1; // Adjust for 0-based index
 
@@ -1372,24 +1372,18 @@ public class DrumSequencer implements IBusListener {
 //                        logger.debug("Current tilt value for bar {}: {}", currentBar, currentTilt);
 //                    }
 
-                    if (sequenceData.getMuteValues() != null && sequenceData.getMuteValues().length > currentBar) {
-                        for (int i = 0; i < SequencerConstants.DRUM_PAD_COUNT; i++) {
-                            Player player = players[i];
+                    for (int i = 0; i < SequencerConstants.DRUM_PAD_COUNT; i++) {
+                        Player player = players[i];
 
-                            boolean shouldMute = sequenceData.getMuteValue(i, currentBar);
-
-                            // Only update if mute state changes
-                            if (shouldMute != player.isMuted()) {
-                                player.setMuted(shouldMute);
-                                // int originalLevel = player.getOriginalLevel() > 0 ?
-                                //player.getOriginalLevel() : 100;
-                                // player.setLevel(shouldMute ? 0 : originalLevel);
-                                logger.debug("Bar {}: Player {} {}",
-                                        currentBar, player.getName(),
-                                        shouldMute ? "muted" : "unmuted");
-                                // CommandBus.getInstance().publish(  Commands.PLAYER_UPDATED, this, player); }
-                            }
-                        }
+                        // Only update if mute state changes
+                        if (sequenceData.getStepMuteValue(i, currentBar) != player.isMuted()) // {
+                            player.setMuted(!player.isMuted());
+                        // int originalLevel = player.getOriginalLevel() > 0 ?
+                        //player.getOriginalLevel() : 100;
+                        // player.setLevel(shouldMute ? 0 : originalLevel);
+                        // logger.debug("Bar {}: Player {} {}", currentBar, player.getName(), shouldMute ? "muted" : "unmuted");
+                        // CommandBus.getInstance().publish(  Commands.PLAYER_UPDATED, this, player); }
+                        // }
                     }
                 }
             }
