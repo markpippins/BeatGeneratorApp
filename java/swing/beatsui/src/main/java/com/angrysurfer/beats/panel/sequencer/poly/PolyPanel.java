@@ -44,10 +44,10 @@ public abstract class PolyPanel extends JPanel implements IBusListener {
     private DrumButtonsPanel drumPadPanel;
     private int selectedPadIndex = -1; // Default to no selection
     private boolean updatingControls = false;
-    private boolean isHandlingSelection = false;
-    private DrumSequencer sequencer;
+    private boolean isHandlingSelection = false;    private DrumSequencer sequencer;
     private Consumer<NoteEvent> noteEventConsumer;
     private MuteSequencerPanel muteSequencerPanel; // Add this field to PolyPanel
+    private com.angrysurfer.beats.widget.DrumSequencerGridPanelContextHandler contextMenuHandler; // Context menu handler
 
     public PolyPanel() {
         super();
@@ -70,9 +70,7 @@ public abstract class PolyPanel extends JPanel implements IBusListener {
         reusableParamChangeEvent.setProbability(sequencer.getStepProbability(drumIndex, stepIndex));
         reusableParamChangeEvent.setVelocity(sequencer.getStepVelocity(drumIndex, stepIndex));
         return reusableParamChangeEvent;
-    }
-
-    private void setup() {
+    }    private void setup() {
         // Get the shared sequencer instance from DrumSequencerManager
         sequencer = DrumSequencerManager.getInstance().getSequencer(0);
 
@@ -85,7 +83,7 @@ public abstract class PolyPanel extends JPanel implements IBusListener {
                 throw new IllegalStateException("Failed to create sequencer");
             }
         }
-
+        
         createUI();
 
         // which will execute after all buttons are created
@@ -427,9 +425,7 @@ public abstract class PolyPanel extends JPanel implements IBusListener {
         });
 
         // Make the panel focusable to receive key events
-        setFocusable(true);
-
-        // When the panel gains focus or becomes visible, request focus
+        setFocusable(true);        // When the panel gains focus or becomes visible, request focus
         addFocusListener(new FocusAdapter() {
             @Override
             public void focusGained(FocusEvent e) {
@@ -444,7 +440,62 @@ public abstract class PolyPanel extends JPanel implements IBusListener {
                 requestFocusInWindow();
             }
         });
+        
+        // Add mouse listener for right-click context menu
+        addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                if (SwingUtilities.isRightMouseButton(e)) {
+                    if (contextMenuHandler != null) {
+                        // Show context menu at mouse position with selected pad
+                        contextMenuHandler.showContextMenu(e.getComponent(), e.getX(), e.getY(), selectedPadIndex, -1);
+                    }
+                }
+            }
+        });
 
+        // Initialize the context menu handler after the component hierarchy is established
+        SwingUtilities.invokeLater(() -> {
+            // Find the DrumSequencerPanel that this PolyPanel might be contained within
+            Container parent = getParent();
+            while (parent != null && !(parent instanceof DrumSequencerPanel)) {
+                parent = parent.getParent();
+            }
+            
+            // Initialize the context menu handler
+            if (parent instanceof DrumSequencerPanel) {
+                // If we found a DrumSequencerPanel parent, use it
+                contextMenuHandler = new com.angrysurfer.beats.widget.DrumSequencerGridPanelContextHandler(sequencer, (DrumSequencerPanel) parent);
+                logger.info("Created context menu handler with DrumSequencerPanel parent");
+            } else {
+                // Otherwise create with a null parent (will have limited functionality)
+                contextMenuHandler = new com.angrysurfer.beats.widget.DrumSequencerGridPanelContextHandler(sequencer, null);
+                logger.info("Created context menu handler with null parent");
+            }
+        });
+    }
+
+    /**
+     * Initialize the context menu handler for right-click functionality.
+     * This needs to be called after the component hierarchy is established.
+     */
+    private void initializeContextMenuHandler() {
+        // Find the DrumSequencerPanel that this PolyPanel might be contained within
+        Container parent = getParent();
+        while (parent != null && !(parent instanceof DrumSequencerPanel)) {
+            parent = parent.getParent();
+        }
+        
+        // Initialize the context menu handler
+        if (parent instanceof DrumSequencerPanel) {
+            // If we found a DrumSequencerPanel parent, use it
+            contextMenuHandler = new com.angrysurfer.beats.widget.DrumSequencerGridPanelContextHandler(sequencer, (DrumSequencerPanel) parent);
+            logger.info("Created context menu handler with DrumSequencerPanel parent");
+        } else {
+            // Otherwise create with a null parent (will have limited functionality)
+            contextMenuHandler = new com.angrysurfer.beats.widget.DrumSequencerGridPanelContextHandler(sequencer, null);
+            logger.info("Created context menu handler with null parent");
+        }
     }
 
     // Replace the handleDrumPadSelected method with this version
@@ -659,9 +710,26 @@ public abstract class PolyPanel extends JPanel implements IBusListener {
         dial.setMinimum(minimum);
         dial.setMaximum(maximum);
         dial.setValue(defaultValue);
-        dial.setKnobColor(UIHelper.getDialColor(getKnobLabel(index).toLowerCase())); // Set knob color
-        dial.setName(getKnobLabel(index) + "-" + index);
+        
+        // Get the row index - for subclasses like DrumParamsSequencerPanel, this should be 
+        // the row index (0=velocity, 1=decay, etc.) not the column index
+        int rowIndex = getRowIndexForDial(index);
+        
+        dial.setKnobColor(UIHelper.getDialColor(getKnobLabel(rowIndex).toLowerCase())); // Set knob color
+        dial.setName(getKnobLabel(rowIndex) + "-" + index);
         return dial;
+    }
+    
+    /**
+     * Get the row index for a dial. This method is intended to be overridden by subclasses
+     * that need to map the dial index to a row index for proper knob color selection.
+     * 
+     * @param index The original index passed to createDial
+     * @return The row index to use for knob color and label lookup
+     */
+    protected int getRowIndexForDial(int index) {
+        // Default implementation: assume index is already the row index
+        return index;
     }
 
 }

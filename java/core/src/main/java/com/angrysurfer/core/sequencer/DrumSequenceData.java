@@ -5,6 +5,10 @@ import lombok.Setter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.fasterxml.jackson.databind.util.StdConverter;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -25,8 +29,8 @@ public class DrumSequenceData {
     private final int[] effectControllers = new int[4];
     private final int[] effectValues = new int[4];
     // Pattern length defaults
-    private int defaultPatternLength = 32; // Default pattern length
-    private int maxPatternLength = 64; // Maximum pattern length
+    private int defaultPatternLength = 16; // Default pattern length
+    private int maxPatternLength = 128; // Maximum pattern length
     // Global sequencing state
     private long tickCounter = 0; // Count ticks
     private int beatCounter = 0; // Count beats
@@ -503,10 +507,25 @@ public class DrumSequenceData {
      */
     public Boolean[][] getMuteValuesArray() {
         return stepMuteValues;
-    }
-
-    /**
+    }    /**
      * Set 2D array of mute values (for deserialization)
+     */
+    public void setMuteValuesArray(Boolean[][] values) {
+        if (values != null) {
+            int minDrums = Math.min(values.length, SequencerConstants.DRUM_PAD_COUNT);
+
+            for (int drumIndex = 0; drumIndex < minDrums; drumIndex++) {
+                if (values[drumIndex] != null) {
+                    int minBars = Math.min(values[drumIndex].length, SequencerConstants.MAX_BAR_COUNT);
+                    System.arraycopy(values[drumIndex], 0, stepMuteValues[drumIndex], 0, minBars);
+                }
+            }
+        }
+    }
+    
+    /**
+     * Alternative method for deserialization of mute values from integer arrays
+     * This handles the case where values come in as int[][] instead of Boolean[][]
      */
     public void setMuteValuesArray(int[][] values) {
         if (values != null) {
@@ -515,7 +534,9 @@ public class DrumSequenceData {
             for (int drumIndex = 0; drumIndex < minDrums; drumIndex++) {
                 if (values[drumIndex] != null) {
                     int minBars = Math.min(values[drumIndex].length, SequencerConstants.MAX_BAR_COUNT);
-                    System.arraycopy(values[drumIndex], 0, stepMuteValues[drumIndex], 0, minBars);
+                    for (int barIndex = 0; barIndex < minBars; barIndex++) {
+                        stepMuteValues[drumIndex][barIndex] = values[drumIndex][barIndex] != 0;
+                    }
                 }
             }
         }
