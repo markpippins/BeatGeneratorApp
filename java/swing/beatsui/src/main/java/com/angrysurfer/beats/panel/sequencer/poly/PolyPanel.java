@@ -703,30 +703,50 @@ public abstract class PolyPanel extends JPanel implements IBusListener {
             parent = parent.getParent();
         }
         return null;
-    }
-
+    }    /**
+     * Create a dial with default row type (using the index as the row type)
+     * 
+     * @param index The dial index
+     * @param minimum The minimum value
+     * @param maximum The maximum value
+     * @param defaultValue The default value
+     * @return A configured Dial
+     */
     Dial createDial(int index, int minimum, int maximum, int defaultValue) {
+        // For backwards compatibility, use index as the rowType by default
+        return createDial(index, minimum, maximum, defaultValue, index);
+    }
+    
+    /**
+     * Create a dial with explicit row type specification
+     * 
+     * @param index The dial index (typically the column index)
+     * @param minimum The minimum value
+     * @param maximum The maximum value
+     * @param defaultValue The default value
+     * @param rowType The row type to use for knob coloring (0=velocity, 1=decay, etc.)
+     * @return A configured Dial
+     */
+    Dial createDial(int index, int minimum, int maximum, int defaultValue, int rowType) {
+        // Create basic dial
         Dial dial = new Dial();
         dial.setMinimum(minimum);
         dial.setMaximum(maximum);
         dial.setValue(defaultValue);
         
-        // Get the row index - for subclasses like DrumParamsSequencerPanel, this should be 
-        // the row index (0=velocity, 1=decay, etc.) not the column index
-        int rowIndex = getRowIndexForDial(index);
-        
-        dial.setKnobColor(UIHelper.getDialColor(getKnobLabel(rowIndex).toLowerCase())); // Set knob color
-        dial.setName(getKnobLabel(rowIndex) + "-" + index);
+        dial.setKnobColor(UIHelper.getDialColor(getKnobLabel(rowType).toLowerCase())); // Set knob color
+        dial.setName(getKnobLabel(rowType) + "-" + index);
         return dial;
     }
-    
-    /**
-     * Get the row index for a dial. This method is intended to be overridden by subclasses
-     * that need to map the dial index to a row index for proper knob color selection.
+      /**
+     * Get the row index for a dial. This method is maintained for backward compatibility.
+     * New code should use the overloaded createDial method with explicit rowType parameter.
      * 
      * @param index The original index passed to createDial
      * @return The row index to use for knob color and label lookup
+     * @deprecated Use the overloaded createDial(index, min, max, defaultValue, rowType) instead
      */
+    @Deprecated
     protected int getRowIndexForDial(int index) {
         // Default implementation: assume index is already the row index
         return index;

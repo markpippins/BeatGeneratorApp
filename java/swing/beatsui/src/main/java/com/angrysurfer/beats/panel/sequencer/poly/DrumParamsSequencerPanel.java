@@ -92,31 +92,13 @@ public class DrumParamsSequencerPanel extends PolyPanel implements IBusListener 
     /**
      * Override createDial to properly set dial color based on parameter type
      * rather than column index
-     */
-    @Override
-    Dial createDial(int index, int minimum, int maximum, int defaultValue) {
-        // Create basic dial
-        Dial dial = new Dial();
-        dial.setMinimum(minimum);
-        dial.setMaximum(maximum);
-        dial.setValue(defaultValue);
-
-        // Use row type rather than column index for color
-        String paramName = "unknown";
-        if (index >= 0 && index < 16) {
-            // For special dials (velocity, decay, etc.) we'll set colors separately in createXxxDial methods
-            dial.setName(getKnobLabel(0) + "-" + index); // Use default name
-        }
-
-        return dial;
-    }
+     */    // We don't need to override the base createDial method anymore because the 
+    // parent class's implementation handles everything properly now with the rowType parameter
 
     // Improved versions of the createXDial methods that explicitly specify the row type
-    
-    private Dial createVelocityDial(int columnIndex) {
-        // Override the parent's createDial method and directly specify the row type (0)
-        // This ensures we get the right color regardless of which column we're in
-        Dial dial = super.createDial(0, 0, 127, 100); // Use row 0 (velocity)
+      private Dial createVelocityDial(int columnIndex) {
+        // Use the new overloaded method with explicit row type 0 (velocity)
+        Dial dial = super.createDial(columnIndex, 0, 127, 100, 0);
         
         // Add to collection and set up listeners
         velocityDials.add(dial);
@@ -130,11 +112,9 @@ public class DrumParamsSequencerPanel extends PolyPanel implements IBusListener 
         });
 
         return dial;
-    }
-
-    private Dial createDecayDial(int columnIndex) {
-        // Use row index 1 (decay) explicitly
-        Dial dial = super.createDial(1, 0, 1000, 250);
+    }    private Dial createDecayDial(int columnIndex) {
+        // Use the new overloaded method with explicit row type 1 (decay)
+        Dial dial = super.createDial(columnIndex, 0, 1000, 250, 1);
         
         decayDials.add(dial);
         dial.addChangeListener(e -> {
@@ -147,11 +127,9 @@ public class DrumParamsSequencerPanel extends PolyPanel implements IBusListener 
         });
 
         return dial;
-    }
-
-    private Dial createProbabilityDial(int columnIndex) {
-        // Use row index 2 (probability) explicitly
-        Dial dial = super.createDial(2, 0, 100, 100);
+    }    private Dial createProbabilityDial(int columnIndex) {
+        // Use the new overloaded method with explicit row type 2 (probability)
+        Dial dial = super.createDial(columnIndex, 0, 100, 100, 2);
         
         probabilityDials.add(dial);
         dial.addChangeListener(e -> {
@@ -164,11 +142,9 @@ public class DrumParamsSequencerPanel extends PolyPanel implements IBusListener 
         });
 
         return dial;
-    }
-
-    private Dial createNudgeDial(int columnIndex) {
-        // Use row index 3 (nudge) explicitly
-        Dial dial = super.createDial(3, -50, 50, 0);
+    }    private Dial createNudgeDial(int columnIndex) {
+        // Use the new overloaded method with explicit row type 3 (nudge)
+        Dial dial = super.createDial(columnIndex, -50, 50, 0, 3);
         
         nudgeDials.add(dial);
         dial.addChangeListener(e -> {
@@ -242,43 +218,19 @@ public class DrumParamsSequencerPanel extends PolyPanel implements IBusListener 
             default -> "";
         };
 
-    }
-
-    /**
-     * Override getRowIndexForDial to provide proper row index mapping.
-     * In DrumParamsSequencerPanel, the indices passed to createDial are column indices (step numbers),
-     * but we need to map them to row indices (parameter types) for proper knob coloring.
+    }    /**
+     * This method is now deprecated since we're using the explicit row type parameter
+     * in createDial instead of stack analysis.
      *
      * @param columnIndex The column index (step number)
-     * @return The appropriate row index based on the specific createXDial method
+     * @return Always 0 as this method is no longer used
+     * @deprecated The overloaded createDial method with explicit rowType parameter is used instead
      */
     @Override
+    @Deprecated
     protected int getRowIndexForDial(int columnIndex) {
-        // This method is called from the parent class's createDial method.
-        // The original createXDial methods (createVelocityDial, createDecayDial, etc.)
-        // are called with column indices, but they need colors based on row type.
-        //
-        // Since this is called from the base createDial method after our createXDial methods
-        // have specifically used it, we can determine which row type to use based
-        // on which collection the dial is being added to.
-        //
-        // Default to using the call stack to determine the caller
-        StackTraceElement[] stackTrace = Thread.currentThread().getStackTrace();
-        for (StackTraceElement element : stackTrace) {
-            String methodName = element.getMethodName();
-            if (methodName.equals("createVelocityDial")) {
-                return 0; // Velocity row
-            } else if (methodName.equals("createDecayDial")) {
-                return 1; // Decay row
-            } else if (methodName.equals("createProbabilityDial")) {
-                return 2; // Probability row
-            } else if (methodName.equals("createNudgeDial")) {
-                return 3; // Nudge row
-            }
-        }
-
-        // If called directly, try to determine row from context
-        // This is a fallback for direct calls to createDial
-        return 0; // Default to velocity (first row)
+        // This is a simple implementation that defaults to velocity (0)
+        // It's no longer used since we now explicitly specify row types
+        return 0;
     }
 }
