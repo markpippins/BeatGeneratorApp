@@ -3,8 +3,6 @@ package com.angrysurfer.beats.panel.sequencer;
 import com.angrysurfer.beats.util.UIHelper;
 import com.angrysurfer.beats.widget.MuteButton;
 import com.angrysurfer.core.api.*;
-import com.angrysurfer.core.event.DrumPadSelectionEvent;
-import com.angrysurfer.core.event.MelodicSequencerEvent;
 import com.angrysurfer.core.model.Player;
 import com.angrysurfer.core.sequencer.DrumSequenceData;
 import com.angrysurfer.core.sequencer.DrumSequencer;
@@ -110,14 +108,16 @@ public class MuteSequencerPanel extends JPanel implements IBusListener {
             buttonPanel.add(container);
         }
 
-        add(buttonPanel, BorderLayout.CENTER);
-
-        // Register with command bus for events
+        add(buttonPanel, BorderLayout.CENTER);        // Register with command bus for events
         CommandBus.getInstance().register(this, new String[]{
                 Commands.TIMING_UPDATE,
-                Commands.DRUM_PAD_SELECTED,
+                Commands.DRUM_PAD_SELECTED,  // Duplicate entry removed
                 Commands.PLAYER_ACTIVATED,
-                Commands.TRANSPORT_STOP
+                Commands.TRANSPORT_STOP,
+                // Add melodic sequence events
+                Commands.MELODIC_SEQUENCE_LOADED,
+                Commands.MELODIC_SEQUENCE_CREATED,
+                Commands.MELODIC_SEQUENCE_UPDATED
         });
         TimingBus.getInstance().register(this);
     }
@@ -134,39 +134,12 @@ public class MuteSequencerPanel extends JPanel implements IBusListener {
                     handleTimingUpdate(update);
                 }
             }
-            case Commands.DRUM_PAD_SELECTED -> {
-                if (sequencer instanceof DrumSequencer &&
-                        action.getData() instanceof DrumPadSelectionEvent event) {
-                    updateSelectedPad(event.getNewSelection());
-                }
-            }
-            case Commands.PLAYER_ACTIVATED -> {
-                if (action.getData() instanceof Player player) {
-                    updatePlayer(player);
-                }
-            }
             case Commands.TRANSPORT_STOP -> resetHighlighting();
-
-            // Add these cases
-            case Commands.MELODIC_SEQUENCE_LOADED,
+            case Commands.DRUM_PAD_SELECTED,
+                 Commands.PLAYER_ACTIVATED,
+                 Commands.MELODIC_SEQUENCE_LOADED,
                  Commands.MELODIC_SEQUENCE_CREATED,
-                 Commands.MELODIC_SEQUENCE_UPDATED -> {
-                // Check if this event is for our sequencer
-                if (action.getData() instanceof MelodicSequencerEvent event &&
-                        sequencer instanceof MelodicSequencer melodicSeq) {
-
-                    if (event.getSequencerId().equals(melodicSeq.getId())) {
-                        logger.debug("Received sequence event: {}", action.getCommand());
-                        // Sync with the sequencer's mute values
-                        SwingUtilities.invokeLater(this::syncWithSequencer);
-                    }
-                } else {
-                    // Generic update - sync anyway if we're a melodic sequencer
-                    if (sequencer instanceof MelodicSequencer) {
-                        SwingUtilities.invokeLater(this::syncWithSequencer);
-                    }
-                }
-            }
+                 Commands.MELODIC_SEQUENCE_UPDATED -> SwingUtilities.invokeLater(this::syncWithSequencer);
         }
     }
 
@@ -249,7 +222,7 @@ public class MuteSequencerPanel extends JPanel implements IBusListener {
         }
 
         // Store old player's pattern
-        storeCurrentPattern();
+        // storeCurrentPattern();
 
         // Update to new player
         currentPlayer = player;
@@ -266,55 +239,54 @@ public class MuteSequencerPanel extends JPanel implements IBusListener {
     /**
      * Store the current pattern in the map
      */
-    private void storeCurrentPattern() {
-        if (currentPlayer == null) {
-            return;
-        }
-
-        if (sequencer instanceof MelodicSequencer melodicSequencer) {
-            // For melodic sequencer, gather mute values from the UI
-            List<Integer> muteValues = new ArrayList<>();
-
-            for (MuteButton muteButton : muteButtons) {
-                muteValues.add(muteButton.isSelected() ? 1 : 0);
-            }            // Update the sequencer
-            melodicSequencer.setMuteValues(muteValues);
-        } else if (sequencer instanceof DrumSequencer drumSequencer) {
-            int padIndex = drumSequencer.getSelectedPadIndex();
-
-            if (padIndex >= 0) {
-                try {
-                    // Get sequence data
-                    DrumSequenceData sequenceData = drumSequencer.getSequenceData();
-                    if (sequenceData == null) {
-                        logger.error("Sequence data is null in DrumSequencer");
-                        return;
-                    }
-                    
-                    // Gather mute values from UI
-                    List<Boolean> muteValues = new ArrayList<>();
-
-                    for (MuteButton muteButton : muteButtons)
-                        muteValues.add(muteButton.isSelected());
-                    
-                    logger.debug("Storing {} mute values for drum pad: {}", muteValues.size(), padIndex);
-
-                    // Update the sequencer
-                    sequenceData.setBarMuteValues(padIndex, muteValues);
-                } catch (Exception e) {
-                    logger.error("Error storing mute pattern for drum pad {}: {}", padIndex, e.getMessage(), e);
-                }
-            }
-        } else {
-            // For other sequencers, use existing map approach
-            boolean[] pattern = new boolean[STEP_COUNT];
-            for (int i = 0; i < muteButtons.size(); i++) {
-                pattern[i] = muteButtons.get(i).isSelected();
-            }
-
-            playerMutePatterns.put(currentPlayer.getId().toString(), pattern);
-        }
-    }
+//    private void storeCurrentPattern() {
+//        if (currentPlayer == null) {
+//            return;
+//        }
+//
+//        if (sequencer instanceof MelodicSequencer melodicSequencer) {
+//            // For melodic sequencer, gather mute values from the UI
+//            List<Integer> muteValues = new ArrayList<>();
+//
+//            for (MuteButton muteButton : muteButtons) {
+//                muteValues.add(muteButton.isSelected() ? 1 : 0);
+//            }            // Update the sequencer
+//            melodicSequencer.setMuteValues(muteValues);
+//        } else if (sequencer instanceof DrumSequencer drumSequencer) {
+//            int padIndex = drumSequencer.getSelectedPadIndex();
+//
+//            if (padIndex >= 0) {
+//                try {
+//                    // Get sequence data
+//                    DrumSequenceData sequenceData = drumSequencer.getSequenceData();
+//                    if (sequenceData == null) {
+//                        logger.error("Sequence data is null in DrumSequencer");
+//                        return;
+//                    }
+//
+//                    int bar = 0;
+//                    for (MuteButton muteButton : muteButtons) {
+//                        sequenceData.setBarMuteValue(padIndex, bar, muteButton.isSelected());
+//                        bar++;
+//                    }
+//
+//                    // logger.debug("Storing {} mute values for drum pad: {}", muteValues.size(), padIndex);
+//
+//                    // Update the sequencer
+//                } catch (Exception e) {
+//                    logger.error("Error storing mute pattern for drum pad {}: {}", padIndex, e.getMessage(), e);
+//                }
+//            }
+//        } else {
+//            // For other sequencers, use existing map approach
+//            boolean[] pattern = new boolean[STEP_COUNT];
+//            for (int i = 0; i < muteButtons.size(); i++) {
+//                pattern[i] = muteButtons.get(i).isSelected();
+//            }
+//
+//            playerMutePatterns.put(currentPlayer.getId().toString(), pattern);
+//        }
+//    }
 
     /**
      * Load the pattern for the current player
@@ -326,7 +298,7 @@ public class MuteSequencerPanel extends JPanel implements IBusListener {
 
         if (sequencer instanceof MelodicSequencer melodicSequencer) {
             List<Integer> muteValues = melodicSequencer.getMuteValues();
-            
+
             // Update UI to reflect loaded pattern
             SwingUtilities.invokeLater(() -> {
                 for (int i = 0; i < muteButtons.size(); i++) {
@@ -347,15 +319,16 @@ public class MuteSequencerPanel extends JPanel implements IBusListener {
                         logger.error("Sequence data is null in DrumSequencer");
                         return;
                     }
-                    
-                    List<Boolean> muteValues = sequenceData.getBarMuteValues(padIndex);
-                    logger.debug("Loading mute pattern for drum pad: {} - found {} mute values", 
-                        padIndex, muteValues != null ? muteValues.size() : 0);
+
+                    // List<Boolean> muteValues = sequenceData.getBarMuteValues(padIndex);
+                    // logger.debug("Loading mute pattern for drum pad: {} - found {} mute values",
+                    //        padIndex, muteValues != null ? muteValues.size() : 0);
 
                     // Update UI to reflect loaded pattern
                     SwingUtilities.invokeLater(() -> {
                         for (int i = 0; i < muteButtons.size(); i++) {
-                            boolean isMuted = i < muteValues.size() && muteValues.get(i);
+                            //  boolean isMuted = i < muteValues.size() && muteValues.get(i);
+                            boolean isMuted = sequenceData.getBarMuteValue(padIndex, i);
                             muteButtons.get(i).setSelected(isMuted);
                             muteButtons.get(i).repaint();
                         }
@@ -466,31 +439,35 @@ public class MuteSequencerPanel extends JPanel implements IBusListener {
                         logger.error("Sequence data is null in DrumSequencer");
                         return;
                     }
-                    
+
                     // Get current mute values
-                    List<Boolean> muteValues = new ArrayList<>();
-                    List<Boolean> existingValues = sequenceData.getBarMuteValues(padIndex);
-                    
+                    //List<Boolean> muteValues = new ArrayList<>();
+                    // List<Boolean> existingValues = sequenceData.getBarMuteValues(padIndex);
+
                     // Add existing values if available
-                    if (existingValues != null) {
-                        muteValues.addAll(existingValues);
-                    }
-                    
+//                    if (existingValues != null) {
+//                        muteValues.addAll(existingValues);
+//                    }
+
                     // Make sure list is large enough
-                    while (muteValues.size() <= step) {
-                        muteValues.add(false);
-                    }
-                    
+//                    while (muteValues.size() <= step) {
+//                        muteValues.add(false);
+//                    }
+
                     // Set the new mute value
-                    muteValues.set(step, muted);
-                    
+                    // muteValues.set(step, muted);
+
                     // Update the sequencer
-                    sequenceData.setBarMuteValues(padIndex, muteValues);
-                    
+                    int bar = 0;
+                    for (MuteButton button : muteButtons) {
+                        sequenceData.setBarMuteValue(padIndex, bar, button.isSelected());
+                        bar++;
+                    }
+
                     logger.debug("Set mute for drum {} step {} to {}", padIndex, step, muted);
                 } catch (Exception e) {
-                    logger.error("Error setting mute for drum {} step {}: {}", 
-                        padIndex, step, e.getMessage(), e);
+                    logger.error("Error setting mute for drum {} step {}: {}",
+                            padIndex, step, e.getMessage(), e);
                 }
             }
         } else {
@@ -500,9 +477,11 @@ public class MuteSequencerPanel extends JPanel implements IBusListener {
                 pattern[step] = muted;
             }
         }
-    }    /**
+    }
+
+    /**
      * Synchronize this panel with the current sequencer's mute values
-     */    
+     */
     public void syncWithSequencer() {
         if (sequencer instanceof MelodicSequencer melodicSequencer) {
             List<Integer> muteValues = melodicSequencer.getMuteValues();
@@ -527,14 +506,16 @@ public class MuteSequencerPanel extends JPanel implements IBusListener {
                         logger.error("Sequence data is null in DrumSequencer");
                         return;
                     }
-                    
-                    List<Boolean> muteValues = sequenceData.getBarMuteValues(padIndex);
-                    logger.debug("Syncing mute panel with drum sequencer - pad: {} - found {} mute values",
-                        padIndex, muteValues != null ? muteValues.size() : 0);
-                    
+
+                    //List<Boolean> muteValues = sequenceData.getBarMuteValues(padIndex);
+                    //logger.debug("Syncing mute panel with drum sequencer - pad: {} - found {} mute values",
+                    //        padIndex, muteValues != null ? muteValues.size() : 0);
+
                     SwingUtilities.invokeLater(() -> {
+                        int bar = 0;
                         for (int i = 0; i < muteButtons.size(); i++) {
-                            boolean isMuted = muteValues != null && i < muteValues.size() && muteValues.get(i);
+                            boolean isMuted = sequenceData.getBarMuteValue(padIndex, i);
+                            //muteValues != null && i < muteValues.size() && muteValues.get(i);
                             muteButtons.get(i).setSelected(isMuted);
                             muteButtons.get(i).repaint();
                         }

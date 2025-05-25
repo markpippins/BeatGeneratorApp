@@ -45,6 +45,7 @@ public class DrumSequencer implements IBusListener {
     // Add field to track if we're using internal synth
     private boolean usingInternalSynth = false;
     private Integer currentBar = null;
+    // private Integer currentPart = null;
 
     /**
      * Creates a new drum sequencer with per-drum parameters
@@ -607,9 +608,8 @@ public class DrumSequencer implements IBusListener {
         final int finalNoteNumber = player.getFollowSessionOffset() ? player.getRootNote() +
                 SessionManager.getInstance().getActiveSession().getNoteOffset() : player.getRootNote();
 
-        boolean amp = getSequenceData().isStepAccented(drumIndex, stepIndex);
-
-        int actualVelocity = amp ? 126 : finalVelocity;
+        int actualVelocity = getSequenceData().isStepAccented(drumIndex, stepIndex) ?
+                Math.min(finalVelocity + 20, 126) : finalVelocity;
 
         final int finalDecay = decay;
         final int finalDrumIndex = drumIndex;
@@ -1359,38 +1359,19 @@ public class DrumSequencer implements IBusListener {
         if (action.getData() instanceof TimingUpdate update) {
 
             if (update.bar() != null) {
-                int newBar = update.bar() - 1; // Adjust for 0-based index
-
-                // Only process if bar actually changed
-                if (currentBar == null || newBar != currentBar) {
-                    currentBar = newBar;
+                // Adjust for 0-based index
+                int bar = update.bar() - 1;
+                if (currentBar == null || bar != currentBar) {
+                    currentBar = bar;
                     logger.debug("Current bar updated to {}", currentBar);
-
-                    // Process tilt values
-//                    if (getHarmonicTiltValues() != null && getHarmonicTiltValues().size() > currentBar) {
-//                        currentTilt = getHarmonicTiltValues().get(currentBar);
-//                        logger.debug("Current tilt value for bar {}: {}", currentBar, currentTilt);
-//                    }
-
-                    for (int i = 0; i < SequencerConstants.DRUM_PAD_COUNT; i++) {
-                        Player player = players[i];
-
-                        // Only update if mute state changes
-                        if (sequenceData.getStepMuteValue(i, currentBar) != player.isMuted()) // {
-                            player.setMuted(!player.isMuted());
-                        // int originalLevel = player.getOriginalLevel() > 0 ?
-                        //player.getOriginalLevel() : 100;
-                        // player.setLevel(shouldMute ? 0 : originalLevel);
-                        // logger.debug("Bar {}: Player {} {}", currentBar, player.getName(), shouldMute ? "muted" : "unmuted");
-                        // CommandBus.getInstance().publish(  Commands.PLAYER_UPDATED, this, player); }
-                        // }
-                    }
+                    for (int i = 0; i < SequencerConstants.DRUM_PAD_COUNT; i++)
+                        if (sequenceData.getStepMuteValue(i, currentBar) != players[i].isMuted())
+                            players[i].setMuted(!players[i].isMuted());
                 }
             }
             // Process tick for note sequencing
-            if (update.tick() != null && sequenceData.isPlaying()) {
+            if (update.tick() != null && sequenceData.isPlaying())
                 processTick(update.tick());
-            }
         }
     }
 

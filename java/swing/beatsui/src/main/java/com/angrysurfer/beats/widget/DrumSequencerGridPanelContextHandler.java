@@ -168,9 +168,7 @@ public class DrumSequencerGridPanelContextHandler implements IBusListener {
             if (success) {
                 parentPanel.updateStepButtonsForDrum(drumIndex);
             }
-        });
-
-        JMenuItem fill2ndItem = new JMenuItem("Every 2nd");
+        });        JMenuItem fill2ndItem = new JMenuItem("8th Notes");
         fill2ndItem.addActionListener(e -> {
             boolean success = DrumSequenceModifier.applyPatternEveryN(sequencer, drumIndex, 2);
             if (success) {
@@ -178,7 +176,7 @@ public class DrumSequencerGridPanelContextHandler implements IBusListener {
             }
         });
 
-        JMenuItem fill3rdItem = new JMenuItem("Every 3rd");
+        JMenuItem fill3rdItem = new JMenuItem("Triplets");
         fill3rdItem.addActionListener(e -> {
             boolean success = DrumSequenceModifier.applyPatternEveryN(sequencer, drumIndex, 3);
             if (success) {
@@ -186,7 +184,7 @@ public class DrumSequencerGridPanelContextHandler implements IBusListener {
             }
         });
 
-        JMenuItem fill4thItem = new JMenuItem("Every 4th");
+        JMenuItem fill4thItem = new JMenuItem("Quarter Notes");
         fill4thItem.addActionListener(e -> {
             boolean success = DrumSequenceModifier.applyPatternEveryN(sequencer, drumIndex, 4);
             if (success) {
@@ -194,7 +192,7 @@ public class DrumSequencerGridPanelContextHandler implements IBusListener {
             }
         });
 
-        JMenuItem fill6thItem = new JMenuItem("Every 6th");
+        JMenuItem fill6thItem = new JMenuItem("Dotted 8ths");
         fill6thItem.addActionListener(e -> {
             boolean success = DrumSequenceModifier.applyPatternEveryN(sequencer, drumIndex, 6);
             if (success) {
@@ -202,7 +200,7 @@ public class DrumSequencerGridPanelContextHandler implements IBusListener {
             }
         });
 
-        JMenuItem fill8thItem = new JMenuItem("Every 8th");
+        JMenuItem fill8thItem = new JMenuItem("Half Notes");
         fill8thItem.addActionListener(e -> {
             boolean success = DrumSequenceModifier.applyPatternEveryN(sequencer, drumIndex, 8);
             if (success) {
@@ -231,14 +229,13 @@ public class DrumSequencerGridPanelContextHandler implements IBusListener {
         JMenu fillFromHereMenu = new JMenu("Fill From Here...");
 
         JMenuItem fillFromHereAllItem = new JMenuItem("All");
+        
         fillFromHereAllItem.addActionListener(e -> {
             boolean success = DrumSequenceModifier.applyFillPattern(sequencer, drumIndex, step, "all");
             if (success) {
                 parentPanel.updateStepButtonsForDrum(drumIndex);
             }
-        });
-
-        JMenuItem fillFromHere2ndItem = new JMenuItem("Every 2nd");
+        });        JMenuItem fillFromHere2ndItem = new JMenuItem("8th Notes");
         fillFromHere2ndItem.addActionListener(e -> {
             boolean success = DrumSequenceModifier.applyPatternEveryNFromStep(sequencer, drumIndex, step, 2);
             if (success) {
@@ -246,7 +243,7 @@ public class DrumSequencerGridPanelContextHandler implements IBusListener {
             }
         });
 
-        JMenuItem fillFromHere3rdItem = new JMenuItem("Every 3rd");
+        JMenuItem fillFromHere3rdItem = new JMenuItem("Triplets");
         fillFromHere3rdItem.addActionListener(e -> {
             boolean success = DrumSequenceModifier.applyPatternEveryNFromStep(sequencer, drumIndex, step, 3);
             if (success) {
@@ -254,7 +251,7 @@ public class DrumSequencerGridPanelContextHandler implements IBusListener {
             }
         });
 
-        JMenuItem fillFromHere4thItem = new JMenuItem("Every 4th");
+        JMenuItem fillFromHere4thItem = new JMenuItem("Quarter Notes");
         fillFromHere4thItem.addActionListener(e -> {
             boolean success = DrumSequenceModifier.applyPatternEveryNFromStep(sequencer, drumIndex, step, 4);
             if (success) {
@@ -262,7 +259,7 @@ public class DrumSequencerGridPanelContextHandler implements IBusListener {
             }
         });
 
-        JMenuItem fillFromHere6thItem = new JMenuItem("Every 6th");
+        JMenuItem fillFromHere6thItem = new JMenuItem("Dotted 8ths");
         fillFromHere6thItem.addActionListener(e -> {
             boolean success = DrumSequenceModifier.applyPatternEveryNFromStep(sequencer, drumIndex, step, 6);
             if (success) {
@@ -270,7 +267,7 @@ public class DrumSequencerGridPanelContextHandler implements IBusListener {
             }
         });
 
-        JMenuItem fillFromHere8thItem = new JMenuItem("Every 8th");
+        JMenuItem fillFromHere8thItem = new JMenuItem("Half Notes");
         fillFromHere8thItem.addActionListener(e -> {
             boolean success = DrumSequenceModifier.applyPatternEveryNFromStep(sequencer, drumIndex, step, 8);
             if (success) {
@@ -384,15 +381,13 @@ public class DrumSequencerGridPanelContextHandler implements IBusListener {
 
         // Show menu at the requested position
         menu.show(component, x, y);
-    }
-
-    /**
+    }    /**
      * Shows a dialog to choose pattern type
      *
      * @param drumIndex The drum index to apply the pattern to
      */
     private void showPatternDialog(int drumIndex) {
-        Object[] options = {"Every 2nd Step", "Every 3rd Step", "Every 4th Step"};
+        Object[] options = {"8th Notes", "Triplets", "Quarter Notes"};
         int choice = JOptionPane.showOptionDialog(
                 parentPanel,
                 "Choose pattern type:",

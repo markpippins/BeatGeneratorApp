@@ -6,6 +6,7 @@ import com.angrysurfer.beats.panel.sequencer.MuteSequencerPanel;
 import com.angrysurfer.beats.util.UIHelper;
 import com.angrysurfer.beats.widget.AccentButton;
 import com.angrysurfer.beats.widget.Dial;
+import com.angrysurfer.beats.widget.DrumSequencerGridPanelContextHandler;
 import com.angrysurfer.beats.widget.TriggerButton;
 import com.angrysurfer.core.api.*;
 import com.angrysurfer.core.event.DrumPadSelectionEvent;
@@ -36,19 +37,22 @@ public abstract class DrumSequencerPanel extends JPanel implements IBusListener 
     private static DrumStepParametersEvent reusableParamChangeEvent = new DrumStepParametersEvent();
     private final List<TriggerButton> selectorButtons = new ArrayList<>();
     private final List<AccentButton> accentButtons = new ArrayList<>();
+
     private DrumSequenceNavigationPanel navigationPanel;
     private DrumSequencerParametersPanel sequenceParamsPanel; // Changed from DrumParamsSequencerParametersPanel
     private DrumSequencerMaxLengthPanel maxLengthPanel; // New field
     private DrumSequenceGeneratorPanel generatorPanel; // New field
     private DrumSequencerSwingPanel swingPanel;
     private DrumButtonsPanel drumPadPanel;
+    private MuteSequencerPanel muteSequencerPanel; // Add this field to PolyPanel
+
+    private DrumSequencerGridPanelContextHandler contextMenuHandler; // Context menu handler
+
     private int selectedPadIndex = -1; // Default to no selection
     private boolean updatingControls = false;
     private boolean isHandlingSelection = false;
     private DrumSequencer sequencer;
     private Consumer<NoteEvent> noteEventConsumer;
-    private MuteSequencerPanel muteSequencerPanel; // Add this field to PolyPanel
-    private com.angrysurfer.beats.widget.DrumSequencerGridPanelContextHandler contextMenuHandler; // Context menu handler
 
     public DrumSequencerPanel() {
         super();
@@ -468,11 +472,11 @@ public abstract class DrumSequencerPanel extends JPanel implements IBusListener 
             // Initialize the context menu handler
             if (parent instanceof DrumSequencerGridPanel) {
                 // If we found a DrumSequencerPanel parent, use it
-                contextMenuHandler = new com.angrysurfer.beats.widget.DrumSequencerGridPanelContextHandler(sequencer, (DrumSequencerGridPanel) parent);
+                contextMenuHandler = new DrumSequencerGridPanelContextHandler(sequencer, (DrumSequencerGridPanel) parent);
                 logger.info("Created context menu handler with DrumSequencerPanel parent");
             } else {
                 // Otherwise create with a null parent (will have limited functionality)
-                contextMenuHandler = new com.angrysurfer.beats.widget.DrumSequencerGridPanelContextHandler(sequencer, null);
+                contextMenuHandler = new DrumSequencerGridPanelContextHandler(sequencer, null);
                 logger.info("Created context menu handler with null parent");
             }
         });

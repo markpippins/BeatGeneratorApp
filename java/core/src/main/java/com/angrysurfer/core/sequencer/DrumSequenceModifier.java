@@ -155,7 +155,15 @@ public class DrumSequenceModifier {
                 }
             }
 
-            logger.info("Applied 1/{} pattern to drum {}", stepInterval, drumIndex);
+            String patternType = switch(stepInterval) {
+                case 2 -> "8th Notes";
+                case 3 -> "Triplets";
+                case 4 -> "Quarter Notes";
+                case 6 -> "Dotted 8ths";
+                case 8 -> "Half Notes";
+                default -> "1/" + stepInterval;
+            };
+            logger.info("Applied {} pattern to drum {}", patternType, drumIndex);
             return true;
         } catch (Exception e) {
             logger.error("Error applying pattern every {} steps to drum {}", stepInterval, drumIndex, e);
@@ -651,7 +659,15 @@ public class DrumSequenceModifier {
             // Notify that the pattern has changed
             notifyPatternChanged(sequencer, drumIndex);
 
-            logger.info("Applied 1/{} pattern from step {} for drum {}", stepInterval, startStep, drumIndex);
+            String patternType = switch(stepInterval) {
+                case 2 -> "8th Notes";
+                case 3 -> "Triplets";
+                case 4 -> "Quarter Notes";
+                case 6 -> "Dotted 8ths";
+                case 8 -> "Half Notes";
+                default -> "1/" + stepInterval;
+            };
+            logger.info("Applied {} pattern from step {} for drum {}", patternType, startStep, drumIndex);
             return true;
         } catch (Exception e) {
             logger.error("Error applying pattern every {} steps from step {} for drum {}",

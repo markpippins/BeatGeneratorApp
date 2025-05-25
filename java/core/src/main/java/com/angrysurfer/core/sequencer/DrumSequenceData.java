@@ -5,10 +5,7 @@ import lombok.Setter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.List;
-import java.util.stream.Collectors;
 
 /**
  * Data storage class for DrumSequencer constants and state.
@@ -95,7 +92,6 @@ public class DrumSequenceData {
     // Root notes for each drum pad
     private int[] rootNotes; // Store root note for each drum pad
 
-    // private boolean[] muteValues; // Mute state for each step of each drum [drumIndex][barIndex]
 
     // Mute state for each step of each drum
     private Boolean[][] barMuteValues = new Boolean[SequencerConstants.DRUM_PAD_COUNT][SequencerConstants.MAX_BAR_COUNT];
@@ -152,7 +148,6 @@ public class DrumSequenceData {
         lastDecayValues = new int[SequencerConstants.DRUM_PAD_COUNT][maxPatternLength];
 
         // Initialize mute arrays
-        //muteValues = new boolean[SequencerConstants.DRUM_PAD_COUNT];
         instrumentIds = new Long[SequencerConstants.DRUM_PAD_COUNT];
         soundbankNames = new String[SequencerConstants.DRUM_PAD_COUNT];
         presets = new Integer[SequencerConstants.DRUM_PAD_COUNT];
@@ -167,7 +162,6 @@ public class DrumSequenceData {
         Arrays.fill(timingDivisions, TimingDivision.NORMAL);
         Arrays.fill(loopingFlags, true);
         Arrays.fill(bounceDirections, 1);
-        //Arrays.fill(muteValues, false);
 
         // Set master tempo default
         masterTempo = SequencerConstants.DEFAULT_MASTER_TEMPO;
@@ -453,34 +447,43 @@ public class DrumSequenceData {
         return false;
     }
 
-    /**
-     * Get all mute values for a specific drum track
-     *
-     * @param drumIndex The drum track index
-     * @return List of mute values for each bar
-     */
-    public List<Boolean> getBarMuteValues(int drumIndex) {
-        if (drumIndex >= 0 && drumIndex < SequencerConstants.DRUM_PAD_COUNT) {
-            return Arrays.stream(barMuteValues[drumIndex]).collect(Collectors.toList());
-        }
-        return new ArrayList<>();
+    public boolean getBarMuteValue(int drumIndex, int barIndex) {
+        return barMuteValues[drumIndex][barIndex];
     }
 
-    /**
-     * Set all mute values for a specific drum track
-     *
-     * @param drumIndex The drum track index
-     * @param values    List of mute values
-     */
-    public void setBarMuteValues(int drumIndex, List<Boolean> values) {
-        if (drumIndex >= 0 && drumIndex < SequencerConstants.DRUM_PAD_COUNT && values != null) {
-            for (int i = 0; i < Math.min(values.size(), SequencerConstants.MAX_BAR_COUNT); i++) {
-                barMuteValues[drumIndex][i] = values.get(i);
-            }
-        } else {
-            logger.warn("Attempted to set null or invalid mute values for drum {}", drumIndex);
-        }
+    public void setBarMuteValue(int drumIndex, int barIndex, boolean mute) {
+        barMuteValues[drumIndex][barIndex] = mute;
     }
+
+
+//    /**
+//     * Get all mute values for a specific drum track
+//     *
+//     * @param drumIndex The drum track index
+//     * @return List of mute values for each bar
+//     */
+//    public List<Boolean> getBarMuteValues(int drumIndex) {
+//        if (drumIndex >= 0 && drumIndex < SequencerConstants.DRUM_PAD_COUNT) {
+//            return Arrays.stream(barMuteValues[drumIndex]).collect(Collectors.toList());
+//        }
+//        return new ArrayList<>();
+//    }
+//
+//    /**
+//     * Set all mute values for a specific drum track
+//     *
+//     * @param drumIndex The drum track index
+//     * @param values    List of mute values
+//     */
+//    public void setBarMuteValues(int drumIndex, List<Boolean> values) {
+//        if (drumIndex >= 0 && drumIndex < SequencerConstants.DRUM_PAD_COUNT && values != null) {
+//            for (int i = 0; i < Math.min(values.size(), SequencerConstants.MAX_BAR_COUNT); i++) {
+//                barMuteValues[drumIndex][i] = values.get(i);
+//            }
+//        } else {
+//            logger.warn("Attempted to set null or invalid mute values for drum {}", drumIndex);
+//        }
+//    }
 
     /**
      * Get the default timing division (when no drum is specified)
