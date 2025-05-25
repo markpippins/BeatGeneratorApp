@@ -111,8 +111,7 @@ public class MuteSequencerPanel extends JPanel implements IBusListener {
         add(buttonPanel, BorderLayout.CENTER);        // Register with command bus for events
         CommandBus.getInstance().register(this, new String[]{
                 Commands.TIMING_UPDATE,
-                Commands.DRUM_PAD_SELECTED,  // Duplicate entry removed
-                Commands.PLAYER_ACTIVATED,
+                Commands.DRUM_PAD_SELECTED,
                 Commands.PLAYER_SELECTION_EVENT,
                 Commands.TRANSPORT_STOP,
                 // Add melodic sequence events
@@ -130,33 +129,31 @@ public class MuteSequencerPanel extends JPanel implements IBusListener {
         }
 
         switch (action.getCommand()) {
-            case Commands.TIMING_UPDATE -> {
-                if (action.getData() instanceof TimingUpdate update) {
-                    handleTimingUpdate(update);
-                }
-            }
+            case Commands.TIMING_UPDATE -> handleTimingUpdate(action);
             case Commands.TRANSPORT_STOP -> resetHighlighting();
             case Commands.DRUM_PAD_SELECTED,
+                 Commands.SEQUENCER_SYNC_MESSAGE,
                  Commands.PLAYER_SELECTION_EVENT,
-                 Commands.PLAYER_ACTIVATED,
                  Commands.MELODIC_SEQUENCE_LOADED,
                  Commands.MELODIC_SEQUENCE_CREATED,
-                 Commands.MELODIC_SEQUENCE_UPDATED -> SwingUtilities.invokeLater(this::syncWithSequencer);
+                 Commands.MELODIC_SEQUENCE_UPDATED -> SwingUtilities.invokeLater(this::synchronizeWithSequencer);
         }
     }
 
-    private void handleTimingUpdate(TimingUpdate update) {
-        // Check for bar updates instead of step/tick updates
-        if (update.bar() != null) {
-            int bar = update.bar() - 1; // Convert to 0-based index
+    private void handleTimingUpdate(Command action) {
+        if (action.getData() instanceof TimingUpdate update) {
+            // Check for bar updates instead of step/tick updates
+            if (update.bar() != null) {
+                int bar = update.bar() - 1; // Convert to 0-based index
 
-            // Only highlight if bar changed
-            if (bar != currentStep) {
-                // Update highlight
-                highlightStep(bar);
+                // Only highlight if bar changed
+                if (bar != currentStep) {
+                    // Update highlight
+                    highlightStep(bar);
 
-                // Update current bar/step reference
-                currentStep = bar;
+                    // Update current bar/step reference
+                    currentStep = bar;
+                }
             }
         }
     }
@@ -484,50 +481,58 @@ public class MuteSequencerPanel extends JPanel implements IBusListener {
     /**
      * Synchronize this panel with the current sequencer's mute values
      */
-    public void syncWithSequencer() {
-        if (sequencer instanceof MelodicSequencer melodicSequencer) {
-            List<Integer> muteValues = melodicSequencer.getMuteValues();
-            logger.debug("Syncing mute panel with melodic sequencer - found {} mute values",
-                    muteValues != null ? muteValues.size() : 0);
+    private void synchronizeWithSequencer() {
 
-            // Update UI to reflect loaded pattern
-            SwingUtilities.invokeLater(() -> {
-                for (int i = 0; i < muteButtons.size(); i++) {
-                    boolean isMuted = muteValues != null && i < muteValues.size() && muteValues.get(i) > 0;
-                    muteButtons.get(i).setSelected(isMuted);
-                    muteButtons.get(i).repaint();
+        if (sequencer instanceof MelodicSequencer melodicSequencer)
+            syncWithMelodicSequencer(melodicSequencer);
+
+        if (sequencer instanceof DrumSequencer drumSequencer)
+            syncWithDrumSequencer(drumSequencer);
+    }
+
+    private void syncWithDrumSequencer(DrumSequencer drumSequencer) {
+        int padIndex = drumSequencer.getSelectedPadIndex();
+        if (padIndex >= 0) {
+            try {
+                DrumSequenceData sequenceData = drumSequencer.getSequenceData();
+                if (sequenceData == null) {
+                    logger.error("Sequence data is null in DrumSequencer");
+                    return;
                 }
-            });
-        } else if (sequencer instanceof DrumSequencer drumSequencer) {
-            // Handle drum sequencer syncing
-            int padIndex = drumSequencer.getSelectedPadIndex();
-            if (padIndex >= 0) {
-                try {
-                    DrumSequenceData sequenceData = drumSequencer.getSequenceData();
-                    if (sequenceData == null) {
-                        logger.error("Sequence data is null in DrumSequencer");
-                        return;
+
+                //List<Boolean> muteValues = sequenceData.getBarMuteValues(padIndex);
+                //logger.debug("Syncing mute panel with drum sequencer - pad: {} - found {} mute values",
+                //        padIndex, muteValues != null ? muteValues.size() : 0);
+
+                SwingUtilities.invokeLater(() -> {
+                    int bar = 0;
+                    for (int i = 0; i < muteButtons.size(); i++) {
+                        boolean isMuted = sequenceData.getBarMuteValue(padIndex, i);
+                        //muteValues != null && i < muteValues.size() && muteValues.get(i);
+                        muteButtons.get(i).setSelected(isMuted);
+                        muteButtons.get(i).repaint();
                     }
-
-                    //List<Boolean> muteValues = sequenceData.getBarMuteValues(padIndex);
-                    //logger.debug("Syncing mute panel with drum sequencer - pad: {} - found {} mute values",
-                    //        padIndex, muteValues != null ? muteValues.size() : 0);
-
-                    SwingUtilities.invokeLater(() -> {
-                        int bar = 0;
-                        for (int i = 0; i < muteButtons.size(); i++) {
-                            boolean isMuted = sequenceData.getBarMuteValue(padIndex, i);
-                            //muteValues != null && i < muteValues.size() && muteValues.get(i);
-                            muteButtons.get(i).setSelected(isMuted);
-                            muteButtons.get(i).repaint();
-                        }
-                    });
-                } catch (Exception e) {
-                    logger.error("Error syncing mute panel with drum sequencer: {}", e.getMessage(), e);
-                }
-            } else {
-                logger.debug("No drum pad selected, cannot sync mute panel");
+                });
+            } catch (Exception e) {
+                logger.error("Error syncing mute panel with drum sequencer: {}", e.getMessage(), e);
             }
+        } else {
+            logger.debug("No drum pad selected, cannot sync mute panel");
         }
+    }
+
+    private void syncWithMelodicSequencer(MelodicSequencer melodicSequencer) {
+        List<Integer> muteValues = melodicSequencer.getMuteValues();
+        logger.debug("Syncing mute panel with melodic sequencer - found {} mute values",
+                muteValues != null ? muteValues.size() : 0);
+
+        // Update UI to reflect loaded pattern
+        SwingUtilities.invokeLater(() -> {
+            for (int i = 0; i < muteButtons.size(); i++) {
+                boolean isMuted = muteValues != null && i < muteValues.size() && muteValues.get(i) > 0;
+                muteButtons.get(i).setSelected(isMuted);
+                muteButtons.get(i).repaint();
+            }
+        });
     }
 }

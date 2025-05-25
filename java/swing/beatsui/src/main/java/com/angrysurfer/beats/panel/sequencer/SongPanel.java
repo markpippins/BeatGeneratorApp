@@ -1,52 +1,25 @@
 package com.angrysurfer.beats.panel.sequencer;
 
-import java.awt.BorderLayout;
-import java.awt.Color;
-import java.awt.Dimension;
-import java.awt.Font;
-import java.awt.Graphics;
-import java.awt.Graphics2D;
-import java.awt.Point;
-import java.awt.RenderingHints;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
-import java.awt.event.MouseMotionAdapter;
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
-import javax.swing.BorderFactory;
-import javax.swing.Box;
-import javax.swing.BoxLayout;
-import javax.swing.JButton;
-import javax.swing.JComboBox;
-import javax.swing.JLabel;
-import javax.swing.JPanel;
-import javax.swing.JScrollPane;
-import javax.swing.JSpinner;
-import javax.swing.JToggleButton;
-import javax.swing.SpinnerNumberModel;
-import javax.swing.SwingUtilities;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import com.angrysurfer.beats.util.UIHelper;
-import com.angrysurfer.core.api.Command;
-import com.angrysurfer.core.api.CommandBus;
-import com.angrysurfer.core.api.Commands;
-import com.angrysurfer.core.api.IBusListener;
-import com.angrysurfer.core.api.TimingBus;
+import com.angrysurfer.core.api.*;
 import com.angrysurfer.core.event.PatternSwitchEvent;
-import com.angrysurfer.core.sequencer.PatternSlot;
 import com.angrysurfer.core.sequencer.DrumSequencer;
 import com.angrysurfer.core.sequencer.MelodicSequencer;
+import com.angrysurfer.core.sequencer.PatternSlot;
 import com.angrysurfer.core.sequencer.TimingUpdate;
 import com.angrysurfer.core.service.DrumSequencerManager;
 import com.angrysurfer.core.service.MelodicSequencerManager;
 import com.angrysurfer.core.service.SessionManager;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import javax.swing.*;
+import java.awt.*;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseMotionAdapter;
+import java.util.List;
+import java.util.*;
 
 public class SongPanel extends JPanel implements IBusListener {
 
@@ -55,15 +28,15 @@ public class SongPanel extends JPanel implements IBusListener {
     private static final int BAR_WIDTH = 80;
     private static final int HEADER_HEIGHT = 25;
     private static final int TRACK_HEADER_WIDTH = 120;
-
-    // Sequencers
-    private DrumSequencer drumSequencer;
     private final List<MelodicSequencer> melodicSequencers = new ArrayList<>();
-
     // Track pattern lists
     private final List<PatternSlot> drumPatternSlots = new ArrayList<>();
     private final Map<Integer, List<PatternSlot>> melodicPatternSlots = new HashMap<>();
-
+    private final Point dragOffset = new Point();
+    // Pattern sequencer internal class instance
+    private final PatternSequencer patternSequencer;
+    // Sequencers
+    private DrumSequencer drumSequencer;
     // UI components
     private JPanel timelinePanel;
     private JPanel controlPanel;
@@ -72,21 +45,15 @@ public class SongPanel extends JPanel implements IBusListener {
     private JButton addPatternButton;
     private JButton deletePatternButton;
     private JSpinner lengthSpinner;
-
     // State variables
     private int songLength = 32; // Length in bars
     private int currentBar = 0;
     private PatternSlot selectedSlot = null;
     private PatternSlot draggingSlot = null;
-    private Point dragOffset = new Point();
     private boolean isDragging = false;
-
     // Add song mode toggle state
     private boolean songModeEnabled = false;
     private JToggleButton songModeToggle;
-
-    // Pattern sequencer internal class instance
-    private PatternSequencer patternSequencer;
 
     public SongPanel() {
         setLayout(new BorderLayout(5, 5));
@@ -96,13 +63,13 @@ public class SongPanel extends JPanel implements IBusListener {
         currentBar = 0;
 
         // Initialize busses - ensure this happens early
-        CommandBus.getInstance().register(this, new String[] {
-            Commands.TIMING_UPDATE,
-            Commands.DRUM_PATTERN_SWITCHED,
-            Commands.MELODIC_PATTERN_SWITCHED,
-            Commands.TIMING_BAR
+        CommandBus.getInstance().register(this, new String[]{
+                Commands.TIMING_UPDATE,
+                Commands.DRUM_PATTERN_SWITCHED,
+                Commands.MELODIC_PATTERN_SWITCHED,
+                Commands.TIMING_BAR
         });
-        
+
         TimingBus.getInstance().register(this);
 
         // Initialize sequencer managers
@@ -211,7 +178,7 @@ public class SongPanel extends JPanel implements IBusListener {
         patternPanel.add(Box.createHorizontalStrut(5));
 
         // Track selector
-        String[] trackOptions = { "Drums", "Mono 1", "Mono 2", "Mono 3", "Mono 4" };
+        String[] trackOptions = {"Drums", "Mono 1", "Mono 2", "Mono 3", "Mono 4"};
         trackCombo = new JComboBox<>(trackOptions);
         trackCombo.addActionListener(e -> updatePatternList());
         patternPanel.add(trackCombo);
@@ -432,7 +399,7 @@ public class SongPanel extends JPanel implements IBusListener {
         }
 
         switch (action.getCommand()) {
-            case Commands.TIMING_BAR -> {
+            case Commands.TIMING_UPDATE -> {
                 if (action.getData() instanceof TimingUpdate update) {
                     // Update current bar for display
                     int oldBar = currentBar;
@@ -515,7 +482,7 @@ public class SongPanel extends JPanel implements IBusListener {
 
         /**
          * Handle a bar update from the timing system
-         * 
+         *
          * @param bar The current bar (1-based)
          */
         public void handleBarUpdate(int bar) {
@@ -573,7 +540,7 @@ public class SongPanel extends JPanel implements IBusListener {
          * Update looping state for a specific sequencer
          */
         private void updateSequencerLooping(String sequencerId, Object sequencer,
-                List<PatternSlot> slots, int currentBar) {
+                                            List<PatternSlot> slots, int currentBar) {
             // Check if we're in a pattern slot
             PatternSlot currentSlot = findSlotAtPosition(slots, currentBar);
             boolean wasActive = activeSequencers.getOrDefault(sequencerId, false);
