@@ -65,7 +65,7 @@ public class StatusBar extends JPanel implements IBusListener {
 
     private void registerForEvents() {
         TimingBus.getInstance().register(this);
-        CommandBus.getInstance().register(this, new String[]{Commands.SESSION_REQUEST,
+        CommandBus.getInstance().register(this, new String[]{Commands.STATUS_UPDATE, Commands.SESSION_REQUEST,
                 Commands.TRANSPORT_STATE_REQUEST, Commands.ACTIVE_PLAYER_REQUEST});
     }
 
@@ -306,8 +306,9 @@ public class StatusBar extends JPanel implements IBusListener {
         if (update.message() != null) {
             messageField.setText(update.message());
         }
-
-        // Other status update fields can be mapped as needed
+        if (update.status() != null) {
+            messageField.setText(update.status());
+        }
     }
 
     private void updateTimeDisplay() {

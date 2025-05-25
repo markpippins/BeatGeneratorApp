@@ -55,9 +55,6 @@ public class Commands {
     // Player selection commands
     public static final String PLAYER = "PLAYER";
 
-    public static final String PLAYER_ACTIVATION_REQUEST = "PLAYER_ACTIVATION_REQUEST";
-    public static final String PLAYER_ACTIVATED = "PLAYER_ACTIVATED";
-
     public static final String PLAYER_ADDED = "PLAYER_ADDED";
     public static final String PLAYER_UPDATED = "PLAYER_UPDATED";
     public static final String PLAYER_DELETED = "PLAYER_DELETED";
@@ -279,6 +276,7 @@ public class Commands {
     public static final String LOAD_DRUM_SEQUENCE = "LOAD_DRUM_SEQUENCE";
     public static final String DRUM_SEQUENCE_PARAMS_CHANGED = "DRUM_SEQUENCE_PARAMS_CHANGED";
     public static final String DRUM_SEQUENCE_LOADED = "DRUM_SEQUENCE_LOADED";
+    public static final String DRUM_SEQUENCES_ALL_DELETED = "DRUM_SEQUENCES_ALL_DELETED";
 
     public static final String MELODIC_SEQUENCE_SAVED = "MELODIC_SEQUENCE_SAVED";
     public static final String MELODIC_SEQUENCE_UPDATED = "MELODIC_SEQUENCE_UPDATED";
@@ -408,7 +406,12 @@ public class Commands {
     // Add this constant for sequencer-specific root note changes
     public static final String SEQUENCER_ROOT_NOTE_SELECTED = "SEQUENCER_ROOT_NOTE_SELECTED";
     public static final String TOGGLE_LOOPING = "TOGGLE_LOOPING";
-    public static final String SEQUENCER_FOLLOW_EVENT = "SEQUENCER_FOLLOW_EVENT";
     public static final String SET_MAX_LENGTH = "SET_MAX_LENGTH";
     public static final String SAVE_ALL_MELODIC = "SAVE_ALL_MELODIC";
+
+    public static final String SEQUENCER_TILT_FOLLOW_EVENT = "SEQUENCER_TILT_FOLLOW_EVENT";
+    public static final String SEQUENCER_NOTE_FOLLOW_EVENT = "SEQUENCER_NOTE_FOLLOW_EVENT";
+    public static final String DRUM_TRACK_MUTE_CHANGED = "DRUM_TRACK_MUTE_CHANGED";
+    public static final String DRUM_TRACK_MUTE_VALUES_CHANGED = "DRUM_TRACK_MUTE_VALUES_CHANGED";
+    public static final String SEQUENCER_SYNC_MESSAGE = "SEQUENCER_SYNC_MESSAGE";
 }

@@ -332,7 +332,7 @@ public class PlayerEditDetailPanel extends JPanel {
             CommandBus.getInstance().publish(
                     Commands.PLAYER_UPDATE_EVENT,
                     this,
-                    new PlayerUpdateEvent(player)
+                    new PlayerUpdateEvent(this, player)
             );
 
             // Show the note name in logs
@@ -351,7 +351,7 @@ public class PlayerEditDetailPanel extends JPanel {
             CommandBus.getInstance().publish(
                     Commands.PLAYER_UPDATE_EVENT,
                     this,
-                    new PlayerUpdateEvent(player)
+                    new PlayerUpdateEvent(this, player)
             );
 
             logger.debug("Pan changed: {}", value);
@@ -364,7 +364,7 @@ public class PlayerEditDetailPanel extends JPanel {
                     noteDial.setValue((Integer) action.getData(), false);
                 }
             }
-        }, new String[] { Commands.NEW_VALUE_NOTE });
+        }, new String[]{Commands.NEW_VALUE_NOTE});
 
         // Add velocity min slider change listener
         velocityMinSlider.addChangeListener(e -> {

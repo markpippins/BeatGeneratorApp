@@ -4,7 +4,6 @@ import com.angrysurfer.core.api.Command;
 import com.angrysurfer.core.api.CommandBus;
 import com.angrysurfer.core.api.Commands;
 import com.angrysurfer.core.api.IBusListener;
-import com.angrysurfer.core.event.PlayerSelectionEvent;
 import com.angrysurfer.core.event.PlayerUpdateEvent;
 import com.angrysurfer.core.model.Player;
 import com.angrysurfer.core.sequencer.DrumSequencer;
@@ -37,9 +36,9 @@ public abstract class LivePanel extends JPanel implements IBusListener {
     public LivePanel() {
         super();
         CommandBus.getInstance().register(this, new String[]{
+                Commands.DRUM_PAD_SELECTED,
                 Commands.PLAYER_SELECTION_EVENT,
                 Commands.PLAYER_UPDATE_EVENT,
-                Commands.PLAYER_ACTIVATED,
                 Commands.PLAYER_UPDATED
         });
     }
@@ -102,25 +101,13 @@ public abstract class LivePanel extends JPanel implements IBusListener {
             switch (action.getCommand()) {
 
                 // Handle new player selection event
-                case Commands.PLAYER_SELECTION_EVENT -> {
-                    if (action.getData() instanceof PlayerSelectionEvent event) {
-                        handlePlayerSelectionEvent(event);
-                    } else if (action.getData() instanceof Player player) {
-                        handleLegacyPlayerActivated(player);
-                    }
-                }
+                case Commands.DRUM_PAD_SELECTED,
+                     Commands.PLAYER_SELECTION_EVENT -> handleLegacyPlayerActivated((Player) action.getData());
 
                 // Handle player update event
                 case Commands.PLAYER_UPDATE_EVENT -> {
                     if (action.getData() instanceof PlayerUpdateEvent event) {
                         handlePlayerUpdateEvent(event);
-                    }
-                }
-
-                // Legacy support for old events
-                case Commands.PLAYER_ACTIVATED -> {
-                    if (action.getData() instanceof Player player) {
-                        handleLegacyPlayerActivated(player);
                     }
                 }
 
@@ -135,23 +122,6 @@ public abstract class LivePanel extends JPanel implements IBusListener {
         }
     }
 
-    /**
-     * Handle a player selection event
-     */
-    protected void handlePlayerSelectionEvent(PlayerSelectionEvent event) {
-        if (event == null || event.getPlayer() == null) {
-            return;
-        }
-
-        Player newPlayer = event.getPlayer();
-
-        // Only process if this is a different player
-        if (player == null || !player.getId().equals(newPlayer.getId())) {
-            logger.debug("Player selected: {} (ID: {})", newPlayer.getName(), newPlayer.getId());
-            player = newPlayer;
-            handlePlayerActivated();
-        }
-    }
 
     /**
      * Handle a player update event
@@ -232,7 +202,7 @@ public abstract class LivePanel extends JPanel implements IBusListener {
             CommandBus.getInstance().publish(
                     Commands.PLAYER_REFRESH_EVENT,
                     this,
-                    new com.angrysurfer.core.event.PlayerRefreshEvent(player)
+                    new com.angrysurfer.core.event.PlayerRefreshEvent(this, player)
             );
         }
     }
@@ -245,7 +215,7 @@ public abstract class LivePanel extends JPanel implements IBusListener {
             CommandBus.getInstance().publish(
                     Commands.PLAYER_UPDATE_EVENT,
                     this,
-                    new com.angrysurfer.core.event.PlayerUpdateEvent(player)
+                    new com.angrysurfer.core.event.PlayerUpdateEvent(this, player)
             );
         }
     }

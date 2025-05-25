@@ -76,7 +76,7 @@ public class DrumSequencerMaxLengthPanel extends JPanel {
     /**
      * Update the control to reflect current sequencer state
      */
-    public void updateControl() {
+    public void updateControls() {
         maxLengthCombo.setSelectedItem(sequencer.getMaxPatternLength());
     }
 }

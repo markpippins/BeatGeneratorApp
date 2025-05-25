@@ -50,21 +50,21 @@ public class TransportIndicatorPanel extends JPanel implements IBusListener {
     private JTextField channelField;
     private JLabel instrumentLabel;
     private JTextField instrumentField;
-    
+
     // Performance monitors
     private JLabel cpuLabel;
     private JProgressBar cpuUsageBar;
     private JLabel memoryLabel;
     private JProgressBar memoryUsageBar;
-    
+
     // Timing display
     private JLabel positionLabel;
     private JTextField positionField;
-    
+
     // Level meters and status indicators
     private VuMeter leftMeter;
     private VuMeter rightMeter;
-    
+
     // System message area
     private JLabel messageLabel;
     private JTextField messageField;
@@ -93,19 +93,19 @@ public class TransportIndicatorPanel extends JPanel implements IBusListener {
 
     private void registerForEvents() {
         TimingBus.getInstance().register(this);
-        CommandBus.getInstance().register(this, new String[] {
-        Commands.PLAYER_UPDATED,
-        Commands.TIMING_UPDATE,
-        Commands.TEMPO_CHANGE,
-        Commands.TIME_SIGNATURE_CHANGE,
-        Commands.TIMING_RESET,
-        Commands.TRANSPORT_START,
-        Commands.TRANSPORT_STOP,
-        Commands.TRANSPORT_RECORD,
-        Commands.TRANSPORT_PAUSE,
-        Commands.SESSION_LOADED,
-        Commands.SESSION_CHANGED
-    });
+        CommandBus.getInstance().register(this, new String[]{
+                Commands.PLAYER_UPDATED,
+                Commands.TIMING_UPDATE,
+                Commands.TEMPO_CHANGE,
+                Commands.TIME_SIGNATURE_CHANGE,
+                Commands.TIMING_RESET,
+                Commands.TRANSPORT_START,
+                Commands.TRANSPORT_STOP,
+                Commands.TRANSPORT_RECORD,
+                Commands.TRANSPORT_PAUSE,
+                Commands.SESSION_LOADED,
+                Commands.SESSION_CHANGED
+        });
     }
 
     private void requestInitialData() {
@@ -125,12 +125,12 @@ public class TransportIndicatorPanel extends JPanel implements IBusListener {
         mainPanel.add(createTransportSection());
         add(mainPanel, BorderLayout.CENTER);
     }
-    
-    
+
+
     private JPanel createTransportSection() {
         JPanel panel = new JPanel();
         panel.setLayout(new FlowLayout(FlowLayout.LEFT, 5, 0));
-        
+
         // Transport state indicator
         JPanel ledPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 3, 0));
         playingLed = new LEDIndicator(Color.GREEN, "PLAY");
@@ -145,42 +145,42 @@ public class TransportIndicatorPanel extends JPanel implements IBusListener {
         // transportStateField = createStatusField(SMALL_FIELD_WIDTH);
         // transportStateField.setText("Stopped");
         // panel.add(transportStateField);
-        
+
         // Time signature
         timeSignatureLabel = new JLabel("Time:");
         panel.add(timeSignatureLabel);
-        
+
         timeSignatureField = createStatusField(SMALL_FIELD_WIDTH);
         timeSignatureField.setText("4/4");
         panel.add(timeSignatureField);
-        
+
         // Position display
         positionLabel = new JLabel("Pos:");
         panel.add(positionLabel);
-        
+
         positionField = createStatusField(MEDIUM_FIELD_WIDTH);
         positionField.setFont(new Font(Font.MONOSPACED, Font.PLAIN, 12));
         updateTimeDisplay();
         panel.add(positionField);
-        
+
         return panel;
     }
-        
+
     private JTextField createStatusField(int width) {
         JTextField field = new JTextField();
         field.setEditable(false);
         field.setBackground(UIHelper.FIELD_BACKGROUND);
         field.setForeground(UIHelper.FIELD_FOREGROUND);
-        
+
         if (width > 0) {
             Dimension size = new Dimension(width, UIHelper.CONTROL_HEIGHT);
             field.setPreferredSize(size);
             field.setMinimumSize(size);
         }
-        
+
         return field;
     }
-        
+
     private void startPerformanceMonitoring() {
         performanceMonitorTimer = new Timer(1000, e -> {
             updatePerformanceMetrics();
@@ -188,25 +188,25 @@ public class TransportIndicatorPanel extends JPanel implements IBusListener {
         });
         performanceMonitorTimer.start();
     }
-    
+
     private void updatePerformanceMetrics() {
         // Get CPU usage (example implementation)
         long cpuUsage = getSystemCpuUsage();
-        cpuUsageBar.setValue((int)cpuUsage);
+        cpuUsageBar.setValue((int) cpuUsage);
         cpuUsageBar.setString(cpuUsage + "%");
-        
+
         // Get memory usage
         long memoryUsage = getSystemMemoryUsage();
-        memoryUsageBar.setValue((int)memoryUsage);
+        memoryUsageBar.setValue((int) memoryUsage);
         memoryUsageBar.setString(memoryUsage + "%");
     }
-    
+
     private void updateLevelMeters() {
         // For demo/testing, use random values - replace with actual audio levels
         if (isPlaying) {
             int leftLevel = Math.max(0, Math.min(100, random.nextInt(60) + (isRecording ? 40 : 20)));
             int rightLevel = Math.max(0, Math.min(100, random.nextInt(60) + (isRecording ? 40 : 20)));
-            
+
             leftMeter.setLevel(leftLevel);
             rightMeter.setLevel(rightLevel);
         } else {
@@ -214,19 +214,19 @@ public class TransportIndicatorPanel extends JPanel implements IBusListener {
             rightMeter.setLevel(0);
         }
     }
-    
+
     private long getSystemCpuUsage() {
         // Mock implementation - replace with actual JMX or other system monitoring
         try {
-            com.sun.management.OperatingSystemMXBean osBean = 
-                (com.sun.management.OperatingSystemMXBean) java.lang.management.ManagementFactory.getOperatingSystemMXBean();
+            com.sun.management.OperatingSystemMXBean osBean =
+                    (com.sun.management.OperatingSystemMXBean) java.lang.management.ManagementFactory.getOperatingSystemMXBean();
             return Math.round(osBean.getCpuLoad() * 100.0);
         } catch (Exception e) {
             // Fallback to random values if the above doesn't work
             return isPlaying ? Math.min(90, 30 + random.nextInt(20)) : 10 + random.nextInt(10);
         }
     }
-    
+
     private long getSystemMemoryUsage() {
         Runtime runtime = Runtime.getRuntime();
         long maxMemory = runtime.maxMemory();
@@ -242,9 +242,9 @@ public class TransportIndicatorPanel extends JPanel implements IBusListener {
         try {
             switch (action.getCommand()) {
                 case Commands.PLAYER_UPDATED -> {
-                    if (action.getData() instanceof Player player && 
-                        currentPlayer != null && 
-                        player.getId().equals(currentPlayer.getId())) {
+                    if (action.getData() instanceof Player player &&
+                            currentPlayer != null &&
+                            player.getId().equals(currentPlayer.getId())) {
                         updatePlayerInfo(player);
                     }
                 }
@@ -311,7 +311,7 @@ public class TransportIndicatorPanel extends JPanel implements IBusListener {
         if (update.part() != null) {
             partCount = update.part().intValue();
         }
-        
+
         // Update the time display with all values
         updateTimeDisplay();
     }
@@ -320,7 +320,7 @@ public class TransportIndicatorPanel extends JPanel implements IBusListener {
         if (session != null) {
             sessionIdField.setText(String.valueOf(session.getId()));
             playerCountField.setText(String.valueOf(session.getPlayers().size()));
-            
+
             // Update tempo if available
             if (session.getTempoInBPM() != null) {
                 tempo = session.getTempoInBPM();
@@ -336,7 +336,7 @@ public class TransportIndicatorPanel extends JPanel implements IBusListener {
             currentPlayer = player;
             playerNameField.setText(player.getName());
             channelField.setText(player.getChannel() != null ? String.valueOf(player.getChannel()) : "");
-            
+
             if (player.getInstrument() != null) {
                 updateInstrumentInfo(player.getInstrument());
             } else {
@@ -346,29 +346,29 @@ public class TransportIndicatorPanel extends JPanel implements IBusListener {
             clearPlayerInfo();
         }
     }
-    
+
     private void updateInstrumentInfo(InstrumentWrapper instrument) {
         if (instrument != null) {
             String instName = instrument.getName();
-            
+
             // If available, add preset information
             if (instrument.getPreset() != null) {
                 instName += " (" + instrument.getPreset() + ")";
             }
-            
+
             instrumentField.setText(instName);
         } else {
             instrumentField.setText("None");
         }
     }
-    
+
     private void updateTransportState(String state) {
         // transportStateField.setText(state);
-        
+
         // Update LED indicators
         playingLed.setOn(isPlaying);
         recordingLed.setOn(isRecording);
-        
+
         // Additional visual feedback
         // transportStateField.setForeground(isRecording ? Color.RED : (isPlaying ? new Color(0, 150, 0) : Color.BLACK));
     }
@@ -402,7 +402,7 @@ public class TransportIndicatorPanel extends JPanel implements IBusListener {
     public void setMessage(String text) {
         messageField.setText(text);
     }
-    
+
     /**
      * Must be called when application is closing to prevent memory leaks
      */

@@ -32,7 +32,7 @@ public class AddInstrumentButton extends JButton implements IBusListener {
         setPreferredSize(new Dimension(24, 24));
 
         // Register for events
-        CommandBus.getInstance().register(this, new String[]{Commands.PLAYER_ACTIVATED});
+        CommandBus.getInstance().register(this, new String[]{Commands.PLAYER_SELECTION_EVENT});
 
         // Add action handler
         addActionListener(e -> handleButtonClick());
@@ -72,7 +72,7 @@ public class AddInstrumentButton extends JButton implements IBusListener {
             return;
         }
 
-        if (action.getCommand().equals(Commands.PLAYER_ACTIVATED)) {
+        if (action.getCommand().equals(Commands.PLAYER_SELECTION_EVENT)) {
             if (action.getData() instanceof Player player) {
                 currentPlayer = player;
                 setEnabled(true);

@@ -175,7 +175,7 @@ public class PianoPanel extends LivePanel {
                         }
                     }
                     // Cases for player and scale interaction
-                    case Commands.PLAYER_ACTIVATED -> {
+                    case Commands.PLAYER_SELECTION_EVENT -> {
                         if (action.getData() instanceof Player player && player.getRootNote() != null) {
                             int note = player.getRootNote().intValue();
                             logger.info("Piano panel: Player selected with note " + note);
@@ -209,7 +209,7 @@ public class PianoPanel extends LivePanel {
                 Commands.KEY_PRESSED,
                 Commands.KEY_HELD,
                 Commands.KEY_RELEASED,
-                Commands.PLAYER_ACTIVATED,
+                Commands.PLAYER_SELECTION_EVENT,
                 Commands.NEW_VALUE_NOTE,
                 Commands.SCALE_SELECTED,
                 Commands.ROOT_NOTE_SELECTED
@@ -574,11 +574,11 @@ public class PianoPanel extends LivePanel {
         CommandBus.getInstance().register(new IBusListener() {
             @Override
             public void onAction(Command action) {
-                if (action.getCommand() == Commands.PLAYER_ACTIVATED) {
+                if (action.getCommand() == Commands.PLAYER_SELECTION_EVENT) {
                     updatePlayerStatusIndicator();
                 }
             }
-        }, new String[]{Commands.PLAYER_ACTIVATED});
+        }, new String[]{Commands.PLAYER_SELECTION_EVENT});
 
         // Set initial state
         updatePlayerStatusIndicator();

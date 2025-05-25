@@ -1105,7 +1105,7 @@ public class SoundbankManager implements IBusListener {
                 CommandBus.getInstance().publish(
                         Commands.PLAYER_PRESET_CHANGE_EVENT,
                         this,
-                        new PlayerPresetChangeEvent(player, bankIndex, presetNumber)
+                        new PlayerPresetChangeEvent(this, player, bankIndex, presetNumber)
                 );
             } else if (presetNumber != null && instrument.getChannel() == SequencerConstants.MIDI_DRUM_CHANNEL) {
                 player.setRootNote(presetNumber);
@@ -1114,7 +1114,7 @@ public class SoundbankManager implements IBusListener {
                 CommandBus.getInstance().publish(
                         Commands.PLAYER_UPDATE_EVENT,
                         this,
-                        new PlayerUpdateEvent(player)
+                        new PlayerUpdateEvent(this, player)
                 );
 
             }

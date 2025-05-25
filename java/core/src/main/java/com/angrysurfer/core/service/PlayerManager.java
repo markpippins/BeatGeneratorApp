@@ -52,13 +52,13 @@ public class PlayerManager implements IBusListener {
     private void registerForEvents() {
         // Register only for commands we actually handle
         CommandBus.getInstance().register(this, new String[]{
+                Commands.DRUM_PAD_SELECTED,
                 Commands.PLAYER_SELECTION_EVENT,
                 Commands.PLAYER_UPDATE_EVENT,
                 Commands.PLAYER_PRESET_CHANGE_EVENT,
                 Commands.PLAYER_INSTRUMENT_CHANGE_EVENT,
                 Commands.PLAYER_REFRESH_EVENT,
                 // Legacy commands still supported
-                Commands.PLAYER_ACTIVATION_REQUEST,
                 Commands.PLAYER_UPDATE_REQUEST,
                 Commands.PLAYER_PRESET_CHANGE_REQUEST,
                 Commands.PLAYER_INSTRUMENT_CHANGE_REQUEST,
@@ -80,6 +80,7 @@ public class PlayerManager implements IBusListener {
         try {
             switch (action.getCommand()) {
                 case Commands.PLAYER_SELECTION_EVENT -> handlePlayerSelectionEvent(action);
+                // case Commands.DRUM_PAD_SELECTED -> CommandBus.getInstance().publish(Commands.PLAYER_SELECTION_EVENT, this, action.getData());
                 case Commands.PLAYER_UPDATE_EVENT -> {
                     if (action.getData() instanceof PlayerUpdateEvent event) {
                         Player player = event.getPlayer();
@@ -109,8 +110,6 @@ public class PlayerManager implements IBusListener {
                     }
                 }
                 case Commands.PLAYER_REFRESH_EVENT -> handlePlayerRefreshEvent(action);
-
-                case Commands.PLAYER_ACTIVATION_REQUEST -> handleLegacyPlayerActivationRequest(action);
                 case Commands.PLAYER_UPDATE_REQUEST -> handleLegacyPlayerUpdateRequest(action);
                 case Commands.PLAYER_PRESET_CHANGE_REQUEST -> handleLegacyPresetChangeRequest(action);
                 case Commands.PLAYER_INSTRUMENT_CHANGE_REQUEST -> handleLegacyInstrumentChangeRequest(action);
@@ -122,11 +121,11 @@ public class PlayerManager implements IBusListener {
     }
 
     private void handlePlayerSelectionEvent(Command action) {
-        if (action.getData() instanceof PlayerSelectionEvent event && event.getPlayer() != null) {
-            logger.info("Player selected for UI: {} (ID: {})",
-                    event.getPlayer().getName(), event.getPlayerId());
-            CommandBus.getInstance().publish(Commands.PLAYER_ACTIVATED, this, event.getPlayer());
-        }
+//        if (action.getData() instanceof PlayerSelectionEvent event && event.getPlayer() != null) {
+//            logger.info("Player selected for UI: {} (ID: {})",
+//                    event.getPlayer().getName(), event.getPlayerId());
+//            CommandBus.getInstance().publish(Commands.PLAYER_ACTIVATED, this, event.getPlayer());
+//        }
     }
 
     /**
@@ -274,22 +273,14 @@ public class PlayerManager implements IBusListener {
 
     @Deprecated
     private void handleLegacyPlayerActivationRequest(Command action) {
-        if (action.getData() instanceof Player player) {
-            PlayerSelectionEvent event = new PlayerSelectionEvent(player);
-            CommandBus.getInstance().publish(Commands.PLAYER_SELECTION_EVENT, this, event);
-        } else if (action.getData() instanceof Long playerId) {
-            Player player = getPlayerById(playerId);
-            if (player != null) {
-                PlayerSelectionEvent event = new PlayerSelectionEvent(player);
-                CommandBus.getInstance().publish(Commands.PLAYER_SELECTION_EVENT, this, event);
-            }
-        }
+        if (action.getData() instanceof Player player)
+            CommandBus.getInstance().publish(Commands.PLAYER_SELECTION_EVENT, this, player);
     }
 
     @Deprecated
     private void handleLegacyPlayerUpdateRequest(Command action) {
         if (action.getData() instanceof Player player) {
-            PlayerUpdateEvent event = new PlayerUpdateEvent(player);
+            PlayerUpdateEvent event = new PlayerUpdateEvent(this, player);
             CommandBus.getInstance().publish(Commands.PLAYER_UPDATE_EVENT, this, event);
         }
     }
@@ -307,7 +298,7 @@ public class PlayerManager implements IBusListener {
 
             Player player = getPlayerById(playerId);
             if (player != null) {
-                PlayerPresetChangeEvent event = new PlayerPresetChangeEvent(player, bankIndex, presetNumber);
+                PlayerPresetChangeEvent event = new PlayerPresetChangeEvent(this, player, bankIndex, presetNumber);
                 CommandBus.getInstance().publish(Commands.PLAYER_PRESET_CHANGE_EVENT, this, event);
             }
         }
@@ -321,7 +312,7 @@ public class PlayerManager implements IBusListener {
 
             Player player = getPlayerById(playerId);
             if (player != null && instrument != null) {
-                PlayerInstrumentChangeEvent event = new PlayerInstrumentChangeEvent(player, instrument);
+                PlayerInstrumentChangeEvent event = new PlayerInstrumentChangeEvent(this, player, instrument);
                 CommandBus.getInstance().publish(Commands.PLAYER_INSTRUMENT_CHANGE_EVENT, this, event);
             }
         }
@@ -330,7 +321,7 @@ public class PlayerManager implements IBusListener {
     @Deprecated
     private void handleLegacyRefreshRequest(Command action) {
         if (action.getData() instanceof Player player) {
-            PlayerRefreshEvent event = new PlayerRefreshEvent(player);
+            PlayerRefreshEvent event = new PlayerRefreshEvent(this, player);
             CommandBus.getInstance().publish(Commands.PLAYER_REFRESH_EVENT, this, event);
         }
     }
@@ -831,7 +822,7 @@ public class PlayerManager implements IBusListener {
         CommandBus.getInstance().publish(
                 Commands.PLAYER_UPDATE_EVENT,
                 this,
-                new PlayerUpdateEvent(player)
+                new PlayerUpdateEvent(this, player)
         );
     }
 

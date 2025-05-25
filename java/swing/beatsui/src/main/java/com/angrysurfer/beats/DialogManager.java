@@ -211,7 +211,6 @@ public class DialogManager implements IBusListener {
 
                     // Create panel with the player
                     PlayerEditPanel panel = new PlayerEditPanel(player);
-                    panel.setPlayer(player);
                     Dialog<Player> dialog = frame.createDialog(player, panel);
                     dialog.setTitle(getPlayerTitle(player));
 
@@ -239,7 +238,7 @@ public class DialogManager implements IBusListener {
                         }
 
                         // CRITICAL STEP: Activate player and request update through command bus
-                        CommandBus.getInstance().publish(Commands.PLAYER_ACTIVATION_REQUEST, this, updatedPlayer);
+                        CommandBus.getInstance().publish(Commands.PLAYER_SELECTION_EVENT, this, updatedPlayer);
                         CommandBus.getInstance().publish(Commands.PLAYER_UPDATE_REQUEST, this, updatedPlayer);
 
                         // Publish dialog-specific completion event
@@ -271,7 +270,7 @@ public class DialogManager implements IBusListener {
 
                             // Re-select the player to update rules display
                             CommandBus.getInstance().publish(Commands.RULE_ADDED, this, player);
-                            CommandBus.getInstance().publish(Commands.PLAYER_ACTIVATION_REQUEST, this, player);
+                            CommandBus.getInstance().publish(Commands.PLAYER_SELECTION_EVENT, this, player);
                             CommandBus.getInstance().publish(Commands.PLAYER_ROW_REFRESH, this, player);
                             // CommandBus.getInstance().publish(Commands.SESSION_UPDATED, this, session);
                         } else {
@@ -311,7 +310,7 @@ public class DialogManager implements IBusListener {
                         // Player refreshedPlayer = RedisService.getInstance().findPlayerById(player.getId());
                         CommandBus.getInstance().publish(Commands.RULE_EDITED, this, updatedRule);
                         // CommandBus.getInstance().publish(Commands.PLAYER_UPDATED, this, player);
-                        CommandBus.getInstance().publish(Commands.PLAYER_ACTIVATION_REQUEST, this, player);
+                        CommandBus.getInstance().publish(Commands.PLAYER_SELECTION_EVENT, this, player);
                         // CommandBus.getInstance().publish(Commands.RULE_SELECTED, this, updatedRule);
                         CommandBus.getInstance().publish(Commands.PLAYER_ROW_REFRESH, this, player);
                     }

@@ -120,7 +120,7 @@ public class SessionControlPanel extends JPanel {
 
         // Create offset combo box (values from -12 to +12)
         JComboBox<Integer> offsetCombo = new JComboBox<>();
-        for (int i = -12; i <= 12; i++) {
+        for (int i = -24; i <= 24; i++) {
             offsetCombo.addItem(i);
         }
         offsetCombo.setSelectedItem(0);

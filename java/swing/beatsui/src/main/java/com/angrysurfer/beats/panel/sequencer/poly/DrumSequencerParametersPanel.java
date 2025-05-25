@@ -1,71 +1,54 @@
 package com.angrysurfer.beats.panel.sequencer.poly;
 
-import java.awt.Dimension;
-import java.awt.FlowLayout;
-import java.awt.Insets;
-
-import javax.swing.Box;
-import javax.swing.BoxLayout;
-import javax.swing.JButton;
-import javax.swing.JComboBox;
-import javax.swing.JLabel;
-import javax.swing.JPanel;
-import javax.swing.JSpinner;
-import javax.swing.JToggleButton;
-import javax.swing.SpinnerNumberModel;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import com.angrysurfer.beats.util.UIHelper;
 import com.angrysurfer.core.api.CommandBus;
 import com.angrysurfer.core.api.Commands;
 import com.angrysurfer.core.sequencer.Direction;
 import com.angrysurfer.core.sequencer.DrumSequencer;
 import com.angrysurfer.core.sequencer.TimingDivision;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import javax.swing.*;
+import java.awt.*;
 
 /**
  * Panel containing sequence parameters controls for a drum sequencer
  */
 public class DrumSequencerParametersPanel extends JPanel {
     private static final Logger logger = LoggerFactory.getLogger(DrumSequencerParametersPanel.class);
-    
+    // Reference to the sequencer
+    private final DrumSequencer sequencer;
     // UI components
     private JSpinner lastStepSpinner;
     private JComboBox<String> directionCombo;
     private JComboBox<TimingDivision> timingCombo;
     private JToggleButton loopToggleButton;
-    private JButton clearPatternButton;
-    
-    // Reference to the sequencer
-    private final DrumSequencer sequencer;
-    
-
     // Flag to prevent recursive events
     private boolean updatingControls = false;
-    
+
     /**
      * Creates a new Sequence Parameters panel
      */
     public DrumSequencerParametersPanel(DrumSequencer sequencer) {
         this.sequencer = sequencer;
-        
-        UIHelper.setWidgetPanelBorder(this,"Sequence Parameters");
-        
+
+        UIHelper.setWidgetPanelBorder(this, "Sequence Parameters");
+
         initializeComponents();
     }
-    
+
     /**
      * Initialize all UI components
      */
     private void initializeComponents() {
         // Change from FlowLayout to BoxLayout for better control
         setLayout(new BoxLayout(this, BoxLayout.X_AXIS));
-        
+
         // Create a panel to hold the main controls with FlowLayout
         // REDUCED: from 10,5 to 2,1
         JPanel controlsPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 2, 1));
-        
+
         // Last Step spinner
         // REDUCED: from 5,0 to 2,0
         JPanel lastStepPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 2, 0));
@@ -73,26 +56,26 @@ public class DrumSequencerParametersPanel extends JPanel {
 
         // Create spinner model with range 1-sequencer.getMaxSteps()
         SpinnerNumberModel lastStepModel = new SpinnerNumberModel(
-            sequencer.getDefaultPatternLength(), 1, sequencer.getMaxPatternLength(), 1);
+                sequencer.getDefaultPatternLength(), 1, sequencer.getMaxPatternLength(), 1);
         lastStepSpinner = new JSpinner(lastStepModel);
         lastStepSpinner.setPreferredSize(new Dimension(UIHelper.MEDIUM_CONTROL_WIDTH, UIHelper.CONTROL_HEIGHT));
         lastStepSpinner.setToolTipText("Set the last step of the pattern (1-" + sequencer.getMaxPatternLength() + ")");
         lastStepSpinner.addChangeListener(e -> {
             if (updatingControls) return;
-            
+
             int lastStep = (Integer) lastStepSpinner.getValue();
             int selectedPadIndex = sequencer.getSelectedPadIndex();
-            
+
             logger.info("Setting last step to {} for drum {}", lastStep, selectedPadIndex);
 
             // Set pattern length directly in the sequencer
             sequencer.setPatternLength(selectedPadIndex, lastStep);
-            
+
             // Publish command to update UI
             CommandBus.getInstance().publish(
-                Commands.DRUM_STEP_BUTTONS_UPDATE_REQUESTED,
-                this,
-                selectedPadIndex
+                    Commands.DRUM_STEP_BUTTONS_UPDATE_REQUESTED,
+                    this,
+                    selectedPadIndex
             );
         });
         lastStepPanel.add(lastStepSpinner);
@@ -100,12 +83,12 @@ public class DrumSequencerParametersPanel extends JPanel {
         // Direction combo
         // REDUCED: from 5,0 to 2,0
         JPanel directionPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 2, 0));
-        directionCombo = new JComboBox<>(new String[] { "Forward", "Backward", "Bounce", "Random" });
+        directionCombo = new JComboBox<>(new String[]{"Forward", "Backward", "Bounce", "Random"});
         directionCombo.setPreferredSize(new Dimension(UIHelper.LARGE_CONTROL_WIDTH + 15, UIHelper.CONTROL_HEIGHT));
         directionCombo.setToolTipText("Set the playback direction of the pattern");
         directionCombo.addActionListener(e -> {
             if (updatingControls) return;
-            
+
             int selectedIndex = directionCombo.getSelectedIndex();
             Direction direction = Direction.FORWARD; // Default
 
@@ -131,7 +114,7 @@ public class DrumSequencerParametersPanel extends JPanel {
         timingCombo.setPreferredSize(new Dimension(UIHelper.LARGE_CONTROL_WIDTH + 15, UIHelper.CONTROL_HEIGHT));
         timingCombo.addActionListener(e -> {
             if (updatingControls) return;
-            
+
             TimingDivision division = (TimingDivision) timingCombo.getSelectedItem();
             if (division != null) {
                 int selectedPadIndex = sequencer.getSelectedPadIndex();
@@ -146,11 +129,11 @@ public class DrumSequencerParametersPanel extends JPanel {
         // Loop checkbox
         loopToggleButton = new JToggleButton("🔁", true); // Default to looping enabled
         loopToggleButton.setToolTipText("Loop this pattern");
-        loopToggleButton.setPreferredSize(new Dimension(24, 24)); 
+        loopToggleButton.setPreferredSize(new Dimension(24, 24));
         loopToggleButton.setMargin(new Insets(2, 2, 2, 2));
         loopToggleButton.addActionListener(e -> {
             if (updatingControls) return;
-            
+
             boolean loop = loopToggleButton.isSelected();
             int selectedPadIndex = sequencer.getSelectedPadIndex();
             logger.info("Setting loop to {} for drum {}", loop, selectedPadIndex);
@@ -170,12 +153,12 @@ public class DrumSequencerParametersPanel extends JPanel {
         pushForwardButton.setMargin(new Insets(2, 2, 2, 2));
         pushForwardButton.addActionListener(e -> {
             sequencer.pushForward();
-            
+
             // Publish command to refresh grid UI
             CommandBus.getInstance().publish(
-                Commands.DRUM_GRID_REFRESH_REQUESTED,
-                this,
-                null
+                    Commands.DRUM_GRID_REFRESH_REQUESTED,
+                    this,
+                    null
             );
         });
 
@@ -186,12 +169,12 @@ public class DrumSequencerParametersPanel extends JPanel {
         pullBackwardButton.setMargin(new Insets(2, 2, 2, 2));
         pullBackwardButton.addActionListener(e -> {
             sequencer.pullBackward();
-            
+
             // Publish command to refresh grid UI
             CommandBus.getInstance().publish(
-                Commands.DRUM_GRID_REFRESH_REQUESTED,
-                this,
-                null
+                    Commands.DRUM_GRID_REFRESH_REQUESTED,
+                    this,
+                    null
             );
         });
 
@@ -205,69 +188,69 @@ public class DrumSequencerParametersPanel extends JPanel {
         controlsPanel.add(loopToggleButton);
         controlsPanel.add(lastStepPanel);
         controlsPanel.add(rotationPanel);
-        
+
         // Create the clear button
-        clearPatternButton = new JButton("🗑️");
+        JButton clearPatternButton = new JButton("🗑️");
         clearPatternButton.setToolTipText("Clear the pattern for this drum");
         clearPatternButton.setPreferredSize(new Dimension(24, 24));
         clearPatternButton.setMargin(new Insets(2, 2, 2, 2));
         clearPatternButton.addActionListener(e -> {
             int selectedPadIndex = sequencer.getSelectedPadIndex();
-            
+
             // Publish command to clear row
             CommandBus.getInstance().publish(
-                Commands.DRUM_PATTERN_CLEAR_REQUESTED,
-                this,
-                selectedPadIndex
+                    Commands.DRUM_PATTERN_CLEAR_REQUESTED,
+                    this,
+                    selectedPadIndex
             );
         });
-        
+
         // Add the main controls panel to the left
         add(controlsPanel);
-        
+
         // Add horizontal glue to push clear button to right
         add(Box.createHorizontalGlue());
-        
+
         // Create right-side panel for clear button with some padding
         // REDUCED: from 10,5 to 2,1
         JPanel rightPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 2, 1));
         rightPanel.add(clearPatternButton);
-        
+
         // Add right panel
         add(rightPanel);
     }
-    
+
     /**
      * Update controls to match the selected drum's parameters
      */
     public void updateControls(int selectedDrumIndex) {
         // Set flag to prevent event recursion
         updatingControls = true;
-        
+
         try {
             // Get values for the selected drum
             int length = sequencer.getPatternLength(selectedDrumIndex);
             Direction dir = sequencer.getDirection(selectedDrumIndex);
             TimingDivision timing = sequencer.getTimingDivision(selectedDrumIndex);
             boolean isLooping = sequencer.isLooping(selectedDrumIndex);
-    
+
             // Update UI components
             lastStepSpinner.setValue(length);
-    
+
             switch (dir) {
                 case FORWARD -> directionCombo.setSelectedIndex(0);
                 case BACKWARD -> directionCombo.setSelectedIndex(1);
                 case BOUNCE -> directionCombo.setSelectedIndex(2);
                 case RANDOM -> directionCombo.setSelectedIndex(3);
             }
-    
+
             timingCombo.setSelectedItem(timing);
             loopToggleButton.setSelected(isLooping);
-            
+
             // Update last step spinner's maximum value
             SpinnerNumberModel model = (SpinnerNumberModel) lastStepSpinner.getModel();
             model.setMaximum(sequencer.getMaxPatternLength());
-            
+
             // Repaint components
             lastStepSpinner.repaint();
             directionCombo.repaint();
@@ -278,5 +261,6 @@ public class DrumSequencerParametersPanel extends JPanel {
             updatingControls = false;
         }
     }
+
 
 }

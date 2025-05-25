@@ -5,7 +5,6 @@ import com.angrysurfer.core.model.feature.Pad;
 import com.angrysurfer.core.sequencer.Scale;
 import com.angrysurfer.core.sequencer.SequencerConstants;
 import com.angrysurfer.core.sequencer.TimingUpdate;
-import com.angrysurfer.core.service.InternalSynthManager;
 import com.angrysurfer.core.util.Cycler;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.Transient;
@@ -19,7 +18,6 @@ import javax.sound.midi.MidiDevice;
 import javax.sound.midi.ShortMessage;
 import java.io.*;
 import java.util.*;
-import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -27,7 +25,7 @@ import java.util.stream.Collectors;
 
 @Getter
 @Setter
-public abstract class Player implements Callable<Boolean>, Serializable, IBusListener {
+public abstract class Player implements Serializable, IBusListener {
 
     static final Random rand = new Random();
     // Add these fields to Player class
@@ -123,23 +121,26 @@ public abstract class Player implements Callable<Boolean>, Serializable, IBusLis
     private Boolean armForNextTick = false;
     private Set<Rule> rules = new HashSet<>();
     private List<Integer> allowedControlMessages = new ArrayList<>();
+
     @JsonIgnore
     private InstrumentWrapper instrument;
+
     @JsonIgnore
     private Session session;
+
     @JsonIgnore
     private transient Object owner;
-    // Add UI update throttling
+
+    @JsonIgnore
+    private transient Integer offset = 0;
+
     @JsonIgnore
     private long lastUiUpdateTime = 0;
-    // Add a new optimized method
+
     private boolean usingInternalSynth = true;
-    private InternalSynthManager internalSynthManager = null;
+
     private long lastNoteTime = 0;
-    // public Long getSubPosition() {
-    // return getSub();
-    // }
-    // Add this property to the Player class
+
     @JsonIgnore
     private boolean isPlaying = false;
     @JsonIgnore
@@ -147,6 +148,9 @@ public abstract class Player implements Callable<Boolean>, Serializable, IBusLis
     // Add this property to the Player class
     @JsonIgnore
     private long lastTriggeredTick = -1;
+
+    private Boolean followRules = false;
+    private Boolean followSessionOffset = false;
 
     // Add cleanup method to shutdown pools on application exit
     public static void shutdownExecutors() {
@@ -233,36 +237,6 @@ public abstract class Player implements Callable<Boolean>, Serializable, IBusLis
     }
 
     public abstract void onTick(TimingUpdate timingUpdate);
-
-    public void drumNoteOn(int note) {
-        logger.debug("drumNoteOn() - note: {}", note);
-
-        int velWeight = getMaxVelocity() - getMinVelocity();
-
-        int velocity = getMinVelocity() + rand.nextInt(velWeight + 1);
-        // Send note on message
-        int randWeight = randomDegree > 0 ? rand.nextInt(randomDegree) : 0;
-
-        NOTE_OFF_SCHEDULER.schedule(() -> {
-            try {
-                triggerNoteWithThrottle(note + randWeight + (Objects.nonNull(getSession()) ? getSession().getNoteOffset() : 0), velocity);
-            } catch (Exception e) {
-                logger.error("Error in scheduled noteOff: {}", e.getMessage(), e);
-            }
-        }, 0, java.util.concurrent.TimeUnit.MILLISECONDS);
-
-        // Schedule note off instead of blocking with Thread.sleep
-        final int finalVelocity = velocity;
-
-        // Use ScheduledExecutorService for note-off scheduling
-        NOTE_OFF_SCHEDULER.schedule(() -> {
-            try {
-                noteOff(note, finalVelocity);
-            } catch (Exception e) {
-                logger.error("Error in scheduled noteOff: {}", e.getMessage(), e);
-            }
-        }, 200, java.util.concurrent.TimeUnit.MILLISECONDS);
-    }
 
     /**
      * Trigger a note with throttling to prevent MIDI buffer overflows
@@ -447,18 +421,10 @@ public abstract class Player implements Callable<Boolean>, Serializable, IBusLis
         }
     }
 
-    @Override
-    public Boolean call() {
-        // Deprecated - keep for interface compatibility
-        return true;
-    }
 
     @JsonIgnore
     public boolean isProbable() {
-        int test = rand.nextInt(101);
-        int probable = getProbability();
-
-        return test < probable;
+        return getProbability() == 100 || rand.nextInt(101) < getProbability();
     }
 
     private boolean hasNoMuteGroupConflict() {
@@ -489,13 +455,10 @@ public abstract class Player implements Callable<Boolean>, Serializable, IBusLis
             return false;
         }
 
-        // CRITICAL CHANGE: Let sequencers play without rule checks
-        if (isMelodicPlayer() || isDrumPlayer()) {
+        // Let sequencers play without unnecessary rule checks
+        if ((isMelodicPlayer() || isDrumPlayer()) && !followRules) {
             return true;
         }
-
-        // Rest of the method remains the same for players with rules
-        // ...
 
         boolean debug = false; // Set to true for verbose logging
         if (debug) {
@@ -544,10 +507,8 @@ public abstract class Player implements Callable<Boolean>, Serializable, IBusLis
                 boolean match = Operator.evaluate(rule.getComparison(),
                         timingUpdate.beat(),
                         rule.getValue());
-                if (debug) {
-                    logger.info("Beat rule: comp={}, timingUpdate.beat()={}, ruleVal={}, result={}",
-                            rule.getComparison(), timingUpdate.beat(), rule.getValue(), match);
-                }
+                logger.info("Beat rule: comp={}, timingUpdate.beat()={}, ruleVal={}, result={}",
+                        rule.getComparison(), timingUpdate.beat(), rule.getValue(), match);
                 if (match) {
                     beatTriggered = true;
                     break;
@@ -556,10 +517,8 @@ public abstract class Player implements Callable<Boolean>, Serializable, IBusLis
         }
 
         if (!tickTriggered || !beatTriggered) {
-            if (debug) {
-                logger.info("Player {}: Trigger condition not met. tickTriggered={}, beatTriggered={}",
-                        getName(), tickTriggered, beatTriggered);
-            }
+            logger.info("Player {}: Trigger condition not met. tickTriggered={}, beatTriggered={}",
+                    getName(), tickTriggered, beatTriggered);
             return false;
         }
 

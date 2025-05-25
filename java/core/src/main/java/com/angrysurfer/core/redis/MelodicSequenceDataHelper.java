@@ -402,6 +402,8 @@ public class MelodicSequenceDataHelper {
             // Create a data transfer object
             MelodicSequenceData data = sequencer.getSequenceData();
 
+            data.setSequencerId(sequencer.getId());
+            
             // Set or generate ID
             if (data.getId() <= 0) {
                 data.setId(jedis.incr("seq:melodicsequence"));
@@ -461,7 +463,7 @@ public class MelodicSequenceDataHelper {
     public void debugData(MelodicSequenceData data) throws JsonProcessingException {
         logger.info("ID: {}, Sequencer: {}, Root: {}, Scale: {}, Instrument: {}, Device: {}, Follow: {}, Looping: {}",
                 data.getId(), data.getSequencerId(), data.getInstrumentName(), data.getDeviceName(),
-                data.getFollowSequencerId(), data.getRootNote(), data.getScale(), data.getLooping());
+                data.getFollowNoteSequencerId(), data.getRootNote(), data.getScale(), data.getLooping());
 
         logger.info("note values:");
         logger.info(objectMapper.writeValueAsString(data.getNoteValues()));
@@ -597,7 +599,8 @@ public class MelodicSequenceDataHelper {
             data.setQuantizeEnabled(true);
             data.setRootNote(60);
             data.setScale(Scale.SCALE_CHROMATIC);
-            data.setFollowSequencerId(-1);
+            data.setFollowNoteSequencerId(-1);
+            data.setFollowTiltSequencerId(-1);
 
             // Initialize pattern data with arrays and SET THEM on the data object
             boolean[] activeSteps = new boolean[16];
@@ -606,6 +609,8 @@ public class MelodicSequenceDataHelper {
             int[] gateValues = new int[16];
             int[] harmonicTiltValues = new int[16]; // Create tilt values array
             int[] muteValues = new int[16]; // Create tilt values array
+            int[] nudgeValues = new int[16]; // Create tilt values array
+            int[] probabilityValues = new int[16]; // Create tilt values array
 
             // Initialize values
             for (int i = 0; i < 16; i++) {
@@ -615,6 +620,8 @@ public class MelodicSequenceDataHelper {
                 gateValues[i] = 50;
                 harmonicTiltValues[i] = 0;
                 muteValues[i] = 0;
+                nudgeValues[i] = 0;
+                probabilityValues[i] = 100;
             }
 
             // SET ALL arrays on the data object
@@ -624,6 +631,8 @@ public class MelodicSequenceDataHelper {
             data.setGateValues(gateValues);
             data.setHarmonicTiltValues(harmonicTiltValues); // Don't forget this line!
             data.setMuteValues(muteValues);
+            data.setNudgeValues(nudgeValues);
+            data.setProbabilityValues(probabilityValues);
 
             // Save to Redis
             String json = objectMapper.writeValueAsString(data);

@@ -36,7 +36,7 @@ public class InstrumentCombo extends JComboBox<InstrumentWrapper> implements IBu
     public InstrumentCombo() {
         super();
         configureRenderer();
-        CommandBus.getInstance().register(this, new String[]{Commands.PLAYER_ACTIVATED,
+        CommandBus.getInstance().register(this, new String[]{Commands.PLAYER_SELECTION_EVENT,
                 Commands.INSTRUMENTS_REFRESHED, Commands.INSTRUMENT_UPDATED, Commands.PLAYER_UPDATED,
                 Commands.PLAYER_INSTRUMENT_CHANGED});
 
@@ -115,7 +115,7 @@ public class InstrumentCombo extends JComboBox<InstrumentWrapper> implements IBu
         }
 
         switch (action.getCommand()) {
-            case Commands.PLAYER_ACTIVATED:
+            case Commands.PLAYER_SELECTION_EVENT:
                 if (action.getData() instanceof Player player) {
                     setCurrentPlayer(player);
                 }
@@ -409,7 +409,7 @@ public class InstrumentCombo extends JComboBox<InstrumentWrapper> implements IBu
         if (selectedInstrument == null) return;
 
         // Create a PlayerInstrumentChangeEvent instead of using the legacy request
-        PlayerInstrumentChangeEvent event = new PlayerInstrumentChangeEvent(currentPlayer, selectedInstrument);
+        PlayerInstrumentChangeEvent event = new PlayerInstrumentChangeEvent(this, currentPlayer, selectedInstrument);
         CommandBus.getInstance().publish(Commands.PLAYER_INSTRUMENT_CHANGE_EVENT, this, event);
 
         logger.info("Instrument change published for player {} to {}",

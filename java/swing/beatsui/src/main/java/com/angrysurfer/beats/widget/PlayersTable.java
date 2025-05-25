@@ -1,34 +1,5 @@
 package com.angrysurfer.beats.widget;
 
-import java.awt.Color;
-import java.awt.Component;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
-
-import javax.swing.JCheckBox;
-import javax.swing.JLabel;
-import javax.swing.JTable;
-import javax.swing.ListSelectionModel;
-import javax.swing.RowSorter.SortKey;
-import javax.swing.SortOrder;
-import javax.swing.SwingUtilities;
-import javax.swing.Timer;
-import javax.swing.event.ChangeEvent;
-import javax.swing.event.ListSelectionEvent;
-import javax.swing.event.ListSelectionListener;
-import javax.swing.event.TableColumnModelEvent;
-import javax.swing.event.TableColumnModelListener;
-import javax.swing.table.DefaultTableCellRenderer;
-import javax.swing.table.TableRowSorter;
-
-import com.angrysurfer.beats.util.UIHelper;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import com.angrysurfer.beats.util.UIHelper;
 import com.angrysurfer.core.Constants;
 import com.angrysurfer.core.api.Command;
@@ -37,22 +8,34 @@ import com.angrysurfer.core.api.Commands;
 import com.angrysurfer.core.api.IBusListener;
 import com.angrysurfer.core.model.Player;
 import com.angrysurfer.core.model.Session;
-import com.angrysurfer.core.service.PlayerManager;
 import com.angrysurfer.core.service.SessionManager;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import javax.swing.*;
+import javax.swing.RowSorter.SortKey;
+import javax.swing.event.*;
+import javax.swing.table.DefaultTableCellRenderer;
+import javax.swing.table.TableRowSorter;
+import java.awt.*;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 public class PlayersTable extends JTable {
     private static final Logger logger = LoggerFactory.getLogger(PlayersTable.class.getName());
-
-    private final PlayersTableModel tableModel;
-    private final Set<Long> flashingPlayerIds = new HashSet<>();
-    private Timer flashTimer;
-    private final Color FLASH_COLOR = UIHelper.coolBlue; // new Color(255, 255, 200); // Light yellow flash
-    private final int FLASH_DURATION_MS = 500; // Flash duration in milliseconds
-    private int lastSelectedRow = -1;
-    private ListSelectionListener selectionListener;
-
     private static final int[] BOOLEAN_COLUMNS = PlayersTableModel.getBooleanColumns();
     private static final int[] NUMERIC_COLUMNS = PlayersTableModel.getNumericColumns();
+    private final PlayersTableModel tableModel;
+    private final Set<Long> flashingPlayerIds = new HashSet<>();
+    private final Color FLASH_COLOR = UIHelper.coolBlue; // new Color(255, 255, 200); // Light yellow flash
+    private final int FLASH_DURATION_MS = 500; // Flash duration in milliseconds
+    private Timer flashTimer;
+    private int lastSelectedRow = -1;
+    private ListSelectionListener selectionListener;
 
     public PlayersTable() {
         this.tableModel = new PlayersTableModel();
@@ -141,13 +124,14 @@ public class PlayersTable extends JTable {
             getColumnModel().getColumn(booleanColumn).setCellRenderer(
                     new DefaultTableCellRenderer() {
                         private final JCheckBox checkbox = new JCheckBox();
+
                         {
                             checkbox.setHorizontalAlignment(JCheckBox.CENTER);
                         }
 
                         @Override
                         public Component getTableCellRendererComponent(JTable table, Object value,
-                                boolean isSelected, boolean hasFocus, int row, int column) {
+                                                                       boolean isSelected, boolean hasFocus, int row, int column) {
                             if (value instanceof Boolean) {
                                 checkbox.setSelected((Boolean) value);
 
@@ -324,7 +308,7 @@ public class PlayersTable extends JTable {
                         }
                         break;
 
-                    case Commands.PLAYER_ACTIVATED:
+                    case Commands.PLAYER_SELECTION_EVENT:
                         if (action.getData() instanceof Player player) {
                             SwingUtilities.invokeLater(() -> {
                                 // Find the row for this player
@@ -356,17 +340,17 @@ public class PlayersTable extends JTable {
                         break;
                 }
             }
-        }, new String[] {
-        Commands.PLAYER_ADDED,
-        Commands.PLAYER_DELETED,
-        Commands.PLAYER_ROW_REFRESH,
-        Commands.SESSION_UPDATED,
-        Commands.SESSION_SELECTED,
-        Commands.SESSION_LOADED,
-        Commands.NEW_VALUE_VELOCITY_MIN,
-        Commands.NEW_VALUE_VELOCITY_MAX,
-        Commands.PLAYER_ACTIVATED
-    });
+        }, new String[]{
+                Commands.PLAYER_ADDED,
+                Commands.PLAYER_DELETED,
+                Commands.PLAYER_ROW_REFRESH,
+                Commands.SESSION_UPDATED,
+                Commands.SESSION_SELECTED,
+                Commands.SESSION_LOADED,
+                Commands.NEW_VALUE_VELOCITY_MIN,
+                Commands.NEW_VALUE_VELOCITY_MAX,
+                Commands.PLAYER_SELECTION_EVENT
+        });
     }
 
     private void updateTableFromSession(Session session) {
@@ -400,7 +384,7 @@ public class PlayersTable extends JTable {
             }
 
             if (player != null) {
-                CommandBus.getInstance().publish(Commands.PLAYER_ACTIVATION_REQUEST, this, player);
+                CommandBus.getInstance().publish(Commands.PLAYER_SELECTION_EVENT, this, player);
             } else {
                 // CommandBus.getInstance().publish(Commands.PLAYER_UNSELECTED, this, null);
             }
@@ -567,7 +551,7 @@ public class PlayersTable extends JTable {
 
     /**
      * Find the view row index of a player by ID
-     * 
+     *
      * @param playerId ID of the player to find
      * @return Row index in view coordinates, or -1 if not found
      */
@@ -634,7 +618,7 @@ public class PlayersTable extends JTable {
     /**
      * Converts a row index from the model's coordinate space to the view's
      * coordinate space
-     * 
+     *
      * @param modelRow The row index in model coordinates
      * @return The row index in view coordinates, or -1 if not found/visible
      */

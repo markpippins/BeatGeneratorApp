@@ -11,7 +11,7 @@ import com.angrysurfer.beats.panel.sequencer.SongPanel;
 import com.angrysurfer.beats.panel.sequencer.mono.MelodicSequencerPanel;
 import com.angrysurfer.beats.panel.sequencer.poly.DrumEffectsSequencerPanel;
 import com.angrysurfer.beats.panel.sequencer.poly.DrumParamsSequencerPanel;
-import com.angrysurfer.beats.panel.sequencer.poly.DrumSequencerPanel;
+import com.angrysurfer.beats.panel.sequencer.poly.DrumSequencerGridPanel;
 import com.angrysurfer.beats.panel.session.SessionPanel;
 import com.angrysurfer.beats.widget.CircleOfFifthsDial;
 import com.angrysurfer.core.api.Command;
@@ -49,7 +49,7 @@ public class MainPanel extends LivePanel implements AutoCloseable, IBusListener 
 
     private final MelodicSequencerPanel[] melodicPanels = new MelodicSequencerPanel[SequencerConstants.MELODIC_CHANNELS.length];
     private JTabbedPane tabbedPane;
-    private DrumSequencerPanel drumSequencerPanel;
+    private DrumSequencerGridPanel drumSequencerGridPanel;
     private DrumParamsSequencerPanel drumParamsSequencerPanel;
     private DrumEffectsSequencerPanel drumEffectsSequencerPanel;
     private GlobalMuteButtonsPanel muteButtonsPanel;
@@ -99,7 +99,7 @@ public class MainPanel extends LivePanel implements AutoCloseable, IBusListener 
         tabbedPane.addTab("Song", createSongPanel());
         tabbedPane.addTab("Mixer", createMixerPanel());
         tabbedPane.addTab("Synth", internalSynthControlPanel);
-        tabbedPane.addTab("Matrix", createModulationMatrixPanel());
+        // tabbedPane.addTab("Matrix", createModulationMatrixPanel());
         tabbedPane.addTab("Players", new SessionPanel());
 
         JPanel pianoPanel = new JPanel(new BorderLayout());
@@ -247,14 +247,14 @@ public class MainPanel extends LivePanel implements AutoCloseable, IBusListener 
         SwingUtilities.invokeLater(selectedComponent::requestFocusInWindow);
 
         // Case 1: DrumSequencerPanel direct selection
-        if (selectedComponent == drumSequencerPanel) {
+        if (selectedComponent == drumSequencerGridPanel) {
             // Add more comprehensive null checking
-            if (drumSequencerPanel.getDrumSelectorPanel() != null &&
-                    drumSequencerPanel.getDrumSelectorPanel().getSelectedDrumPadIndex() != null &&
-                    drumSequencerPanel.getSequencer() != null) {
+            if (drumSequencerGridPanel.getDrumSelectorPanel() != null &&
+                    drumSequencerGridPanel.getDrumSelectorPanel().getSelectedDrumPadIndex() != null &&
+                    drumSequencerGridPanel.getSequencer() != null) {
 
-                int padIndex = drumSequencerPanel.getDrumSelectorPanel().getSelectedDrumPadIndex();
-                Player player = drumSequencerPanel.getSequencer().getPlayer(padIndex);
+                int padIndex = drumSequencerGridPanel.getDrumSelectorPanel().getSelectedDrumPadIndex();
+                Player player = drumSequencerGridPanel.getSequencer().getPlayer(padIndex);
 
                 if (player != null) {
                     activatePlayer(player, "drum sequencer");
@@ -293,7 +293,7 @@ public class MainPanel extends LivePanel implements AutoCloseable, IBusListener 
             Player player = null;
 
             try {
-                if (selectedDrumsTab instanceof DrumSequencerPanel drumPanel) {
+                if (selectedDrumsTab instanceof DrumSequencerGridPanel drumPanel) {
 
                     if (drumPanel.getDrumSelectorPanel() != null &&
                             drumPanel.getDrumSelectorPanel().getSelectedDrumPadIndex() != null &&
@@ -490,17 +490,17 @@ public class MainPanel extends LivePanel implements AutoCloseable, IBusListener 
     }
 
     private Component createDrumPanel() {
-        drumSequencerPanel = new DrumSequencerPanel(noteEvent -> {
+        drumSequencerGridPanel = new DrumSequencerGridPanel(noteEvent -> {
             logger.debug("Drum note event received: note={}, velocity={}",
                     noteEvent.getNote(), noteEvent.getVelocity());
 
             // Publish to CommandBus so MuteButtonsPanel can respond
             // Subtract 36 to convert MIDI note to drum index (36=kick, etc.)
             int drumIndex = noteEvent.getNote() - 36;
-            CommandBus.getInstance().publish(Commands.DRUM_NOTE_TRIGGERED, drumSequencerPanel.getSequencer(),
+            CommandBus.getInstance().publish(Commands.DRUM_NOTE_TRIGGERED, drumSequencerGridPanel.getSequencer(),
                     drumIndex);
         });
-        return drumSequencerPanel;
+        return drumSequencerGridPanel;
     }
 
     private Component createDrumEffectsPanel() {
@@ -612,8 +612,8 @@ public class MainPanel extends LivePanel implements AutoCloseable, IBusListener 
 
     private void updateMuteButtonSequencers() {
         // Set the drum sequencer
-        if (drumSequencerPanel != null) {
-            DrumSequencer drumSeq = drumSequencerPanel.getSequencer();
+        if (drumSequencerGridPanel != null) {
+            DrumSequencer drumSeq = drumSequencerGridPanel.getSequencer();
             muteButtonsPanel.setDrumSequencer(drumSeq);
 
             // *** THIS IS THE CRITICAL PART - Set up drum note event publisher ***
@@ -808,8 +808,8 @@ public class MainPanel extends LivePanel implements AutoCloseable, IBusListener 
             logger.info("Global looping toggled: {}", isLooping ? "ON" : "OFF");
 
             // Set looping state for drum sequencer
-            if (drumSequencerPanel != null && drumSequencerPanel.getSequencer() != null) {
-                drumSequencerPanel.getSequencer().setLooping(isLooping);
+            if (drumSequencerGridPanel != null && drumSequencerGridPanel.getSequencer() != null) {
+                drumSequencerGridPanel.getSequencer().setLooping(isLooping);
             }
 
             // Set looping state for all melodic sequencers
@@ -936,8 +936,8 @@ public class MainPanel extends LivePanel implements AutoCloseable, IBusListener 
         mixButton.addActionListener(e -> {
             // Get current sequencer
             DrumSequencer sequencer = null;
-            if (drumSequencerPanel != null) {
-                sequencer = drumSequencerPanel.getSequencer();
+            if (drumSequencerGridPanel != null) {
+                sequencer = drumSequencerGridPanel.getSequencer();
             }
 
             if (sequencer != null) {

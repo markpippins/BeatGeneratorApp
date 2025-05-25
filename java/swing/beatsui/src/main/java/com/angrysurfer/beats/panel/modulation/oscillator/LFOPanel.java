@@ -156,7 +156,7 @@ public class LFOPanel extends JPanel implements AutoCloseable {
         liveWaveformContainer.add(valueDisplayPanel, BorderLayout.SOUTH);
 
         // Create waveform selector
-        String[] waveforms = { "Sine", "Triangle", "Sawtooth", "Square", "Pulse", "Random" };
+        String[] waveforms = {"Sine", "Triangle", "Sawtooth", "Square", "Pulse", "Random"};
         waveformCombo = new JComboBox<>(waveforms);
         waveformCombo.setSelectedIndex(0);
         waveformCombo.addActionListener(e -> {
@@ -274,7 +274,7 @@ public class LFOPanel extends JPanel implements AutoCloseable {
 
         // Create slider for timing division - CORRECTLY REVERSED for fractions of cycle
         // per bar
-        String[] divisions = { "1/1", "1/2", "1/4", "1/8", "1/16", "1/32" };
+        String[] divisions = {"1/1", "1/2", "1/4", "1/8", "1/16", "1/32"};
         divisionSlider = new JSlider(JSlider.HORIZONTAL, 0, divisions.length - 1, 0); // Default 1/1
         divisionSlider.setPreferredSize(new Dimension(120, 20));
         divisionSlider.setSnapToTicks(true);
@@ -334,7 +334,7 @@ public class LFOPanel extends JPanel implements AutoCloseable {
      * Creates a Dial with label and value display
      */
     private DoubleDial createDial(String name, double min, double max, double initial, double step,
-            Consumer<Double> changeListener) {
+                                  Consumer<Double> changeListener) {
         JPanel panel = new JPanel(new BorderLayout(2, 2));
         panel.setBorder(BorderFactory.createTitledBorder(name));
 
@@ -364,7 +364,7 @@ public class LFOPanel extends JPanel implements AutoCloseable {
      * Updated to add increment/decrement buttons for step size control
      */
     private JPanel createDialPanel(String name, String tooltip, double min, double max, double initial, double step,
-            Consumer<Double> changeListener) {
+                                   Consumer<Double> changeListener) {
         // Create panel with border layout
         JPanel panel = new JPanel(new BorderLayout(2, 2));
         panel.setBorder(BorderFactory.createCompoundBorder(
@@ -380,7 +380,7 @@ public class LFOPanel extends JPanel implements AutoCloseable {
         dial.setToolTipText(tooltip);
 
         // Format pattern based on step size - show more decimals for finer steps
-        int decimals = step < 0.01 ? 3 : 2;
+        int decimals = step < 0.001 ? 4 : 3;
         String formatPattern = "%." + decimals + "f";
 
         // Create value label with formatted current value
@@ -498,7 +498,7 @@ public class LFOPanel extends JPanel implements AutoCloseable {
         executor.scheduleAtFixedRate(() -> {
             if (running) {
                 double timeInSeconds = (System.currentTimeMillis() - startTimeMs) / 1000.0;
-                double[] newValue = { lfo.getValue(timeInSeconds) };
+                double[] newValue = {lfo.getValue(timeInSeconds)};
                 // Clamp the value between -1 and 1
                 newValue[0] = Math.max(-1.0, Math.min(1.0, newValue[0]));
 
@@ -677,6 +677,37 @@ public class LFOPanel extends JPanel implements AutoCloseable {
         }
     }
 
+    private JButton createStepButton(String label, Dial dial, double step) {
+        JButton button = new JButton(label);
+        button.setPreferredSize(new Dimension(20, 20));
+        button.setMinimumSize(new Dimension(20, 20));
+        button.setMaximumSize(new Dimension(20, 20));
+        button.setFont(new Font("Monospaced", Font.PLAIN, 8));
+        button.setToolTipText("Set step size to " + step);
+
+        button.addActionListener(e -> {
+            // dial.setStepSize(step);
+            // Optionally highlight the active step button
+            resetStepButtonStyles();
+            button.setBackground(Color.LIGHT_GRAY);
+        });
+
+        return button;
+    }
+
+    private void resetStepButtonStyles() {
+        // Reset all step buttons to default style
+        for (Component comp : getComponents()) {
+            if (comp instanceof JPanel) {
+                for (Component subComp : ((JPanel) comp).getComponents()) {
+                    if (subComp instanceof JButton) {
+                        subComp.setBackground(null);
+                    }
+                }
+            }
+        }
+    }
+
     /**
      * Panel for visualizing the waveform
      */
@@ -791,37 +822,6 @@ public class LFOPanel extends JPanel implements AutoCloseable {
             }
 
             g2d.dispose();
-        }
-    }
-
-    private JButton createStepButton(String label, Dial dial, double step) {
-        JButton button = new JButton(label);
-        button.setPreferredSize(new Dimension(20, 20));
-        button.setMinimumSize(new Dimension(20, 20));
-        button.setMaximumSize(new Dimension(20, 20));
-        button.setFont(new Font("Monospaced", Font.PLAIN, 8));
-        button.setToolTipText("Set step size to " + step);
-
-        button.addActionListener(e -> {
-            // dial.setStepSize(step);
-            // Optionally highlight the active step button
-            resetStepButtonStyles();
-            button.setBackground(Color.LIGHT_GRAY);
-        });
-
-        return button;
-    }
-
-    private void resetStepButtonStyles() {
-        // Reset all step buttons to default style
-        for (Component comp : getComponents()) {
-            if (comp instanceof JPanel) {
-                for (Component subComp : ((JPanel) comp).getComponents()) {
-                    if (subComp instanceof JButton) {
-                        subComp.setBackground(null);
-                    }
-                }
-            }
         }
     }
 }

@@ -53,6 +53,8 @@ public class MelodicSequencerPanel extends JPanel implements IBusListener {
 
     private TiltSequencerPanel tiltSequencerPanel;
 
+    private MuteSequencerPanel muteSequencerPanel;
+
     private MelodicSequencerGridPanel gridPanel;
 
     private MelodicSequencerScalePanel scalePanel;
@@ -76,9 +78,7 @@ public class MelodicSequencerPanel extends JPanel implements IBusListener {
         sequencer.setNoteEventListener(noteEventConsumer);
 
         // Set up step update listener with DIRECT callback (no CommandBus)
-        sequencer.setStepUpdateListener(event -> {
-            updateStepHighlighting(event.getOldStep(), event.getNewStep());
-        });
+        sequencer.setStepUpdateListener(event -> updateStepHighlighting(event.getOldStep(), event.getNewStep()));
 
         // Apply instrument preset immediately to ensure correct sound
         PlayerManager.getInstance().applyInstrumentPreset(sequencer.getPlayer());
@@ -89,23 +89,19 @@ public class MelodicSequencerPanel extends JPanel implements IBusListener {
         // Try to load the first sequence for this sequencer
         loadFirstSequenceIfExists();
 
-        // Register with command bus for other UI updates (not step highlighting)
         CommandBus.getInstance().register(this, new String[]{
-                Commands.MELODIC_SEQUENCE_LOADED,
-                Commands.MELODIC_SEQUENCE_CREATED,
-                Commands.MELODIC_SEQUENCE_SELECTED,
+                Commands.DRUM_PAD_SELECTED,
+                Commands.DRUM_STEP_SELECTED,
+                Commands.DRUM_INSTRUMENTS_UPDATED,
+                Commands.HIGHLIGHT_STEP,
+                Commands.TIMING_UPDATE,
+                Commands.DRUM_PAD_SELECTED,
+                Commands.PLAYER_SELECTION_EVENT,
+                Commands.TRANSPORT_STOP,
+                Commands.MELODIC_SEQUENCE_LOADED,    // Add these events
                 Commands.MELODIC_SEQUENCE_UPDATED,
-                Commands.SCALE_SELECTED,
-                Commands.PATTERN_UPDATED,
-                Commands.PLAYER_UPDATED,
-                Commands.INSTRUMENT_CHANGED,
-                Commands.HIGHLIGHT_STEP
+                Commands.MELODIC_SEQUENCE_CREATED
         });
-
-        logger.info("MelodicSequencerPanel registered for specific sequencer events");
-
-
-        logger.info("Created MelodicSequencerPanel with index {}", index);
     }
 
     /**
@@ -119,12 +115,9 @@ public class MelodicSequencerPanel extends JPanel implements IBusListener {
         }
 
         try {
-            // Get the manager reference
-            MelodicSequencerManager manager = MelodicSequencerManager.getInstance();
-
             // Check if this sequencer has any sequences
-            if (manager.hasSequences(sequencer.getId())) {
-                Long firstId = manager.getFirstSequenceId(sequencer.getId());
+            if (MelodicSequencerManager.getInstance().hasSequences(sequencer.getId())) {
+                Long firstId = MelodicSequencerManager.getInstance().getFirstSequenceId(sequencer.getId());
 
                 if (firstId != null) {
                     MelodicSequenceData data = RedisService.getInstance().findMelodicSequenceById(firstId,
@@ -150,6 +143,8 @@ public class MelodicSequencerPanel extends JPanel implements IBusListener {
                         if (tiltSequencerPanel != null) {
                             tiltSequencerPanel.syncWithSequencer();
                         }
+
+                        CommandBus.getInstance().publish(Commands.SEQUENCER_SYNC_MESSAGE, this, sequencer);
                     });
 
                     // Notify that a pattern was loaded
@@ -197,6 +192,8 @@ public class MelodicSequencerPanel extends JPanel implements IBusListener {
                 if (tiltSequencerPanel != null) {
                     tiltSequencerPanel.syncWithSequencer();
                 }
+
+                CommandBus.getInstance().publish(Commands.SEQUENCER_SYNC_MESSAGE, this, sequencer);
             });
 
             // Notify that a new sequence was created
@@ -281,7 +278,8 @@ public class MelodicSequencerPanel extends JPanel implements IBusListener {
 
         tiltSequencerPanel = new TiltSequencerPanel(sequencer);
         topPanel.add(tiltSequencerPanel, BorderLayout.SOUTH);
-        sequencersPanel.add(new MuteSequencerPanel(sequencer), BorderLayout.NORTH);
+        muteSequencerPanel = new MuteSequencerPanel(sequencer);
+        sequencersPanel.add(muteSequencerPanel, BorderLayout.NORTH);
         // Create bottom panel with BorderLayout for proper positioning
         JPanel bottomPanel = new JPanel(new BorderLayout(2, 1));
 
@@ -317,24 +315,15 @@ public class MelodicSequencerPanel extends JPanel implements IBusListener {
         JButton refreshButton = new JButton(Symbols.get(Symbols.REFRESH));
         refreshButton.setToolTipText("Refresh all instrument presets");
         refreshButton.setPreferredSize(new Dimension(UIHelper.SMALL_CONTROL_WIDTH, UIHelper.CONTROL_HEIGHT));
-        refreshButton.addActionListener(e -> {
-            CommandBus.getInstance().publish(
-                    Commands.REFRESH_ALL_INSTRUMENTS,
-                    this,
-                    sequencer);
-        });
+        refreshButton.addActionListener(e -> CommandBus.getInstance().publish(
+                Commands.REFRESH_ALL_INSTRUMENTS,
+                this,
+                sequencer));
         buttonPanel.add(refreshButton);
         buttonPanel.add(createInstrumentRefreshButton());
         buttonPanel.add(createRefreshButton());
         // Add the button to the bottom panel
         //westPanel.add(buttonPanel, BorderLayout.WEST);
-
-        CommandBus.getInstance().register(this, new String[]{
-                Commands.DRUM_PAD_SELECTED,
-                Commands.DRUM_STEP_SELECTED,
-                Commands.DRUM_INSTRUMENTS_UPDATED,
-                Commands.HIGHLIGHT_STEP
-        });
     }
 
     // Add this as a new method:
@@ -391,7 +380,7 @@ public class MelodicSequencerPanel extends JPanel implements IBusListener {
                         instr.getName(), instr.getBankIndex(), instr.getPreset());
 
                 // Send the player-specific refresh event
-                PlayerRefreshEvent event = new PlayerRefreshEvent(sequencer.getPlayer());
+                PlayerRefreshEvent event = new PlayerRefreshEvent(this, sequencer.getPlayer());
                 com.angrysurfer.core.api.CommandBus.getInstance().publish(
                         com.angrysurfer.core.api.Commands.PLAYER_REFRESH_EVENT,
                         this,
@@ -428,56 +417,37 @@ public class MelodicSequencerPanel extends JPanel implements IBusListener {
     private void syncUIWithSequencer() {
         updatingUI = true;
         try {
-
             // Update sequence parameters panel
-            if (sequenceParamsPanel != null) {
+            if (sequenceParamsPanel != null)
                 sequenceParamsPanel.updateUI(sequencer);
-            }
 
-            // Update scale panel
-            if (scalePanel != null) {
+            if (scalePanel != null)
                 scalePanel.updateUI(sequencer);
-            }
 
-            // Update grid panel
-            if (gridPanel != null) {
+            if (gridPanel != null)
                 gridPanel.syncWithSequencer();
-            }
 
-            // Update tilt sequencer panel - THIS WAS MISSING
-            if (tiltSequencerPanel != null) {
-                logger.debug("Syncing tilt panel with sequencer values: {}",
-                        sequencer.getHarmonicTiltValues().size());
+            if (tiltSequencerPanel != null)
                 tiltSequencerPanel.syncWithSequencer();
-            }
 
-            // Update swing panel - THIS WAS MISSING
-            if (swingPanel != null) {
+            if (swingPanel != null)
                 swingPanel.updateControls();
-            }
 
-            // Update navigation panel - THIS WAS MISSING
-            if (navigationPanel != null) {
+            if (navigationPanel != null)
                 navigationPanel.updateSequenceIdDisplay();
-            }
 
-            // Update instrument info label - THIS WAS MISSING
-            // updateInstrumentInfoLabel();
-
-            // Check and update latch toggle button if needed - THIS WAS MISSING
             if (latchToggleButton != null)
                 latchToggleButton.setSelected(sequencer.isLatchEnabled());
 
-            // Update generator panel
-            if (generatorPanel != null) {
+            if (generatorPanel != null)
                 generatorPanel.syncWithSequencer();
-            }
+
+            CommandBus.getInstance().publish(Commands.SEQUENCER_SYNC_MESSAGE, this, sequencer);
 
         } finally {
             updatingUI = false;
         }
 
-        // Force revalidate and repaint
         revalidate();
         repaint();
     }

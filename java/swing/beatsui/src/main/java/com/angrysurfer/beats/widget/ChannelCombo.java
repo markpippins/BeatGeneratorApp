@@ -32,7 +32,7 @@ public class ChannelCombo extends JComboBox<Integer> implements IBusListener {
      */
     public ChannelCombo() {
         super();
-        CommandBus.getInstance().register(this, new String[]{Commands.PLAYER_ACTIVATED,
+        CommandBus.getInstance().register(this, new String[]{Commands.PLAYER_SELECTION_EVENT,
                 Commands.PLAYER_UPDATED, Commands.CHANNEL_ASSIGNMENT_CHANGED});
 
         // Populate all 16 channels
@@ -110,7 +110,7 @@ public class ChannelCombo extends JComboBox<Integer> implements IBusListener {
         }
 
         switch (action.getCommand()) {
-            case Commands.PLAYER_ACTIVATED:
+            case Commands.PLAYER_SELECTION_EVENT:
                 if (action.getData() instanceof Player player) {
                     setCurrentPlayer(player);
                 }

@@ -1,11 +1,10 @@
 package com.angrysurfer.core.model;
 
-import java.util.List;
-
 import com.angrysurfer.core.sequencer.TimingUpdate;
-
 import lombok.Getter;
 import lombok.Setter;
+
+import java.util.List;
 
 @Setter
 @Getter
@@ -19,28 +18,31 @@ public class Note extends Player {
     public Note() {
         // initialize(); // Call initialize to set up basic properties
         setMelodicPlayer(true);
+        setFollowSessionOffset(false);
     }
 
     /**
      * Main constructor for Note with basic parameters
      */
     public Note(String name, Session session, InstrumentWrapper instrument, int note,
-            List<Integer> allowedControlMessages) {
+                List<Integer> allowedControlMessages) {
         initialize(name, session, instrument, allowedControlMessages);
         setRootNote(note);
         setMelodicPlayer(true);
+        setFollowSessionOffset(false);
     }
 
     /**
      * Extended constructor with velocity parameters
      */
     public Note(String name, Session session, InstrumentWrapper instrument, int note,
-            List<Integer> allowableControlMessages, int minVelocity, int maxVelocity) {
+                List<Integer> allowableControlMessages, int minVelocity, int maxVelocity) {
         initialize(name, session, instrument, allowableControlMessages);
         setRootNote(note);
         setMinVelocity(minVelocity);
         setMaxVelocity(maxVelocity);
         setMelodicPlayer(true);
+        setFollowSessionOffset(false);
     }
 
     /**
@@ -51,7 +53,6 @@ public class Note extends Player {
     // this.name = name;
     // setRootNote(rootNote);
     // }
-
     @Override
     public void onTick(TimingUpdate timingUpdate) {
         // Implementation details

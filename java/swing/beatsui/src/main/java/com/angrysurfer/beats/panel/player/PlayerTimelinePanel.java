@@ -87,7 +87,7 @@ public class PlayerTimelinePanel extends LivePanel implements IBusListener {
 
         // Register for specific events only
         CommandBus.getInstance().register(this, new String[]{
-                Commands.PLAYER_ACTIVATED,
+                Commands.PLAYER_SELECTION_EVENT,
                 Commands.PLAYER_UPDATED,
                 Commands.NEW_VALUE_NOTE,
                 Commands.PRESET_UP,
@@ -737,7 +737,7 @@ public class PlayerTimelinePanel extends LivePanel implements IBusListener {
 
         SwingUtilities.invokeLater(() -> {
             switch (action.getCommand()) {
-                case Commands.PLAYER_ACTIVATED -> {
+                case Commands.PLAYER_SELECTION_EVENT -> {
                     if (action.getData() instanceof Player p) {
                         player = p;
                         updateTimelineWithFixedRowHeights();

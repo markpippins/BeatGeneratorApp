@@ -2,6 +2,7 @@ package com.angrysurfer.core.model;
 
 import com.angrysurfer.core.sequencer.SequencerConstants;
 import com.angrysurfer.core.sequencer.TimingUpdate;
+import com.angrysurfer.core.service.SessionManager;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -13,22 +14,13 @@ import java.util.stream.LongStream;
 @Setter
 public class Strike extends Player {
 
-    public static int KICK = 36;
-    public static int SNARE = 37;
-    public static int CLOSED_HAT = 38;
-    public static int OPEN_HAT = 39;
-
-    public static List<Integer> razParams = List.of(16, 17, 18, 19, 20, 21, 22, 23);
-    public static List<Integer> closedHatParams = List.of(24, 25, 26, 27, 28, 29, 30, 31);
-    public static List<Integer> kickParams = List.of(1, 2, 3, 4, 12, 13, 14, 15);
-    public static List<Integer> snarePrams = List.of(16, 17, 18, 19, 20, 21, 22, 23);
-
     /**
      * Default constructor
      */
     public Strike() {
         setRules(new HashSet<>()); // Initialize rules set
         setDrumPlayer(true);
+        setFollowSessionOffset(true);
     }
 
     /**
@@ -40,6 +32,7 @@ public class Strike extends Player {
         setRootNote(note);
         setDrumPlayer(true);
         setDrumPlayer(true);
+        setFollowSessionOffset(true);
     }
 
     /**
@@ -52,6 +45,7 @@ public class Strike extends Player {
         setMinVelocity(minVelocity);
         setMaxVelocity(maxVelocity);
         setDrumPlayer(true);
+        setFollowSessionOffset(true);
     }
 
     @Override
@@ -61,24 +55,17 @@ public class Strike extends Player {
 
     @Override
     public void onTick(TimingUpdate timingUpdate) {
-        // Get additional timing values from the session
-//        Session session = getSession();
-//        if (session == null) {
-//            System.err.println("Strike.onTick: No session available");
-//            return;
-//        }
 
         // Check if we should play based on the current timing
-        boolean shouldPlayResult = shouldPlay(timingUpdate);
-
-        if (shouldPlayResult) {
+        if (!getFollowRules() || shouldPlay(timingUpdate)) {
             try {
                 int noteToPlay = getRootNote();
-                // System.out.println("Strike.onTick playing note: " + noteToPlay);
-                drumNoteOn(noteToPlay);
+                // System.out.println("Strike.onTick playing note: " + noteToPlay);(
+                if (getFollowSessionOffset())
+                    noteToPlay += SessionManager.getInstance().getActiveSession().getNoteOffset();
+                noteOn(noteToPlay, getLevel());
             } catch (Exception e) {
                 System.err.println("Error in Strike.onTick: " + e.getMessage());
-                e.printStackTrace();
             }
         }
     }

@@ -1,11 +1,12 @@
 package com.angrysurfer.beats.panel.player;
 
-import com.angrysurfer.beats.panel.LivePanel;
 import com.angrysurfer.core.model.InstrumentWrapper;
 import com.angrysurfer.core.model.Player;
 import com.angrysurfer.core.sequencer.DrumSequencer;
 import com.angrysurfer.core.sequencer.SequencerConstants;
 import com.angrysurfer.core.service.PlayerManager;
+import lombok.Getter;
+import lombok.Setter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -15,10 +16,11 @@ import java.awt.*;
 /**
  * Panel for editing player properties using the PlayerAwarePanel pattern
  */
-public class PlayerEditPanel extends LivePanel {
+@Getter
+@Setter
+public class PlayerEditPanel extends JPanel {
     private static final Logger logger = LoggerFactory.getLogger(PlayerEditPanel.class);
-    // Services
-    private final PlayerManager playerManager = PlayerManager.getInstance();
+
     // UI Components
     private PlayerEditBasicPropertiesPanel basicPropertiesPanel;
     private PlayerEditDetailPanel detailPanel;
@@ -27,48 +29,17 @@ public class PlayerEditPanel extends LivePanel {
     private InstrumentWrapper initialInstrument;
     private DrumSequencer owningSequencer = null;
 
+    private Player player;
+
     /**
-     * Constructor
+     * Constructor - Fixed initialization order
      */
     public PlayerEditPanel(Player player) {
         super();
-        setPlayer(player);
+        this.player = player;
+
         initComponents();
         layoutComponents();
-    }
-
-    /**
-     * Handle when a new player is activated for this panel
-     */
-    @Override
-    public void handlePlayerActivated() {
-        logger.info("Player activated in edit panel: {}", getPlayer() != null ? getPlayer().getName() : "null");
-
-        // Cache initial state for comparison when saving
-        Player player = getPlayer();
-        if (player != null) {
-            initialIsDrumPlayer = player.getChannel() == SequencerConstants.MIDI_DRUM_CHANNEL;
-            initialInstrument = player.getInstrument();
-
-            // Check if this is part of a drum sequencer
-            if (player.getOwner() instanceof DrumSequencer) {
-                owningSequencer = (DrumSequencer) player.getOwner();
-            } else {
-                owningSequencer = null;
-            }
-        }
-
-        // Update all panels with the new player
-        updatePanels();
-    }
-
-    /**
-     * Handle when the panel's player is updated
-     */
-    @Override
-    public void handlePlayerUpdated() {
-        logger.info("Player updated in edit panel: {}", getPlayer() != null ? getPlayer().getName() : "null");
-        updatePanels();
     }
 
     /**
@@ -145,10 +116,10 @@ public class PlayerEditPanel extends LivePanel {
         handleDrumPlayerChanges();
 
         // Save through PlayerManager for consistency
-        playerManager.savePlayerProperties(player);
+        PlayerManager.getInstance().savePlayerProperties(player);
 
         // Request player update to notify other components
-        requestPlayerUpdate();
+        /// requestPlayerUpdate();
     }
 
     /**
@@ -190,7 +161,7 @@ public class PlayerEditPanel extends LivePanel {
                         drumPlayer.setInstrumentId(player.getInstrument().getId());
 
                         // Save changes
-                        playerManager.savePlayerProperties(drumPlayer);
+                        PlayerManager.getInstance().savePlayerProperties(drumPlayer);
                     }
                 }
 

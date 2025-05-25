@@ -14,7 +14,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.util.Objects;
 
-public class ToolBar extends JToolBar {
+public class ToolBar extends JToolBar implements IBusListener {
 
     static final int PANEL_WIDTH = 450;
     private Session currentSession;
@@ -30,35 +30,11 @@ public class ToolBar extends JToolBar {
         setup();
 
         // Set up command bus listener
-        CommandBus.getInstance().register(new IBusListener() {
-            @Override
-            public void onAction(Command action) {
-                // Skip if this ToolBar is the sender
-                if (action.getSender() == ToolBar.this) {
-                    return;
-                }
-
-                if (Objects.nonNull(action.getCommand())) {
-                    switch (action.getCommand()) {
-                        case Commands.SESSION_SELECTED:
-                        case Commands.SESSION_UPDATED:
-                        case Commands.SESSION_CREATED:
-                            if (action.getData() instanceof Session session) {
-                                displayPanel.setSession(session);
-                                controlPanel.setSession(session);
-                                // transportPanel.updateTransportState(session);
-                                // sessionNameField.setText(session.getName());
-                                currentSession = session;
-                            }
-                            break;
-                    }
-                }
-            }
-        }, new String[] {
-    Commands.SESSION_SELECTED,
-    Commands.SESSION_UPDATED,
-    Commands.SESSION_CREATED
-});
+        CommandBus.getInstance().register(this, new String[]{
+                Commands.SESSION_SELECTED,
+                Commands.SESSION_UPDATED,
+                Commands.SESSION_CREATED
+        });
 
         // Request the initial session state
         SwingUtilities.invokeLater(() -> {
@@ -69,6 +45,25 @@ public class ToolBar extends JToolBar {
                 CommandBus.getInstance().publish(Commands.SESSION_REQUEST, this);
             }
         });
+    }
+
+    @Override
+    public void onAction(Command action) {
+        if (Objects.nonNull(action.getCommand())) {
+            switch (action.getCommand()) {
+                case Commands.SESSION_SELECTED:
+                case Commands.SESSION_UPDATED:
+                case Commands.SESSION_CREATED:
+                    if (action.getData() instanceof Session session) {
+                        displayPanel.setSession(session);
+                        controlPanel.setSession(session);
+                        // transportPanel.updateTransportState(session);
+                        // sessionNameField.setText(session.getName());
+                        currentSession = session;
+                    }
+                    break;
+            }
+        }
     }
 
     private void setup() {

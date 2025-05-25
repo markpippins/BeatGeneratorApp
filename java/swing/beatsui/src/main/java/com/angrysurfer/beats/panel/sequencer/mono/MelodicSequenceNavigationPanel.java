@@ -6,6 +6,7 @@ import com.angrysurfer.core.api.Command;
 import com.angrysurfer.core.api.CommandBus;
 import com.angrysurfer.core.api.Commands;
 import com.angrysurfer.core.event.MelodicSequencerEvent;
+import com.angrysurfer.core.redis.RedisService;
 import com.angrysurfer.core.sequencer.Direction;
 import com.angrysurfer.core.sequencer.MelodicSequencer;
 import com.angrysurfer.core.sequencer.TimingDivision;
@@ -205,9 +206,8 @@ public class MelodicSequenceNavigationPanel extends LivePanel {
                     sequencer.getId(), 0L); // Use 0 to indicate new sequence
 
             // Reset the sequencer and clear pattern
-            sequencer.setId(0); // Set to 0 to indicate new unsaved sequence
-            sequencer.reset();
-            sequencer.getSequenceData().clearPattern();
+            // sequencer.setId(0); // Set to 0 to indicate new unsaved sequence
+            sequencer.setSequenceData(RedisService.getInstance().newMelodicSequence(sequencer.getId()));
 
             // Set default parameters
             sequencer.getSequenceData().setPatternLength(16);

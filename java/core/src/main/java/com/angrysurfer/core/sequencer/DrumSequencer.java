@@ -2,10 +2,7 @@ package com.angrysurfer.core.sequencer;
 
 import com.angrysurfer.core.api.*;
 import com.angrysurfer.core.api.midi.MIDIConstants;
-import com.angrysurfer.core.event.DrumPadSelectionEvent;
-import com.angrysurfer.core.event.DrumStepUpdateEvent;
-import com.angrysurfer.core.event.NoteEvent;
-import com.angrysurfer.core.event.PatternSwitchEvent;
+import com.angrysurfer.core.event.*;
 import com.angrysurfer.core.model.InstrumentWrapper;
 import com.angrysurfer.core.model.Player;
 import com.angrysurfer.core.model.Session;
@@ -47,6 +44,8 @@ public class DrumSequencer implements IBusListener {
     private Consumer<NoteEvent> noteEventPublisher;
     // Add field to track if we're using internal synth
     private boolean usingInternalSynth = false;
+    private Integer currentBar = null;
+    // private Integer currentPart = null;
 
     /**
      * Creates a new drum sequencer with per-drum parameters
@@ -69,17 +68,17 @@ public class DrumSequencer implements IBusListener {
 
         // Register with command bus
         CommandBus.getInstance().register(this, new String[]{
-            Commands.REPAIR_MIDI_CONNECTIONS,
-            Commands.TIMING_UPDATE,
-            Commands.TRANSPORT_START,
-            Commands.TRANSPORT_STOP,
-            Commands.UPDATE_TEMPO,
-            Commands.DRUM_PAD_SELECTED,
-            Commands.DRUM_STEP_UPDATED,
-            Commands.REFRESH_ALL_INSTRUMENTS,
-            Commands.REFRESH_PLAYER_INSTRUMENT,
-            Commands.PLAYER_UPDATED,
-            Commands.PLAYER_INSTRUMENT_CHANGED
+                Commands.REPAIR_MIDI_CONNECTIONS,
+                Commands.TIMING_UPDATE,
+                Commands.TRANSPORT_START,
+                Commands.TRANSPORT_STOP,
+                Commands.UPDATE_TEMPO,
+                Commands.DRUM_PAD_SELECTED,
+                Commands.DRUM_STEP_UPDATED,
+                Commands.REFRESH_ALL_INSTRUMENTS,
+                Commands.REFRESH_PLAYER_INSTRUMENT,
+                Commands.PLAYER_UPDATED,
+                Commands.PLAYER_INSTRUMENT_CHANGED
         });
 
         TimingBus.getInstance().register(this);
@@ -185,9 +184,9 @@ public class DrumSequencer implements IBusListener {
     /**
      * Initialize a drum pad with proper device connections
      *
-     * @param drumIndex The index of the drum pad to initialize
+     * @param drumIndex     The index of the drum pad to initialize
      * @param defaultDevice The default MIDI device to use if a specific one
-     * isn't available
+     *                      isn't available
      */
     private void initializeDrumPadConnections(int drumIndex, MidiDevice defaultDevice) {
         try {
@@ -298,7 +297,7 @@ public class DrumSequencer implements IBusListener {
 
         // Notify UI of parameter change
         CommandBus.getInstance().publish(Commands.DRUM_SEQUENCE_PARAMS_CHANGED, this, -1 // -1 indicates global
-        // parameter
+                // parameter
         );
     }
 
@@ -394,15 +393,17 @@ public class DrumSequencer implements IBusListener {
     public void reset(boolean preservePositions) {
         // Use the data object's reset method
         sequenceData.reset(preservePositions);
+        sequenceData.setMasterTempo(SessionManager.getInstance().getActiveSession().getTicksPerBeat());
 
         // Force the sequencer to generate an event to update visual indicators
-        if (stepUpdateListener != null) {
-            for (int drumIndex = 0; drumIndex < SequencerConstants.DRUM_PAD_COUNT; drumIndex++) {
-                stepUpdateListener
-                        .accept(new DrumStepUpdateEvent(drumIndex, -1, sequenceData.getCurrentStep()[drumIndex]));
-            }
-        }
+        //        if (stepUpdateListener != null) {
+        //            for (int drumIndex = 0; drumIndex < SequencerConstants.DRUM_PAD_COUNT; drumIndex++) {
+        //                stepUpdateListener
+        //                        .accept(new DrumStepUpdateEvent(drumIndex, -1, sequenceData.getCurrentStep()[drumIndex]));
+        //            }
+        //        }
 
+        CommandBus.getInstance().publish(Commands.DRUM_SEQUENCE_UPDATED, this, this);
         logger.debug("Sequencer reset - preservePositions={}", preservePositions);
     }
 
@@ -497,7 +498,7 @@ public class DrumSequencer implements IBusListener {
      * completes
      *
      * @param patternId The ID of the next pattern, or null to disable automatic
-     * switching
+     *                  switching
      */
     public void setNextPatternId(Long patternId) {
         sequenceData.setNextPatternId(patternId);
@@ -535,10 +536,8 @@ public class DrumSequencer implements IBusListener {
         int length = sequenceData.getPatternLengths()[drumIndex];
 
         return switch (direction) {
-            case FORWARD ->
-                (currentPos + length - 1) % length;
-            case BACKWARD ->
-                (currentPos + 1) % length;
+            case FORWARD -> (currentPos + length - 1) % length;
+            case BACKWARD -> (currentPos + 1) % length;
             case BOUNCE -> {
                 // For bounce, it depends on the current bounce direction
                 if (sequenceData.getBounceDirections()[drumIndex] > 0) {
@@ -547,8 +546,7 @@ public class DrumSequencer implements IBusListener {
                     yield currentPos < length - 1 ? currentPos + 1 : length - 1;
                 }
             }
-            case RANDOM ->
-                currentPos; // For random, just use current position
+            case RANDOM -> currentPos; // For random, just use current position
         };
     }
 
@@ -559,6 +557,13 @@ public class DrumSequencer implements IBusListener {
      * @param stepIndex The step index
      */
     private void triggerDrumStep(int drumIndex, int stepIndex) {
+
+        // Get player
+        Player player = players[drumIndex];
+        if (player == null || player.isMuted()) {
+            return;
+        }
+
         // Skip if step is inactive
         if (!sequenceData.isStepActive(drumIndex, stepIndex)) {
             return;
@@ -581,11 +586,6 @@ public class DrumSequencer implements IBusListener {
             return;
         }
 
-        // Get player
-        Player player = players[drumIndex];
-        if (player == null) {
-            return;
-        }
 
         // Set instrument if needed
         if (player.getInstrument() == null && player.getInstrumentId() != null) {
@@ -605,21 +605,27 @@ public class DrumSequencer implements IBusListener {
         }
 
         // Now trigger the note
-        final int finalNoteNumber = player.getRootNote();
-        final int finalVelocityCopy = finalVelocity;
+        final int offset = player.getOffset();
+        final int sessionOffset = player.getFollowSessionOffset() ? SessionManager.getInstance().getActiveSession().getNoteOffset() : 0;
+        final int finalNoteNumber = player.getRootNote() + offset + sessionOffset;
+
+        int actualVelocity = getSequenceData().isStepAccented(drumIndex, stepIndex) ?
+                Math.min(finalVelocity + 20, 126) : finalVelocity;
+
         final int finalDecay = decay;
         final int finalDrumIndex = drumIndex;
+        final int finalActualVelocity = actualVelocity;
 
         if (nudge > 0) {
             // Delayed note
             SHARED_NOTE_SCHEDULER.schedule(() -> {
-                player.noteOn(finalNoteNumber, finalVelocityCopy, finalDecay);
-                publishNoteEvent(finalDrumIndex, finalVelocityCopy, finalDecay);
+                player.noteOn(finalNoteNumber, finalActualVelocity, finalDecay);
+                publishNoteEvent(finalDrumIndex, finalActualVelocity, finalDecay);
             }, nudge, TimeUnit.MILLISECONDS);
         } else {
             // Immediate note
-            player.noteOn(finalNoteNumber, finalVelocity, decay);
-            publishNoteEvent(drumIndex, finalVelocity, decay);
+            player.noteOn(finalNoteNumber, finalActualVelocity, decay);
+            publishNoteEvent(drumIndex, finalActualVelocity, decay);
         }
     }
 
@@ -651,36 +657,21 @@ public class DrumSequencer implements IBusListener {
 
         // Adjust for timing division based on actual enum values
         switch (division) {
-            case NORMAL ->
-                stepDurationMs *= 1; // No change for normal timing
-            case DOUBLE ->
-                stepDurationMs /= 2; // Double time (faster)
-            case HALF ->
-                stepDurationMs *= 2; // Half-time (slower)
-            case QUARTER ->
-                stepDurationMs *= 4; // Quarter time (very slow)
-            case TRIPLET ->
-                stepDurationMs *= 2.0f / 3.0f; // Triplet feel
-            case QUARTER_TRIPLET ->
-                stepDurationMs *= 4.0f / 3.0f; // Quarter note triplets
-            case EIGHTH_TRIPLET ->
-                stepDurationMs *= 1.0f / 3.0f; // Eighth note triplets
-            case SIXTEENTH ->
-                stepDurationMs *= 1.0f / 4.0f; // Sixteenth notes
-            case SIXTEENTH_TRIPLET ->
-                stepDurationMs *= 1.0f / 6.0f; // Sixteenth note triplets
-            case BEBOP ->
-                stepDurationMs *= 1; // Same as normal for swing calculations
-            case FIVE_FOUR ->
-                stepDurationMs *= 5.0f / 4.0f; // 5/4 time
-            case SEVEN_EIGHT ->
-                stepDurationMs *= 7.0f / 8.0f; // 7/8 time
-            case NINE_EIGHT ->
-                stepDurationMs *= 9.0f / 8.0f; // 9/8 time
-            case TWELVE_EIGHT ->
-                stepDurationMs *= 12.0f / 8.0f; // 12/8 time
-            case SIX_FOUR ->
-                stepDurationMs *= 6.0f / 4.0f; // 6/4 time
+            case NORMAL -> stepDurationMs *= 1; // No change for normal timing
+            case DOUBLE -> stepDurationMs /= 2; // Double time (faster)
+            case HALF -> stepDurationMs *= 2; // Half-time (slower)
+            case QUARTER -> stepDurationMs *= 4; // Quarter time (very slow)
+            case TRIPLET -> stepDurationMs *= 2.0f / 3.0f; // Triplet feel
+            case QUARTER_TRIPLET -> stepDurationMs *= 4.0f / 3.0f; // Quarter note triplets
+            case EIGHTH_TRIPLET -> stepDurationMs *= 1.0f / 3.0f; // Eighth note triplets
+            case SIXTEENTH -> stepDurationMs *= 1.0f / 4.0f; // Sixteenth notes
+            case SIXTEENTH_TRIPLET -> stepDurationMs *= 1.0f / 6.0f; // Sixteenth note triplets
+            case BEBOP -> stepDurationMs *= 1; // Same as normal for swing calculations
+            case FIVE_FOUR -> stepDurationMs *= 5.0f / 4.0f; // 5/4 time
+            case SEVEN_EIGHT -> stepDurationMs *= 7.0f / 8.0f; // 7/8 time
+            case NINE_EIGHT -> stepDurationMs *= 9.0f / 8.0f; // 9/8 time
+            case TWELVE_EIGHT -> stepDurationMs *= 12.0f / 8.0f; // 12/8 time
+            case SIX_FOUR -> stepDurationMs *= 6.0f / 4.0f; // 6/4 time
         }
 
         // Calculate swing percentage (convert from 50-75% to 0-25%)
@@ -761,6 +752,7 @@ public class DrumSequencer implements IBusListener {
     public void start() {
         if (!sequenceData.isPlaying()) {
             reset();
+            // ensureDeviceConnections();
             sequenceData.setPlaying(true);
         }
     }
@@ -785,37 +777,35 @@ public class DrumSequencer implements IBusListener {
     /**
      * Toggle a step in the pattern
      */
+    public void toggleAccent(int drumIndex, int step) {
+        if (!isValidDrumAndStep(drumIndex, step)) {
+            return;
+        }
+
+        boolean newState = !getSequenceData().isStepAccented(drumIndex, step);
+
+        sequenceData.setStepAccent(drumIndex, step, newState);
+        CommandBus.getInstance().publish(
+                Commands.DRUM_STEP_PARAMETERS_CHANGED,
+                this,
+                new DrumStepParametersEvent(this, getSelectedPadIndex(), this.getSelectedPadIndex())
+        );
+    }
+
     public void toggleStep(int drumIndex, int step) {
         if (!isValidDrumAndStep(drumIndex, step)) {
             return;
         }
 
-        boolean currentState = isStepActive(drumIndex, step);
-        boolean newState = !currentState;
+        boolean newState = !isStepActive(drumIndex, step);
 
         // Set the new state
         sequenceData.setStepActive(drumIndex, step, newState);
-
-        // If activating a step, ensure ALL parameters have default values
-        if (newState) {
-            // Always explicitly set all parameters to defaults when step is activated
-            setStepVelocity(drumIndex, step, SequencerConstants.DEFAULT_VELOCITY);
-            setStepDecay(drumIndex, step, SequencerConstants.DEFAULT_DECAY);
-            setStepProbability(drumIndex, step, SequencerConstants.DEFAULT_PROBABILITY);
-            setStepNudge(drumIndex, step, 0);
-            setStepPan(drumIndex, step, 64); // Center pan
-            setStepChorus(drumIndex, step, 0);
-            setStepReverb(drumIndex, step, 0);
-
-            // Notify that parameters have changed
-            CommandBus.getInstance().publish(
-                    Commands.DRUM_STEP_PARAMETERS_CHANGED,
-                    this,
-                    new Object[]{drumIndex, step, getStepVelocity(drumIndex, step),
-                        getStepDecay(drumIndex, step), getStepProbability(drumIndex, step),
-                        getStepNudge(drumIndex, step)}
-            );
-        }
+        CommandBus.getInstance().publish(
+                Commands.DRUM_STEP_PARAMETERS_CHANGED,
+                DrumSequenceModifier.class,
+                new DrumStepParametersEvent(this, drumIndex, step)
+        );
     }
 
     /**
@@ -1345,79 +1335,51 @@ public class DrumSequencer implements IBusListener {
         if (cmd == null || cmd.getCommand() == null) {
             return;
         }
-
-        // Handle repair connections command - delegate to manager
-        if (Commands.REPAIR_MIDI_CONNECTIONS.equals(cmd.getCommand())) {
-            DrumSequencerManager.getInstance().repairSequencerConnections(this);
-            return;
-        }
-
-        // Process timing updates
-        if (Commands.TIMING_UPDATE.equals(cmd.getCommand()) && cmd.getData() instanceof TimingUpdate) {
-            processTick(((TimingUpdate) cmd.getData()).tickCount());
-            return; // Process timing updates immediately and return
-        }
-
         // Handle other commands
         switch (cmd.getCommand()) {
-            case Commands.TRANSPORT_START -> {
-                sequenceData.setPlaying(true);
-                sequenceData.setMasterTempo(SessionManager.getInstance().getActiveSession().getTicksPerBeat());
-                reset();
-                ensureDeviceConnections();
-            }
-            case Commands.TRANSPORT_STOP -> {
-                sequenceData.setPlaying(false);
-                reset();
-            }
-            case Commands.UPDATE_TEMPO -> {
-                if (cmd.getData() instanceof Integer ticksPerBeat) {
-                    updateMasterTempo(ticksPerBeat);
-                } else if (cmd.getData() instanceof Float) {
-                    // If BPM is sent instead, get ticksPerBeat from session
-                    int tpb = SessionManager.getInstance().getActiveSession().getTicksPerBeat();
-                    updateMasterTempo(tpb);
-                }
-            }
+            case Commands.TIMING_UPDATE -> handleTimingUpdate(cmd);
+            case Commands.UPDATE_TEMPO -> handleTempoUpdate(cmd);
+            case Commands.REPAIR_MIDI_CONNECTIONS ->
+                    DrumSequencerManager.getInstance().repairSequencerConnections(this);
+            case Commands.TRANSPORT_START -> start();
+            case Commands.TRANSPORT_STOP -> reset();
         }
     }
 
-    /**
-     * Play a drum note using the Player for the specified drum pad
-     */
-    public void playDrumNote(int drumIndex, int velocity) {
-        if (drumIndex < 0 || drumIndex >= SequencerConstants.DRUM_PAD_COUNT) {
-            logger.warn("Invalid drum index: {}", drumIndex);
-            return;
+    private void handleTempoUpdate(Command cmd) {
+        if (cmd.getData() instanceof Integer ticksPerBeat) {
+            updateMasterTempo(ticksPerBeat);
+        } else if (cmd.getData() instanceof Float) {
+            // If BPM is sent instead, get ticksPerBeat from session
+            int tpb = SessionManager.getInstance().getActiveSession().getTicksPerBeat();
+            updateMasterTempo(tpb);
         }
+    }
 
-        Player player = players[drumIndex];
-        if (player == null) {
-            logger.debug("No Player assigned to drum pad {}", drumIndex);
-            return;
-        }
+    private void handleTimingUpdate(Command action) {
+        if (action.getData() instanceof TimingUpdate update) {
 
-        if (player.getInstrument() == null && player.getInstrumentId() != null) {
-            player.setInstrument(InstrumentManager.getInstance().getInstrumentById(player.getInstrumentId()));
-            player.getInstrument().setChannel(SequencerConstants.MIDI_DRUM_CHANNEL);
-        }
+            if (update.bar() != null) {
+                // Adjust for 0-based index
+                int bar = update.bar() - 1;
+                if (currentBar == null || bar != currentBar) {
+                    currentBar = bar;
+                    logger.debug("Current bar updated to {}", currentBar);
 
-        if (player.getInstrument() == null) {
-            logger.debug("No instrument assigned to Player for drum pad {}", drumIndex);
-            return;
-        }
+                    for (int i = 0; i < SequencerConstants.DRUM_PAD_COUNT; i++)
+                        if (sequenceData.getBarMuteValue(i, currentBar) != players[i].isMuted())
+                            players[i].setMuted(!players[i].isMuted());
 
-        int noteNumber = player.getRootNote();
-        try {
-            // Use the Player's instrument directly to play the note
-            player.noteOn(noteNumber, velocity);
-
-            // Still notify listeners for UI updates
-            if (noteEventListener != null) {
-                noteEventListener.accept(new NoteEvent(noteNumber, velocity, 0));
+                    for (int i = 0; i < SequencerConstants.DRUM_PAD_COUNT; i++) {
+                        int offset = sequenceData.getBarOffsetValue(i, currentBar);
+                        if (offset != players[i].getOffset())
+                            players[i].setOffset(offset);
+                    }
+                }
             }
-        } catch (Exception e) {
-            logger.error("Error playing drum note: {}", e.getMessage(), e);
+            // Process tick for note sequencing
+            if (update.tick() != null && sequenceData.isPlaying())
+                processTick(update.tick());
         }
     }
 
@@ -1499,6 +1461,7 @@ public class DrumSequencer implements IBusListener {
 
     // Add a method to update root notes
     // Add a getter method for drum root note
+
     /**
      * Update all drum root notes from the sequence data Called after loading a
      * sequence
@@ -1587,5 +1550,9 @@ public class DrumSequencer implements IBusListener {
             PlayerManager.getInstance().initializeInternalInstrument(players[i], true, players[i].getId().intValue());
         }
 
+    }
+
+    public boolean isStepAccented(int drumIndex, int step) {
+        return sequenceData.isStepAccented(drumIndex, step);
     }
 }

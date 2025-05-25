@@ -3,6 +3,7 @@ package com.angrysurfer.beats.panel.player;
 import com.angrysurfer.beats.Symbols;
 import com.angrysurfer.beats.panel.LivePanel;
 import com.angrysurfer.beats.util.UIHelper;
+import com.angrysurfer.beats.widget.SoundbankComboRenderer;
 import com.angrysurfer.core.api.CommandBus;
 import com.angrysurfer.core.api.Commands;
 import com.angrysurfer.core.event.PlayerPresetChangeEvent;
@@ -74,6 +75,7 @@ public class SoundParametersPanel extends LivePanel {
                 BorderFactory.createTitledBorder("Soundbank"),
                 BorderFactory.createEmptyBorder(2, 2, 2, 2)));
         soundbankCombo = new JComboBox<>();
+        soundbankCombo.setRenderer(new SoundbankComboRenderer());
 
         // Update the soundbank action listener to properly apply changes
         soundbankCombo.addActionListener(e -> {
@@ -103,6 +105,7 @@ public class SoundParametersPanel extends LivePanel {
                             Commands.PLAYER_PRESET_CHANGE_EVENT,
                             this,
                             new PlayerPresetChangeEvent(
+                                    this,
                                     currentPlayer,
                                     currentPlayer.getInstrument().getBankIndex(),
                                     currentPlayer.getInstrument().getPreset()
@@ -154,6 +157,7 @@ public class SoundParametersPanel extends LivePanel {
                             Commands.PLAYER_PRESET_CHANGE_EVENT,
                             this,
                             new PlayerPresetChangeEvent(
+                                    this,
                                     currentPlayer,
                                     bankIndex,
                                     presetNumber
@@ -173,6 +177,7 @@ public class SoundParametersPanel extends LivePanel {
         presetPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 4, 0));
         UIHelper.setWidgetPanelBorder(presetPanel, "Preset");
         presetCombo = new JComboBox<>();
+        presetCombo.setPreferredSize(new Dimension(UIHelper.LARGE_CONTROL_WIDTH + 40, UIHelper.CONTROL_HEIGHT));
 
         // Update the preset action listener for better logging and consistency
         presetCombo.addActionListener(e -> {
@@ -254,12 +259,6 @@ public class SoundParametersPanel extends LivePanel {
         playNoteButton.setMaximumSize(new Dimension(UIHelper.SMALL_CONTROL_WIDTH, UIHelper.CONTROL_HEIGHT));
         playNoteButton.addActionListener(e -> {
             getPlayer().noteOn(60, 100);
-            // getTargetPlayer().noteOn(60,100);
-
-//            CommandBus.getInstance().publish(
-//                    Commands.DRUM_PRESET_SELECTION_REQUEST,
-//                    this,
-//                    getTargetPlayer().getOwner());
         });
 
 
@@ -268,22 +267,9 @@ public class SoundParametersPanel extends LivePanel {
         presetPanel.add(editButton);
         presetPanel.add(drumPresetsButton);
 
-        presetPanel.setMaximumSize(new Dimension(Integer.MAX_VALUE, presetPanel.getPreferredSize().height));
-
-        // 3. Create edit button panel
-        // JPanel editButtonPanel = new JPanel(new BorderLayout(5, 0));
-        // UIHelper.setWidgetPanelBorder(editButtonPanel, "Action");
-
-
+        horizontalPanel.add(new InstrumentComboPanel());
         horizontalPanel.add(channelComboPanel);
-
-        InstrumentComboPanel instrumentComboPanel = new InstrumentComboPanel();
-        instrumentComboPanel.setMaximumSize(new Dimension(instrumentComboPanel.getPreferredSize().width, instrumentComboPanel.getPreferredSize().height));
-
-        horizontalPanel.add(instrumentComboPanel);
-
         horizontalPanel.add(presetPanel);
-
         horizontalPanel.add(soundbankPanel);
 
         horizontalPanel.add(bankPanel);

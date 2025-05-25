@@ -5,7 +5,10 @@ import com.angrysurfer.beats.panel.LivePanel;
 import com.angrysurfer.beats.widget.Dial;
 import com.angrysurfer.core.api.CommandBus;
 import com.angrysurfer.core.api.Commands;
+import com.angrysurfer.core.api.StatusUpdate;
 import com.angrysurfer.core.config.TableState;
+import com.angrysurfer.core.event.PlayerRefreshEvent;
+import com.angrysurfer.core.event.PlayerUpdateEvent;
 import com.angrysurfer.core.model.Player;
 import com.angrysurfer.core.redis.RedisService;
 import org.slf4j.Logger;
@@ -488,8 +491,7 @@ public class UIHelper {
         refreshButton.addActionListener(e -> {
             if (player != null && player.getInstrument() != null) {
                 // Create a refresh event for this specific player
-                com.angrysurfer.core.event.PlayerRefreshEvent event =
-                        new com.angrysurfer.core.event.PlayerRefreshEvent(player);
+                PlayerRefreshEvent event = new PlayerRefreshEvent(refreshButton, player);
 
                 // Send the event
                 CommandBus.getInstance().publish(
@@ -502,7 +504,7 @@ public class UIHelper {
                 CommandBus.getInstance().publish(
                         Commands.STATUS_UPDATE,
                         refreshButton,
-                        new com.angrysurfer.core.api.StatusUpdate(
+                        new StatusUpdate(
                                 "Sound Refresh", "Info",
                                 "Refreshed instrument for " + player.getName())
                 );
@@ -510,38 +512,6 @@ public class UIHelper {
         });
 
         return refreshButton;
-    }
-
-    /**
-     * Create a player selection button
-     *
-     * @param player     The player to select
-     * @param buttonText Optional button text
-     * @return A configured JButton
-     */
-    public static JButton createPlayerSelectButton(Player player, String buttonText) {
-        String text = buttonText != null ? buttonText : "Select " + player.getName();
-        JButton selectButton = new JButton(text);
-
-        selectButton.setToolTipText("Select " + player.getName() + " for editing");
-        selectButton.setPreferredSize(new Dimension(CONTROL_WIDTH, CONTROL_HEIGHT));
-
-        selectButton.addActionListener(e -> {
-            if (player != null) {
-                // Create a selection event for this specific player
-                com.angrysurfer.core.event.PlayerSelectionEvent event =
-                        new com.angrysurfer.core.event.PlayerSelectionEvent(player);
-
-                // Send the event
-                CommandBus.getInstance().publish(
-                        Commands.PLAYER_SELECTION_EVENT,
-                        selectButton,
-                        event
-                );
-            }
-        });
-
-        return selectButton;
     }
 
     /**
@@ -610,7 +580,7 @@ public class UIHelper {
                 CommandBus.getInstance().publish(
                         Commands.PLAYER_UPDATE_EVENT,
                         dial,
-                        new com.angrysurfer.core.event.PlayerUpdateEvent(player)
+                        new PlayerUpdateEvent(dial, player)
                 );
             }
         });
