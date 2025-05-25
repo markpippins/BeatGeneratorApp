@@ -95,6 +95,7 @@ public class DrumSequenceData {
 
     // Mute state for each step of each drum
     private Boolean[][] barMuteValues = new Boolean[SequencerConstants.DRUM_PAD_COUNT][SequencerConstants.MAX_BAR_COUNT];
+    private Integer[][] barOffsetValues = new Integer[SequencerConstants.DRUM_PAD_COUNT][SequencerConstants.MAX_BAR_COUNT];
 
     private Integer sequencerId = -1;
 
@@ -212,6 +213,7 @@ public class DrumSequenceData {
         // Initialize mute values - default is 0 (unmuted)
         for (int drumIndex = 0; drumIndex < SequencerConstants.DRUM_PAD_COUNT; drumIndex++) {
             Arrays.fill(barMuteValues[drumIndex], false);
+            Arrays.fill(barOffsetValues[drumIndex], 0);
         }
     }
 
@@ -439,13 +441,6 @@ public class DrumSequenceData {
      * @param barIndex  The index of the bar
      * @return The mute value (0=unmuted, 1=muted)
      */
-    public boolean getStepMuteValue(int drumIndex, int barIndex) {
-        if (drumIndex >= 0 && drumIndex < SequencerConstants.DRUM_PAD_COUNT &&
-                barIndex >= 0 && barIndex < SequencerConstants.MAX_BAR_COUNT) {
-            return barMuteValues[drumIndex][barIndex];
-        }
-        return false;
-    }
 
     public boolean getBarMuteValue(int drumIndex, int barIndex) {
         return barMuteValues[drumIndex][barIndex];
@@ -455,35 +450,13 @@ public class DrumSequenceData {
         barMuteValues[drumIndex][barIndex] = mute;
     }
 
+    public int getBarOffsetValue(int drumIndex, int barIndex) {
+        return barOffsetValues[drumIndex][barIndex];
+    }
 
-//    /**
-//     * Get all mute values for a specific drum track
-//     *
-//     * @param drumIndex The drum track index
-//     * @return List of mute values for each bar
-//     */
-//    public List<Boolean> getBarMuteValues(int drumIndex) {
-//        if (drumIndex >= 0 && drumIndex < SequencerConstants.DRUM_PAD_COUNT) {
-//            return Arrays.stream(barMuteValues[drumIndex]).collect(Collectors.toList());
-//        }
-//        return new ArrayList<>();
-//    }
-//
-//    /**
-//     * Set all mute values for a specific drum track
-//     *
-//     * @param drumIndex The drum track index
-//     * @param values    List of mute values
-//     */
-//    public void setBarMuteValues(int drumIndex, List<Boolean> values) {
-//        if (drumIndex >= 0 && drumIndex < SequencerConstants.DRUM_PAD_COUNT && values != null) {
-//            for (int i = 0; i < Math.min(values.size(), SequencerConstants.MAX_BAR_COUNT); i++) {
-//                barMuteValues[drumIndex][i] = values.get(i);
-//            }
-//        } else {
-//            logger.warn("Attempted to set null or invalid mute values for drum {}", drumIndex);
-//        }
-//    }
+    public void setBarOffsetValue(int drumIndex, int barIndex, int offset) {
+        barOffsetValues[drumIndex][barIndex] = offset;
+    }
 
     /**
      * Get the default timing division (when no drum is specified)

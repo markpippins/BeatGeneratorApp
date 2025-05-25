@@ -69,6 +69,8 @@ public class DrumSequencerGridButtonsPanel extends JPanel implements IBusListene
                 Commands.DRUM_STEP_EFFECTS_CHANGED,
                 Commands.TRANSPORT_START,
                 Commands.TRANSPORT_STOP,
+                Commands.DRUM_SEQUENCE_LOADED,
+                Commands.DRUM_SEQUENCE_UPDATED,
                 Commands.DRUM_GRID_REFRESH_REQUESTED  // Add this line
         });
 //        TimingBus.getInstance().register(this, new String[]{Commands.DRUM_STEP_UPDATED,
@@ -493,10 +495,14 @@ public class DrumSequencerGridButtonsPanel extends JPanel implements IBusListene
             return;
         }
 
+
         switch (action.getCommand()) {
             case Commands.TIMING_UPDATE:
                 handleTimingUpdate(action);
                 break;
+
+            case Commands.DRUM_SEQUENCE_LOADED, Commands.DRUM_SEQUENCE_UPDATED:
+                SwingUtilities.invokeLater(this::refreshGridUI);
 
             case Commands.DRUM_STEP_UPDATED:
                 if (action.getData() instanceof DrumStepUpdateEvent event) {

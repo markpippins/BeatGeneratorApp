@@ -72,8 +72,6 @@ public class DrumSequencerGridPanel extends JPanel implements IBusListener {
 
     private JScrollPane scrollPane;
 
-    private JPanel sequencePanel;
-
     // Add this field to the class:
     private DrumSequenceGeneratorPanel generatorPanel;
 
@@ -158,10 +156,8 @@ public class DrumSequencerGridPanel extends JPanel implements IBusListener {
         JPanel drumPadsPanel = createDrumPadsPanel();
         add(drumPadsPanel, BorderLayout.WEST);
 
-        sequencePanel = createSequenceGridPanel();
-
         // Wrap in scroll pane
-        scrollPane = new JScrollPane(sequencePanel);
+        scrollPane = new JScrollPane(createSequenceGridPanel());
         scrollPane.setBorder(null);
         scrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
         scrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_NEVER);
@@ -308,10 +304,7 @@ public class DrumSequencerGridPanel extends JPanel implements IBusListener {
             // Update sound parameters panel
             // updateSoundParametersPanel(padIndex);
 
-            CommandBus.getInstance().publish(
-                    Commands.PLAYER_ACTIVATION_REQUEST,
-                    this,
-                    sequencer.getPlayers()[padIndex]);
+            CommandBus.getInstance().publish(Commands.PLAYER_SELECTION_EVENT, this, sequencer.getPlayers()[padIndex]);
 
             // IMPORTANT: Notify other panels through the command bus
             CommandBus.getInstance().publish(

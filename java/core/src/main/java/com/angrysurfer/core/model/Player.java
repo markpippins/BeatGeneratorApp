@@ -132,6 +132,9 @@ public abstract class Player implements Serializable, IBusListener {
     private transient Object owner;
 
     @JsonIgnore
+    private transient Integer offset = 0;
+
+    @JsonIgnore
     private long lastUiUpdateTime = 0;
 
     private boolean usingInternalSynth = true;

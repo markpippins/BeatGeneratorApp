@@ -308,7 +308,7 @@ public class PlayersTable extends JTable {
                         }
                         break;
 
-                    case Commands.PLAYER_ACTIVATED:
+                    case Commands.PLAYER_SELECTION_EVENT:
                         if (action.getData() instanceof Player player) {
                             SwingUtilities.invokeLater(() -> {
                                 // Find the row for this player
@@ -349,7 +349,7 @@ public class PlayersTable extends JTable {
                 Commands.SESSION_LOADED,
                 Commands.NEW_VALUE_VELOCITY_MIN,
                 Commands.NEW_VALUE_VELOCITY_MAX,
-                Commands.PLAYER_ACTIVATED
+                Commands.PLAYER_SELECTION_EVENT
         });
     }
 
@@ -384,7 +384,7 @@ public class PlayersTable extends JTable {
             }
 
             if (player != null) {
-                CommandBus.getInstance().publish(Commands.PLAYER_ACTIVATION_REQUEST, this, player);
+                CommandBus.getInstance().publish(Commands.PLAYER_SELECTION_EVENT, this, player);
             } else {
                 // CommandBus.getInstance().publish(Commands.PLAYER_UNSELECTED, this, null);
             }

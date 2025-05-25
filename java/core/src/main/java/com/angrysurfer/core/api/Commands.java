@@ -55,9 +55,6 @@ public class Commands {
     // Player selection commands
     public static final String PLAYER = "PLAYER";
 
-    public static final String PLAYER_ACTIVATION_REQUEST = "PLAYER_ACTIVATION_REQUEST";
-    public static final String PLAYER_ACTIVATED = "PLAYER_ACTIVATED";
-
     public static final String PLAYER_ADDED = "PLAYER_ADDED";
     public static final String PLAYER_UPDATED = "PLAYER_UPDATED";
     public static final String PLAYER_DELETED = "PLAYER_DELETED";
@@ -269,7 +266,8 @@ public class Commands {
     /**
      * Command for drum pad selection events
      */
-    public static final String DRUM_PAD_SELECTED = "DRUM_PAD_SELECTED";    public static final String DRUM_SEQUENCE_SAVED = "DRUM_SEQUENCE_SAVED";
+    public static final String DRUM_PAD_SELECTED = "DRUM_PAD_SELECTED";
+    public static final String DRUM_SEQUENCE_SAVED = "DRUM_SEQUENCE_SAVED";
     public static final String DRUM_SEQUENCE_UPDATED = "DRUM_SEQUENCE_UPDATED";
     public static final String DRUM_SEQUENCE_REMOVED = "DRUM_SEQUENCE_REMOVED";
     public static final String DRUM_SEQUENCE_ADDED = "DRUM_SEQUENCE_ADDED";
@@ -415,4 +413,5 @@ public class Commands {
     public static final String SEQUENCER_NOTE_FOLLOW_EVENT = "SEQUENCER_NOTE_FOLLOW_EVENT";
     public static final String DRUM_TRACK_MUTE_CHANGED = "DRUM_TRACK_MUTE_CHANGED";
     public static final String DRUM_TRACK_MUTE_VALUES_CHANGED = "DRUM_TRACK_MUTE_VALUES_CHANGED";
+    public static final String SEQUENCER_SYNC_MESSAGE = "SEQUENCER_SYNC_MESSAGE";
 }

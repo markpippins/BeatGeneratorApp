@@ -47,7 +47,7 @@ public class RulesTable extends JTable implements IBusListener {
                 Commands.RULE_ADDED,
                 Commands.RULE_EDITED,
                 Commands.RULE_DELETED,
-                Commands.PLAYER_ACTIVATED
+                Commands.PLAYER_SELECTION_EVENT
         });
     }
 
@@ -160,7 +160,7 @@ public class RulesTable extends JTable implements IBusListener {
                 });
                 break;
 
-            case Commands.PLAYER_ACTIVATED:
+            case Commands.PLAYER_SELECTION_EVENT:
                 if (action.getData() instanceof Player player) {
                     SwingUtilities.invokeLater(() -> {
                         // Update the table with the selected player's rules

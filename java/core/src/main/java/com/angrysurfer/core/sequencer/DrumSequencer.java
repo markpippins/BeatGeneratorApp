@@ -605,8 +605,9 @@ public class DrumSequencer implements IBusListener {
         }
 
         // Now trigger the note
-        final int finalNoteNumber = player.getFollowSessionOffset() ? player.getRootNote() +
-                SessionManager.getInstance().getActiveSession().getNoteOffset() : player.getRootNote();
+        final int offset = player.getOffset();
+        final int sessionOffset = player.getFollowSessionOffset() ? SessionManager.getInstance().getActiveSession().getNoteOffset() : 0;
+        final int finalNoteNumber = player.getRootNote() + offset + sessionOffset;
 
         int actualVelocity = getSequenceData().isStepAccented(drumIndex, stepIndex) ?
                 Math.min(finalVelocity + 20, 126) : finalVelocity;
@@ -1364,9 +1365,16 @@ public class DrumSequencer implements IBusListener {
                 if (currentBar == null || bar != currentBar) {
                     currentBar = bar;
                     logger.debug("Current bar updated to {}", currentBar);
+
                     for (int i = 0; i < SequencerConstants.DRUM_PAD_COUNT; i++)
-                        if (sequenceData.getStepMuteValue(i, currentBar) != players[i].isMuted())
+                        if (sequenceData.getBarMuteValue(i, currentBar) != players[i].isMuted())
                             players[i].setMuted(!players[i].isMuted());
+
+                    for (int i = 0; i < SequencerConstants.DRUM_PAD_COUNT; i++) {
+                        int offset = sequenceData.getBarOffsetValue(i, currentBar);
+                        if (offset != players[i].getOffset())
+                            players[i].setOffset(offset);
+                    }
                 }
             }
             // Process tick for note sequencing

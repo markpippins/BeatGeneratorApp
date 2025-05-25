@@ -3,6 +3,7 @@ package com.angrysurfer.beats.panel.sequencer.poly;
 import com.angrysurfer.beats.panel.MainPanel;
 import com.angrysurfer.beats.panel.player.SoundParametersPanel;
 import com.angrysurfer.beats.panel.sequencer.MuteSequencerPanel;
+import com.angrysurfer.beats.panel.sequencer.OffsetSequencerPanel;
 import com.angrysurfer.beats.util.UIHelper;
 import com.angrysurfer.beats.widget.AccentButton;
 import com.angrysurfer.beats.widget.Dial;
@@ -34,6 +35,7 @@ import java.util.logging.Logger;
 public abstract class DrumSequencerPanel extends JPanel implements IBusListener {
 
     private static final Logger logger = Logger.getLogger(DrumSequencerPanel.class.getName());
+
     private static DrumStepParametersEvent reusableParamChangeEvent = new DrumStepParametersEvent();
     private final List<TriggerButton> selectorButtons = new ArrayList<>();
     private final List<AccentButton> accentButtons = new ArrayList<>();
@@ -134,13 +136,11 @@ public abstract class DrumSequencerPanel extends JPanel implements IBusListener 
             refreshTriggerButtonsForPad(selectedPadIndex);
             updateControlsFromSequencer();
 
-            if (muteSequencerPanel != null) {
-                muteSequencerPanel.syncWithSequencer();
-            }
-
             if (sequenceParamsPanel != null) {
                 sequenceParamsPanel.updateControls(selectedPadIndex);
             }
+
+            CommandBus.getInstance().publish(Commands.SEQUENCER_SYNC_MESSAGE, this, sequencer);
         }
     }
 
@@ -275,6 +275,7 @@ public abstract class DrumSequencerPanel extends JPanel implements IBusListener 
                 button.setSelected(false);
                 button.setHighlighted(false);
             }
+
             button.repaint();
         }
     }
@@ -389,6 +390,7 @@ public abstract class DrumSequencerPanel extends JPanel implements IBusListener 
 
         // Create and add mute sequencer panel
         muteSequencerPanel = new MuteSequencerPanel(sequencer);
+        drumSection.add(new OffsetSequencerPanel((sequencer)));
         drumSection.add(muteSequencerPanel, BorderLayout.NORTH);
         drumSection.add(drumPadPanel, BorderLayout.CENTER);
 
@@ -396,10 +398,10 @@ public abstract class DrumSequencerPanel extends JPanel implements IBusListener 
 
         UIHelper.addSafely(this, centerPanel, BorderLayout.CENTER);
 
-        JPanel bottomPanel = new JPanel(new BorderLayout(2, 2));
+        JPanel statusPanel = new JPanel(new BorderLayout(2, 2));
         sequenceParamsPanel = new DrumSequencerParametersPanel(sequencer);
-        bottomPanel.add(sequenceParamsPanel, BorderLayout.WEST);
-        bottomPanel.add(sequenceParamsPanel, BorderLayout.WEST);
+        statusPanel.add(sequenceParamsPanel, BorderLayout.WEST);
+        statusPanel.add(sequenceParamsPanel, BorderLayout.WEST);
 
         maxLengthPanel = new DrumSequencerMaxLengthPanel(sequencer);
         JPanel rightPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 2, 0));
@@ -412,8 +414,12 @@ public abstract class DrumSequencerPanel extends JPanel implements IBusListener 
         swingPanel = new DrumSequencerSwingPanel(sequencer);
         rightPanel.add(swingPanel);
 
-        bottomPanel.add(rightPanel, BorderLayout.EAST);
+        statusPanel.add(rightPanel, BorderLayout.EAST);
 
+        JPanel bottomPanel = new JPanel(new BorderLayout());
+
+        bottomPanel.add(new OffsetSequencerPanel(sequencer), BorderLayout.NORTH);
+        bottomPanel.add(statusPanel, BorderLayout.SOUTH);
         add(bottomPanel, BorderLayout.SOUTH);
 
         // Add key listener for Escape key to return to DrumSequencer panel
@@ -528,7 +534,7 @@ public abstract class DrumSequencerPanel extends JPanel implements IBusListener 
 
                 if (player != null && player.getInstrument() != null) {
                     CommandBus.getInstance().publish(Commands.STATUS_UPDATE, this, new StatusUpdate("Selected pad: " + player.getName()));
-                    CommandBus.getInstance().publish(Commands.PLAYER_ACTIVATION_REQUEST, this, player);
+                    CommandBus.getInstance().publish(Commands.PLAYER_SELECTION_EVENT, this, player);
                 }
             }
 
@@ -622,6 +628,21 @@ public abstract class DrumSequencerPanel extends JPanel implements IBusListener 
             button.repaint();
         }
 
+    }
+
+    JPanel createOffsetPanel(int index) {
+        JComboBox<Integer> combo = new JComboBox<>();
+        //combo.setName("TriggerButton-" + index);
+        //combo.setToolTipText("Step " + (index + 1));
+        //combo.setEnabled(selectedPadIndex >= 0);
+        //combo.addActionListener(e -> toggleStepForActivePad(index));
+
+        ///selectorButtons.add(triggerButton);
+
+        // Center the button horizontally
+        JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 0, 0));
+        buttonPanel.add(combo);
+        return buttonPanel;
     }
 
     JPanel createTriggerPanel(int index) {

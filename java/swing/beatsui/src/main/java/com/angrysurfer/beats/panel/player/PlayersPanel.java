@@ -605,7 +605,7 @@ public class PlayersPanel extends JPanel {
             table.setRowSelectionInterval(lastRow, lastRow);
             Player selectedPlayer = getSelectedPlayer();
             if (selectedPlayer != null) {
-                CommandBus.getInstance().publish(Commands.PLAYER_ACTIVATION_REQUEST, this, selectedPlayer);
+                CommandBus.getInstance().publish(Commands.PLAYER_SELECTION_EVENT, this, selectedPlayer);
             }
         }
     }
@@ -762,11 +762,8 @@ public class PlayersPanel extends JPanel {
             if (row >= 0) {
                 // Get player directly from table helper method (which now uses ID)
                 player = table.getPlayerAtRow(row);
-                if (player != null) {
-                    CommandBus.getInstance().publish(Commands.PLAYER_ACTIVATION_REQUEST, this, player);
-                } else {
-                    // CommandBus.getInstance().publish(Commands.PLAYER_UNSELECTED, this, null);
-                }
+                if (player != null)
+                    CommandBus.getInstance().publish(Commands.PLAYER_SELECTION_EVENT, this, player);
             }
         } catch (Exception ex) {
             logger.error("Error in player selection: " + ex.getMessage());

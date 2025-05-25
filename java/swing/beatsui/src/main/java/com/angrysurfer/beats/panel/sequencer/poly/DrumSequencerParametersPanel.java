@@ -24,7 +24,6 @@ public class DrumSequencerParametersPanel extends JPanel {
     private JComboBox<String> directionCombo;
     private JComboBox<TimingDivision> timingCombo;
     private JToggleButton loopToggleButton;
-    private JButton clearPatternButton;
     // Flag to prevent recursive events
     private boolean updatingControls = false;
 
@@ -191,7 +190,7 @@ public class DrumSequencerParametersPanel extends JPanel {
         controlsPanel.add(rotationPanel);
 
         // Create the clear button
-        clearPatternButton = new JButton("🗑️");
+        JButton clearPatternButton = new JButton("🗑️");
         clearPatternButton.setToolTipText("Clear the pattern for this drum");
         clearPatternButton.setPreferredSize(new Dimension(24, 24));
         clearPatternButton.setMargin(new Insets(2, 2, 2, 2));

@@ -49,7 +49,7 @@ public class Visualizer implements IBusListener {
                 Commands.VISUALIZATION_HANDLER_REFRESH_REQUESTED,
                 Commands.TRANSPORT_START,
                 Commands.TRANSPORT_STATE_CHANGED,
-                Commands.PLAYER_ACTIVATED,
+                Commands.PLAYER_SELECTION_EVENT,
                 Commands.TRANSPORT_STOP
         });
     }
@@ -110,7 +110,7 @@ public class Visualizer implements IBusListener {
                 // }
                 break;
 
-            case Commands.PLAYER_ACTIVATED:
+            case Commands.PLAYER_SELECTION_EVENT:
                 stopVisualizer();
                 // Find and start the StrikeVisualizationHandler
                 // for (IVisualizationHandler vis : visualizations) {

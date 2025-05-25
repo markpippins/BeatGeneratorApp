@@ -96,7 +96,7 @@ public class MelodicSequencerPanel extends JPanel implements IBusListener {
                 Commands.HIGHLIGHT_STEP,
                 Commands.TIMING_UPDATE,
                 Commands.DRUM_PAD_SELECTED,
-                Commands.PLAYER_ACTIVATED,
+                Commands.PLAYER_SELECTION_EVENT,
                 Commands.TRANSPORT_STOP,
                 Commands.MELODIC_SEQUENCE_LOADED,    // Add these events
                 Commands.MELODIC_SEQUENCE_UPDATED,
@@ -144,9 +144,7 @@ public class MelodicSequencerPanel extends JPanel implements IBusListener {
                             tiltSequencerPanel.syncWithSequencer();
                         }
 
-                        if (muteSequencerPanel != null) {
-                            muteSequencerPanel.syncWithSequencer();
-                        }
+                        CommandBus.getInstance().publish(Commands.SEQUENCER_SYNC_MESSAGE, this, sequencer);
                     });
 
                     // Notify that a pattern was loaded
@@ -194,9 +192,8 @@ public class MelodicSequencerPanel extends JPanel implements IBusListener {
                 if (tiltSequencerPanel != null) {
                     tiltSequencerPanel.syncWithSequencer();
                 }
-                if (muteSequencerPanel != null) {
-                    muteSequencerPanel.syncWithSequencer();
-                }
+
+                CommandBus.getInstance().publish(Commands.SEQUENCER_SYNC_MESSAGE, this, sequencer);
             });
 
             // Notify that a new sequence was created
@@ -421,32 +418,31 @@ public class MelodicSequencerPanel extends JPanel implements IBusListener {
         updatingUI = true;
         try {
             // Update sequence parameters panel
-            if (sequenceParamsPanel != null) 
+            if (sequenceParamsPanel != null)
                 sequenceParamsPanel.updateUI(sequencer);
 
             if (scalePanel != null)
                 scalePanel.updateUI(sequencer);
 
-            if (gridPanel != null) 
+            if (gridPanel != null)
                 gridPanel.syncWithSequencer();
 
-            if (tiltSequencerPanel != null) 
+            if (tiltSequencerPanel != null)
                 tiltSequencerPanel.syncWithSequencer();
 
-            if (muteSequencerPanel != null) 
-                muteSequencerPanel.syncWithSequencer();
-
-            if (swingPanel != null) 
+            if (swingPanel != null)
                 swingPanel.updateControls();
 
             if (navigationPanel != null)
                 navigationPanel.updateSequenceIdDisplay();
- 
+
             if (latchToggleButton != null)
                 latchToggleButton.setSelected(sequencer.isLatchEnabled());
 
-            if (generatorPanel != null) 
+            if (generatorPanel != null)
                 generatorPanel.syncWithSequencer();
+
+            CommandBus.getInstance().publish(Commands.SEQUENCER_SYNC_MESSAGE, this, sequencer);
 
         } finally {
             updatingUI = false;

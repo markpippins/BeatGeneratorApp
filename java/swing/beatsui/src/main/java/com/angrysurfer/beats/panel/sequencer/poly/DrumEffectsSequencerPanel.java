@@ -53,6 +53,7 @@ public class DrumEffectsSequencerPanel extends DrumSequencerPanel {
 
         JPanel accentPanel = createAccentPanel(index);
         column.add(accentPanel);
+        // column.add(createOffsetPanel(index));
 
         for (int rowIndex = 0; rowIndex < 4; rowIndex++) {
             JLabel label = new JLabel(getKnobLabel(rowIndex));
@@ -80,9 +81,7 @@ public class DrumEffectsSequencerPanel extends DrumSequencerPanel {
 
         column.add(Box.createRigidArea(new Dimension(0, 2)));
 
-        // Add only the trigger button - not the drum button
-        JPanel buttonPanel = createTriggerPanel(index);
-        column.add(buttonPanel);
+        column.add(createTriggerPanel(index));
 
         return column;
     }

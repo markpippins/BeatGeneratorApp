@@ -405,7 +405,7 @@ public class ControlPanel extends LivePanel implements IBusListener {
                 prevScaleButton.setEnabled(true);
                 nextScaleButton.setEnabled(true);
             }
-            case Commands.PLAYER_ACTIVATED -> {
+            case Commands.PLAYER_SELECTION_EVENT -> {
                 // Enable dials when player is activated
                 enableDials();
             }
@@ -488,7 +488,7 @@ public class ControlPanel extends LivePanel implements IBusListener {
     private void setupCommandBusListener() {
         // Register this panel as a listener for all needed commands
         CommandBus.getInstance().register(this, new String[]{
-                Commands.PLAYER_ACTIVATED,
+                Commands.PLAYER_SELECTION_EVENT,
                 Commands.FIRST_SCALE_SELECTED,
                 Commands.LAST_SCALE_SELECTED,
                 Commands.SCALE_SELECTED

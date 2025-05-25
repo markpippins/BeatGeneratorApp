@@ -8,7 +8,6 @@ import com.angrysurfer.core.api.Commands;
 import com.angrysurfer.core.api.StatusUpdate;
 import com.angrysurfer.core.config.TableState;
 import com.angrysurfer.core.event.PlayerRefreshEvent;
-import com.angrysurfer.core.event.PlayerSelectionEvent;
 import com.angrysurfer.core.event.PlayerUpdateEvent;
 import com.angrysurfer.core.model.Player;
 import com.angrysurfer.core.redis.RedisService;
@@ -513,37 +512,6 @@ public class UIHelper {
         });
 
         return refreshButton;
-    }
-
-    /**
-     * Create a player selection button
-     *
-     * @param player     The player to select
-     * @param buttonText Optional button text
-     * @return A configured JButton
-     */
-    public static JButton createPlayerSelectButton(Player player, String buttonText) {
-        String text = buttonText != null ? buttonText : "Select " + player.getName();
-        JButton selectButton = new JButton(text);
-
-        selectButton.setToolTipText("Select " + player.getName() + " for editing");
-        selectButton.setPreferredSize(new Dimension(CONTROL_WIDTH, CONTROL_HEIGHT));
-
-        selectButton.addActionListener(e -> {
-            if (player != null) {
-                // Create a selection event for this specific player
-                PlayerSelectionEvent event = new PlayerSelectionEvent(selectButton, player);
-
-                // Send the event
-                CommandBus.getInstance().publish(
-                        Commands.PLAYER_SELECTION_EVENT,
-                        selectButton,
-                        event
-                );
-            }
-        });
-
-        return selectButton;
     }
 
     /**
