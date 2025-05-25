@@ -748,18 +748,5 @@ public abstract class DrumSequencerPanel extends JPanel implements IBusListener 
         return dial;
     }
 
-    /**
-     * Get the row index for a dial. This method is maintained for backward compatibility.
-     * New code should use the overloaded createDial method with explicit rowType parameter.
-     *
-     * @param index The original index passed to createDial
-     * @return The row index to use for knob color and label lookup
-     * @deprecated Use the overloaded createDial(index, min, max, defaultValue, rowType) instead
-     */
-    @Deprecated
-    protected int getRowIndexForDial(int index) {
-        // Default implementation: assume index is already the row index
-        return index;
-    }
 
 }

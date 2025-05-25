@@ -113,6 +113,7 @@ public class MuteSequencerPanel extends JPanel implements IBusListener {
                 Commands.TIMING_UPDATE,
                 Commands.DRUM_PAD_SELECTED,  // Duplicate entry removed
                 Commands.PLAYER_ACTIVATED,
+                Commands.PLAYER_SELECTION_EVENT,
                 Commands.TRANSPORT_STOP,
                 // Add melodic sequence events
                 Commands.MELODIC_SEQUENCE_LOADED,
@@ -136,6 +137,7 @@ public class MuteSequencerPanel extends JPanel implements IBusListener {
             }
             case Commands.TRANSPORT_STOP -> resetHighlighting();
             case Commands.DRUM_PAD_SELECTED,
+                 Commands.PLAYER_SELECTION_EVENT,
                  Commands.PLAYER_ACTIVATED,
                  Commands.MELODIC_SEQUENCE_LOADED,
                  Commands.MELODIC_SEQUENCE_CREATED,

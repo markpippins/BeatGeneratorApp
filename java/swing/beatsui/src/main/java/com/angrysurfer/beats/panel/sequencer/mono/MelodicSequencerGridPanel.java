@@ -108,6 +108,7 @@ public class MelodicSequencerGridPanel extends JPanel implements IBusListener {
     private JPanel createSequenceColumn(int index) {
         // Use BoxLayout for vertical arrangement
         JPanel column = new JPanel();
+        // column.setBackground(UIHelper.coolBlue);
         column.setLayout(new BoxLayout(column, BoxLayout.Y_AXIS));
         column.setBorder(BorderFactory.createEmptyBorder(2, 1, 2, 1));
 

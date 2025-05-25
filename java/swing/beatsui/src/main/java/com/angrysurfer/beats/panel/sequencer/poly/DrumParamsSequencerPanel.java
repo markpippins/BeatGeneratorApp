@@ -225,20 +225,4 @@ public class DrumParamsSequencerPanel extends DrumSequencerPanel implements IBus
         };
 
     }
-
-    /**
-     * This method is now deprecated since we're using the explicit row type parameter
-     * in createDial instead of stack analysis.
-     *
-     * @param columnIndex The column index (step number)
-     * @return Always 0 as this method is no longer used
-     * @deprecated The overloaded createDial method with explicit rowType parameter is used instead
-     */
-    @Override
-    @Deprecated
-    protected int getRowIndexForDial(int columnIndex) {
-        // This is a simple implementation that defaults to velocity (0)
-        // It's no longer used since we now explicitly specify row types
-        return 0;
-    }
 }
