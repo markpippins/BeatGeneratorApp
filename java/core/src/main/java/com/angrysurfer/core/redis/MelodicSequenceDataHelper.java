@@ -133,7 +133,7 @@ public class MelodicSequenceDataHelper {
             sequencer.getSequenceData().setTimingDivision(data.getTimingDivision());
 
             // Apply looping flag
-            sequencer.setLooping(data.isLooping());
+            sequencer.getSequenceData().setLooping(data.isLooping());
 
             // Apply octave shift
             sequencer.getSequenceData().setOctaveShift(data.getOctaveShift());
@@ -152,10 +152,9 @@ public class MelodicSequenceDataHelper {
                 for (int i = 0; i < Math.min(activeSteps.size(), MAX_STEPS); i++) {
                     if (activeSteps.get(i)) {
                         // Get corresponding note, velocity, and gate values
-                        int noteValue = (i < data.getNoteValues().size()) ? data.getNoteValues().get(i) : 60;
-                        int velocityValue = (i < data.getVelocityValues().size()) ? data.getVelocityValues().get(i)
-                                : 100;
-                        int gateValue = (i < data.getGateValues().size()) ? data.getGateValues().get(i) : 50;
+                        int noteValue = data.getNoteValue(i);
+                        int velocityValue = data.getVelocityValue(i);
+                        int gateValue = data.getGateValue(i);
 
                         // Set step data
                         sequencer.setStepData(i, true, noteValue, velocityValue, gateValue);
@@ -403,7 +402,7 @@ public class MelodicSequenceDataHelper {
             MelodicSequenceData data = sequencer.getSequenceData();
 
             data.setSequencerId(sequencer.getId());
-            
+
             // Set or generate ID
             if (data.getId() <= 0) {
                 data.setId(jedis.incr("seq:melodicsequence"));

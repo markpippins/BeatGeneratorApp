@@ -1,33 +1,28 @@
 package com.angrysurfer.core.sequencer;
 
+import com.angrysurfer.core.service.DrumSequencerManager;
+import com.angrysurfer.core.service.MelodicSequencerManager;
+import lombok.Getter;
+import lombok.Setter;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import com.angrysurfer.core.service.DrumSequencerManager;
-import com.angrysurfer.core.service.MelodicSequencerManager;
-
-import lombok.Getter;
-import lombok.Setter;
-
 @Getter
 @Setter
 public class PatternSequencer {
     private static final Logger logger = LoggerFactory.getLogger(PatternSequencer.class);
-
-    // Sequencers
-    private DrumSequencer drumSequencer;
     final List<MelodicSequencer> melodicSequencers = new ArrayList<>();
-
     // Track pattern lists
     final List<PatternSlot> drumPatternSlots = new ArrayList<>();
     final Map<Integer, List<PatternSlot>> melodicPatternSlots = new HashMap<>();
-
     private final Map<String, Boolean> activeSequencers = new HashMap<>();
+    // Sequencers
+    private DrumSequencer drumSequencer;
 
     public PatternSequencer() {
         // Initialize sequencers
@@ -61,7 +56,7 @@ public class PatternSequencer {
 
         // Initialize melodic sequencers
         for (MelodicSequencer sequencer : melodicSequencers) {
-            sequencer.setLooping(true);
+            sequencer.getSequenceData().setLooping(true);
             logger.debug("Initialized melodic sequencer {}: looping disabled", sequencer.getId());
         }
 
@@ -71,7 +66,7 @@ public class PatternSequencer {
 
     /**
      * Handle a bar update from the timing system
-     * 
+     *
      * @param bar The current bar (1-based)
      */
     public void handleBarUpdate(int bar) {
@@ -129,7 +124,7 @@ public class PatternSequencer {
      * Update looping state for a specific sequencer
      */
     private void updateSequencerLooping(String sequencerId, Object sequencer,
-            List<PatternSlot> slots, int currentBar) {
+                                        List<PatternSlot> slots, int currentBar) {
         // Check if we're in a pattern slot
         PatternSlot currentSlot = findSlotAtPosition(slots, currentBar);
         boolean wasActive = activeSequencers.getOrDefault(sequencerId, false);
@@ -173,7 +168,7 @@ public class PatternSequencer {
         if (sequencer instanceof DrumSequencer) {
             ((DrumSequencer) sequencer).setLooping(looping);
         } else if (sequencer instanceof MelodicSequencer) {
-            ((MelodicSequencer) sequencer).setLooping(looping);
+            ((MelodicSequencer) sequencer).getSequenceData().setLooping(looping);
         }
     }
 
@@ -203,7 +198,7 @@ public class PatternSequencer {
         for (MelodicSequencer sequencer : melodicSequencers) {
             if (sequencer != null) {
                 sequencer.setNextPatternId(null);
-                sequencer.setLooping(true); // Reset to normal behavior when song mode is off
+                sequencer.getSequenceData().setLooping(true); // Reset to normal behavior when song mode is off
             }
         }
 

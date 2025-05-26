@@ -487,11 +487,6 @@ public class MelodicSequencerGridPanel extends JPanel implements IBusListener {
             List<Boolean> activeSteps = sequencer.getSequenceData().getActiveSteps();
 
             // Get all other step parameters from sequencer
-            List<Integer> notes = sequencer.getSequenceData().getNoteValues();
-            List<Integer> velocities = sequencer.getSequenceData().getVelocityValues();
-            List<Integer> gates = sequencer.getSequenceData().getGateValues();
-            List<Integer> probabilities = sequencer.getSequenceData().getProbabilityValues();
-            List<Integer> nudges = sequencer.getSequenceData().getNudgeValues();
 
             for (int i = 0; i < Math.min(triggerButtons.size(), activeSteps.size()); i++) {
                 // Update trigger button state
@@ -499,25 +494,12 @@ public class MelodicSequencerGridPanel extends JPanel implements IBusListener {
                 triggerButtons.get(i).setSelected(active);
 
                 // Update all dial values - make sure indexes are valid first
-                if (i < notes.size() && i < noteDials.size()) {
-                    noteDials.get(i).setValue(notes.get(i));
-                }
 
-                if (i < velocities.size() && i < velocityDials.size()) {
-                    velocityDials.get(i).setValue(velocities.get(i));
-                }
-
-                if (i < gates.size() && i < gateDials.size()) {
-                    gateDials.get(i).setValue(gates.get(i));
-                }
-
-                if (i < probabilities.size() && i < probabilityDials.size()) {
-                    probabilityDials.get(i).setValue(probabilities.get(i));
-                }
-
-                if (i < nudges.size() && i < nudgeDials.size()) {
-                    nudgeDials.get(i).setValue(nudges.get(i));
-                }
+                noteDials.get(i).setValue(sequencer.getSequenceData().getNoteValue(i));
+                velocityDials.get(i).setValue(sequencer.getSequenceData().getVelocityValue(i));
+                gateDials.get(i).setValue(sequencer.getSequenceData().getGateValue(i));
+                probabilityDials.get(i).setValue(sequencer.getSequenceData().getProbabilityValue(i));
+                nudgeDials.get(i).setValue(sequencer.getSequenceData().getNudgeValue(i));
 
                 // Force immediate visual update for trigger button
                 triggerButtons.get(i).repaint();

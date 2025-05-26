@@ -46,6 +46,7 @@ public class DrumSequencer implements IBusListener {
     private boolean usingInternalSynth = false;
     private Integer currentBar = null;
     // private Integer currentPart = null;
+    private TimingUpdate lastTimingUpdate = null;
 
     /**
      * Creates a new drum sequencer with per-drum parameters
@@ -391,7 +392,8 @@ public class DrumSequencer implements IBusListener {
      * @param preservePositions whether to preserve current positions
      */
     public void reset(boolean preservePositions) {
-        // Use the data object's reset method
+
+        this.lastTimingUpdate = null;
         sequenceData.reset(preservePositions);
         sequenceData.setMasterTempo(SessionManager.getInstance().getActiveSession().getTicksPerBeat());
 
@@ -1358,7 +1360,7 @@ public class DrumSequencer implements IBusListener {
 
     private void handleTimingUpdate(Command action) {
         if (action.getData() instanceof TimingUpdate update) {
-
+            this.lastTimingUpdate = update;
             if (update.bar() != null) {
                 // Adjust for 0-based index
                 int bar = update.bar() - 1;

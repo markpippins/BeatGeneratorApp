@@ -290,41 +290,6 @@ public class MelodicSequenceData {
     }
 
     /**
-     * Convert array to List of Integer
-     */
-    public List<Integer> getNoteValues() {
-        return Arrays.stream(noteValues).boxed().collect(Collectors.toList());
-    }
-
-    /**
-     * Convert array to List of Integer
-     */
-    public List<Integer> getVelocityValues() {
-        return Arrays.stream(velocityValues).boxed().collect(Collectors.toList());
-    }
-
-    /**
-     * Convert array to List of Integer
-     */
-    public List<Integer> getGateValues() {
-        return Arrays.stream(gateValues).boxed().collect(Collectors.toList());
-    }
-
-    /**
-     * Convert array to List of Integer
-     */
-    public List<Integer> getProbabilityValues() {
-        return Arrays.stream(probabilityValues).boxed().collect(Collectors.toList());
-    }
-
-    /**
-     * Convert array to List of Integer
-     */
-    public List<Integer> getNudgeValues() {
-        return Arrays.stream(nudgeValues).boxed().collect(Collectors.toList());
-    }
-
-    /**
      * Get pattern length
      */
     public int getPatternLength() {

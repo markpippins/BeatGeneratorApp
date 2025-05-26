@@ -213,7 +213,7 @@ public class MelodicSequenceNavigationPanel extends LivePanel {
             sequencer.getSequenceData().setPatternLength(16);
             sequencer.getSequenceData().setDirection(Direction.FORWARD);
             sequencer.getSequenceData().setTimingDivision(TimingDivision.NORMAL);
-            sequencer.setLooping(true);
+            sequencer.getSequenceData().setLooping(true);
 
             // Update UI
             updateSequenceIdDisplay();

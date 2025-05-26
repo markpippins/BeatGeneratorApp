@@ -15,6 +15,7 @@ import org.slf4j.LoggerFactory;
 
 import javax.sound.midi.MidiDevice;
 import javax.sound.midi.MidiUnavailableException;
+import javax.sound.midi.ShortMessage;
 import java.util.*;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
@@ -22,29 +23,33 @@ import java.util.stream.Collectors;
 @Getter
 @Setter
 public class MelodicSequencer implements IBusListener {
+
     private static final Logger logger = LoggerFactory.getLogger(MelodicSequencer.class);
-    private final javax.sound.midi.ShortMessage reuseableMessage = new javax.sound.midi.ShortMessage();
+
+    private final ShortMessage reuseableMessage = new javax.sound.midi.ShortMessage();
+
+    private boolean loopingToggled;
+    private boolean isPlaying = false; // Flag indicating playback state
+
     private int currentStep = 0; // Current step in the pattern
     private long tickCounter = 0; // Tick counter
-    private boolean isPlaying = false; // Flag indicating playback state
     private int bounceDirection = 1; // Direction for bounce mode
-    private boolean isLooping = false;
     private Integer currentBar = null;
     private MelodicSequenceData sequenceData = new MelodicSequenceData();
     private Boolean[] scaleNotes; // Computed from root note and scale
     private Quantizer quantizer; // Computed from scale notes
-    private Consumer<StepUpdateEvent> stepUpdateListener;
-    private Consumer<NoteEvent> noteEventListener;
     private int masterTempo;
     private Integer id;
     private boolean latchEnabled = false;
-    private Consumer<NoteEvent> noteEventPublisher;
     private Long nextPatternId = null;
     private long lastNoteTriggeredTime = 0;
     private Player player;
     private int currentTilt = 0;
-    private boolean currentlyMuted = false;
-    private boolean muted = false; // Track mute state for efficient note triggering
+    private Random rand = new Random();
+
+    private Consumer<NoteEvent> noteEventPublisher;
+    private Consumer<StepUpdateEvent> stepUpdateListener;
+    private Consumer<NoteEvent> noteEventListener;
 
     public MelodicSequencer(Integer id) {
         setId(id);
@@ -65,7 +70,7 @@ public class MelodicSequencer implements IBusListener {
                 Commands.PLAYER_UPDATED,
                 Commands.REFRESH_PLAYER_INSTRUMENT,
                 Commands.SYSTEM_READY,
-                // Add these two commands
+                Commands.LOOPING_TOGGLE_EVENT,
                 Commands.GLOBAL_SCALE_SELECTION_EVENT,
                 Commands.SCALE_SELECTED,
                 Commands.ROOT_NOTE_SELECTED
@@ -116,7 +121,7 @@ public class MelodicSequencer implements IBusListener {
 
         MelodicSequencerManager.getInstance().initializePlayer(player);
 
-        isPlaying = true;
+        isPlaying = getSequenceData().isLooping();
         logger.info("Melodic sequencer {} started playback", id);
         CommandBus.getInstance().publish(Commands.SEQUENCER_STATE_CHANGED, this,
                 Map.of("sequencerId", id, "state", "started"));
@@ -125,6 +130,8 @@ public class MelodicSequencer implements IBusListener {
     public void stop() {
         if (isPlaying) {
             isPlaying = false;
+            currentStep = 0;
+            currentBar = null;
             logger.info("Melodic sequencer playback stopped");
         }
     }
@@ -171,10 +178,6 @@ public class MelodicSequencer implements IBusListener {
 
                     // Handle pattern switching if enabled
                     handlePatternCompletion();
-
-                    if (!sequenceData.isLooping()) {
-                        isPlaying = false;
-                    }
                 }
             }
 
@@ -186,10 +189,6 @@ public class MelodicSequencer implements IBusListener {
                     patternCompleted = true;
 
                     handlePatternCompletion();
-
-                    if (!sequenceData.isLooping()) {
-                        isPlaying = false;
-                    }
                 }
             }
 
@@ -201,10 +200,6 @@ public class MelodicSequencer implements IBusListener {
 
                     if (currentStep <= 0 || currentStep >= sequenceData.getPatternLength() - 1) {
                         handlePatternCompletion();
-                    }
-
-                    if (!sequenceData.isLooping()) {
-                        isPlaying = false;
                     }
                 }
             }
@@ -226,10 +221,13 @@ public class MelodicSequencer implements IBusListener {
     }
 
     private void handlePatternCompletion() {
+
         if (latchEnabled) {
             int octaveRange = 2;
             int density = 50;
-            generatePattern(octaveRange, density);
+            if (rand.nextBoolean())
+                generatePattern(octaveRange, density);
+
             logger.info("Latch mode: Generated new pattern at cycle end");
         }
 
@@ -289,15 +287,8 @@ public class MelodicSequencer implements IBusListener {
 
     public void triggerNote(int stepIndex) {
         // Skip if not playing or muted (fast check before doing any other processing)
-        if (!isPlaying || muted) {
+        if (!isPlaying || !sequenceData.isStepActive(stepIndex) || player.isMuted())
             return;
-        }
-
-        // Check if step is active
-        boolean stepActive = sequenceData.isStepActive(stepIndex);
-        if (!stepActive) {
-            return;
-        }
 
         // Check probability
         int probability = sequenceData.getProbabilityValue(stepIndex);
@@ -359,21 +350,6 @@ public class MelodicSequencer implements IBusListener {
                 sequenceData);
 
         logger.debug("Pattern updated notification sent");
-    }
-
-    public void updateFromData(MelodicSequenceData sequenceData) {
-        if (sequenceData == null) {
-            logger.warn("Cannot update from null sequence data");
-            return;
-        }
-
-        boolean wasPlaying = isPlaying;
-        this.sequenceData = sequenceData;
-        updateQuantizer();
-        currentStep = 0;
-        isPlaying = wasPlaying;
-        logger.info("Sequencer updated from sequence data (ID: {})",
-                sequenceData.getId());
     }
 
     private void initializePlayer(int playerChannel) {
@@ -500,6 +476,9 @@ public class MelodicSequencer implements IBusListener {
         }
 
         switch (action.getCommand()) {
+
+            case Commands.LOOPING_TOGGLE_EVENT -> handleLoopToggleEvent(action);
+
             case Commands.GLOBAL_SCALE_SELECTION_EVENT -> {
                 // Apply global scale change to all sequencers
                 if (action.getData() instanceof String scale) {
@@ -602,18 +581,17 @@ public class MelodicSequencer implements IBusListener {
                         boolean shouldMute = muteValue > 0;
 
                         // Only update if mute state changes
-                        if (shouldMute != muted) {
-                            muted = shouldMute;
-                            // int originalLevel = player.getOriginalLevel() > 0 ?
-                            //player.getOriginalLevel() : 100;
-                            // player.setLevel(shouldMute ? 0 : originalLevel);
+                        if (shouldMute != player.isMuted()) {
+                            player.setMuted(shouldMute);
                             player.setEnabled(!shouldMute);
                             logger.debug("Bar {}: Player {} {}",
                                     currentBar, player.getName(),
                                     shouldMute ? "muted" : "unmuted");
-                            // CommandBus.getInstance().publish(  Commands.PLAYER_UPDATED, this, player); }
                         }
                     }
+
+                    if (loopingToggled)
+                        handleLoopToggled();
                 }
             }
             // Process tick for note sequencing
@@ -684,6 +662,35 @@ public class MelodicSequencer implements IBusListener {
 
         sequenceData.setMuteValues(muteArray);
         logger.info("Set {} mute values in sequencer", muteValues.size());
+    }
+
+    /**
+     * Handle loop toggle events from UI components
+     *
+     * @param action the Command containing the loop toggle event
+     */
+    private void handleLoopToggleEvent(Command action) {
+        if (action.getData() instanceof MelodicSequencer sequencer && sequencer.getId().equals(id))
+            loopingToggled = true;
+    }
+
+    private void handleLoopToggled() {
+
+        boolean loopingState = getSequenceData().isLooping();
+        if (!loopingState && isPlaying)
+            isPlaying = false;
+
+            // If looping was re-enabled and the sequencer isn't playing but should be
+        else if (loopingState && !isPlaying && sequenceData.isLooping()) {
+            // Restart playback
+            // currentStep = 0;
+            isPlaying = true;
+            logger.info("Restarting melodic sequencer {} due to looping re-enabled", id);
+            CommandBus.getInstance().publish(Commands.SEQUENCER_STATE_CHANGED, this,
+                    Map.of("sequencerId", id, "state", "restarted"));
+        }
+
+        loopingToggled = false;
     }
 
 

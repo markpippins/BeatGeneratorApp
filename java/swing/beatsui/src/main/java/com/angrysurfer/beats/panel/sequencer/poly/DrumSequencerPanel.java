@@ -651,7 +651,7 @@ public abstract class DrumSequencerPanel extends JPanel implements IBusListener 
         triggerButton.setToolTipText("Step " + (index + 1));
         triggerButton.setEnabled(selectedPadIndex >= 0);
         triggerButton.addActionListener(e -> toggleStepForActivePad(index));
-
+        triggerButton.setBorder(BorderFactory.createEmptyBorder(4, 0, 0, 0));
         selectorButtons.add(triggerButton);
 
         // Center the button horizontally
