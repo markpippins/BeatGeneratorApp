@@ -16,16 +16,16 @@ import java.awt.event.ItemEvent;
 /**
  * Panel containing sequence parameters for melodic sequencers
  */
-public class MelodicSequencerScalePanel extends JPanel {
-    private static final Logger logger = LoggerFactory.getLogger(MelodicSequencerScalePanel.class);
-    // Reference to sequencer - should be marked as final
+public class ScalePanel extends JPanel {
+    private static final Logger logger = LoggerFactory.getLogger(ScalePanel.class);
+
     private final MelodicSequencer sequencer;
-    // Declare fields for all UI controls
+
     private JComboBox<String> rootNoteCombo;
     private JComboBox<String> scaleCombo;
     private JToggleButton quantizeToggle;
     private JSpinner octaveSpinner;
-    // Flag to prevent event loops
+
     private boolean updatingUI = false;
 
     /**
@@ -33,7 +33,7 @@ public class MelodicSequencerScalePanel extends JPanel {
      *
      * @param sequencer The melodic sequencer to control
      */
-    public MelodicSequencerScalePanel(MelodicSequencer sequencer) {
+    public ScalePanel(MelodicSequencer sequencer) {
         this.sequencer = sequencer;
         initialize();
     }

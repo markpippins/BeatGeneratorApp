@@ -371,7 +371,7 @@ public class SongPanel extends JPanel implements IBusListener {
                     drumSequencer.setLooping(true);
                 }
                 for (MelodicSequencer sequencer : melodicSequencers) {
-                    sequencer.setLooping(true);
+                    sequencer.getSequenceData().setLooping(true);
                 }
             }
 
@@ -472,7 +472,7 @@ public class SongPanel extends JPanel implements IBusListener {
 
             // Initialize melodic sequencers
             for (MelodicSequencer sequencer : melodicSequencers) {
-                sequencer.setLooping(false);
+                sequencer.getSequenceData().setLooping(false);
                 logger.debug("Initialized melodic sequencer {}: looping disabled", sequencer.getId());
             }
 
@@ -584,7 +584,7 @@ public class SongPanel extends JPanel implements IBusListener {
             if (sequencer instanceof DrumSequencer) {
                 ((DrumSequencer) sequencer).setLooping(looping);
             } else if (sequencer instanceof MelodicSequencer) {
-                ((MelodicSequencer) sequencer).setLooping(looping);
+                ((MelodicSequencer) sequencer).getSequenceData().setLooping(looping);
             }
         }
 
@@ -614,7 +614,7 @@ public class SongPanel extends JPanel implements IBusListener {
             for (MelodicSequencer sequencer : melodicSequencers) {
                 if (sequencer != null) {
                     sequencer.setNextPatternId(null);
-                    sequencer.setLooping(true); // Reset to normal behavior when song mode is off
+                    sequencer.getSequenceData().setLooping(true); // Reset to normal behavior when song mode is off
                 }
             }
 

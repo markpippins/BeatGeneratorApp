@@ -5,7 +5,7 @@ import com.angrysurfer.beats.util.UIHelper;
 import javax.swing.*;
 import java.awt.*;
 
-public class DrumGridButton extends JButton {
+public class DrumSequencerGridButton extends JButton {
 
     private final int drumPadIndex = -1; // Default to -1 for unassigned index
     private final Color temporaryColor = new Color(200, 150, 40); // Amber highlight
@@ -42,7 +42,7 @@ public class DrumGridButton extends JButton {
      *
      * @param text The button text
      */
-    public DrumGridButton(String text) {
+    public DrumSequencerGridButton(String text) {
         super(text);
         initialize();
     }
@@ -50,7 +50,7 @@ public class DrumGridButton extends JButton {
     /**
      * Create a new trigger button without label
      */
-    public DrumGridButton() {
+    public DrumSequencerGridButton() {
         super();
         initialize();
     }
@@ -420,9 +420,9 @@ public class DrumGridButton extends JButton {
 
         // If accented, draw a small red square in the top right corner
         if (accented) {
-            g2d.setColor(Color.RED);
+            g2d.setColor(UIHelper.agedOffWhite);
             int squareSize = Math.max(4, Math.min(width, height) / 5);
-            g2d.fillRect(width - squareSize - 1, 1, squareSize, squareSize);
+            g2d.fillRect(0, 0, squareSize, squareSize);
         }
 
         // If using temporary state, draw a border

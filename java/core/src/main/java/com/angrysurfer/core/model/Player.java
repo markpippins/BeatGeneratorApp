@@ -149,7 +149,7 @@ public abstract class Player implements Serializable, IBusListener {
     @JsonIgnore
     private long lastTriggeredTick = -1;
 
-    private Boolean followRules = false;
+    private Boolean followRules = true;
     private Boolean followSessionOffset = false;
 
     // Add cleanup method to shutdown pools on application exit
@@ -444,6 +444,13 @@ public abstract class Player implements Serializable, IBusListener {
         }).collect(Collectors.toSet());
     }
 
+
+    @JsonIgnore
+    @Transient
+    private boolean hasRules() {
+        return getRules().size() > 0;
+    }
+
     /**
      * Determines whether this player should play at the given position
      *
@@ -456,7 +463,7 @@ public abstract class Player implements Serializable, IBusListener {
         }
 
         // Let sequencers play without unnecessary rule checks
-        if ((isMelodicPlayer() || isDrumPlayer()) && !followRules) {
+        if (!followRules) {
             return true;
         }
 

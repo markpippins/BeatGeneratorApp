@@ -6,6 +6,7 @@ import com.angrysurfer.core.api.Command;
 import com.angrysurfer.core.api.CommandBus;
 import com.angrysurfer.core.api.Commands;
 import com.angrysurfer.core.api.IBusListener;
+import com.angrysurfer.core.event.PlayerInstrumentChangeEvent;
 import com.angrysurfer.core.event.PlayerPresetChangeEvent;
 import com.angrysurfer.core.event.PlayerUpdateEvent;
 import com.angrysurfer.core.model.Player;
@@ -134,27 +135,24 @@ public class DrumSelectorPanel extends JPanel implements IBusListener {
                 timer.start();
                 break;
 
-            case Commands.PLAYER_UPDATED:
+            case Commands.PLAYER_UPDATED, Commands.PLAYER_UPDATE_EVENT:
                 if (action.getData() instanceof Player player) {
                     // Check if this player belongs to our sequencer
                     if (player.getOwner() == sequencer) {
                         updateButtonForPlayer(player);
                         logger.debug("Updated drum button for player: {}", player.getName());
                     }
-                }
-                break;
-
-            case Commands.PLAYER_UPDATE_EVENT:
-                if (action.getData() instanceof PlayerUpdateEvent event) {
+                } else if (action.getData() instanceof PlayerUpdateEvent event) {
                     // Check if this player belongs to our sequencer
                     if (event.getPlayer().getOwner() == sequencer) {
                         updateButtonForPlayer(event.getPlayer());
                         logger.debug("Updated drum button for player: {}", event.getPlayer().getName());
                     }
                 }
+
                 break;
 
-            case Commands.PLAYER_PRESET_CHANGED:
+            case Commands.PLAYER_PRESET_CHANGED, Commands.PLAYER_PRESET_CHANGE_EVENT:
                 if (action.getData() instanceof Object[] data && data.length >= 2) {
                     Long playerId = (Long) data[0];
 
@@ -172,12 +170,7 @@ public class DrumSelectorPanel extends JPanel implements IBusListener {
                             break;
                         }
                     }
-                }
-                break;
-
-            // Add direct handler for preset change events
-            case Commands.PLAYER_PRESET_CHANGE_EVENT:
-                if (action.getData() instanceof PlayerPresetChangeEvent event) {
+                } else if (action.getData() instanceof PlayerPresetChangeEvent event) {
                     Player eventPlayer = event.getPlayer();
                     if (eventPlayer != null) {
                         // Check if this player belongs to our sequencer
@@ -217,6 +210,9 @@ public class DrumSelectorPanel extends JPanel implements IBusListener {
                 break;
 
             case Commands.DRUM_PLAYER_INSTRUMENT_CHANGED:
+                if (action.getData() instanceof PlayerInstrumentChangeEvent event) {
+                    updateButtonForPlayer(event.getPlayer());
+                }
                 if (action.getData() instanceof Object[] data && data.length >= 3) {
                     DrumSequencer targetSequencer = (DrumSequencer) data[0];
                     int drumIndex = (int) data[1];
