@@ -281,6 +281,7 @@ public class MelodicSequenceParametersPanel extends JPanel {
         loopToggleButton.addActionListener(e -> {
             if (!updatingUI) {
                 sequencer.getSequenceData().setLooping(loopToggleButton.isSelected());
+                CommandBus.getInstance().publish(Commands.LOOPING_TOGGLE_EVENT, this, sequencer);
             }
         });
 

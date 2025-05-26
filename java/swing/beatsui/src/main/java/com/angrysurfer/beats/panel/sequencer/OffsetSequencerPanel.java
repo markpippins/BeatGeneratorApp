@@ -66,8 +66,8 @@ public class OffsetSequencerPanel extends JPanel implements IBusListener {
         UIHelper.setWidgetPanelBorder(this, "Offsets");
 
         // Correct the height settings
-        setPreferredSize(new Dimension(800, 64));
-        setMaximumSize(new Dimension(Integer.MAX_VALUE, 44)); // Match preferred height
+        setPreferredSize(new Dimension(800, 54));
+        setMaximumSize(new Dimension(Integer.MAX_VALUE, 54)); // Match preferred height
 
         JPanel buttonPanel = new JPanel(new GridLayout(1, STEP_COUNT, 2, 0));
         buttonPanel.setBackground(getBackground());

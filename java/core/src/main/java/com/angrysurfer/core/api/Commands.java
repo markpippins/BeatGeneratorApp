@@ -414,4 +414,5 @@ public class Commands {
     public static final String DRUM_TRACK_MUTE_CHANGED = "DRUM_TRACK_MUTE_CHANGED";
     public static final String DRUM_TRACK_MUTE_VALUES_CHANGED = "DRUM_TRACK_MUTE_VALUES_CHANGED";
     public static final String SEQUENCER_SYNC_MESSAGE = "SEQUENCER_SYNC_MESSAGE";
+    public static final String LOOPING_TOGGLE_EVENT = "LOOPING_TOGGLE_EVENT";
 }

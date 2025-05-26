@@ -57,7 +57,7 @@ public class MelodicSequencerPanel extends JPanel implements IBusListener {
 
     private MelodicSequencerGridPanel gridPanel;
 
-    private MelodicSequencerScalePanel scalePanel;
+    private ScalePanel scalePanel;
 
     private MelodicSequencerGeneratorPanel generatorPanel;
 
@@ -100,7 +100,9 @@ public class MelodicSequencerPanel extends JPanel implements IBusListener {
                 Commands.TRANSPORT_STOP,
                 Commands.MELODIC_SEQUENCE_LOADED,    // Add these events
                 Commands.MELODIC_SEQUENCE_UPDATED,
-                Commands.MELODIC_SEQUENCE_CREATED
+                Commands.MELODIC_SEQUENCE_CREATED,
+                Commands.SCALE_SELECTED,
+                Commands.ROOT_NOTE_SELECTED
         });
     }
 
@@ -292,7 +294,7 @@ public class MelodicSequencerPanel extends JPanel implements IBusListener {
         JPanel rightPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 2, 1));
 
         // Create and add the scale panel to the RIGHT of the bottom panel
-        scalePanel = new MelodicSequencerScalePanel(sequencer);
+        scalePanel = new ScalePanel(sequencer);
         rightPanel.add(scalePanel);
 
         generatorPanel = new MelodicSequencerGeneratorPanel(sequencer);
@@ -478,6 +480,11 @@ public class MelodicSequencerPanel extends JPanel implements IBusListener {
                     syncUIWithSequencer();
                 }
             }
+            case Commands.ROOT_NOTE_SELECTED -> {
+                getSequencer().getSequenceData().setRootNoteFromString((String) action.getData());
+                getSequencer().getPlayer().setRootNote(getSequencer().getSequenceData().getRootNote());
+                syncUIWithSequencer();
+            }
 
             case Commands.SCALE_SELECTED -> {
                 // Only update if this event is for our specific sequencer or from the global
@@ -504,9 +511,8 @@ public class MelodicSequencerPanel extends JPanel implements IBusListener {
                     sequencer.getSequenceData().setScale(scale);
 
                     // Update UI without publishing new events
-                    if (scalePanel != null) {
+                    if (scalePanel != null)
                         scalePanel.setSelectedScale(scale);
-                    }
 
                     logger.debug("Set scale to {} from global session change", scale);
                 }

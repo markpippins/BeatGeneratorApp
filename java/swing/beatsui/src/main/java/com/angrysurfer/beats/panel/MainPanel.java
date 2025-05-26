@@ -815,7 +815,7 @@ public class MainPanel extends LivePanel implements AutoCloseable, IBusListener 
             // Set looping state for all melodic sequencers
             for (MelodicSequencerPanel panel : melodicPanels) {
                 if (panel != null && panel.getSequencer() != null) {
-                    panel.getSequencer().setLooping(isLooping);
+                    panel.getSequencer().getSequenceData().setLooping(isLooping);
                 }
             }
 
