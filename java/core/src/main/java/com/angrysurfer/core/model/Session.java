@@ -7,7 +7,6 @@ import com.angrysurfer.core.sequencer.TimingUpdate;
 import com.angrysurfer.core.service.DeviceManager;
 import com.angrysurfer.core.service.InstrumentManager;
 import com.angrysurfer.core.service.PlayerManager;
-import com.angrysurfer.core.util.LowLatencyMidiClock;
 import com.angrysurfer.core.util.MidiClockSource;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.Transient;
@@ -119,7 +118,6 @@ public class Session implements Serializable, IBusListener {
 
     @JsonIgnore
     private transient ConcurrentLinkedQueue<IBusListener> timingListeners;
-    private LowLatencyMidiClock lowLatencyMidiClock;
 
     // Add this to Session constructor to ensure proper registration
     public Session() {
@@ -804,22 +802,6 @@ public class Session implements Serializable, IBusListener {
                 }
             }
         }
-    }
-
-    public void startSession() {
-        // Initialize and start the low latency clock if not already done
-        if (lowLatencyMidiClock == null) {
-            lowLatencyMidiClock = new LowLatencyMidiClock(this);
-        }
-        lowLatencyMidiClock.start();
-        // ...other start initialization code...
-    }
-
-    public void stopSession() {
-        if (lowLatencyMidiClock != null) {
-            lowLatencyMidiClock.stop();
-        }
-        // ...other stop cleanup code...
     }
 
     /**

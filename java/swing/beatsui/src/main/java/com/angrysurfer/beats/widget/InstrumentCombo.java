@@ -6,6 +6,7 @@ import com.angrysurfer.core.api.CommandBus;
 import com.angrysurfer.core.api.Commands;
 import com.angrysurfer.core.api.IBusListener;
 import com.angrysurfer.core.event.PlayerInstrumentChangeEvent;
+import com.angrysurfer.core.event.PlayerUpdateEvent;
 import com.angrysurfer.core.model.InstrumentWrapper;
 import com.angrysurfer.core.model.Player;
 import com.angrysurfer.core.service.InstrumentManager;
@@ -37,7 +38,7 @@ public class InstrumentCombo extends JComboBox<InstrumentWrapper> implements IBu
         super();
         configureRenderer();
         CommandBus.getInstance().register(this, new String[]{Commands.PLAYER_SELECTION_EVENT,
-                Commands.INSTRUMENTS_REFRESHED, Commands.INSTRUMENT_UPDATED, Commands.PLAYER_UPDATED,
+                Commands.INSTRUMENTS_REFRESHED, Commands.INSTRUMENT_UPDATED, Commands.PLAYER_UPDATE_EVENT,
                 Commands.PLAYER_INSTRUMENT_CHANGED});
 
         setPreferredSize(new Dimension(UIHelper.LARGE_CONTROL_WIDTH * 2, UIHelper.CONTROL_HEIGHT));
@@ -121,15 +122,15 @@ public class InstrumentCombo extends JComboBox<InstrumentWrapper> implements IBu
                 }
                 break;
 
-            case Commands.PLAYER_UPDATED:
-                if (action.getData() instanceof Player player &&
+            case Commands.PLAYER_UPDATE_EVENT:
+                if (action.getData() instanceof PlayerUpdateEvent event &&
                         currentPlayer != null &&
-                        player.getId().equals(currentPlayer.getId())) {
+                        event.getPlayer().getId().equals(currentPlayer.getId())) {
                     // Only update if instrument has changed
-                    if (player.getInstrumentId() != null &&
+                    if (event.getPlayer().getInstrumentId() != null &&
                             (currentPlayer.getInstrumentId() == null ||
-                                    !player.getInstrumentId().equals(currentPlayer.getInstrumentId()))) {
-                        updateSelectedInstrument(player);
+                                    !event.getPlayer().getInstrumentId().equals(currentPlayer.getInstrumentId()))) {
+                        updateSelectedInstrument(event.getPlayer());
                     }
                 }
                 break;

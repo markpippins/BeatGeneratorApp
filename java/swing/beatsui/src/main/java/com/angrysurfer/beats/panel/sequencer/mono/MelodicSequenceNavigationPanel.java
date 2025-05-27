@@ -1,5 +1,6 @@
 package com.angrysurfer.beats.panel.sequencer.mono;
 
+import com.angrysurfer.beats.Symbols;
 import com.angrysurfer.beats.panel.LivePanel;
 import com.angrysurfer.beats.util.UIHelper;
 import com.angrysurfer.core.api.Command;
@@ -8,9 +9,11 @@ import com.angrysurfer.core.api.Commands;
 import com.angrysurfer.core.event.MelodicSequencerEvent;
 import com.angrysurfer.core.redis.RedisService;
 import com.angrysurfer.core.sequencer.Direction;
+import com.angrysurfer.core.sequencer.MelodicSequenceData;
 import com.angrysurfer.core.sequencer.MelodicSequencer;
 import com.angrysurfer.core.sequencer.TimingDivision;
 import com.angrysurfer.core.service.MelodicSequencerManager;
+import com.angrysurfer.core.service.PlayerManager;
 import lombok.Getter;
 import lombok.Setter;
 import org.slf4j.Logger;
@@ -20,6 +23,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * Panel providing navigation controls for melodic sequences
@@ -36,6 +40,8 @@ public class MelodicSequenceNavigationPanel extends LivePanel {
     private JButton prevButton;
     private JButton nextButton;
     private JButton lastButton;
+    private JButton copyButton;
+    private JButton pasteButton;
 
     // Update the constructor to accept the parent panel reference
     public MelodicSequenceNavigationPanel(MelodicSequencer sequencer) {
@@ -68,17 +74,31 @@ public class MelodicSequenceNavigationPanel extends LivePanel {
         lastButton = createButton("⏭", "Last sequence", e -> loadLastSequence());
         JButton saveButton = createButton("💾", "Save current sequence", e -> saveCurrentSequence());
 
+        copyButton = createButton(Symbols.get(Symbols.SNAPSHOT), "Copy", e -> copySequence());
+        pasteButton = createButton(Symbols.get(Symbols.PASTE), "Paste", e -> pasteSequence());
+
         // Add components in same order as DrumSequenceNavigationPanel
         add(sequenceIdLabel);
-        add(newButton);
         add(firstButton);
         add(prevButton);
         add(nextButton);
         add(lastButton);
         add(saveButton);
+        add(copyButton);
+        add(pasteButton);
+        add(newButton);
 
         // Set initial button state
         updateButtonStates();
+    }
+
+    private void pasteSequence() {
+    }
+
+    private void copySequence() {
+    }
+
+    private void copyToNewSequence() {
     }
 
     private JButton createButton(String text, String tooltip, java.awt.event.ActionListener listener) {
@@ -239,20 +259,26 @@ public class MelodicSequenceNavigationPanel extends LivePanel {
     private void loadSequence(Long sequenceId) {
         if (sequenceId != null && sequencer.getId() != null) {
             // Replace direct RedisService call with manager call
-            boolean success = MelodicSequencerManager.getInstance()
-                    .applySequenceById(sequencer.getId(), sequenceId);
 
-            if (!success) {
+            MelodicSequenceData data = MelodicSequencerManager.getInstance().getSequenceData(sequencer.getId(), sequenceId);
+
+//            boolean success = MelodicSequencerManager.getInstance()
+//                    .applySequenceById(sequencer.getId(), sequenceId);
+
+            if (Objects.isNull(data)) {
                 logger.warn("Failed to load sequence {} for sequencer {}",
                         sequenceId, sequencer.getId());
                 return;
             }
 
+            sequencer.setSequenceData(data);
+
             // Update display
             updateSequenceIdDisplay();
 
             // Reset the sequencer to ensure proper step indicator state
-            sequencer.reset();
+            //sequencer.reset();
+            PlayerManager.getInstance().initializePlayer(sequencer.getPlayer());
 
             // Notify that a pattern was loaded
             CommandBus.getInstance().publish(

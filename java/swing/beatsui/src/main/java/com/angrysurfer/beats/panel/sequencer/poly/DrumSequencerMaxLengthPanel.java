@@ -24,14 +24,16 @@ public class DrumSequencerMaxLengthPanel extends JPanel {
      * Create a new MaxLengthPanel
      *
      * @param sequencer The drum sequencer
-     */
-    public DrumSequencerMaxLengthPanel(DrumSequencer sequencer) {
+     */    public DrumSequencerMaxLengthPanel(DrumSequencer sequencer) {
         this.sequencer = sequencer;
         // In DrumSequencerMaxLengthPanel's constructor
         UIHelper.setWidgetPanelBorder(this, "Sequencer");
 
         // REDUCED: from 5,2 to 2,1
         setLayout(new FlowLayout(FlowLayout.CENTER, 2, 1));
+        
+        // Add mouse wheel listener to the entire panel
+        addMouseWheelListener(this::handleMouseWheelEvent);
 
         initializeComponents();
     }
@@ -78,5 +80,28 @@ public class DrumSequencerMaxLengthPanel extends JPanel {
      */
     public void updateControls() {
         maxLengthCombo.setSelectedItem(sequencer.getMaxPatternLength());
+    }
+
+    /**
+     * Handles mouse wheel events for the panel's components
+     *
+     * @param e The mouse wheel event
+     */
+    private void handleMouseWheelEvent(java.awt.event.MouseWheelEvent e) {
+        // Determine scroll direction (-1 for up, 1 for down)
+        int scrollDirection = e.getWheelRotation() > 0 ? -1 : 1;
+        
+        // Get current index
+        int currentIndex = maxLengthCombo.getSelectedIndex();
+        int newIndex = currentIndex + scrollDirection;
+        
+        // Ensure within bounds
+        newIndex = Math.max(0, Math.min(newIndex, maxLengthCombo.getItemCount() - 1));
+        
+        // Update if changed
+        if (newIndex != currentIndex) {
+            maxLengthCombo.setSelectedIndex(newIndex);
+            // The action listener will handle the update
+        }
     }
 }

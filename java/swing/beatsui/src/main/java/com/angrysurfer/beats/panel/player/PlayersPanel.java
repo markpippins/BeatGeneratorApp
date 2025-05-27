@@ -5,6 +5,7 @@ import com.angrysurfer.beats.panel.ContextMenuHelper;
 import com.angrysurfer.beats.widget.PlayersTable;
 import com.angrysurfer.beats.widget.PlayersTableModel;
 import com.angrysurfer.core.api.*;
+import com.angrysurfer.core.event.PlayerUpdateEvent;
 import com.angrysurfer.core.model.Player;
 import com.angrysurfer.core.model.Session;
 import com.angrysurfer.core.service.SessionManager;
@@ -493,10 +494,10 @@ public class PlayersPanel extends JPanel {
                         case Commands.NEW_VALUE_RANDOM:
                         case Commands.NEW_VALUE_PAN:
                         case Commands.NEW_VALUE_SPARSE:
-                        case Commands.PLAYER_UPDATED: {
-                            if (action.getSender() instanceof Player player) {
-                                logger.info("Updating player row due to " + cmd + " for: " + player.getName());
-                                updatePlayerRow(player);
+                        case Commands.PLAYER_UPDATE_EVENT: {
+                            if (action.getSender() instanceof PlayerUpdateEvent event) {
+                                logger.info("Updating player row due to " + cmd + " for: " + event.getPlayer().getName());
+                                updatePlayerRow(event.getPlayer());
                             }
                             break;
                         }
@@ -531,7 +532,7 @@ public class PlayersPanel extends JPanel {
                 Commands.NEW_VALUE_RANDOM,
                 Commands.NEW_VALUE_PAN,
                 Commands.NEW_VALUE_SPARSE,
-                Commands.PLAYER_UPDATED
+                Commands.PLAYER_UPDATE_EVENT
         });
     }
 

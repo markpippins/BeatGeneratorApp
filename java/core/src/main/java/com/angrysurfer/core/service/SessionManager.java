@@ -1,6 +1,7 @@
 package com.angrysurfer.core.service;
 
 import com.angrysurfer.core.api.*;
+import com.angrysurfer.core.event.PlayerUpdateEvent;
 import com.angrysurfer.core.model.InstrumentWrapper;
 import com.angrysurfer.core.model.Player;
 import com.angrysurfer.core.model.Rule;
@@ -403,7 +404,7 @@ public class SessionManager implements IBusListener {
         }
 
         // Notify UI
-        CommandBus.getInstance().publish(Commands.PLAYER_UPDATED, this, player);
+        CommandBus.getInstance().publish(Commands.PLAYER_UPDATE_EVENT, this, new PlayerUpdateEvent(this, player));
         CommandBus.getInstance().publish(Commands.SESSION_UPDATED, this, getActiveSession());
     }
 
@@ -461,7 +462,7 @@ public class SessionManager implements IBusListener {
             RedisService.getInstance().saveSession(activeSession);
 
             // Publish update events
-            CommandBus.getInstance().publish(Commands.PLAYER_UPDATED, this, player);
+            CommandBus.getInstance().publish(Commands.PLAYER_UPDATE_EVENT, this, new PlayerUpdateEvent(this, player));
             CommandBus.getInstance().publish(Commands.SESSION_UPDATED, this, activeSession);
         }
     }

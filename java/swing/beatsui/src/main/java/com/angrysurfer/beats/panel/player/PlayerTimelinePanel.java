@@ -5,6 +5,7 @@ import com.angrysurfer.core.api.Command;
 import com.angrysurfer.core.api.CommandBus;
 import com.angrysurfer.core.api.Commands;
 import com.angrysurfer.core.api.IBusListener;
+import com.angrysurfer.core.event.PlayerUpdateEvent;
 import com.angrysurfer.core.model.Comparison;
 import com.angrysurfer.core.model.Player;
 import com.angrysurfer.core.model.Rule;
@@ -88,7 +89,8 @@ public class PlayerTimelinePanel extends LivePanel implements IBusListener {
         // Register for specific events only
         CommandBus.getInstance().register(this, new String[]{
                 Commands.PLAYER_SELECTION_EVENT,
-                Commands.PLAYER_UPDATED,
+                Commands.PLAYER_UPDATE_EVENT,
+                Commands.PLAYER_RULE_UPDATE_EVENT,
                 Commands.NEW_VALUE_NOTE,
                 Commands.PRESET_UP,
                 Commands.PRESET_DOWN,
@@ -750,10 +752,10 @@ public class PlayerTimelinePanel extends LivePanel implements IBusListener {
                 //     // Add this line to redraw the empty grid structure when player is unselected
                 //     drawEmptyTimelineGrid();
                 // }
-                case Commands.PLAYER_UPDATED -> {
-                    if (player != null && action.getData() instanceof Player p && Objects.nonNull(p.getId())
-                            && p.getId().equals(player.getId())) {
-                        player = p;
+                case Commands.PLAYER_UPDATE_EVENT -> {
+                    if (player != null && action.getData() instanceof PlayerUpdateEvent event &&
+                            event.getPlayer().getId().equals(player.getId())) {
+                        player = event.getPlayer();
                         updateTimelineWithFixedRowHeights();
                     }
                 }

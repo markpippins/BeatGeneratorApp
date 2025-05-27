@@ -77,7 +77,6 @@ public class DrumSelectorPanel extends JPanel implements IBusListener {
 
         // Register for events - adding SYSTEM_READY
         CommandBus.getInstance().register(this, new String[]{
-                Commands.PLAYER_UPDATED,
                 Commands.PLAYER_UPDATE_EVENT,
                 Commands.PLAYER_PRESET_CHANGED,
                 Commands.PLAYER_PRESET_CHANGE_EVENT,
@@ -135,14 +134,8 @@ public class DrumSelectorPanel extends JPanel implements IBusListener {
                 timer.start();
                 break;
 
-            case Commands.PLAYER_UPDATED, Commands.PLAYER_UPDATE_EVENT:
-                if (action.getData() instanceof Player player) {
-                    // Check if this player belongs to our sequencer
-                    if (player.getOwner() == sequencer) {
-                        updateButtonForPlayer(player);
-                        logger.debug("Updated drum button for player: {}", player.getName());
-                    }
-                } else if (action.getData() instanceof PlayerUpdateEvent event) {
+            case Commands.PLAYER_UPDATE_EVENT:
+                if (action.getData() instanceof PlayerUpdateEvent event) {
                     // Check if this player belongs to our sequencer
                     if (event.getPlayer().getOwner() == sequencer) {
                         updateButtonForPlayer(event.getPlayer());

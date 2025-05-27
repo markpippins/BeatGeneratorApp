@@ -15,6 +15,7 @@ import org.slf4j.LoggerFactory;
 
 import javax.sound.midi.MidiDevice;
 import javax.sound.midi.Receiver;
+import javax.sound.midi.ShortMessage;
 import java.util.Arrays;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -34,8 +35,11 @@ public class DrumSequencer implements IBusListener {
     // Reference to the data container
     // Add as static fields in both sequencer classes
     private static final ScheduledExecutorService SHARED_NOTE_SCHEDULER = Executors.newScheduledThreadPool(2);
-    // 1. Create a reusable message object as a class field
-    private final javax.sound.midi.ShortMessage reuseableMessage = new javax.sound.midi.ShortMessage();
+
+    private final ShortMessage reuseableMessage = new javax.sound.midi.ShortMessage();
+
+    private Integer id;
+
     private DrumSequenceData sequenceData;
     private Player[] players;
     // Event handling
@@ -78,7 +82,6 @@ public class DrumSequencer implements IBusListener {
                 Commands.DRUM_STEP_UPDATED,
                 Commands.REFRESH_ALL_INSTRUMENTS,
                 Commands.REFRESH_PLAYER_INSTRUMENT,
-                Commands.PLAYER_UPDATED,
                 Commands.PLAYER_INSTRUMENT_CHANGED
         });
 
@@ -997,19 +1000,28 @@ public class DrumSequencer implements IBusListener {
 
     /**
      * Set whether a drum should loop
+     * The looping state change will take effect at the end of the current cycle
      */
     public void setLooping(int drumIndex, boolean loop) {
         if (drumIndex >= 0 && drumIndex < SequencerConstants.DRUM_PAD_COUNT) {
+            // Set the looping flag in the sequence data
             sequenceData.getLoopingFlags()[drumIndex] = loop;
 
-            // If we're re-enabling looping for a stopped pattern, reset it
-            if (loop && sequenceData.getPatternCompleted()[drumIndex] && sequenceData.isPlaying()) {
+            // Don't immediately reset the drum, let the pattern complete naturally
+            // This ensures looping changes only affect subsequent cycles
+
+            // Only if we're re-enabling looping for a completed pattern that's not playing
+            // should we reset it immediately
+            if (loop && sequenceData.getPatternCompleted()[drumIndex] &&
+                    !isPatternPlaying(drumIndex) && sequenceData.isPlaying()) {
                 sequenceData.getPatternCompleted()[drumIndex] = false;
                 resetDrum(drumIndex);
+                logger.info("Restarting drum {} due to looping re-enabled", drumIndex);
             }
 
             // Notify UI of parameter change
             CommandBus.getInstance().publish(Commands.DRUM_SEQUENCE_PARAMS_CHANGED, this, drumIndex);
+            logger.info("Looping for drum {} set to {} (will take effect after cycle completes)", drumIndex, loop);
         } else {
             logger.warn("Invalid drum index: {}", drumIndex);
         }
@@ -1556,5 +1568,20 @@ public class DrumSequencer implements IBusListener {
 
     public boolean isStepAccented(int drumIndex, int step) {
         return sequenceData.isStepAccented(drumIndex, step);
+    }
+
+    /**
+     * Check if a specific drum pattern is currently playing
+     *
+     * @param drumIndex The drum pad index
+     * @return true if the pattern is actively playing, false if it's stopped
+     */
+    private boolean isPatternPlaying(int drumIndex) {
+        if (drumIndex < 0 || drumIndex >= SequencerConstants.DRUM_PAD_COUNT) {
+            return false;
+        }
+
+        // Return false if the pattern is completed or if the sequencer is not playing
+        return sequenceData.isPlaying() && !sequenceData.getPatternCompleted()[drumIndex];
     }
 }

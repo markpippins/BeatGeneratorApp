@@ -38,8 +38,7 @@ public abstract class LivePanel extends JPanel implements IBusListener {
         CommandBus.getInstance().register(this, new String[]{
                 Commands.DRUM_PAD_SELECTED,
                 Commands.PLAYER_SELECTION_EVENT,
-                Commands.PLAYER_UPDATE_EVENT,
-                Commands.PLAYER_UPDATED
+                Commands.PLAYER_UPDATE_EVENT
         });
     }
 
@@ -110,12 +109,6 @@ public abstract class LivePanel extends JPanel implements IBusListener {
                         handlePlayerUpdateEvent(event);
                     }
                 }
-
-                case Commands.PLAYER_UPDATED -> {
-                    if (action.getData() instanceof Player player) {
-                        handleLegacyPlayerUpdated(player);
-                    }
-                }
             }
         } catch (Exception e) {
             logger.error("Error handling command: {}", e.getMessage(), e);
@@ -158,22 +151,6 @@ public abstract class LivePanel extends JPanel implements IBusListener {
     }
 
     /**
-     * Legacy handler for PLAYER_UPDATED command
-     */
-    protected void handleLegacyPlayerUpdated(Player player) {
-        if (player == null) {
-            return;
-        }
-
-        // Only process if this is our target player
-        if (this.player != null && this.player.getId().equals(player.getId())) {
-            logger.debug("Legacy player updated: {} (ID: {})", player.getName(), player.getId());
-            this.player = player;
-            handlePlayerUpdated();
-        }
-    }
-
-    /**
      * Set the target player for this panel
      *
      * @param player The player to set
@@ -203,19 +180,6 @@ public abstract class LivePanel extends JPanel implements IBusListener {
                     Commands.PLAYER_REFRESH_EVENT,
                     this,
                     new com.angrysurfer.core.event.PlayerRefreshEvent(this, player)
-            );
-        }
-    }
-
-    /**
-     * Send a player update event
-     */
-    protected void requestPlayerUpdate() {
-        if (player != null) {
-            CommandBus.getInstance().publish(
-                    Commands.PLAYER_UPDATE_EVENT,
-                    this,
-                    new com.angrysurfer.core.event.PlayerUpdateEvent(this, player)
             );
         }
     }

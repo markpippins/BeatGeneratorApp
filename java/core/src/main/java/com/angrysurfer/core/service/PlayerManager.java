@@ -58,9 +58,6 @@ public class PlayerManager implements IBusListener {
                 Commands.PLAYER_PRESET_CHANGE_EVENT,
                 Commands.PLAYER_INSTRUMENT_CHANGE_EVENT,
                 Commands.PLAYER_REFRESH_EVENT,
-                // Legacy commands still supported
-                Commands.PLAYER_UPDATE_REQUEST,
-                Commands.PLAYER_PRESET_CHANGE_REQUEST,
                 Commands.PLAYER_INSTRUMENT_CHANGE_REQUEST,
                 Commands.REFRESH_ALL_INSTRUMENTS
         });
@@ -110,13 +107,37 @@ public class PlayerManager implements IBusListener {
                     }
                 }
                 case Commands.PLAYER_REFRESH_EVENT -> handlePlayerRefreshEvent(action);
-                case Commands.PLAYER_UPDATE_REQUEST -> handleLegacyPlayerUpdateRequest(action);
-                case Commands.PLAYER_PRESET_CHANGE_REQUEST -> handleLegacyPresetChangeRequest(action);
                 case Commands.PLAYER_INSTRUMENT_CHANGE_REQUEST -> handleLegacyInstrumentChangeRequest(action);
                 case Commands.REFRESH_ALL_INSTRUMENTS -> handleLegacyRefreshRequest(action);
             }
         } catch (Exception e) {
             logger.error("Error processing player action: {}", e.getMessage(), e);
+        }
+    }
+
+    public void initializePlayer(Player player) {
+        // PlayerManager.getInstance().applyInstrumentPreset(player);
+
+        // Add this explicit program change to ensure the preset is applied:
+        if (player != null && player.getInstrument() != null) {
+            try {
+                // Force program change through both regular channel and direct MIDI
+                InstrumentWrapper instrument = player.getInstrument();
+                int channel = player.getChannel();
+                int bankIndex = instrument.getBankIndex() != null ? instrument.getBankIndex() : 0;
+                int preset = instrument.getPreset() != null ? instrument.getPreset() : 0;
+
+                player.getInstrument().controlChange(0, (bankIndex >> 7) & MidiControlMessageEnum.POLY_MODE_ON);
+                player.getInstrument().controlChange(32, bankIndex & MidiControlMessageEnum.POLY_MODE_ON);
+                player.getInstrument().programChange(preset, 0);
+
+
+                CommandBus.getInstance().publish(Commands.PLAYER_UPDATE_EVENT, this, new PlayerUpdateEvent(this, player));
+                logger.info("Explicitly set instrument {} to bank {} program {} on channel {}",
+                        instrument.getName(), bankIndex, preset, channel);
+            } catch (Exception e) {
+                logger.error("Error applying program change: {}", e.getMessage(), e);
+            }
         }
     }
 
@@ -188,7 +209,7 @@ public class PlayerManager implements IBusListener {
 
             // Notify listeners
             CommandBus.getInstance().publish(Commands.PLAYER_PRESET_CHANGED, this, player);
-            CommandBus.getInstance().publish(Commands.PLAYER_UPDATED, this, player);
+            CommandBus.getInstance().publish(Commands.PLAYER_UPDATE_EVENT, this, new PlayerUpdateEvent(this, player));
         }
     }
 
@@ -255,7 +276,7 @@ public class PlayerManager implements IBusListener {
         // Notify listeners about the change
         CommandBus.getInstance().publish(Commands.PLAYER_INSTRUMENT_CHANGED, this,
                 new Object[]{player.getId(), instrument.getId()});
-        CommandBus.getInstance().publish(Commands.PLAYER_UPDATED, this, player);
+        CommandBus.getInstance().publish(Commands.PLAYER_UPDATE_EVENT, this, new PlayerUpdateEvent(this, player));
     }
 
     private void handlePlayerRefreshEvent(Command action) {
@@ -275,33 +296,6 @@ public class PlayerManager implements IBusListener {
     private void handleLegacyPlayerActivationRequest(Command action) {
         if (action.getData() instanceof Player player)
             CommandBus.getInstance().publish(Commands.PLAYER_SELECTION_EVENT, this, player);
-    }
-
-    @Deprecated
-    private void handleLegacyPlayerUpdateRequest(Command action) {
-        if (action.getData() instanceof Player player) {
-            PlayerUpdateEvent event = new PlayerUpdateEvent(this, player);
-            CommandBus.getInstance().publish(Commands.PLAYER_UPDATE_EVENT, this, event);
-        }
-    }
-
-    @Deprecated
-    private void handleLegacyPresetChangeRequest(Command action) {
-        if (action.getData() instanceof Object[] data && data.length >= 2) {
-            Long playerId = (Long) data[0];
-            Integer presetNumber = (Integer) data[1];
-            Integer bankIndex = null;
-
-            if (data.length >= 3 && data[2] instanceof Integer) {
-                bankIndex = (Integer) data[2];
-            }
-
-            Player player = getPlayerById(playerId);
-            if (player != null) {
-                PlayerPresetChangeEvent event = new PlayerPresetChangeEvent(this, player, bankIndex, presetNumber);
-                CommandBus.getInstance().publish(Commands.PLAYER_PRESET_CHANGE_EVENT, this, event);
-            }
-        }
     }
 
     @Deprecated

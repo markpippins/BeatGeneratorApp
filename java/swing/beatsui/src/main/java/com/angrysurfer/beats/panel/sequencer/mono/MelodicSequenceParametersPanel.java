@@ -371,6 +371,8 @@ public class MelodicSequenceParametersPanel extends JPanel {
         updatingUI = true;
 
         try {
+            loopToggleButton.setToolTipText(sequencer.getSequenceData().isLooping() ? "Looping on." : "Looping off.");
+
             // Update timing division
             TimingDivision timingDivision = sequencer.getSequenceData().getTimingDivision();
             if (timingDivision != null) {
@@ -390,6 +392,7 @@ public class MelodicSequenceParametersPanel extends JPanel {
 
             // Update loop state
             loopToggleButton.setSelected(sequencer.getSequenceData().isLooping());
+            loopToggleButton.setToolTipText(sequencer.getSequenceData().isLooping() ? "Looping on." : "Looping off.");
 
             // Update last step
             lastStepSpinner.setValue(sequencer.getSequenceData().getPatternLength());

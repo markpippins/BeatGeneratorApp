@@ -37,8 +37,8 @@ public class PianoPanel extends LivePanel {
     public PianoPanel() {
         super(); // Remove statusConsumer parameter
         // Fix #1: Make preferred size larger and consistent with minimum size
-        setPreferredSize(new Dimension(280, 80)); // Increased from 255x60
-        setMinimumSize(new Dimension(280, 80));   // Increased from 265x60
+        //setPreferredSize(new Dimension(280, 80)); // Increased from 255x60
+        //setMinimumSize(new Dimension(280, 80));   // Increased from 265x60
         setBorder(BorderFactory.createEmptyBorder(5, 2, 5, 2)); // Reduced top/bottom padding
         setOpaque(true);
         setBackground(UIHelper.fadedOrange);

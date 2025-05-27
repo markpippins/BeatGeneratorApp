@@ -526,7 +526,7 @@ public class MelodicSequencerPanel extends JPanel implements IBusListener {
                 }
             }
 
-            case Commands.PLAYER_UPDATED, Commands.INSTRUMENT_CHANGED -> {
+            case Commands.INSTRUMENT_CHANGED -> {
                 // Check if this update is for our sequencer's player
                 // if (action.getData() instanceof Player &&
                 // sequencer != null &&
