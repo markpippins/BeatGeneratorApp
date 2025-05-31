@@ -8,6 +8,7 @@ import com.angrysurfer.beats.panel.player.RuleEditPanel;
 import com.angrysurfer.beats.panel.sequencer.poly.DrumPresetPanel;
 import com.angrysurfer.core.api.*;
 import com.angrysurfer.core.config.UserConfig;
+import com.angrysurfer.core.event.PlayerUpdateEvent;
 import com.angrysurfer.core.model.InstrumentWrapper;
 import com.angrysurfer.core.model.Player;
 import com.angrysurfer.core.model.Rule;
@@ -232,16 +233,12 @@ public class DialogManager implements IBusListener {
                             for (Player drumPlayer : sequencer.getPlayers()) {
                                 if (drumPlayer != null && !drumPlayer.equals(updatedPlayer)) {
                                     PlayerManager.getInstance().savePlayerProperties(drumPlayer);
-                                    CommandBus.getInstance().publish(Commands.PLAYER_UPDATED, this, drumPlayer);
+                                    CommandBus.getInstance().publish(Commands.PLAYER_UPDATE_EVENT, this,
+                                            new PlayerUpdateEvent(this, drumPlayer));
                                 }
                             }
                         }
 
-                        // CRITICAL STEP: Activate player and request update through command bus
-                        CommandBus.getInstance().publish(Commands.PLAYER_SELECTION_EVENT, this, updatedPlayer);
-                        CommandBus.getInstance().publish(Commands.PLAYER_UPDATE_REQUEST, this, updatedPlayer);
-
-                        // Publish dialog-specific completion event
                         CommandBus.getInstance().publish(Commands.SHOW_PLAYER_EDITOR_OK, this, updatedPlayer);
                     }
                 } catch (Exception e) {

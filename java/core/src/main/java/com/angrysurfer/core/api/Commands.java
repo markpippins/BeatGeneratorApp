@@ -56,7 +56,6 @@ public class Commands {
     public static final String PLAYER = "PLAYER";
 
     public static final String PLAYER_ADDED = "PLAYER_ADDED";
-    public static final String PLAYER_UPDATED = "PLAYER_UPDATED";
     public static final String PLAYER_DELETED = "PLAYER_DELETED";
 
     // Player CRUD commands
@@ -329,8 +328,6 @@ public class Commands {
     public static final String INSTRUMENT_CHANGED = "INSTRUMENT_CHANGED";
     public static final String DRUM_STEP_UPDATED = "DRUM_STEP_UPDATED";
 
-    // Player update commands
-    public static final String PLAYER_UPDATE_REQUEST = "PLAYER_UPDATE_REQUEST";
 
     // Player preset commands
     public static final String PLAYER_PRESET_CHANGE_REQUEST = "PLAYER_PRESET_CHANGE_REQUEST";
@@ -385,8 +382,6 @@ public class Commands {
     public static final String PAD_HIT = "PAD_HIT";
 
     // Add these new command constants for default player/instrument updates
-    public static final String DEFAULT_PLAYER_UPDATED = "DEFAULT_PLAYER_UPDATED";
-    public static final String DEFAULT_INSTRUMENT_UPDATED = "DEFAULT_INSTRUMENT_UPDATED";
 
     public static final String DEBUG_USER_CONFIG_SAVE = "DEBUG_USER_CONFIG_SAVE";
     public static final String SOUNDBANK_CHANGED = "SOUNDBANK_CHANGED";

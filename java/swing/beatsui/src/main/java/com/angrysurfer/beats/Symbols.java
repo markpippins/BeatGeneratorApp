@@ -56,6 +56,8 @@ public class Symbols {
     public static final String REPLACE = "replace";
     public static final String REPLACE_ALL = "replace_all";
 
+    public static final String SNAPSHOT = "snapshot";
+
     public static final String SELECT = "select";
     public static final String DESELECT = "deselect";
     public static final String HIGHLIGHT = "highlight";
@@ -126,6 +128,8 @@ public class Symbols {
         map.put(REWIND, "⏪");
         map.put(FAST_FORWARD, "⏩");
 
+        map.put(SNAPSHOT, "\uD83D\uDCF7"); // 📷 Camera
+
         map.put(PANIC, "💥");
         map.put(EDIT, "✏️");
         map.put(GRID, "☷");
@@ -155,7 +159,7 @@ public class Symbols {
         map.put(UNDO, "↩️");
         map.put(REDO, "↪️");
         map.put(CUT, "✂️");
-        map.put(COPY, "📋");
+        map.put(COPY, "⎘");
         map.put(PASTE, "📋");
         map.put(DELETE, "🗑️");
         map.put(SELECT_ALL, "🔲");
@@ -188,6 +192,7 @@ public class Symbols {
         map.put(SPECTROGRAM, "🔊");
         map.put(MIDI, "🎹");
         map.put(AUDIO, "🔊");
+
 
         SYMBOLS = Collections.unmodifiableMap(map);
     }

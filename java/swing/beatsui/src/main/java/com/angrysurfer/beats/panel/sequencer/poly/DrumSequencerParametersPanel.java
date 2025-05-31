@@ -29,11 +29,13 @@ public class DrumSequencerParametersPanel extends JPanel {
 
     /**
      * Creates a new Sequence Parameters panel
-     */
-    public DrumSequencerParametersPanel(DrumSequencer sequencer) {
+     */    public DrumSequencerParametersPanel(DrumSequencer sequencer) {
         this.sequencer = sequencer;
 
         UIHelper.setWidgetPanelBorder(this, "Sequence Parameters");
+        
+        // Add mouse wheel listener to the entire panel
+        addMouseWheelListener(this::handleMouseWheelEvent);
 
         initializeComponents();
     }
@@ -262,5 +264,64 @@ public class DrumSequencerParametersPanel extends JPanel {
         }
     }
 
-
+    /**
+     * Handles mouse wheel events for the panel's components
+     *
+     * @param e The mouse wheel event
+     */
+    private void handleMouseWheelEvent(java.awt.event.MouseWheelEvent e) {
+        // Skip if we're in the middle of updating controls
+        if (updatingControls) {
+            return;
+        }
+        
+        // Determine scroll direction (-1 for up, 1 for down)
+        int scrollDirection = e.getWheelRotation() > 0 ? -1 : 1;
+        
+        // Get the current focused component or use lastStepSpinner as default
+        Component focusOwner = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
+        
+        // Adjust lastStepSpinner if focused or if no specific component has focus
+        if (focusOwner == lastStepSpinner || !(focusOwner instanceof JComponent)) {
+            // Get current value
+            int currentValue = (Integer) lastStepSpinner.getValue();
+            int newValue = currentValue + scrollDirection;
+            
+            // Get spinner model to check bounds
+            SpinnerNumberModel model = (SpinnerNumberModel) lastStepSpinner.getModel();
+            int min = (Integer) model.getMinimum();
+            int max = (Integer) model.getMaximum();
+            
+            // Ensure value within bounds
+            newValue = Math.max(min, Math.min(newValue, max));
+            
+            // Update if value changed
+            if (newValue != currentValue) {
+                lastStepSpinner.setValue(newValue);
+                // The change listener will handle passing the value to the sequencer
+            }
+        }
+        // Handle direction combo if focused (future enhancement)
+        else if (focusOwner == directionCombo) {
+            int index = directionCombo.getSelectedIndex();
+            int newIndex = index + scrollDirection;
+            newIndex = Math.max(0, Math.min(newIndex, directionCombo.getItemCount() - 1));
+            
+            if (newIndex != index) {
+                directionCombo.setSelectedIndex(newIndex);
+                // The action listener will handle passing the direction to the sequencer
+            }
+        }
+        // Handle timing combo if focused (future enhancement)
+        else if (focusOwner == timingCombo) {
+            int index = timingCombo.getSelectedIndex();
+            int newIndex = index + scrollDirection;
+            newIndex = Math.max(0, Math.min(newIndex, timingCombo.getItemCount() - 1));
+            
+            if (newIndex != index) {
+                timingCombo.setSelectedIndex(newIndex);
+                // The action listener will handle passing the timing to the sequencer
+            }
+        }
+    }
 }

@@ -23,14 +23,16 @@ public class MelodicSequencerSwingPanel extends JPanel {
 
     /**
      * Creates a new swing control panel for melodic sequencer
-     */
-    public MelodicSequencerSwingPanel(MelodicSequencer sequencer) {
+     */    public MelodicSequencerSwingPanel(MelodicSequencer sequencer) {
         this.sequencer = sequencer;
 
         // Reduce layout spacing
         setLayout(new FlowLayout(FlowLayout.LEFT, 1, 0));
 
         UIHelper.setWidgetPanelBorder(this, "Swing");
+        
+        // Add mouse wheel listener to the entire panel
+        addMouseWheelListener(this::handleMouseWheelEvent);
 
         // Swing on/off toggle
         swingToggle = new JToggleButton("On", sequencer.getSequenceData().isSwingEnabled());
@@ -50,24 +52,47 @@ public class MelodicSequencerSwingPanel extends JPanel {
 
         valueLabel = new JLabel(sequencer.getSequenceData().getSwingPercentage() + "%");
         valueLabel.setFont(valueLabel.getFont().deriveFont(11f));
-        valueLabel.setPreferredSize(new Dimension(25, 22));
-
-        swingSlider.addChangeListener(e -> {
+        valueLabel.setPreferredSize(new Dimension(25, 22));        swingSlider.addChangeListener(e -> {
             int value = swingSlider.getValue();
             sequencer.getSequenceData().setSwingPercentage(value);
             valueLabel.setText(value + "%");
-        });
+        });        // Mouse wheel listener is now applied to the entire panel
 
         add(swingSlider);
         add(valueLabel);
-    }
-
-    /**
+    }    /**
      * Updates controls to match current sequencer state
      */
     public void updateControls() {
         swingToggle.setSelected(sequencer.getSequenceData().isSwingEnabled());
         swingSlider.setValue(sequencer.getSequenceData().getSwingPercentage());
         valueLabel.setText(sequencer.getSequenceData().getSwingPercentage() + "%");
+    }
+    
+    /**
+     * Handles mouse wheel events to adjust slider value
+     * 
+     * @param e The mouse wheel event
+     */
+    private void handleMouseWheelEvent(java.awt.event.MouseWheelEvent e) {
+        if (!swingSlider.isEnabled()) {
+            return;
+        }
+        
+        // Determine scroll direction (-1 for up, 1 for down)
+        int scrollDirection = e.getWheelRotation() > 0 ? -1 : 1;
+        
+        // Get current value and adjust by 1 in the scroll direction
+        int currentValue = swingSlider.getValue();
+        int newValue = currentValue + (scrollDirection * 1);
+        
+        // Ensure the new value respects the slider bounds
+        newValue = Math.max(swingSlider.getMinimum(), Math.min(newValue, swingSlider.getMaximum()));
+        
+        // Update slider if value changed
+        if (newValue != currentValue) {
+            swingSlider.setValue(newValue);
+            // This will trigger the change listener
+        }
     }
 }

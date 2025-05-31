@@ -29,7 +29,6 @@ public class OffsetSequencerPanel extends JPanel implements IBusListener {
 
     private int currentStep = 0;
     private Player currentPlayer;
-    private int selectedPadIndex = -1;
     private boolean isSynchronizing = false;
 
     /**
@@ -48,7 +47,7 @@ public class OffsetSequencerPanel extends JPanel implements IBusListener {
      */
     public OffsetSequencerPanel(DrumSequencer sequencer) {
         this.sequencer = sequencer;
-        this.selectedPadIndex = sequencer.getSelectedPadIndex();
+        int selectedPadIndex = sequencer.getSelectedPadIndex();
 
         // Initialize for currently selected player if any
         if (selectedPadIndex >= 0 && selectedPadIndex < sequencer.getPlayers().length) {
@@ -77,15 +76,15 @@ public class OffsetSequencerPanel extends JPanel implements IBusListener {
             final int index = i;
 
             // Create the offset button
-            JComboBox<Integer> combo = new JComboBox(OFFSET_VALUES);
+            JComboBox<Integer> combo = new JComboBox<>(OFFSET_VALUES);
             combo.setToolTipText("Offset for step " + (i + 1));
             combo.setSelectedItem(0);
-            combo.setPreferredSize(new Dimension(60, UIHelper.CONTROL_HEIGHT));
-            combo.setMaximumSize(new Dimension(60, UIHelper.CONTROL_HEIGHT));
+            combo.setPreferredSize(new Dimension(54, UIHelper.CONTROL_HEIGHT));
+            combo.setMaximumSize(new Dimension(54, UIHelper.CONTROL_HEIGHT));
             offsetCombos.add(combo);
 
             // Add action listener
-            combo.addActionListener(e -> setOffsetForBar(index, (int) combo.getSelectedItem()));
+            combo.addActionListener(e -> setOffsetForBar(index, (Integer) combo.getSelectedItem()));
 
             // Create container with padding
             JPanel container = new JPanel(new FlowLayout(FlowLayout.CENTER, 0, 0));
@@ -174,7 +173,7 @@ public class OffsetSequencerPanel extends JPanel implements IBusListener {
                     // Update the sequencer
                     int bar = 0;
                     for (JComboBox<Integer> combo : offsetCombos) {
-                        sequenceData.setBarOffsetValue(padIndex, bar, (int) combo.getSelectedItem());
+                        sequenceData.setBarOffsetValue(padIndex, bar, (Integer) combo.getSelectedItem());
                         bar++;
                     }
 
@@ -231,14 +230,6 @@ public class OffsetSequencerPanel extends JPanel implements IBusListener {
         logger.debug("Syncing mute panel with melodic sequencer - found {} mute values",
                 muteValues != null ? muteValues.size() : 0);
 
-        // Update UI to reflect loaded pattern
-//        SwingUtilities.invokeLater(() -> {
-//            for (int i = 0; i < muteButtons.size(); i++) {
-//                boolean isMuted = muteValues != null && i < muteValues.size() && muteValues.get(i) > 0;
-//                muteButtons.get(i).setSelected(isMuted);
-//                muteButtons.get(i).repaint();
-//            }
-//        });
     }
 
 }

@@ -223,6 +223,7 @@ public class DrumSequencerManager implements IBusListener {
      */
     public synchronized DrumSequencer newSequencer() {
         DrumSequencer sequencer = new DrumSequencer();
+        sequencer.setId(sequencers.size());
         sequencers.add(sequencer);
         logger.info("Created new drum sequencer (index: {})", sequencers.size() - 1);
         return sequencer;

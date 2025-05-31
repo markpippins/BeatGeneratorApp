@@ -569,12 +569,6 @@ public class InternalSynthManager {
         return SoundbankManager.getInstance().loadSoundbank(file);
     }
 
-    /**
-     * Apply preset change to an instrument
-     */
-    public void applyPresetChange(InstrumentWrapper instrument, int bankIndex, int presetNumber) {
-        SoundbankManager.getInstance().applyPresetChange(instrument, bankIndex, presetNumber);
-    }
 
     public void setControlChange(int channel, int ccNumber, int value) {
         if (synthesizer == null || !synthesizer.isOpen()) {

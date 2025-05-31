@@ -1,13 +1,17 @@
 package com.angrysurfer.beats.panel.sequencer.poly;
 
 import java.awt.Color;
+import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.Insets;
+import java.awt.KeyboardFocusManager;
+import java.awt.event.MouseWheelEvent;
 
 import javax.swing.BorderFactory;
 import javax.swing.JButton;
 import javax.swing.JComboBox;
+import javax.swing.JComponent;
 import javax.swing.JPanel;
 import javax.swing.JToggleButton;
 import javax.swing.border.TitledBorder;
@@ -37,13 +41,15 @@ public class DrumSequenceGeneratorPanel extends JPanel {
      * Create a new DrumSequenceGeneratorPanel
      * 
      * @param sequencer The drum sequencer
-     */
-    public DrumSequenceGeneratorPanel(DrumSequencer sequencer) {
+     */    public DrumSequenceGeneratorPanel(DrumSequencer sequencer) {
         this.sequencer = sequencer;
         UIHelper.setWidgetPanelBorder(this, "Generate");
 
         // REDUCED: from 5,2 to 2,1
         setLayout(new FlowLayout(FlowLayout.LEFT, 2, 1));
+        
+        // Add mouse wheel listener to the entire panel
+        addMouseWheelListener(this::handleMouseWheelEvent);
 
         initializeComponents();
     }
@@ -120,5 +126,26 @@ public class DrumSequenceGeneratorPanel extends JPanel {
      */
     public int getDensity() {
         return (densityCombo.getSelectedIndex() + 1) * 25;
+    }    /**
+     * Handles mouse wheel events for the panel's components
+     *
+     * @param e The mouse wheel event
+     */
+    private void handleMouseWheelEvent(MouseWheelEvent e) {
+        // Determine scroll direction (-1 for up, 1 for down)
+        int scrollDirection = e.getWheelRotation() > 0 ? -1 : 1;
+        
+        // Handle density combo box directly
+        int currentIndex = densityCombo.getSelectedIndex();
+        int newIndex = currentIndex + scrollDirection;
+        
+        // Ensure within bounds
+        newIndex = Math.max(0, Math.min(newIndex, densityCombo.getItemCount() - 1));
+        
+        // Update if changed
+        if (newIndex != currentIndex) {
+            densityCombo.setSelectedIndex(newIndex);
+            // The action listener will handle the update
+        }
     }
 }

@@ -3,6 +3,7 @@ package com.angrysurfer.beats.panel.player;
 import com.angrysurfer.core.api.CommandBus;
 import com.angrysurfer.core.api.Commands;
 import com.angrysurfer.core.api.StatusUpdate;
+import com.angrysurfer.core.event.PlayerUpdateEvent;
 import com.angrysurfer.core.model.InstrumentWrapper;
 import com.angrysurfer.core.model.Player;
 import com.angrysurfer.core.redis.RedisService;
@@ -279,7 +280,7 @@ public class PlayerInstrumentPanel extends JPanel {
                 PlayerManager.getInstance().applyPlayerInstrument(player);
 
                 // Notify about player update
-                CommandBus.getInstance().publish(Commands.PLAYER_UPDATED, this, player);
+                CommandBus.getInstance().publish(Commands.PLAYER_UPDATE_EVENT, this, new PlayerUpdateEvent(this, player));
 
                 // Notify about instrument assignment
                 CommandBus.getInstance().publish(Commands.PLAYER_INSTRUMENT_CHANGED, this,

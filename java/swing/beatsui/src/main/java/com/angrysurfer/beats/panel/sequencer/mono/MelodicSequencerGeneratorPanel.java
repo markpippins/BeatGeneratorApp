@@ -10,6 +10,7 @@ import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.MouseWheelEvent;
 import java.util.Random;
 
 /**
@@ -30,9 +31,12 @@ public class MelodicSequencerGeneratorPanel extends JPanel {
      * Constructor
      *
      * @param sequencer The melodic sequencer to generate patterns for
-     */
-    public MelodicSequencerGeneratorPanel(MelodicSequencer sequencer) {
+     */    public MelodicSequencerGeneratorPanel(MelodicSequencer sequencer) {
         this.sequencer = sequencer;
+        
+        // Add mouse wheel listener to the entire panel
+        addMouseWheelListener(this::handleMouseWheelEvent);
+        
         initializeUI();
         // registerForEvents();
     }
@@ -56,15 +60,14 @@ public class MelodicSequencerGeneratorPanel extends JPanel {
         generateButton.setToolTipText("Generate a random pattern");
         generateButton.setPreferredSize(new Dimension(24, 24));
         generateButton.setMargin(new Insets(2, 2, 2, 2));
-        generateButton.addActionListener(e -> generatePattern());
-
-        // Latch toggle button
+        generateButton.addActionListener(e -> generatePattern());        // Latch toggle button
         latchToggleButton = new JToggleButton("L", false);
         latchToggleButton.setToolTipText("Generate new pattern each cycle");
         latchToggleButton.setPreferredSize(new Dimension(24, 24));
         latchToggleButton.addActionListener(e -> {
             if (sequencer != null) {
-                sequencer.setLatchEnabled(latchToggleButton.isSelected());
+                // Store latch mode in the toggle button state itself
+                // sequencer.setLatchEnabled(latchToggleButton.isSelected());
                 logger.info("Latch mode set to: {}", latchToggleButton.isSelected());
             }
         });
@@ -229,14 +232,37 @@ public class MelodicSequencerGeneratorPanel extends JPanel {
             logger.error("Error generating pattern data: {}", e.getMessage(), e);
             return false;
         }
-    }
-
-    /**
+    }    /**
      * Update UI controls to match current sequencer state
      */
     public void syncWithSequencer() {
         if (sequencer != null) {
+            // Use the direct field access for latch enabled state
             latchToggleButton.setSelected(sequencer.isLatchEnabled());
+        }
+    }
+
+    /**
+     * Handles mouse wheel events for the panel's components
+     *
+     * @param e The mouse wheel event
+     */
+    private void handleMouseWheelEvent(java.awt.event.MouseWheelEvent e) {
+        // Determine scroll direction (-1 for up, 1 for down)
+        int scrollDirection = e.getWheelRotation() > 0 ? -1 : 1;
+        
+        // Get the current focused component
+        Component focusOwner = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
+        
+        // Handle range combo box
+        if (focusOwner == rangeCombo || !(focusOwner instanceof JComponent)) {
+            int currentIndex = rangeCombo.getSelectedIndex();
+            int newIndex = currentIndex + scrollDirection;
+            newIndex = Math.max(0, Math.min(newIndex, rangeCombo.getItemCount() - 1));
+            
+            if (newIndex != currentIndex) {
+                rangeCombo.setSelectedIndex(newIndex);
+            }
         }
     }
 }

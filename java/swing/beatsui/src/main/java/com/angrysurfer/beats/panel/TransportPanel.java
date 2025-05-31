@@ -14,6 +14,12 @@ import java.util.Objects;
  */
 public class TransportPanel extends JPanel {
 
+    // Simple app startup time tracker
+    private static final long APP_STARTUP_TIME = System.currentTimeMillis();
+    private final boolean isPlaying;
+    // Add a flag to track initial application load state
+    private final boolean initialLoadCompleted = false;
+    private final boolean ignoreNextSessionUpdate = true; // Flag to ignore the first update
     // Transport controls
     private JButton playButton;
     private JButton stopButton;
@@ -22,16 +28,9 @@ public class TransportPanel extends JPanel {
     private JButton forwardButton;
     private JButton pauseButton;
     private boolean isRecording;
-    private boolean isPlaying;
-
-    // Add a flag to track initial application load state
-    private boolean initialLoadCompleted = false;
-    private boolean ignoreNextSessionUpdate = true; // Flag to ignore the first update
-
     // Add a timer to delay the auto-recording feature
     private boolean autoRecordingEnabled = false;
     private javax.swing.Timer autoRecordingEnableTimer;
-
     // Tracking variables for session navigation
     private String lastCommand = "";
     private long lastSessionNavTime = 0;
@@ -55,10 +54,10 @@ public class TransportPanel extends JPanel {
 
         // Create the buttons panel
         JPanel buttonPanel = createTransportButtons();
-        
+
         // Add to CENTER for vertical centering
         add(buttonPanel, BorderLayout.CENTER);
-        
+
         setupCommandBusListener();
 
         // Set initial button states
@@ -66,19 +65,23 @@ public class TransportPanel extends JPanel {
         stopButton.setEnabled(false);
     }
 
+    private static long getAppStartupTime() {
+        return APP_STARTUP_TIME;
+    }
+
     /**
      * Creates and configures transport control buttons
-     * 
+     *
      * @return JPanel containing all transport buttons
      */
     private JPanel createTransportButtons() {
         // Create panel to hold transport buttons with a vertical BoxLayout to center
         JPanel buttonsPanel = new JPanel();
         buttonsPanel.setLayout(new BoxLayout(buttonsPanel, BoxLayout.Y_AXIS));
-        
+
         // Row panel for buttons
         JPanel buttonRow = new JPanel(new FlowLayout(FlowLayout.CENTER, 5, 0));
-        
+
         // Create all buttons first - ensure none are null
         rewindButton = createToolbarButton(Commands.TRANSPORT_REWIND, "⏮", "Previous Session");
         pauseButton = createToolbarButton(Commands.TRANSPORT_PAUSE, "⏸", "Pause");
@@ -86,7 +89,7 @@ public class TransportPanel extends JPanel {
         recordButton = createToolbarButton(Commands.TRANSPORT_RECORD, "⏺", "Record");
         playButton = createToolbarButton(Commands.TRANSPORT_START, "▶", "Play");
         forwardButton = createToolbarButton(Commands.TRANSPORT_FORWARD, "⏭", "Next Session");
-        
+
         // Add buttons to the button row - check each one first
         if (rewindButton != null) buttonRow.add(rewindButton);
         if (pauseButton != null) buttonRow.add(pauseButton);
@@ -94,7 +97,7 @@ public class TransportPanel extends JPanel {
         if (recordButton != null) buttonRow.add(recordButton);
         if (playButton != null) buttonRow.add(playButton);
         if (forwardButton != null) buttonRow.add(forwardButton);
-        
+
         // Add padding at top to push content down to center
         buttonsPanel.add(Box.createVerticalGlue());
         // Add the button row
@@ -102,11 +105,11 @@ public class TransportPanel extends JPanel {
         buttonsPanel.add(buttonRow);
         // Add padding at bottom to push content up to center
         buttonsPanel.add(Box.createVerticalGlue());
-        
+
         // Only call these methods if buttons are non-null
         if (playButton != null) updatePlayButtonAppearance();
         if (recordButton != null) updateRecordButtonAppearance();
-        
+
         return buttonsPanel;
     }
 
@@ -280,48 +283,40 @@ public class TransportPanel extends JPanel {
 
                 updatePlayButtonAppearance();
             }
-        }, new String[] {
-            Commands.TRANSPORT_STATE_CHANGED,
-            Commands.TRANSPORT_START,
-            Commands.TRANSPORT_STOP,
-            Commands.TRANSPORT_RECORD_START,
-            Commands.TRANSPORT_RECORD_STOP,
-            Commands.SESSION_CREATED,
-            Commands.SESSION_SELECTED,
-            Commands.SESSION_LOADED,
-            // Value change commands
-            Commands.PLAYER_ADDED,
-            Commands.PLAYER_UPDATED,
-            Commands.PLAYER_DELETED,
-            Commands.RULE_ADDED,
-            Commands.RULE_UPDATED,
-            Commands.RULE_DELETED,
-            Commands.RULE_ADDED_TO_PLAYER,
-            Commands.RULE_REMOVED_FROM_PLAYER,
-            Commands.NEW_VALUE_LEVEL,
-            Commands.NEW_VALUE_NOTE,
-            Commands.NEW_VALUE_SWING,
-            Commands.NEW_VALUE_PROBABILITY,
-            Commands.NEW_VALUE_VELOCITY_MIN,
-            Commands.NEW_VALUE_VELOCITY_MAX,
-            Commands.NEW_VALUE_RANDOM,
-            Commands.NEW_VALUE_PAN,
-            Commands.NEW_VALUE_SPARSE,
-            Commands.SESSION_UPDATED,
-            Commands.PRESET_CHANGED,
-            Commands.UPDATE_TEMPO,
-            Commands.UPDATE_TIME_SIGNATURE,
-            Commands.TIMING_PARAMETERS_CHANGED,
-            Commands.TRANSPOSE_UP,
-            Commands.TRANSPOSE_DOWN
+        }, new String[]{
+                Commands.TRANSPORT_STATE_CHANGED,
+                Commands.TRANSPORT_START,
+                Commands.TRANSPORT_STOP,
+                Commands.TRANSPORT_RECORD_START,
+                Commands.TRANSPORT_RECORD_STOP,
+                Commands.SESSION_CREATED,
+                Commands.SESSION_SELECTED,
+                Commands.SESSION_LOADED,
+                // Value change commands
+                Commands.PLAYER_ADDED,
+                Commands.PLAYER_DELETED,
+                Commands.RULE_ADDED,
+                Commands.RULE_UPDATED,
+                Commands.RULE_DELETED,
+                Commands.RULE_ADDED_TO_PLAYER,
+                Commands.RULE_REMOVED_FROM_PLAYER,
+                Commands.NEW_VALUE_LEVEL,
+                Commands.NEW_VALUE_NOTE,
+                Commands.NEW_VALUE_SWING,
+                Commands.NEW_VALUE_PROBABILITY,
+                Commands.NEW_VALUE_VELOCITY_MIN,
+                Commands.NEW_VALUE_VELOCITY_MAX,
+                Commands.NEW_VALUE_RANDOM,
+                Commands.NEW_VALUE_PAN,
+                Commands.NEW_VALUE_SPARSE,
+                Commands.SESSION_UPDATED,
+                Commands.PRESET_CHANGED,
+                Commands.UPDATE_TEMPO,
+                Commands.UPDATE_TIME_SIGNATURE,
+                Commands.TIMING_PARAMETERS_CHANGED,
+                Commands.TRANSPOSE_UP,
+                Commands.TRANSPOSE_DOWN
         });
-    }
-
-    // Simple app startup time tracker
-    private static final long APP_STARTUP_TIME = System.currentTimeMillis();
-
-    private static long getAppStartupTime() {
-        return APP_STARTUP_TIME;
     }
 
     /**
@@ -344,7 +339,7 @@ public class TransportPanel extends JPanel {
 
         // Player modification commands
         return switch (cmd) {
-            case Commands.PLAYER_ADDED, Commands.PLAYER_UPDATED, Commands.PLAYER_DELETED -> true;
+            case Commands.PLAYER_ADDED, Commands.PLAYER_DELETED -> true;
 
 
             // Rule modification commands

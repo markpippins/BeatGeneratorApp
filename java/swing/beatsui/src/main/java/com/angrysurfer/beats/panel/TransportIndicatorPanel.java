@@ -4,6 +4,7 @@ import com.angrysurfer.beats.util.UIHelper;
 import com.angrysurfer.beats.widget.LEDIndicator;
 import com.angrysurfer.beats.widget.VuMeter;
 import com.angrysurfer.core.api.*;
+import com.angrysurfer.core.event.PlayerUpdateEvent;
 import com.angrysurfer.core.model.InstrumentWrapper;
 import com.angrysurfer.core.model.Player;
 import com.angrysurfer.core.model.Session;
@@ -94,7 +95,7 @@ public class TransportIndicatorPanel extends JPanel implements IBusListener {
     private void registerForEvents() {
         TimingBus.getInstance().register(this);
         CommandBus.getInstance().register(this, new String[]{
-                Commands.PLAYER_UPDATED,
+                Commands.PLAYER_UPDATE_EVENT,
                 Commands.TIMING_UPDATE,
                 Commands.TEMPO_CHANGE,
                 Commands.TIME_SIGNATURE_CHANGE,
@@ -241,11 +242,11 @@ public class TransportIndicatorPanel extends JPanel implements IBusListener {
 
         try {
             switch (action.getCommand()) {
-                case Commands.PLAYER_UPDATED -> {
-                    if (action.getData() instanceof Player player &&
+                case Commands.PLAYER_RULE_UPDATE_EVENT -> {
+                    if (action.getData() instanceof PlayerUpdateEvent event &&
                             currentPlayer != null &&
-                            player.getId().equals(currentPlayer.getId())) {
-                        updatePlayerInfo(player);
+                            event.getPlayer().getId().equals(currentPlayer.getId())) {
+                        updatePlayerInfo(event.getPlayer());
                     }
                 }
                 case Commands.TIMING_UPDATE -> {

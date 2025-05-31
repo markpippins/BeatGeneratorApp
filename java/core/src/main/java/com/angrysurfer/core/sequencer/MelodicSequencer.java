@@ -28,6 +28,10 @@ public class MelodicSequencer implements IBusListener {
 
     private final ShortMessage reuseableMessage = new javax.sound.midi.ShortMessage();
 
+    private Integer id;
+
+    private TimingUpdate lastTimingUpdate;
+
     private boolean loopingToggled;
     private boolean isPlaying = false; // Flag indicating playback state
 
@@ -39,7 +43,7 @@ public class MelodicSequencer implements IBusListener {
     private Boolean[] scaleNotes; // Computed from root note and scale
     private Quantizer quantizer; // Computed from scale notes
     private int masterTempo;
-    private Integer id;
+
     private boolean latchEnabled = false;
     private Long nextPatternId = null;
     private long lastNoteTriggeredTime = 0;
@@ -67,7 +71,6 @@ public class MelodicSequencer implements IBusListener {
                 Commands.PLAYER_PRESET_CHANGE_EVENT,
                 Commands.PLAYER_PRESET_CHANGED,
                 Commands.PLAYER_INSTRUMENT_CHANGE_EVENT,
-                Commands.PLAYER_UPDATED,
                 Commands.REFRESH_PLAYER_INSTRUMENT,
                 Commands.SYSTEM_READY,
                 Commands.LOOPING_TOGGLE_EVENT,
@@ -119,7 +122,7 @@ public class MelodicSequencer implements IBusListener {
             reset();
         }
 
-        MelodicSequencerManager.getInstance().initializePlayer(player);
+        PlayerManager.getInstance().initializePlayer(player);
 
         isPlaying = getSequenceData().isLooping();
         logger.info("Melodic sequencer {} started playback", id);
@@ -285,30 +288,20 @@ public class MelodicSequencer implements IBusListener {
         logger.info("Sequencer reset");
     }
 
+
     public void triggerNote(int stepIndex) {
         // Skip if not playing or muted (fast check before doing any other processing)
         if (!isPlaying || !sequenceData.isStepActive(stepIndex) || player.isMuted())
             return;
 
         // Check probability
-        int probability = sequenceData.getProbabilityValue(stepIndex);
-        if (probability < 100) {
-            int rand = (int) (Math.random() * 100);
+        if (stepIsProbable(stepIndex)) return;
 
-            if (rand >= probability) {
-                logger.debug("Step {} skipped due to probability ({} < {})",
-                        stepIndex, rand, probability);
-                return;
-            }
-        }
-
-        int noteValue = sequenceData.getNoteValue(stepIndex);
+        int noteValue = sequenceData.isQuantizeEnabled() ? quantizeNote(sequenceData.getNoteValue(stepIndex)) :
+                sequenceData.getNoteValue(stepIndex);
         int velocity = sequenceData.getVelocityValue(stepIndex);
         int gate = sequenceData.getGateValue(stepIndex);
 
-        if (sequenceData.isQuantizeEnabled()) {
-            noteValue = quantizeNote(noteValue);
-        }
 
         noteValue = noteValue + currentTilt + (player.getFollowSessionOffset() ? SessionManager.getInstance().getActiveSession().getNoteOffset() : 0);
 
@@ -328,7 +321,10 @@ public class MelodicSequencer implements IBusListener {
             );
 
             if (player != null) {
-                player.noteOn(noteValue, velocity, gate);
+                if (player.getFollowRules()) {
+                    if (player.shouldPlay(lastTimingUpdate))
+                        player.noteOn(noteValue, velocity, gate);
+                } else player.noteOn(noteValue, velocity, gate);
             }
 
             if (noteEventListener != null) {
@@ -341,6 +337,20 @@ public class MelodicSequencer implements IBusListener {
         } catch (Exception e) {
             logger.error("Error triggering note: {}", e.getMessage(), e);
         }
+    }
+
+    private boolean stepIsProbable(int stepIndex) {
+        int probability = sequenceData.getProbabilityValue(stepIndex);
+        if (probability < 100) {
+            int rand = (int) (Math.random() * 100);
+
+            if (rand >= probability) {
+                logger.debug("Step {} skipped due to probability ({} < {})",
+                        stepIndex, rand, probability);
+                return true;
+            }
+        }
+        return false;
     }
 
     public void notifyPatternUpdated() {
@@ -518,8 +528,8 @@ public class MelodicSequencer implements IBusListener {
 
             case Commands.REFRESH_ALL_INSTRUMENTS, Commands.PLAYER_PRESET_CHANGE_EVENT,
                  Commands.PLAYER_PRESET_CHANGED, Commands.PLAYER_INSTRUMENT_CHANGE_EVENT,
-                 Commands.PLAYER_UPDATED, Commands.REFRESH_PLAYER_INSTRUMENT -> {
-                MelodicSequencerManager.getInstance().initializePlayer(player);
+                 Commands.REFRESH_PLAYER_INSTRUMENT -> {
+                PlayerManager.getInstance().initializePlayer(player);
                 MelodicSequenceModifier.updateInstrumentSettingsInSequenceData(this);
             }
 
@@ -561,6 +571,7 @@ public class MelodicSequencer implements IBusListener {
 
         if (action.getData() instanceof TimingUpdate update) {
 
+            lastTimingUpdate = update;
             // Process bar for tilt and mute updates
             if (update.bar() != null) {
                 int newBar = update.bar() - 1; // Adjust for 0-based index

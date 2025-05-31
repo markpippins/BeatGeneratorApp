@@ -64,12 +64,12 @@ public class DrumSequenceNavigationPanel extends JPanel {
 
         // Add components to panel - add new button first
         add(sequenceIdLabel);
-        add(newButton); // Add new button here
         add(firstButton);
         add(prevButton);
         add(nextButton);
         add(lastButton);
         add(saveButton);
+        add(newButton); // Add new button here
 
         // Set initial button state
         updateButtonStates();

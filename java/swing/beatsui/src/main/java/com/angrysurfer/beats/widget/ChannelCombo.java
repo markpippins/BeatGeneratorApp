@@ -4,6 +4,7 @@ import com.angrysurfer.core.api.Command;
 import com.angrysurfer.core.api.CommandBus;
 import com.angrysurfer.core.api.Commands;
 import com.angrysurfer.core.api.IBusListener;
+import com.angrysurfer.core.event.PlayerUpdateEvent;
 import com.angrysurfer.core.model.Player;
 import com.angrysurfer.core.sequencer.SequencerConstants;
 import com.angrysurfer.core.service.ChannelManager;
@@ -33,7 +34,7 @@ public class ChannelCombo extends JComboBox<Integer> implements IBusListener {
     public ChannelCombo() {
         super();
         CommandBus.getInstance().register(this, new String[]{Commands.PLAYER_SELECTION_EVENT,
-                Commands.PLAYER_UPDATED, Commands.CHANNEL_ASSIGNMENT_CHANGED});
+                Commands.CHANNEL_ASSIGNMENT_CHANGED, Commands.PLAYER_UPDATE_EVENT});
 
         // Populate all 16 channels
         for (int i = 0; i < 16; i++) {
@@ -116,11 +117,11 @@ public class ChannelCombo extends JComboBox<Integer> implements IBusListener {
                 }
                 break;
 
-            case Commands.PLAYER_UPDATED:
-                if (action.getData() instanceof Player player &&
+            case Commands.PLAYER_UPDATE_EVENT:
+                if (action.getData() instanceof PlayerUpdateEvent event &&
                         currentPlayer != null &&
-                        player.getId().equals(currentPlayer.getId())) {
-                    updateSelectedChannel(player);
+                        event.getPlayer().getId().equals(currentPlayer.getId())) {
+                    updateSelectedChannel(event.getPlayer());
                 }
                 break;
 

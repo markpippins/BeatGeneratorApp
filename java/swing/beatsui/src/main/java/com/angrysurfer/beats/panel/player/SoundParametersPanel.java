@@ -60,10 +60,6 @@ public class SoundParametersPanel extends LivePanel {
         horizontalPanel.setLayout(new BoxLayout(horizontalPanel, BoxLayout.X_AXIS));
         horizontalPanel.setBorder(BorderFactory.createEmptyBorder(2, 2, 2, 2));
 
-        Player player = getPlayer();
-        if (player != null)
-            requestPlayerUpdate();
-
         // Create channel combo - display 1-16 but store 0-15
         ChannelComboPanel channelComboPanel = new ChannelComboPanel();
         channelComboPanel.setMaximumSize(new Dimension(channelComboPanel.getPreferredSize().width,
@@ -78,7 +74,6 @@ public class SoundParametersPanel extends LivePanel {
         horizontalPanel.add(channelComboPanel);
         horizontalPanel.add(presetPanel);
         horizontalPanel.add(soundbankPanel);
-
         horizontalPanel.add(bankPanel);
 
         add(horizontalPanel, BorderLayout.CENTER);
@@ -164,6 +159,7 @@ public class SoundParametersPanel extends LivePanel {
                 logger.info("Preset selected: {} - {}", item.getNumber(), item.getName());
 
                 if (currentPlayer != null && currentPlayer.getInstrument() != null) {
+
                     // Use SoundbankManager to update player sound
                     SoundbankItem sbItem = (SoundbankItem) soundbankCombo.getSelectedItem();
                     BankItem bankItem = (BankItem) bankCombo.getSelectedItem();
@@ -179,10 +175,8 @@ public class SoundParametersPanel extends LivePanel {
                     boolean success = SoundbankManager.getInstance().updatePlayerSound(
                             currentPlayer, soundbankName, bankIndex, item.getNumber());
 
+                    publishPresetChange(currentPlayer, soundbankName, bankIndex, item.getNumber());
                     logger.info("Applied preset to player: {}", success ? "SUCCESS" : "FAILED");
-
-                    // Request update
-                    requestPlayerUpdate();
                 }
             }
         });
@@ -200,6 +194,10 @@ public class SoundParametersPanel extends LivePanel {
             if (!isInitializing && bankCombo.getSelectedItem() != null) {
                 Player currentPlayer = getPlayer();
                 if (currentPlayer != null && currentPlayer.getInstrument() != null) {
+
+                    SoundbankItem sbItem = (SoundbankItem) soundbankCombo.getSelectedItem();
+                    String soundbankName = sbItem != null ? sbItem.getName() : null;
+
                     BankItem item = (BankItem) bankCombo.getSelectedItem();
                     Integer bankIndex = item.getIndex();
 
@@ -220,19 +218,7 @@ public class SoundParametersPanel extends LivePanel {
                     }
 
                     // Create and publish a PresetChangeEvent to ensure the change is applied
-                    CommandBus.getInstance().publish(
-                            Commands.PLAYER_PRESET_CHANGE_EVENT,
-                            this,
-                            new PlayerPresetChangeEvent(
-                                    this,
-                                    currentPlayer,
-                                    bankIndex,
-                                    presetNumber
-                            )
-                    );
-
-                    // Request UI update
-                    requestPlayerUpdate();
+                    publishPresetChange(currentPlayer, soundbankName, bankIndex, presetNumber);
                 }
             }
         });
@@ -242,6 +228,20 @@ public class SoundParametersPanel extends LivePanel {
 
     }
 
+    private void publishPresetChange(Player currentPlayer, String soundbankName, Integer bankIndex, Integer presetNumber) {
+        CommandBus.getInstance().publish(
+                Commands.PLAYER_PRESET_CHANGE_EVENT,
+                this,
+                new PlayerPresetChangeEvent(
+                        this,
+                        currentPlayer,
+                        soundbankName,
+                        bankIndex,
+                        presetNumber
+                )
+        );
+    }
+
     private void createSoundbankPanel() {
         soundbankPanel = new JPanel(new BorderLayout(5, 0));
         soundbankPanel.setBorder(BorderFactory.createCompoundBorder(
@@ -249,50 +249,40 @@ public class SoundParametersPanel extends LivePanel {
                 BorderFactory.createEmptyBorder(2, 2, 2, 2)));
         soundbankCombo = new JComboBox<>();
         soundbankCombo.setRenderer(new SoundbankComboRenderer());
-
-        // Update the soundbank action listener to properly apply changes
+        soundbankPanel.add(soundbankCombo, BorderLayout.CENTER);
+        soundbankPanel.setMaximumSize(new Dimension(Integer.MAX_VALUE, soundbankPanel.getPreferredSize().height));
         soundbankCombo.addActionListener(e -> {
             if (!isInitializing && soundbankCombo.getSelectedItem() != null) {
-                Player currentPlayer = getPlayer();
-                if (currentPlayer != null && currentPlayer.getInstrument() != null) {
-                    SoundbankItem item = (SoundbankItem) soundbankCombo.getSelectedItem();
-                    String soundbankName = item.getName();
-
-                    logger.info("Soundbank selected: {}", soundbankName);
-
-                    // Update the instrument property
-                    currentPlayer.getInstrument().setSoundbankName(soundbankName);
-
-                    // IMPORTANT: Actively apply the soundbank using SoundbankManager
-                    boolean applied = SoundbankManager.getInstance().applySoundbank(
-                            currentPlayer.getInstrument(), soundbankName);
-
-                    logger.info("Applied soundbank {} to instrument: {}",
-                            soundbankName, applied ? "SUCCESS" : "FAILED");
-
-                    // Update bank and preset UI
-                    updateBankCombo();
-
-                    // Create and publish a PresetChangeEvent to ensure the change is applied
-                    CommandBus.getInstance().publish(
-                            Commands.PLAYER_PRESET_CHANGE_EVENT,
-                            this,
-                            new PlayerPresetChangeEvent(
-                                    this,
-                                    currentPlayer,
-                                    currentPlayer.getInstrument().getBankIndex(),
-                                    currentPlayer.getInstrument().getPreset()
-                            )
-                    );
-
-                    // Request UI update
-                    requestPlayerUpdate();
-                }
+                applySoundbankChanges();
             }
         });
 
-        soundbankPanel.add(soundbankCombo, BorderLayout.CENTER);
-        soundbankPanel.setMaximumSize(new Dimension(Integer.MAX_VALUE, soundbankPanel.getPreferredSize().height));
+    }
+
+    private void applySoundbankChanges() {
+        Player currentPlayer = getPlayer();
+        if (currentPlayer != null && currentPlayer.getInstrument() != null) {
+            SoundbankItem item = (SoundbankItem) soundbankCombo.getSelectedItem();
+            String soundbankName = item.getName();
+
+            logger.info("Soundbank selected: {}", soundbankName);
+
+            // Update the instrument property
+            currentPlayer.getInstrument().setSoundbankName(soundbankName);
+
+            // IMPORTANT: Actively apply the soundbank using SoundbankManager
+            boolean applied = SoundbankManager.getInstance().applySoundbank(
+                    currentPlayer.getInstrument(), soundbankName);
+
+            logger.info("Applied soundbank {} to instrument: {}",
+                    soundbankName, applied ? "SUCCESS" : "FAILED");
+
+            // Update bank and preset UI
+            updateBankCombo();
+
+            // Create and publish a PresetChangeEvent to ensure the change is applied
+            publishPresetChange(currentPlayer, currentPlayer.getInstrument().getSoundbankName(), currentPlayer.getInstrument().getBankIndex(), currentPlayer.getInstrument().getPreset());
+        }
     }
 
     /**

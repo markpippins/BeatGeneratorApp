@@ -5,7 +5,6 @@ import com.angrysurfer.core.api.Command;
 import com.angrysurfer.core.api.CommandBus;
 import com.angrysurfer.core.api.Commands;
 import com.angrysurfer.core.api.DefaultBusListener;
-import com.angrysurfer.core.api.midi.MidiControlMessageEnum;
 import com.angrysurfer.core.model.InstrumentWrapper;
 import com.angrysurfer.core.model.Note;
 import com.angrysurfer.core.model.Player;
@@ -581,7 +580,7 @@ public class MelodicSequencerManager extends DefaultBusListener {
                     logger.info("Successfully reconnected sequencer {} to device {}", id, deviceName);
 
                     // PlayerManager.getInstance().applyInstrumentPreset(player);
-                    initializePlayer(player);
+                    PlayerManager.getInstance().initializePlayer(player);
 
                 } else {
                     logger.warn("Failed to get receiver for sequencer {}", id);
@@ -593,31 +592,6 @@ public class MelodicSequencerManager extends DefaultBusListener {
             PlayerManager.getInstance().savePlayerProperties(player);
         } catch (Exception e) {
             logger.error("Error repairing melodic sequencer {}: {}", id, e.getMessage());
-        }
-    }
-
-    public void initializePlayer(Player player) {
-        // PlayerManager.getInstance().applyInstrumentPreset(player);
-
-        // Add this explicit program change to ensure the preset is applied:
-        if (player != null && player.getInstrument() != null) {
-            try {
-                // Force program change through both regular channel and direct MIDI
-                InstrumentWrapper instrument = player.getInstrument();
-                int channel = player.getChannel();
-                int bankIndex = instrument.getBankIndex() != null ? instrument.getBankIndex() : 0;
-                int preset = instrument.getPreset() != null ? instrument.getPreset() : 0;
-
-                player.getInstrument().controlChange(0, (bankIndex >> 7) & MidiControlMessageEnum.POLY_MODE_ON);
-                player.getInstrument().controlChange(32, bankIndex & MidiControlMessageEnum.POLY_MODE_ON);
-                player.getInstrument().programChange(preset, 0);
-
-
-                logger.info("Explicitly set instrument {} to bank {} program {} on channel {}",
-                        instrument.getName(), bankIndex, preset, channel);
-            } catch (Exception e) {
-                logger.error("Error applying program change: {}", e.getMessage(), e);
-            }
         }
     }
 
