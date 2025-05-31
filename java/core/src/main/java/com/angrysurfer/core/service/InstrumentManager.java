@@ -4,6 +4,7 @@ import com.angrysurfer.core.api.Command;
 import com.angrysurfer.core.api.CommandBus;
 import com.angrysurfer.core.api.Commands;
 import com.angrysurfer.core.api.IBusListener;
+import com.angrysurfer.core.model.InstrumentInfo;
 import com.angrysurfer.core.model.InstrumentWrapper;
 import com.angrysurfer.core.model.Player;
 import com.angrysurfer.core.redis.InstrumentHelper;
@@ -17,6 +18,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.sound.midi.MidiDevice;
+import javax.sound.midi.Receiver;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -27,15 +29,15 @@ public class InstrumentManager implements IBusListener {
     private static InstrumentManager instance;
     private final InstrumentHelper instrumentHelper;
     private final Map<Long, InstrumentWrapper> instrumentCache = new HashMap<>();
+    private final ReceiverManager receiverManager; // ADDED
 
-    private List<MidiDevice> midiDevices = new ArrayList<>();
-    private List<String> devices = new ArrayList<>();
     private boolean needsRefresh = true;
     private boolean isInitializing = false;
 
     // Private constructor for singleton pattern
     private InstrumentManager() {
         this.instrumentHelper = RedisService.getInstance().getInstrumentHelper();
+        this.receiverManager = ReceiverManager.getInstance(); // ADDED - Initialize ReceiverManager
         // Register for command events
         CommandBus.getInstance().register(this, new String[]{
                 Commands.INSTRUMENT_UPDATED, Commands.INSTRUMENTS_REFRESHED, Commands.USER_CONFIG_LOADED
@@ -54,18 +56,20 @@ public class InstrumentManager implements IBusListener {
     }
 
     private static InstrumentWrapper getInternalInstrument(int channel) {
-        InstrumentWrapper internalInstrument = new InstrumentWrapper(
-                "Internal Synth",
-                null, // Internal synth uses null device
-                channel);
+
+        InstrumentInfo instrumentInfo = new InstrumentInfo(SequencerConstants.GERVILL + "Ch: " + channel,
+                channel, SequencerConstants.GERVILL, null, null);
+
+        InstrumentWrapper internalInstrument = new InstrumentWrapper(instrumentInfo);
 
         // Configure as internal instrument
-        internalInstrument.setInternal(true);
+        // Device name for internal synth should be consistent, e.g., Gervill
         internalInstrument.setDeviceName(SequencerConstants.GERVILL);
-        internalInstrument.setSoundbankName("Default");
+        internalInstrument.setSoundBank("Default");
         internalInstrument.setBankIndex(0);
         internalInstrument.setPreset(0); // Piano
-        internalInstrument.setId(9985L + channel);
+        internalInstrument.setId(9985L + channel); // Ensure unique ID
+        // Receiver will be set by the manager when this instrument is fully processed/cached
         return internalInstrument;
     }
 
@@ -76,7 +80,6 @@ public class InstrumentManager implements IBusListener {
 
         switch (action.getCommand()) {
             case Commands.USER_CONFIG_LOADED -> {
-                // Check if we're already initializing to prevent recursion
                 if (!isInitializing) {
                     refreshInstruments();
                 } else {
@@ -84,15 +87,25 @@ public class InstrumentManager implements IBusListener {
                 }
             }
             case Commands.INSTRUMENT_UPDATED -> {
-                // Update single instrument in cache
                 if (action.getData() instanceof InstrumentWrapper instrument) {
+                    // Ensure receiver is up-to-date if deviceName changed or receiver is missing
+                    if (instrument.getDeviceName() != null && !instrument.getDeviceName().isEmpty()) {
+                        Receiver currentReceiver = instrument.getReceiver();
+                        // Simple check: if receiver is null or device name implies a different one might be needed.
+                        // More sophisticated checks could compare current receiver's identity if possible.
+                        if (currentReceiver == null) { // Simplified check for this example
+                            Receiver newReceiver = receiverManager.getOrCreateReceiver(instrument.getDeviceName());
+                            instrument.setReceiver(newReceiver);
+                            if (newReceiver == null) {
+                                logger.warn("Could not obtain receiver for updated instrument {} (device: {})", instrument.getName(), instrument.getDeviceName());
+                            }
+                        }
+                    }
                     instrumentCache.put(instrument.getId(), instrument);
-                    logger.info("Updated instrument in cache: {}", instrument.getName());
+                    logger.info("Updated instrument in cache: {} (ID: {})", instrument.getName(), instrument.getId());
                 }
             }
-
             case Commands.INSTRUMENTS_REFRESHED -> {
-                // Force cache refresh
                 refreshInstruments();
             }
         }
@@ -100,40 +113,59 @@ public class InstrumentManager implements IBusListener {
 
     public void initializeCache() {
         logger.info("Initializing instrument cache");
-
-        // Set flag to prevent recursion
         isInitializing = true;
-
         try {
-            // Get instruments from UserConfigManager which is the source of truth
             List<InstrumentWrapper> instruments = UserConfigManager.getInstance().getInstruments();
             instrumentCache.clear();
 
             if (instruments != null) {
                 for (InstrumentWrapper instrument : instruments) {
+                    if (instrument.getDeviceName() != null && !instrument.getDeviceName().isEmpty()) {
+                        Receiver receiver = receiverManager.getOrCreateReceiver(instrument.getDeviceName());
+                        instrument.setReceiver(receiver);
+                        if (receiver == null) {
+                            logger.warn("Could not obtain receiver for instrument {} (device: {}) during cache initialization.", instrument.getName(), instrument.getDeviceName());
+                        }
+                    }
                     instrumentCache.put(instrument.getId(), instrument);
                 }
-                logger.info("Cached {} instruments", instrumentCache.size());
+                logger.info("Cached {} instruments and attempted to set receivers.", instrumentCache.size());
             } else {
                 logger.warn("No instruments found in UserConfigManager");
             }
-
             needsRefresh = false;
         } finally {
-            // Always reset the flag when done
             isInitializing = false;
         }
     }
 
+
+    public InstrumentWrapper createInstrumentWrapper(int channel, String name) {
+        InstrumentInfo info = new InstrumentInfo(name, channel, SequencerConstants.GERVILL, null, null);
+        // Create the instrument wrapper
+        InstrumentWrapper instrument = new InstrumentWrapper(info);
+
+        // Configure instrument properties
+        instrument.setDeviceName(SequencerConstants.GERVILL);
+        instrument.setSoundBank("Java Internal Soundbank");
+        instrument.setBankIndex(0);
+
+        // Default to appropriate preset based on channel
+        instrument.setPreset(0); // 0 is grand piano for melodic channels
+
+        // Generate ID consistently
+        instrument.setId(RedisService.getInstance().getNextInstrumentId());
+        return instrument;
+    }
+
+
     public void refreshInstruments() {
-        // Skip if we're already initializing
         if (isInitializing) {
             logger.debug("Skipping recursive refresh call");
             return;
         }
-
         logger.info("Refreshing instruments cache");
-        initializeCache();
+        initializeCache(); // This will now also handle setting receivers
         needsRefresh = false;
     }
 
@@ -152,12 +184,9 @@ public class InstrumentManager implements IBusListener {
                         return instrument.receivesOn(channel);
                     } catch (Exception e) {
                         // Fallback for any unexpected errors
-                        logger.warn("Error checking if instrument receives on channel {}: {}",
-                                channel, e.getMessage());
-
-                        // Check channel directly as fallback
-                        return instrument.getChannel() != null &&
-                                instrument.getChannel() == channel;
+                        logger.warn("Error checking if instrument {} receives on channel {}: {} - falling back to direct channel check",
+                                instrument.getName(), channel, e.getMessage());
+                        return instrument.getChannel() == channel;
                     }
                 })
                 .sorted(Comparator.comparing(InstrumentWrapper::getName))
@@ -178,20 +207,24 @@ public class InstrumentManager implements IBusListener {
 
         logger.debug("Looking up instrument by ID: {}", id);
 
-        // Check cache first
         InstrumentWrapper instrument = instrumentCache.get(id);
 
-        // If not in cache, try to load from Redis
         if (instrument == null) {
             logger.info("Instrument with ID {} not found in cache, checking database", id);
             try {
                 instrument = RedisService.getInstance().getInstrumentById(id);
 
-                // Add to cache if found
                 if (instrument != null) {
                     logger.info("Found instrument in database: {} (ID: {})",
                             instrument.getName(), instrument.getId());
-                    instrumentCache.put(id, instrument);
+                    if (instrument.getDeviceName() != null && !instrument.getDeviceName().isEmpty()) {
+                        Receiver receiver = receiverManager.getOrCreateReceiver(instrument.getDeviceName());
+                        instrument.setReceiver(receiver);
+                        if (receiver == null) {
+                            logger.warn("Could not obtain receiver for instrument {} (device: {}) loaded from database.", instrument.getName(), instrument.getDeviceName());
+                        }
+                    }
+                    instrumentCache.put(id, instrument); // Add to cache after loading and setting receiver
                 } else {
                     logger.warn("Instrument with ID {} not found in database", id);
                 }
@@ -199,8 +232,18 @@ public class InstrumentManager implements IBusListener {
                 logger.error("Error retrieving instrument with ID {}: {}", id, e.getMessage(), e);
             }
         } else {
-            logger.debug("Found instrument in cache: {} (ID: {})",
-                    instrument.getName(), instrument.getId());
+            // For cached instrument, ensure receiver is still valid or re-acquire if necessary
+            if (instrument.getDeviceName() != null && !instrument.getDeviceName().isEmpty()) {
+                if (instrument.getReceiver() == null) { // Or a more robust validation like receiverManager.isReceiverValid(instrument.getReceiver())
+                    logger.warn("Receiver for cached instrument {} (device: {}) is missing/invalid. Attempting to re-acquire.", instrument.getName(), instrument.getDeviceName());
+                    Receiver receiver = receiverManager.getOrCreateReceiver(instrument.getDeviceName());
+                    instrument.setReceiver(receiver);
+                    if (receiver == null) {
+                        logger.warn("Could not re-acquire receiver for cached instrument {} (device: {}).", instrument.getName(), instrument.getDeviceName());
+                    }
+                }
+            }
+            logger.debug("Found instrument in cache: {} (ID: {})", instrument.getName(), instrument.getId());
         }
 
         return instrument;
@@ -219,9 +262,21 @@ public class InstrumentManager implements IBusListener {
         if (needsRefresh) {
             refreshInstruments();
         }
+        // This might return an instrument without a guaranteed valid receiver if not accessed by ID first
+        // Consider adding receiver check/refresh here too if direct findByName is common and needs live receiver
         return instrumentCache.values().stream()
                 .filter(i -> i.getName().equalsIgnoreCase(name))
                 .findFirst()
+                .map(instrument -> { // Ensure receiver is checked/set when found by name
+                    if (instrument.getDeviceName() != null && !instrument.getDeviceName().isEmpty() && instrument.getReceiver() == null) {
+                        Receiver receiver = receiverManager.getOrCreateReceiver(instrument.getDeviceName());
+                        instrument.setReceiver(receiver);
+                        if (receiver == null) {
+                            logger.warn("Could not obtain receiver for instrument {} (device: {}) found by name.", instrument.getName(), instrument.getDeviceName());
+                        }
+                    }
+                    return instrument;
+                })
                 .orElse(null);
     }
 
@@ -229,20 +284,28 @@ public class InstrumentManager implements IBusListener {
         if (needsRefresh) {
             refreshInstruments();
         }
-
         InstrumentWrapper instrument = instrumentCache.get(instrumentId);
         if (instrument == null) {
             logger.warn("Cache miss for instrument ID: {}, refreshing cache", instrumentId);
-            refreshInstruments();
+            refreshInstruments(); // This will load and attempt to set receivers
             instrument = instrumentCache.get(instrumentId);
+        } else {
+            // Ensure receiver is set for cached instrument if it was missed or became invalid
+            if (instrument.getDeviceName() != null && !instrument.getDeviceName().isEmpty() && instrument.getReceiver() == null) {
+                Receiver receiver = receiverManager.getOrCreateReceiver(instrument.getDeviceName());
+                instrument.setReceiver(receiver);
+                if (receiver == null) {
+                    logger.warn("Could not obtain receiver for cached instrument {} (device: {}) on getInstrumentFromCache.", instrument.getName(), instrument.getDeviceName());
+                }
+            }
         }
         return instrument;
     }
 
     public List<InstrumentWrapper> getCachedInstruments() {
-        if (instrumentCache.isEmpty()) {
+        if (instrumentCache.isEmpty() && !isInitializing) { // Avoid refresh if already initializing
             logger.info("Cache is empty, initializing...");
-            initializeCache();
+            refreshInstruments(); // Calls initializeCache which sets receivers
         }
         return new ArrayList<>(instrumentCache.values());
     }
@@ -255,26 +318,26 @@ public class InstrumentManager implements IBusListener {
             logger.warn("Cannot update null instrument");
             return;
         }
-
         try {
-            // Check if this is a default instrument
-            if (Boolean.TRUE.equals(instrument.getIsDefault())) {
-                logger.info("Updating default instrument in UserConfig: {}", instrument.getName());
-                // Save to UserConfig
-                UserConfigManager.getInstance().updateDefaultInstrument(instrument);
-            } else {
-                // Regular instrument - save to instrument storage
-                RedisService.getInstance().saveInstrument(instrument);
+            // Ensure receiver is set/updated before saving
+            if (instrument.getDeviceName() != null && !instrument.getDeviceName().isEmpty()) {
+                Receiver receiver = receiverManager.getOrCreateReceiver(instrument.getDeviceName());
+                instrument.setReceiver(receiver);
+                if (receiver == null && !instrument.isInternalSynth()) { // Internal synth might not always have a receiver immediately if Gervill is problematic
+                    logger.warn("Could not obtain receiver for instrument {} (device: {}) during update. It might not function correctly.", instrument.getName(), instrument.getDeviceName());
+                }
             }
 
-            // Update the in-memory cache
+            if (Boolean.TRUE.equals(instrument.getDefaultInstrument())) {
+                logger.info("Updating default instrument in UserConfig: {}", instrument.getName());
+                UserConfigManager.getInstance().updateDefaultInstrument(instrument);
+            } else {
+                RedisService.getInstance().saveInstrument(instrument);
+            }
             instrumentCache.put(instrument.getId(), instrument);
-
-            // Notify listeners
             CommandBus.getInstance().publish(Commands.INSTRUMENT_UPDATED, this, instrument);
-
         } catch (Exception e) {
-            logger.error("Error updating instrument: {}", e.getMessage(), e);
+            logger.error("Error updating instrument {}: {}", instrument.getName(), e.getMessage(), e);
         }
     }
 
@@ -288,18 +351,13 @@ public class InstrumentManager implements IBusListener {
             logger.warn("Attempt to remove instrument with null ID");
             return;
         }
-
-        // Get instrument for logging before removal
         InstrumentWrapper instrument = instrumentCache.get(instrumentId);
-        String name = instrument != null ? instrument.getName() : "Unknown";
-
-        // Remove from cache
+        String name = instrument != null ? instrument.getName() : "Unknown ID: " + instrumentId;
         instrumentCache.remove(instrumentId);
-
-        // Remove from UserConfigManager
-        UserConfigManager.getInstance().removeInstrument(instrumentId);
-
+        UserConfigManager.getInstance().removeInstrument(instrumentId); // Assuming this handles DB removal or marks as inactive
         logger.info("Instrument removed: {} (ID: {})", name, instrumentId);
+        // Associated receiver in ReceiverManager is managed by deviceName and will be closed if no longer used by any InstrumentWrapper.
+        // No explicit call to ReceiverManager.closeReceiver(instrument.getDeviceName()) here, as the receiver might be shared.
     }
 
     /**
@@ -309,70 +367,117 @@ public class InstrumentManager implements IBusListener {
      * @return An InstrumentWrapper for the internal synth
      */
     public InstrumentWrapper findOrCreateInternalInstrument(int channel) {
-        // Try to find an existing internal instrument for this channel
-        for (InstrumentWrapper instrument : getCachedInstruments()) {
-            if (Boolean.TRUE.equals(instrument.getInternal()) && !instrument.getAssignedToPlayer() &&
-                    instrument.getChannel() == channel) {
-                return instrument;
-            }
-        }
+        // Look for an unassigned internal instrument on the specified channel
+        Optional<InstrumentWrapper> existing = getCachedInstruments().stream()
+                .filter(inst -> Boolean.TRUE.equals(inst.isInternalSynth()) &&
+                        !Boolean.TRUE.equals(inst.getAssignedToPlayer()) && // Check assignedToPlayer
+                        inst.getChannel() == channel)
+                .findFirst();
 
-        // Create a new internal instrument
-        InstrumentWrapper internalInstrument = getInternalInstrument(channel);
-
-        // Add to cache and persist
-        updateInstrument(internalInstrument);
-
-        return internalInstrument;
-    }
-
-    /**
-     * Get instrument for internal synthesizer on a specific channel
-     *
-     * @param channel MIDI channel
-     * @return The instrument, creating it if necessary
-     */
-    public InstrumentWrapper getOrCreateInternalSynthInstrument(int channel, boolean exclusive, int tag) {
-        // First try to find an existing instrument
-        Long id = 9985L + tag;
-
-        // Try to find by ID first
-        InstrumentWrapper instrument = instrumentCache.get(id);
-        if (instrument != null && (!exclusive || !instrument.getAssignedToPlayer())) {
-            if (exclusive) {
-                instrument.setAssignedToPlayer(true);
+        if (existing.isPresent()) {
+            InstrumentWrapper instrument = existing.get();
+            // Ensure receiver is set
+            if (instrument.getReceiver() == null && instrument.getDeviceName() != null && !instrument.getDeviceName().isEmpty()) {
+                Receiver receiver = receiverManager.getOrCreateReceiver(instrument.getDeviceName());
+                instrument.setReceiver(receiver);
             }
             return instrument;
         }
 
-        // Next try by device name and channel
-        for (InstrumentWrapper cached : instrumentCache.values()) {
-            if (InternalSynthManager.getInstance().isInternalSynthInstrument(cached) &&
-                    cached.getChannel() != null &&
-                    cached.getChannel() == channel &&
-                    (!exclusive || !cached.getAssignedToPlayer())) {
+        // Create a new internal instrument
+        InstrumentWrapper internalInstrument = getInternalInstrument(channel); // This sets deviceName to Gervill
+        // Receiver will be set by updateInstrument -> which calls getOrCreateReceiver
+        updateInstrument(internalInstrument); // This will cache it and attempt to set its receiver
+        return internalInstrument;
+    }
 
-                cached.setAssignedToPlayer(exclusive);
-                return cached;
-            }
+    /**
+     * Connect an instrument to a MIDI device
+     *
+     * @param drumIndex     The drum pad index (for logging)
+     * @param instrument    The instrument to connect
+     * @param defaultDevice The default device to use if preferred device isn't available
+     * @return true if successfully connected, false otherwise
+     */
+    public boolean connectInstrumentToDevice(int drumIndex, InstrumentWrapper instrument, MidiDevice defaultDevice) {
+        // Skip if already connected
+        if (instrument.getReceiver() != null) {
+            logger.debug("Drum {} already has a valid receiver", drumIndex);
+            return true;
         }
 
-        // No instrument found, create a new one using InternalSynthManager
-        boolean isDrumChannel = (channel == SequencerConstants.MIDI_DRUM_CHANNEL);
-        instrument = InternalSynthManager.getInstance().createInternalInstrument(
-                channel, isDrumChannel, isDrumChannel ? "Internal Drums " + tag : "Internal Melo " + channel + "-" + tag);
+        try {
+            // Strategy 1: Try to get device by name
+            MidiDevice device = null;
+            String deviceName = instrument.getDeviceName();
 
-        if (instrument != null) {
-            // Store in our cache
-            updateInstrument(instrument);
-
-            // Mark as assigned if exclusive
-            if (exclusive) {
-                instrument.setAssignedToPlayer(true);
+            if (deviceName != null && !deviceName.isEmpty()) {
+                device = DeviceManager.getInstance().acquireDevice(deviceName);
+                if (device != null && !device.isOpen()) {
+                    try {
+                        device.open();
+                        logger.debug("Opened device {} for drum {}", deviceName, drumIndex);
+                    } catch (Exception e) {
+                        logger.warn("Could not open device {} for drum {}: {}",
+                                deviceName, drumIndex, e.getMessage());
+                        device = null;
+                    }
+                }
             }
+
+            // Strategy 2: Use default device if specific device not available
+            if (device == null && defaultDevice != null) {
+                device = defaultDevice;
+                deviceName = defaultDevice.getDeviceInfo().getName();
+                instrument.setDeviceName(deviceName);
+                logger.debug("Using default device {} for drum {}", deviceName, drumIndex);
+            }
+
+            // Strategy 3: Try Gervill specifically as last resort
+            if (device == null) {
+                device = DeviceManager.getMidiDevice(SequencerConstants.GERVILL);
+                if (device != null) {
+                    if (!device.isOpen()) {
+                        device.open();
+                    }
+                    deviceName = SequencerConstants.GERVILL;
+                    instrument.setDeviceName(deviceName);
+                    logger.debug("Using Gervill synthesizer for drum {}", drumIndex);
+                }
+            }
+
+            // Now get a receiver for the device
+            if (device != null) {
+                instrument.setDevice(device);
+
+                Receiver receiver = ReceiverManager.getInstance()
+                        .getOrCreateReceiver(deviceName);
+
+                if (receiver != null) {
+                    instrument.setReceiver(receiver);
+                    instrument.setChannel(SequencerConstants.MIDI_DRUM_CHANNEL);
+
+                    // Find player that owns this instrument to apply preset
+                    Player player = DrumSequencerManager.getInstance().findPlayerByInstrument(instrument);
+                    if (player != null) {
+                        SoundbankManager.getInstance().applyInstrumentPreset(player);
+                        logger.info("Successfully connected drum {} to device {}", drumIndex, deviceName);
+                        PlayerManager.getInstance().savePlayerProperties(player);
+                        return true;
+                    } else {
+                        logger.warn("Could not find player for instrument to apply preset");
+                    }
+                } else {
+                    logger.warn("Failed to get receiver for drum {} from device {}", drumIndex, deviceName);
+                }
+            } else {
+                logger.warn("Could not find any valid device for drum {}", drumIndex);
+            }
+        } catch (Exception e) {
+            logger.error("Error connecting drum {}: {}", drumIndex, e.getMessage());
         }
 
-        return instrument;
+        return false;
     }
 
     /**
@@ -380,20 +485,21 @@ public class InstrumentManager implements IBusListener {
      */
     public void refreshCache(List<InstrumentWrapper> instruments) {
         if (instruments == null) return;
-
-        // Clear the existing cache
         instrumentCache.clear();
-
-        // Add all instruments to the cache
         for (InstrumentWrapper instrument : instruments) {
             if (instrument != null && instrument.getId() != null) {
+                if (instrument.getDeviceName() != null && !instrument.getDeviceName().isEmpty()) {
+                    Receiver receiver = receiverManager.getOrCreateReceiver(instrument.getDeviceName());
+                    instrument.setReceiver(receiver);
+                    if (receiver == null) {
+                        logger.warn("Could not obtain receiver for instrument {} (device: {}) during refreshCache.", instrument.getName(), instrument.getDeviceName());
+                    }
+                }
                 instrumentCache.put(instrument.getId(), instrument);
             }
         }
-
         logger.debug("Refreshed instrument cache with {} instruments", instruments.size());
     }
-
 
     /**
      * Determine who owns/uses an instrument
@@ -426,7 +532,7 @@ public class InstrumentManager implements IBusListener {
                 if (sequencer != null && sequencer.getPlayer() != null &&
                         sequencer.getPlayer().getInstrumentId() != null &&
                         sequencer.getPlayer().getInstrumentId().equals(instrument.getId())) {
-                    owners.add("Melodic: " + sequencer.getClass().getName());
+                    owners.add("Melodic: " + sequencer.getClass().getSimpleName() + " (" + sequencer.getPlayer().getName() + ")");
                 }
             }
 
@@ -437,7 +543,7 @@ public class InstrumentManager implements IBusListener {
                         if (player != null &&
                                 player.getInstrumentId() != null &&
                                 player.getInstrumentId().equals(instrument.getId())) {
-                            owners.add(sequencer.getClass().getName() + " (" + player.getName() + ")");
+                            owners.add("Drum: " + sequencer.getClass().getSimpleName() + " (" + player.getName() + ")");
                         }
                     }
                 }
@@ -449,10 +555,10 @@ public class InstrumentManager implements IBusListener {
                 return String.join(", ", owners);
             } else {
                 // If there are many owners, show a count
-                return owners.getFirst() + " and " + (owners.size() - 1) + " more";
+                return owners.get(0) + " and " + (owners.size() - 1) + " more";
             }
         } catch (Exception e) {
-            logger.error("Error determining instrument owner: {}", e.getMessage(), e);
+            logger.error("Error determining instrument owner for {}: {}", instrument.getName(), e.getMessage(), e);
             return "Error";
         }
     }
@@ -467,7 +573,7 @@ public class InstrumentManager implements IBusListener {
 
         try {
             // Get all instruments from the database
-            List<InstrumentWrapper> allInstruments = getCachedInstruments();
+            List<InstrumentWrapper> allInstruments = getCachedInstruments(); // Ensures receivers are attempted
 
             // Filter for drum instruments (typically bank 128 or those with drum-related names)
             for (InstrumentWrapper instrument : allInstruments) {
@@ -479,15 +585,15 @@ public class InstrumentManager implements IBusListener {
             }
 
             // If no drum instruments found, return all instruments as fallback
-            if (drumInstruments.isEmpty()) {
-                logger.warn("No drum instruments found, returning all instruments");
+            if (drumInstruments.isEmpty() && !allInstruments.isEmpty()) { // Avoid returning all if allInstruments is also empty
+                logger.warn("No specific drum instruments found, returning all available instruments as fallback.");
                 return allInstruments;
             }
 
             // Sort by name for easier selection
             drumInstruments.sort(Comparator.comparing(InstrumentWrapper::getName));
 
-            logger.info("Found {} drum instruments", drumInstruments.size());
+            logger.info("Found {} drum instruments.", drumInstruments.size());
             return drumInstruments;
         } catch (Exception e) {
             logger.error("Error getting drum instruments: {}", e.getMessage(), e);
@@ -505,19 +611,7 @@ public class InstrumentManager implements IBusListener {
         if (name == null) return false;
 
         String lowerName = name.toLowerCase();
-        String[] drumKeywords = {
-                "drum", "kick", "snare", "tom", "cymbal", "hat", "clap", "rim",
-                "percussion", "conga", "bongo", "tabla", "timbale", "wood", "stick",
-                "shaker", "guiro", "bell", "tambourine", "triangle"
-        };
-
-        for (String keyword : drumKeywords) {
-            if (lowerName.contains(keyword)) {
-                return true;
-            }
-        }
-
-        return false;
+        return lowerName.contains("drum") || lowerName.contains("kit") || lowerName.contains("perc");
     }
 
     /**
@@ -576,11 +670,9 @@ public class InstrumentManager implements IBusListener {
                 // Still not found, add any drum
                 if (!found && !allDrums.isEmpty()) {
                     // Take the first available
-                    defaultKit.add(allDrums.getFirst());
+                    defaultKit.add(allDrums.get(0));
                     // Remove to avoid duplicates
-                    if (!allDrums.isEmpty()) {
-                        allDrums.removeFirst();
-                    }
+                    allDrums.remove(0);
                 }
 
                 // If we've filled all 16 slots, stop
@@ -591,8 +683,8 @@ public class InstrumentManager implements IBusListener {
 
             // Fill remaining slots if needed
             while (defaultKit.size() < SequencerConstants.DRUM_PAD_COUNT && !allDrums.isEmpty()) {
-                defaultKit.add(allDrums.getFirst());
-                allDrums.removeFirst();
+                defaultKit.add(allDrums.get(0));
+                allDrums.remove(0);
             }
 
             logger.info("Created default drum kit with {} instruments", defaultKit.size());

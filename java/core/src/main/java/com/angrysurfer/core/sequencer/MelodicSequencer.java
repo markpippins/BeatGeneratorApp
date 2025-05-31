@@ -426,10 +426,11 @@ public class MelodicSequencer implements IBusListener {
         }
 
         InstrumentWrapper instrument = player.getInstrument();
+
         if (!instrument.isInternalSynth() && instrument.getChannel() != SequencerConstants.MIDI_DRUM_CHANNEL) {
 
             if (sequenceData.getSoundbankName() != null) {
-                instrument.setSoundbankName(sequenceData.getSoundbankName());
+                instrument.setSoundBank(sequenceData.getSoundbankName());
             }
 
             if (sequenceData.getBankIndex() != null) {
@@ -445,7 +446,7 @@ public class MelodicSequencer implements IBusListener {
         }
 
         logger.debug("Applied sequence data settings to instrument: preset:{}, bank:{}, soundbank:{}",
-                instrument.getPreset(), instrument.getBankIndex(), instrument.getSoundbankName());
+                instrument.getPreset(), instrument.getBankIndex(), instrument.getSoundBank());
     }
 
 
@@ -507,11 +508,6 @@ public class MelodicSequencer implements IBusListener {
                 MelodicSequencerManager.getInstance().repairMidiConnections(this);
             }
 
-            case Commands.SYSTEM_READY -> {
-
-                // initializePlayer(player);
-                //player.noteOn(player.getRootNote(), 100);
-            }
             case Commands.TIMING_UPDATE -> handleTimingUpdate(action);
 
             case Commands.TRANSPORT_START -> {
@@ -547,12 +543,12 @@ public class MelodicSequencer implements IBusListener {
 
     private void handleScaleSelected(Command action) {
         // Handle sequencer-specific scale changes
-        if (action.getData() instanceof MelodicScaleSelectionEvent event) {
+        if (action.getData() instanceof MelodicScaleSelectionEvent(Integer sequencerId, String scale)) {
             // Only apply if it's meant for this sequencer
-            if (event.getSequencerId() != null && event.getSequencerId().equals(id)) {
-                sequenceData.setScale(event.getScale());
+            if (sequencerId != null && sequencerId.equals(id)) {
+                sequenceData.setScale(scale);
                 updateQuantizer();
-                logger.info("Applied sequencer-specific scale change: {}", event.getScale());
+                logger.info("Applied sequencer-specific scale change: {}", scale);
             }
         } else if (action.getData() instanceof String scale) {
             // Legacy support for string-only data
@@ -582,10 +578,17 @@ public class MelodicSequencer implements IBusListener {
                     logger.debug("Current bar updated to {}", currentBar);
 
                     // Process tilt values
-                    if (getHarmonicTiltValues() != null && getHarmonicTiltValues().size() > currentBar) {
+                    if (getHarmonicTiltValues() != null && getHarmonicTiltValues().size() > newBar) {
                         currentTilt = getHarmonicTiltValues().get(currentBar);
                         logger.debug("Current tilt value for bar {}: {}", currentBar, currentTilt);
                     }
+
+                    if (sequenceData.getLengthModifierValues() != null && sequenceData.getLengthModifierValues().length >= newBar) {
+                        int adjustment = sequenceData.getLengthModifierValue(newBar);
+                        if (adjustment != 0)
+                            sequenceData.setPatternLength(sequenceData.getPatternLength() + adjustment);
+                    }
+
 
                     if (sequenceData.getMuteValues() != null && sequenceData.getMuteValues().size() > currentBar) {
                         int muteValue = sequenceData.getMuteValue(currentBar);

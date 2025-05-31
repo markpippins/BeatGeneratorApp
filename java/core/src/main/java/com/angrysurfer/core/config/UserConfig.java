@@ -14,10 +14,11 @@ import java.util.List;
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class UserConfig {
     private Integer id;
-    private List<InstrumentWrapper> instruments = new ArrayList<>();
-    private Boolean hasDefaults = false;
+    private List<InstrumentWrapper> defaultInstruments = new ArrayList<>();
     private List<Strike> defaultStrikes = new ArrayList<>();
+    // private List<Sample> defaultSamplers = new ArrayList<>();
     private List<Note> defaultNotes = new ArrayList<>();
+    private Boolean hasDefaults = false;
     private int configVersion = 1;
     private Date lastUpdated;
     private String name;

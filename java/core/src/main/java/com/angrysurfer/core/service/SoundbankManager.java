@@ -26,9 +26,8 @@ public class SoundbankManager implements IBusListener {
     private final LinkedHashMap<String, Soundbank> soundbanks = new LinkedHashMap<>();
     private final int defaultMidiChannel = 15; // Default channel for melodic sounds
     // Map to store available banks for each soundbank (by name)
-    private final Map<String, List<Integer>> availableBanksMap = new HashMap<>();
-    // Add synthesizer as a central instance
-    private Synthesizer synthesizer;
+    private final Map<String, List<Integer>> availableBanksMap = new HashMap<>();    // We'll use InternalSynthManager's synthesizer instance
+    // instead of maintaining our own
 
     private SoundbankManager() {
         // Register with command bus
@@ -49,21 +48,22 @@ public class SoundbankManager implements IBusListener {
      * @return true if initialization was successful
      */
     public boolean initializeSoundbanks() {
+
+        Synthesizer synthesizer = InternalSynthManager.getInstance().getSynthesizer();
+
         try {
             logger.info("Initializing soundbanks...");
 
             // Clear existing collections first
             soundbanks.clear();
-            availableBanksMap.clear();
-
-            // Make sure we have a synthesizer
+            availableBanksMap.clear();            // Check if synthesizer is ready - but allow retry later
             if (synthesizer == null || !synthesizer.isOpen()) {
-                initializeSynthesizer();
-                if (synthesizer == null) {
-                    logger.error("Failed to initialize synthesizer");
-                    return false;
-                }
+                logger.warn("Synthesizer not ready for soundbank initialization - will retry later");
+                return false;
             }
+
+            logger.info("Using synthesizer for soundbank initialization: {}",
+                    synthesizer.getDeviceInfo().getName());
 
             // Add default Java soundbank
             Soundbank defaultSoundbank = synthesizer.getDefaultSoundbank();
@@ -330,19 +330,19 @@ public class SoundbankManager implements IBusListener {
      * @param instrument The instrument to load
      * @return true if successful, false otherwise
      */
-    public boolean loadInstrument(Instrument instrument) {
-        try {
-            Synthesizer synth = InternalSynthManager.getInstance().getSynthesizer();
-            if (synth == null || !synth.isOpen()) {
-                return false;
-            }
-
-            return synth.loadInstrument(instrument);
-        } catch (Exception e) {
-            logger.error("Error loading instrument: {}", e.getMessage());
-            return false;
-        }
-    }
+//    public boolean loadInstrument(Instrument instrument) {
+//        try {
+//            Synthesizer synth = InternalSynthManager.getInstance().getOrCreateSynthesizer();
+//            if (synth == null || !synth.isOpen()) {
+//                return false;
+//            }
+//
+//            return synth.loadInstrument(instrument);
+//        } catch (Exception e) {
+//            logger.error("Error loading instrument: {}", e.getMessage());
+//            return false;
+//        }
+//    }
 
     /**
      * Get available banks for a soundbank by name
@@ -384,7 +384,7 @@ public class SoundbankManager implements IBusListener {
             }
 
             // Get soundbank name from instrument
-            String soundbankName = instrument.getSoundbankName();
+            String soundbankName = instrument.getSoundBank();
             if (soundbankName == null || soundbankName.isEmpty()) {
                 soundbankName = "Java Internal Soundbank";
             }
@@ -422,7 +422,7 @@ public class SoundbankManager implements IBusListener {
             }
 
             // Get the soundbank name from the instrument
-            String soundbankName = instrument.getSoundbankName();
+            String soundbankName = instrument.getSoundBank();
             if (soundbankName == null || soundbankName.isEmpty()) {
                 // Fall back to default soundbank
                 soundbankName = "Java Internal Soundbank";
@@ -765,11 +765,13 @@ public class SoundbankManager implements IBusListener {
 //            logger.error("Failed to apply preset change: {}", e.getMessage(), e);
 //        }
 //    }
+//
 
     /**
      * Apply a preset change to a specific player's instrument
      *
      * @param player    The player to update
+     * @param soundbank The soundbank name
      * @param bankIndex The bank index
      * @param preset    The preset number
      */
@@ -795,20 +797,16 @@ public class SoundbankManager implements IBusListener {
                 instrument.setPreset(preset);
             }
 
-            // For internal synth, use direct channel access
+            // For internal synth, use InternalSynthManager to apply preset change
             if (InternalSynthManager.getInstance().isInternalSynthInstrument(instrument)) {
-                Synthesizer synth = InternalSynthManager.getInstance().getSynthesizer();
-                if (synth != null && synth.isOpen()) {
-                    MidiChannel[] channels = synth.getChannels();
-                    if (channels != null && channel < channels.length) {
-                        // Direct channel access to avoid affecting other instruments
-                        channels[channel].controlChange(0, (bankIndex >> 7) & MidiControlMessageEnum.POLY_MODE_ON);  // Bank MSB
-                        channels[channel].controlChange(32, bankIndex & MidiControlMessageEnum.POLY_MODE_ON);        // Bank LSB
-                        channels[channel].programChange(preset);
+                boolean success = InternalSynthManager.getInstance().updateInstrumentPreset(
+                        instrument, bankIndex, preset);
 
-                        logger.info("Applied preset change directly to player {} on channel {}: bank={}, program={}",
-                                player.getId(), channel, bankIndex, preset);
-                    }
+                if (success) {
+                    logger.info("Applied preset change via InternalSynthManager to player {} on channel {}: bank={}, program={}",
+                            player.getId(), channel, bankIndex, preset);
+                } else {
+                    logger.warn("Failed to apply preset change via InternalSynthManager to player {}", player.getId());
                 }
             } else if (device != null && device.isOpen() && instrument.getReceiver() != null) {
                 // For external device, send MIDI message directly to this device's receiver
@@ -854,44 +852,15 @@ public class SoundbankManager implements IBusListener {
         }
 
         try {
-            // Get the actual Soundbank object by name
-            Soundbank soundbank = soundbanks.get(soundbankName);
-            if (soundbank == null) {
-                logger.warn("Soundbank not found: {}", soundbankName);
-                return false;
-            }
-
             // Determine if this is an internal or external instrument
             boolean isInternalSynth = InternalSynthManager.getInstance().isInternalSynthInstrument(instrument);
 
             if (isInternalSynth) {
-                // Get the synthesizer from InternalSynthManager for consistency
-                Synthesizer synth = InternalSynthManager.getInstance().getSynthesizer();
-                if (synth == null || !synth.isOpen()) {
-                    logger.warn("Synthesizer not available");
-                    return false;
-                }
-
-                // Check if soundbank is supported
-                if (!synth.isSoundbankSupported(soundbank)) {
-                    logger.warn("Soundbank not supported by synthesizer: {}", soundbankName);
-                    return false;
-                }
-
-                // Load the soundbank (unload previous if needed)
-                synth.unloadAllInstruments(synth.getDefaultSoundbank());
-                boolean success = synth.loadAllInstruments(soundbank);
-
-                // Store the soundbank name in the instrument
-                if (success) {
-                    instrument.setSoundbankName(soundbankName);
-                    logger.info("Successfully loaded soundbank: {}", soundbankName);
-                }
-
-                return success;
+                // Delegate to InternalSynthManager for internal instruments
+                return SoundbankManager.getInstance().applySoundbank(instrument, soundbankName);
             } else {
                 // For external devices, just store the soundbank name
-                instrument.setSoundbankName(soundbankName);
+                instrument.setSoundBank(soundbankName);
                 logger.info("Set soundbank name for external instrument: {}", soundbankName);
                 return true;
             }
@@ -923,21 +892,26 @@ public class SoundbankManager implements IBusListener {
     /**
      * Initialize synthesizer for soundbank operations
      */
-    public boolean initializeSynthesizer() {
-        try {
-            if (synthesizer == null || !synthesizer.isOpen()) {
-                // Get default synthesizer
-                synthesizer = MidiSystem.getSynthesizer();
-                synthesizer.open();
-                logger.info("Synthesizer initialized: {}", synthesizer.getDeviceInfo().getName());
-                return true;
-            }
-            return true;
-        } catch (Exception e) {
-            logger.error("Error initializing synthesizer: {}", e.getMessage(), e);
-            return false;
-        }
-    }
+//    public boolean initializeSynthesizer() {
+//        try {
+//            // Just retrieve the synthesizer reference from InternalSynthManager
+//            // DO NOT call initializeSynthesizer on InternalSynthManager to avoid circular dependency
+//            Synthesizer synth = InternalSynthManager.getInstance().getSynthesizer();
+//
+//            // If it exists and is open, we're good
+//            if (synth != null && synth.isOpen()) {
+//                logger.info("Using existing synthesizer from InternalSynthManager: {}", synth.getDeviceInfo().getName());
+//                return true;
+//            } else {
+//                // Just log a warning - let the application handle proper initialization order
+//                logger.warn("Synthesizer not ready yet. This is normal during startup sequence.");
+//                return false;
+//            }
+//        } catch (Exception e) {
+//            logger.error("Error initializing synthesizer: {}", e.getMessage(), e);
+//            return false;
+//        }
+//    }
 
     /**
      * Get all available soundbanks for a player
@@ -1085,7 +1059,7 @@ public class SoundbankManager implements IBusListener {
 
             // Update soundbank if specified
             if (soundbankName != null && !soundbankName.isEmpty()) {
-                instrument.setSoundbankName(soundbankName);
+                instrument.setSoundBank(soundbankName);
             }
 
             // Update bank if specified
@@ -1160,8 +1134,8 @@ public class SoundbankManager implements IBusListener {
             }
 
             // Select instrument's soundbank
-            if (instrument.getSoundbankName() != null) {
-                soundbankCombo.setSelectedItem(instrument.getSoundbankName());
+            if (instrument.getSoundBank() != null) {
+                soundbankCombo.setSelectedItem(instrument.getSoundBank());
             } else if (soundbankCombo.getItemCount() > 0) {
                 soundbankCombo.setSelectedIndex(0);
             }
@@ -1222,6 +1196,121 @@ public class SoundbankManager implements IBusListener {
     }
 
     /**
+     * Apply a player's instrument preset to MIDI system
+     *
+     * @param player The player whose instrument preset should be applied
+     * @return true if preset was applied successfully, false otherwise
+     */
+    public boolean applyInstrumentPreset(Player player) {
+        if (player == null || player.getInstrument() == null) {
+            return false;
+        }
+
+        try {
+            InstrumentWrapper instrument = player.getInstrument();
+
+            boolean isInternalSynth = InternalSynthManager.getInstance().isInternalSynthInstrument(instrument);
+            boolean deviceOpen = false;
+
+            if (instrument.getDevice() != null) {
+                if (!instrument.getDevice().isOpen()) {
+                    try {
+                        instrument.getDevice().open();
+                    } catch (Exception e) {
+                        logger.warn("Could not open device: {}", e.getMessage());
+                        return false;
+                    }
+                }
+                deviceOpen = instrument.getDevice().isOpen();
+            }
+
+            if (instrument.getReceiver() == null && instrument.getDevice() != null && instrument.getDevice().isOpen()) {
+                try {
+                    instrument.setReceiver(instrument.getDevice().getReceiver());
+                } catch (Exception e) {
+                    logger.warn("Could not get receiver: {}", e.getMessage());
+                    return false;
+                }
+            }
+
+            logger.info(
+                    "Applying preset for {} on channel {}: bank={}, program={}, device={}, isInternal={}, deviceOpen={}",
+                    player.getName(), player.getChannel(),
+                    instrument.getBankIndex(), instrument.getPreset(),
+                    instrument.getDeviceName(), isInternalSynth, deviceOpen);
+
+            if (isInternalSynth) {
+                boolean internalSuccess = InternalSynthManager.getInstance().updateInstrumentPreset(
+                        instrument,
+                        instrument.getBankIndex(),
+                        instrument.getPreset());
+
+                try {
+                    Synthesizer synth = InternalSynthManager.getInstance().getSynthesizer();
+                    if (synth != null && synth.isOpen()) {
+                        int bankIndex = instrument.getBankIndex() != null ? instrument.getBankIndex() : 0;
+                        int preset = instrument.getPreset() != null ? instrument.getPreset() : 0;
+                        int channel = player.getChannel();
+
+                        MidiChannel[] channels = synth.getChannels();
+                        if (channels != null && channel < channels.length) {
+                            channels[channel].controlChange(0, (bankIndex >> 7) & MidiControlMessageEnum.POLY_MODE_ON);
+                            channels[channel].controlChange(32, bankIndex & MidiControlMessageEnum.POLY_MODE_ON);
+                            channels[channel].programChange(preset);
+
+                            logger.info("Directly applied program change to synth channel {}: bank={}, program={}",
+                                    channel, bankIndex, preset);
+                            return true;
+                        }
+                    }
+                    return internalSuccess;
+                } catch (Exception e) {
+                    logger.warn("Could not apply direct synth program change: {}", e.getMessage());
+                    return internalSuccess;
+                }
+            } else {
+                int bankIndex = instrument.getBankIndex() != null ? instrument.getBankIndex() : 0;
+                int preset = instrument.getPreset() != null ? instrument.getPreset() : 0;
+                int channel = player.getChannel();
+                boolean success = false;
+
+                try {
+                    instrument.controlChange(0, (bankIndex >> 7) & MidiControlMessageEnum.POLY_MODE_ON);
+                    instrument.controlChange(32, bankIndex & MidiControlMessageEnum.POLY_MODE_ON);
+                    instrument.programChange(preset, 0);
+                    success = true;
+
+                    if (instrument.getReceiver() != null) {
+                        javax.sound.midi.ShortMessage bankMSB = new javax.sound.midi.ShortMessage();
+                        bankMSB.setMessage(0xB0 | channel, 0, (bankIndex >> 7) & MidiControlMessageEnum.POLY_MODE_ON);
+                        instrument.getReceiver().send(bankMSB, -1);
+
+                        javax.sound.midi.ShortMessage bankLSB = new javax.sound.midi.ShortMessage();
+                        bankLSB.setMessage(0xB0 | channel, 32, bankIndex & MidiControlMessageEnum.POLY_MODE_ON);
+                        instrument.getReceiver().send(bankLSB, -1);
+
+                        javax.sound.midi.ShortMessage pc = new javax.sound.midi.ShortMessage();
+                        pc.setMessage(0xC0 | channel, preset, 0);
+                        instrument.getReceiver().send(pc, -1);
+
+                        logger.info("Sent raw MIDI program change messages to channel {}", channel);
+                        success = true;
+                    }
+                } catch (Exception e) {
+                    logger.warn("Error sending MIDI program change: {}", e.getMessage());
+                    return false;
+                }
+
+                logger.info("Applied preset for player: {}", player.getName());
+                return success;
+            }
+        } catch (Exception e) {
+            logger.error("Error applying player preset: {}", e.getMessage(), e);
+            return false;
+        }
+    }
+
+    /**
      * Play a preview note for a specific player
      *
      * @param player     The player to preview
@@ -1239,20 +1328,27 @@ public class SoundbankManager implements IBusListener {
                 // Apply current preset settings
                 Integer bankIndex = instrument.getBankIndex();
                 Integer preset = instrument.getPreset();
-                String soundbank = instrument.getSoundbankName();
-
-                // Apply changes directly to player
-                applyPresetChangeToPlayer(player, soundbank, bankIndex, preset);
-
-                // For drum channel, play root note or default kick drum
-                if (player.getChannel() == SequencerConstants.MIDI_DRUM_CHANNEL) {
-                    int noteNumber = player.getRootNote() != null ? player.getRootNote() : 36; // Default to kick
-                    InternalSynthManager.getInstance().playNote(noteNumber, 100, durationMs, 9);
-                    player.noteOn(noteNumber, 100, durationMs);
+                String soundbank = instrument.getSoundBank();                // Check if this is an internal synth instrument
+                if (InternalSynthManager.getInstance().isInternalSynthInstrument(instrument)) {
+                    // For internal synth, delegate to InternalSynthManager with duration
+                    // The method is designed to handle both velocity and duration parameters
+                    SoundbankManager.getInstance().playPreviewNote(player, durationMs);
+                    logger.debug("Delegated preview note to InternalSynthManager for player {} with duration {}ms",
+                            player.getId(), durationMs);
                 } else {
-                    // For melodic instruments, play middle C
-                    InternalSynthManager.getInstance().playNote(60, 100, durationMs, player.getChannel());
-                    player.noteOn(60, 100, durationMs);
+                    // For external instruments - keep existing code
+
+                    // Apply preset changes
+                    applyPresetChangeToPlayer(player, soundbank, bankIndex, preset);
+
+                    // Play note using player's own note system
+                    if (player.getChannel() == SequencerConstants.MIDI_DRUM_CHANNEL) {
+                        int noteNumber = player.getRootNote() != null ? player.getRootNote() : 36; // Default to kick
+                        player.noteOn(noteNumber, 100, durationMs);
+                    } else {
+                        // For melodic instruments, play middle C
+                        player.noteOn(60, 100, durationMs);
+                    }
                 }
             }
         } catch (Exception e) {

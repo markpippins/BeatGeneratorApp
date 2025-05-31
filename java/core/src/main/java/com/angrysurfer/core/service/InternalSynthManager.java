@@ -1,6 +1,7 @@
 package com.angrysurfer.core.service;
 
 import com.angrysurfer.core.api.midi.MidiControlMessageEnum;
+import com.angrysurfer.core.model.InstrumentInfo;
 import com.angrysurfer.core.model.InstrumentWrapper;
 import com.angrysurfer.core.model.preset.DrumItem;
 import com.angrysurfer.core.model.preset.SynthData;
@@ -40,13 +41,6 @@ public class InternalSynthManager {
      * Initialize the manager and register command listeners
      */
     private InternalSynthManager() {
-        try {
-            initializeSynthData();
-            loadDefaultSoundbank();
-            initializeSynthesizer(); // Add synthesizer initialization
-        } catch (Exception e) {
-            logger.error("Error initializing InternalSynthManager", e);
-        }
     }
 
     /**
@@ -59,10 +53,20 @@ public class InternalSynthManager {
         return instance;
     }
 
+    public void initialize() {
+        try {
+            initializeSynthesizer();
+            initializeSynthData();
+            loadDefaultSoundbank();
+        } catch (Exception e) {
+            logger.error("Error initializing InternalSynthManager", e);
+        }
+    }
+
     /**
      * Initialize synthesizer data structures
      */
-    private void initializeSynthData() {
+    public void initializeSynthData() {
         try {
             // Clear existing data first
             synthDataMap.clear();
@@ -108,10 +112,20 @@ public class InternalSynthManager {
     }
 
     /**
+     * Ensure internal synthesizer is available
+     */
+    public void ensureInternalSynthAvailable() {
+        if (!checkInternalSynthAvailable()) {
+            initializeSynthesizer();
+            logger.info("Initialized internal synth for drum sequencer");
+        }
+    }
+
+    /**
      * Initialize the synthesizer
      * This should be called during startup
      */
-    public void initializeSynthesizer() {
+    private void initializeSynthesizer() {
         try {
             // Try to find Gervill synthesizer first
             MidiDevice.Info[] infos = MidiSystem.getMidiDeviceInfo();
@@ -193,13 +207,14 @@ public class InternalSynthManager {
                     // Check if it's a synthesizer
                     if (device instanceof Synthesizer) {
                         // Create an instrument wrapper for this synth
-                        InstrumentWrapper wrapper = new InstrumentWrapper();
+                        InstrumentInfo instrumentInfo = new InstrumentInfo(info.getDescription(), -1, info.getName(), device, device.getReceiver());
+                        InstrumentWrapper wrapper = new InstrumentWrapper(instrumentInfo);
                         wrapper.setId(System.currentTimeMillis()); // Unique ID
                         wrapper.setName(info.getName());
                         wrapper.setDeviceName(info.getName());
                         wrapper.setDevice(device);
                         wrapper.setDescription(info.getDescription());
-                        wrapper.setInternalSynth(true);
+
 
                         // Add to the list
                         internalSynths.add(wrapper);
@@ -222,12 +237,11 @@ public class InternalSynthManager {
      * channel
      * This is the single entry point for all internal synth instrument creation
      *
-     * @param channel       The MIDI channel to use
-     * @param isDrumChannel Whether this is a drum channel (9)
-     * @param name          Optional custom name (will be generated if null)
+     * @param channel The MIDI channel to use
+     * @param name    Optional custom name (will be generated if null)
      * @return A fully configured InstrumentWrapper for the internal synth
      */
-    public InstrumentWrapper createInternalInstrument(int channel, boolean isDrumChannel, String name) {
+    public InstrumentWrapper createInternalInstrument(String name, int channel, MidiDevice device) {
         if (synthesizer == null) {
             initializeSynthesizer();
             if (synthesizer == null) {
@@ -237,27 +251,13 @@ public class InternalSynthManager {
         }
 
         // Generate a name if none provided
-        String instrumentName = name != null ? name : isDrumChannel ? "Internal Drums" : "Internal Synth " + channel;
+        String instrumentName = name != null ? name : channel == SequencerConstants.MIDI_DRUM_CHANNEL ? "Internal Drums" : "Internal Synth " + channel;
 
         try {
-            // Create the instrument wrapper
-            InstrumentWrapper instrument = new InstrumentWrapper(
-                    instrumentName,
-                    synthesizer,
-                    channel);
-
-            // Configure instrument properties
-            instrument.setInternal(true);
-            instrument.setDeviceName(SequencerConstants.GERVILL);
-            instrument.setSoundbankName("Java Internal Soundbank");
-            instrument.setBankIndex(0);
-
-            // Default to appropriate preset based on channel
-            instrument.setPreset(0); // 0 is grand piano for melodic channels
-
-            // Generate ID consistently
-            instrument.setId(9985L + channel);
-
+            InstrumentWrapper instrument = InstrumentManager.getInstance().createInstrumentWrapper(channel, name);
+            instrument.setDevice(device);
+            if (!device.isOpen())
+                device.open();
             // Initialize the instrument MIDI state
             initializeInstrumentState(instrument);
 
@@ -326,7 +326,7 @@ public class InternalSynthManager {
             }
 
             // Make sure we have the correct channel
-            int channel = instrument.getChannel() != null ? instrument.getChannel() : 0;
+            int channel = instrument.getChannel() != -1 ? instrument.getChannel() : 0;
             bankIndex = instrument.getBankIndex() != null ? instrument.getBankIndex() : 0;
             preset = instrument.getPreset() != null ? instrument.getPreset() : 0;
 
@@ -420,13 +420,73 @@ public class InternalSynthManager {
                 (instrument.getDevice() == synthesizer);
     }
 
+
     /**
-     * Create a drum kit instrument (always on channel 9)
+     * Get instrument for internal synthesizer on a specific channel
      *
-     * @return A fully configured drum kit instrument
+     * @param channel MIDI channel
+     * @return The instrument, creating it if necessary
      */
-    public InstrumentWrapper createDrumKitInstrument() {
-        return createInternalInstrument(9, true, "Internal Drum Kit");
+    public InstrumentWrapper createInternalSynthInstrument(int channel, boolean exclusive, int tag) {
+        String name = (channel == SequencerConstants.MIDI_DRUM_CHANNEL) ?
+                "Internal Drums " + tag :
+                "Internal Melo " + channel + "-" + tag;
+
+//        InstrumentWrapper instrument = InstrumentManager.getInstance().getInstrumentCache().get(id);
+//        if (instrument != null) {
+//            if (exclusive && Boolean.TRUE.equals(instrument.getAssignedToPlayer())) {
+//                // If exclusive and already assigned to a player, and it's not for the same purpose (e.g. re-request),
+//                // it might indicate a conflict or need for a new instance.
+//                // For simplicity, if found by ID and requested exclusively, but already assigned, we might need a new one or log a warning.
+//                // Current logic: if found by ID, use it but ensure assignment status.
+//            }
+//        } else { // Not found by ID, try to find a suitable one by properties
+//            Optional<InstrumentWrapper> foundByProperties = InstrumentManager.getInstance().getInstrumentCache().values()
+//                    .stream().filter(cached ->
+//                            InternalSynthManager.getInstance().isInternalSynthInstrument(cached) &&
+//                                    cached.getChannel() == channel &&
+//                                    (!exclusive || !Boolean.TRUE.equals(cached.getAssignedToPlayer())) &&
+//                                    cached.getName().startsWith((channel == SequencerConstants.MIDI_DRUM_CHANNEL) ? "Internal Drums" : "Internal Melo " + channel)) // More specific name check
+//                    .findFirst();
+//            if (foundByProperties.isPresent()) {
+//                instrument = foundByProperties.get();
+//            }
+//        }
+//
+//        if (instrument != null) { // Found either by ID or properties
+//            if (instrument.getReceiver() == null && instrument.getDeviceName() != null && !instrument.getDeviceName().isEmpty()) {
+//                Receiver receiver = ReceiverManager.getInstance().getOrCreateReceiver(instrument.getDeviceName());
+//                instrument.setReceiver(receiver);
+//                if (receiver == null) {
+//                    logger.warn("Could not obtain receiver for existing internal instrument {} (device: {})", instrument.getName(), instrument.getDeviceName());
+//                }
+//            }
+//            if (exclusive) {
+//                instrument.setAssignedToPlayer(true); // Mark as assigned
+//                // Potentially update the instrument in cache/DB if assignedToPlayer changed
+//                // updateInstrument(instrument); // Could cause recursion if called from onCommand.INSTRUMENT_UPDATED
+//            }
+//            return instrument;
+//        }
+
+
+        // No suitable instrument found, create a new one
+
+        // Use InternalSynthManager to create the basic structure
+        MidiDevice device = DeviceManager.getMidiDevice(SequencerConstants.GERVILL);
+        InstrumentWrapper instrument = InstrumentManager.getInstance().createInstrumentWrapper(channel, name);
+
+
+        if (instrument != null && device != null) {
+            instrument.setDevice(device);
+            Receiver receiver = ReceiverManager.getInstance().getOrCreateReceiver(instrument.getDeviceName());
+            instrument.setReceiver(receiver);
+            InstrumentManager.getInstance().updateInstrument(instrument); // This saves, caches, and sets receiver
+            if (exclusive) {
+                instrument.setAssignedToPlayer(true);
+            }
+        }
+        return instrument;
     }
 
     /**

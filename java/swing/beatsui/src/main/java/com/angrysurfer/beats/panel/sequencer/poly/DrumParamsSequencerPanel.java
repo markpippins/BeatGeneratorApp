@@ -30,7 +30,6 @@ public class DrumParamsSequencerPanel extends DrumSequencerPanel implements IBus
     final static List<Dial> nudgeDials = new ArrayList<>();
     private static final Logger logger = Logger.getLogger(DrumParamsSequencerPanel.class.getName());
 
-
     /**
      * Create a new SequencerPanel
      *
@@ -110,6 +109,7 @@ public class DrumParamsSequencerPanel extends DrumSequencerPanel implements IBus
                         createDrumStepParametersEvent(getSequencer(), getSelectedPadIndex(), columnIndex));
             }
         });
+
 
         return dial;
     }
@@ -224,5 +224,5 @@ public class DrumParamsSequencerPanel extends DrumSequencerPanel implements IBus
             default -> "";
         };
 
-    }
+    }    // Mouse wheel handling now provided by MouseWheelUtil class
 }

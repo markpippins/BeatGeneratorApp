@@ -120,8 +120,8 @@ public class ChannelCombo extends JComboBox<Integer> implements IBusListener {
             case Commands.PLAYER_UPDATE_EVENT:
                 if (action.getData() instanceof PlayerUpdateEvent event &&
                         currentPlayer != null &&
-                        event.getPlayer().getId().equals(currentPlayer.getId())) {
-                    updateSelectedChannel(event.getPlayer());
+                        event.player().getId().equals(currentPlayer.getId())) {
+                    updateSelectedChannel(event.player());
                 }
                 break;
 

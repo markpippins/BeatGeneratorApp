@@ -137,9 +137,9 @@ public class DrumSelectorPanel extends JPanel implements IBusListener {
             case Commands.PLAYER_UPDATE_EVENT:
                 if (action.getData() instanceof PlayerUpdateEvent event) {
                     // Check if this player belongs to our sequencer
-                    if (event.getPlayer().getOwner() == sequencer) {
-                        updateButtonForPlayer(event.getPlayer());
-                        logger.debug("Updated drum button for player: {}", event.getPlayer().getName());
+                    if (event.player().getOwner() == sequencer) {
+                        updateButtonForPlayer(event.player());
+                        logger.debug("Updated drum button for player: {}", event.player().getName());
                     }
                 }
 
@@ -164,7 +164,7 @@ public class DrumSelectorPanel extends JPanel implements IBusListener {
                         }
                     }
                 } else if (action.getData() instanceof PlayerPresetChangeEvent event) {
-                    Player eventPlayer = event.getPlayer();
+                    Player eventPlayer = event.player();
                     if (eventPlayer != null) {
                         // Check if this player belongs to our sequencer
                         for (int i = 0; i < DRUM_PAD_COUNT; i++) {
@@ -204,7 +204,7 @@ public class DrumSelectorPanel extends JPanel implements IBusListener {
 
             case Commands.DRUM_PLAYER_INSTRUMENT_CHANGED:
                 if (action.getData() instanceof PlayerInstrumentChangeEvent event) {
-                    updateButtonForPlayer(event.getPlayer());
+                    updateButtonForPlayer(event.player());
                 }
                 if (action.getData() instanceof Object[] data && data.length >= 3) {
                     DrumSequencer targetSequencer = (DrumSequencer) data[0];
@@ -312,8 +312,8 @@ public class DrumSelectorPanel extends JPanel implements IBusListener {
                         tooltip.append("<br>Bank: ").append(player.getInstrument().getBankIndex());
                     }
 
-                    if (player.getInstrument().getSoundbankName() != null) {
-                        tooltip.append("<br>Soundbank: ").append(player.getInstrument().getSoundbankName());
+                    if (player.getInstrument().getSoundBank() != null) {
+                        tooltip.append("<br>Soundbank: ").append(player.getInstrument().getSoundBank());
                     }
                 }
 

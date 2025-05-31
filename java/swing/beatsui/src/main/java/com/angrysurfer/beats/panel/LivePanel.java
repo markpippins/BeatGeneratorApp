@@ -120,11 +120,11 @@ public abstract class LivePanel extends JPanel implements IBusListener {
      * Handle a player update event
      */
     protected void handlePlayerUpdateEvent(PlayerUpdateEvent event) {
-        if (event == null || event.getPlayer() == null) {
+        if (event == null || event.player() == null) {
             return;
         }
 
-        Player updatedPlayer = event.getPlayer();
+        Player updatedPlayer = event.player();
 
         // Only process if this is our target player
         if (player != null && player.getId().equals(updatedPlayer.getId())) {

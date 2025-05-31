@@ -1,32 +1,27 @@
 package com.angrysurfer.core.redis;
 
+import com.angrysurfer.core.model.*;
+import com.angrysurfer.core.service.SessionManager;
+import com.angrysurfer.core.util.ErrorHandler;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import lombok.Getter;
+import lombok.Setter;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import redis.clients.jedis.Jedis;
+import redis.clients.jedis.JedisPool;
+
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import com.angrysurfer.core.model.Note;
-import com.angrysurfer.core.model.Player;
-import com.angrysurfer.core.model.Rule;
-import com.angrysurfer.core.model.Session;
-import com.angrysurfer.core.model.Strike;
-import com.angrysurfer.core.service.SessionManager;
-import com.angrysurfer.core.util.ErrorHandler;
-import com.fasterxml.jackson.databind.ObjectMapper;
-
-import lombok.Getter;
-import lombok.Setter;
-import redis.clients.jedis.Jedis;
-import redis.clients.jedis.JedisPool;
+import java.util.stream.Collectors;
 
 @Getter
 @Setter
 public class PlayerHelper {
+    static final int CACHE_SIZE = 50;
     private static final Logger logger = LoggerFactory.getLogger(PlayerHelper.class.getName());
-
     private final JedisPool jedisPool;
     private final ObjectMapper objectMapper;
     private final RuleHelper ruleHelper;
@@ -37,13 +32,22 @@ public class PlayerHelper {
         this.ruleHelper = new RuleHelper(jedisPool, objectMapper);
     }
 
+    public List<Player> findAllPlayers() {
+        try (Jedis jedis = jedisPool.getResource()) {
+            return jedis.keys("player:*").stream()
+                    .map(key -> findPlayerById(Long.parseLong(key.split(":")[1])))
+                    .filter(i -> i != null)
+                    .collect(Collectors.toList());
+        }
+    }
+
     private String getPlayerKey(String className, Long id) {
         return String.format("player:%s:%d", className.toLowerCase(), id);
     }
 
     /**
      * Find a player by ID, automatically determining the player type
-     * 
+     *
      * @param id The player ID to look up
      * @return The player with the specified ID, or null if not found
      */
@@ -152,8 +156,6 @@ public class PlayerHelper {
         }
     }
 
-    static final int CACHE_SIZE = 50;
-
     public Long[] getCachedPlayerIds() {
         List<Long> ids = new ArrayList<>();
 
@@ -198,7 +200,7 @@ public class PlayerHelper {
             logger.debug("Saving player ID: {} with name: {}", player.getId(), player.getName());
 
             // Save the instrument first if it exists and is not default
-            if (player.getInstrument() != null && !Boolean.TRUE.equals(player.getInstrument().getIsDefault())) {
+            if (player.getInstrument() != null && !Boolean.TRUE.equals(player.getInstrument().getDefaultInstrument())) {
                 InstrumentHelper instrumentHelper = new InstrumentHelper(jedisPool, objectMapper);
                 instrumentHelper.saveInstrument(player.getInstrument());
 
@@ -212,7 +214,7 @@ public class PlayerHelper {
             // If the player belongs to a session, update the session as well
             Session session = player.getSession();
             if (session != null) {
-                String playersKey = String.format("session:%d:players:%s", 
+                String playersKey = String.format("session:%d:players:%s",
                         session.getId(), player.getPlayerClassName());
                 jedis.sadd(playersKey, player.getId().toString());
             }
@@ -241,7 +243,7 @@ public class PlayerHelper {
 
             // Store references before removing
             Set<Rule> rules = new HashSet<>(player.getRules() != null ? player.getRules() : new HashSet<>());
-            
+
             // Temporarily remove circular references
             player.setSession(null);
             player.setRules(null);
@@ -328,8 +330,8 @@ public class PlayerHelper {
         }
     }
 
-    public Player newNote() {
-        Player player = new Note("Note", SessionManager.getInstance().getActiveSession(), null, 60, null);
+    public Note newNote() {
+        Note player = new Note("Note", SessionManager.getInstance().getActiveSession(), null, 60, null);
 
         player.setId(getNextPlayerId());
         player.setRules(new HashSet<>()); // Ensure rules are initialized
@@ -341,8 +343,8 @@ public class PlayerHelper {
 
     }
 
-    public Player newStrike() {
-        Player player = new Strike("Strike", SessionManager.getInstance().getActiveSession(), null, 36, null);
+    public Strike newStrike() {
+        Strike player = new Strike("Strike", SessionManager.getInstance().getActiveSession(), null, 36, null);
 
         player.setId(getNextPlayerId());
         player.setRules(new HashSet<>()); // Ensure rules are initialized

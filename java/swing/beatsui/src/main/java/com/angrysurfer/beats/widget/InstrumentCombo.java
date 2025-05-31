@@ -65,8 +65,7 @@ public class InstrumentCombo extends JComboBox<InstrumentWrapper> implements IBu
                     Integer playerChannel = currentPlayer.getChannel();
 
                     // Show instrument device type in display
-                    boolean isInternal = instrument.getInternal() != null && instrument.getInternal();
-                    String deviceInfo = isInternal ? "[Internal]" :
+                    String deviceInfo = instrument.isInternalSynth() ? "[Internal]" :
                             (instrument.getDeviceName() != null ? "[" + instrument.getDeviceName() + "]" : "");
 
                     // Check if this is for current player's channel
@@ -125,12 +124,12 @@ public class InstrumentCombo extends JComboBox<InstrumentWrapper> implements IBu
             case Commands.PLAYER_UPDATE_EVENT:
                 if (action.getData() instanceof PlayerUpdateEvent event &&
                         currentPlayer != null &&
-                        event.getPlayer().getId().equals(currentPlayer.getId())) {
+                        event.player().getId().equals(currentPlayer.getId())) {
                     // Only update if instrument has changed
-                    if (event.getPlayer().getInstrumentId() != null &&
+                    if (event.player().getInstrumentId() != null &&
                             (currentPlayer.getInstrumentId() == null ||
-                                    !event.getPlayer().getInstrumentId().equals(currentPlayer.getInstrumentId()))) {
-                        updateSelectedInstrument(event.getPlayer());
+                                    !event.player().getInstrumentId().equals(currentPlayer.getInstrumentId()))) {
+                        updateSelectedInstrument(event.player());
                     }
                 }
                 break;
@@ -389,13 +388,13 @@ public class InstrumentCombo extends JComboBox<InstrumentWrapper> implements IBu
         }
 
         // Check if instrument receives on multiple channels including this one
-        if (instrument.getReceivedChannels() != null) {
-            for (Integer ch : instrument.getReceivedChannels()) {
-                if (ch != null && ch == playerChannel) {
-                    return true;
-                }
-            }
-        }
+//        if (instrument.getReceivedChannels() != null) {
+//            for (Integer ch : instrument.getReceivedChannels()) {
+//                if (ch != null && ch == playerChannel) {
+//                    return true;
+//                }
+//            }
+//        }
 
         return false;
     }

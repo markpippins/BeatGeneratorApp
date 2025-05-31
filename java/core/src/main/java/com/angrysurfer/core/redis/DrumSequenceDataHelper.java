@@ -68,7 +68,7 @@ class DrumSequenceDataHelper {
                 if (player != null && player.getInstrument() != null) {
                     InstrumentWrapper instrument = player.getInstrument();
                     data.getInstrumentIds()[i] = instrument.getId();
-                    data.getSoundbankNames()[i] = instrument.getSoundbankName();
+                    data.getSoundbankNames()[i] = instrument.getSoundBank();
                     data.getPresets()[i] = instrument.getPreset();
                     data.getBankIndices()[i] = instrument.getBankIndex();
                     data.getDeviceNames()[i] = instrument.getDeviceName();

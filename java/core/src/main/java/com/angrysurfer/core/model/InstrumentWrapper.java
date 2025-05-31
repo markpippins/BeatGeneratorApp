@@ -1,13 +1,9 @@
 package com.angrysurfer.core.model;
 
-import com.angrysurfer.core.api.midi.MidiControlMessageEnum;
-import com.angrysurfer.core.model.feature.Pad;
+// import com.angrysurfer.core.service.ReceiverManager; // Keep if ReceiverManager interaction is planned
+
 import com.angrysurfer.core.sequencer.SequencerConstants;
-import com.angrysurfer.core.service.ReceiverManager;
-import com.angrysurfer.core.util.IntegerArrayConverter;
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import jakarta.persistence.Column;
-import jakarta.persistence.Convert;
 import lombok.Getter;
 import lombok.Setter;
 import org.slf4j.Logger;
@@ -17,6 +13,7 @@ import javax.sound.midi.*;
 import java.io.Serializable;
 import java.util.*;
 import java.util.concurrent.Executors;
+import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
@@ -24,531 +21,413 @@ import java.util.concurrent.TimeUnit;
 @Setter
 public final class InstrumentWrapper implements Serializable {
 
-    public static final Integer DEFAULT_CHANNEL = 0;
-    public static final Integer[] DEFAULT_CHANNELS = new Integer[]{DEFAULT_CHANNEL};
-    public static final Integer[] ALL_CHANNELS = new Integer[]{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15};
-    static final Random rand = new Random();
-    static Logger logger = LoggerFactory.getLogger(InstrumentWrapper.class.getCanonicalName());
-    private static ScheduledExecutorService NOTE_OFF_SCHEDULER;
-    // Cached ShortMessages for better performance
+    private static final long serialVersionUID = 1L;
+    private static final Logger logger = LoggerFactory.getLogger(InstrumentWrapper.class);
+
+    private static final int DEFAULT_CHANNEL = 0;
+    private static final int DEFAULT_VELOCITY = 100;
+    private static final int DEFAULT_NOTE_DURATION_MS = 500;
+
+    private static final String LOG_MSG_CHANNEL_PART = ", channel ";
+
+    private static ScheduledExecutorService noteOffScheduler;
+
+    static {
+        initializeScheduler();
+    }
+
     @JsonIgnore
-    private final ShortMessage cachedNoteOn = new ShortMessage();
+    private final transient Map<Integer, Integer> cachedControlChange = new HashMap<>();
+
     @JsonIgnore
-    private final ShortMessage cachedNoteOff = new ShortMessage();
-    @JsonIgnore
-    private final ShortMessage cachedControlChange = new ShortMessage();
-    @JsonIgnore
-    private final Map<String, Object> properties = new HashMap<>();
+    private Map<String, Object> properties;
+
+    private List<ControlCode> controlCodes;
+
     private Long id;
-    @JsonIgnore
-    private transient MidiDevice.Info deviceInfo = null;
-    private Boolean internal;
-    private int bankMSB = 0; // Bank MSB (CC 0)
-    private int bankLSB = 0; // Bank LSB (CC 32)
-    private Boolean assignedToPlayer = false;
-    private Boolean isDefault = false;
-    private List<ControlCode> controlCodes = new ArrayList<>();
-    private Set<Pad> pads = new HashSet<>();
-    @JsonIgnore
-    private transient Map<Integer, String> assignments = new HashMap<>();
-    @JsonIgnore
-    private Map<Integer, Integer[]> boundaries = new HashMap<>();
-    @JsonIgnore
-    private Map<Integer, Map<Long, String>> captions = new HashMap<>();
-    // Primary change: Receiver becomes the primary MIDI output mechanism
-    @JsonIgnore
-    private Receiver receiver;  // Direct reference for faster access
-    // Keep device as a backup and for metadata
+    private String name;
+    private Integer channel;
+    private String deviceName;
+
     @JsonIgnore
     private MidiDevice device;
-    @Column(name = "name", unique = true)
-    private String name;
-    private String deviceName = SequencerConstants.GERVILL;
+
     @JsonIgnore
-    private int defaultChannel = 0;
-    private boolean internalSynth;
-    private String description;
-    @Convert(converter = IntegerArrayConverter.class)
-    private Integer[] receivedChannels = ALL_CHANNELS;
-    private Integer channel;
-    private Integer lowestNote = 0;
-    private Integer highestNote = 127;
-    private Integer highestPreset;
-    private Integer preferredPreset;
-    private Boolean hasAssignments;
-    private String playerClassName;
-    private Boolean available = true;
-    private Set<Pattern> patterns;
-    private Integer preset = 1;
-    private String soundbankName;
+    private Receiver receiver;
+
+    private Boolean defaultInstrument = false;
+    private Boolean assignedToPlayer = false;
     private Integer bankIndex;
-    // Add flag to track initialization state
-    private boolean initialized = false;
+    private Integer preset;
+    private String soundBank;
 
-    /**
-     * Default constructor with safe boolean initialization
-     */
+    private String description;
+    private boolean initialized;
+
+    private int bankLSB;
+    private int bankMSB;
+
+    private Integer highestNote = 126;
+    private Integer lowestNote = 0;
+
     public InstrumentWrapper() {
-        // Initialize boolean fields to prevent NPE
-        this.internal = Boolean.FALSE;
-        this.available = Boolean.FALSE;
-        this.initialized = Boolean.FALSE;
+        this.controlCodes = new ArrayList<>();
+        this.properties = new HashMap<>();
     }
 
-    /**
-     * Constructor with just a name and Receiver
-     */
-    public InstrumentWrapper(String name, Receiver receiver) {
-        this.name = name;
-        this.receiver = receiver;
-        this.internal = (receiver == null);
-        this.channel = DEFAULT_CHANNEL;
-        this.deviceName = "External";
+    public InstrumentWrapper(InstrumentInfo instrumentInfo) {
+        this();
+        this.name = instrumentInfo.name();
+        this.channel = (instrumentInfo.channel() >= 0 && instrumentInfo.channel() <= 15) ? instrumentInfo.channel() : DEFAULT_CHANNEL;
+        this.device = instrumentInfo.device();
+        this.deviceName = instrumentInfo.deviceName();
+        this.receiver = instrumentInfo.receiver();
     }
 
-    /**
-     * Constructor for creating an instrument wrapper
-     */
-    public InstrumentWrapper(String name, MidiDevice device, int channel) {
-        this.name = name;
-        this.device = device;
-        this.channel = channel;
-
-        // Safely get device info if device is not null
-        if (device != null) {
-            this.deviceInfo = device.getDeviceInfo();
-            this.deviceName = deviceInfo.getName();
-
-            // Try to get a receiver from the device
-            try {
-                if (!device.isOpen()) {
-                    device.open();
+    // Constructors
+    private static void initializeScheduler() {
+        if (noteOffScheduler == null || noteOffScheduler.isShutdown()) {
+            noteOffScheduler = Executors.newSingleThreadScheduledExecutor(r -> {
+                Thread t = Executors.defaultThreadFactory().newThread(r);
+                t.setDaemon(true);
+                try {
+                    t.setName("NoteOffScheduler-Thread-" + t.threadId());
+                } catch (NoSuchMethodError e) {
+                    t.setName("NoteOffScheduler-Thread");
                 }
-                this.receiver = device.getReceiver();
-            } catch (MidiUnavailableException e) {
-                logger.warn("Could not get receiver from device: {}", e.getMessage());
+                return t;
+            });
+            if (logger.isInfoEnabled()) {
+                logger.info("NoteOffScheduler initialized or re-initialized.");
             }
-        } else {
-            // Set default values for null device
-            this.deviceName = "Internal";
         }
-
-        // Set default values
-        this.internal = (device == null); // Assume internal if device is null
     }
 
-    public InstrumentWrapper(String name, MidiDevice device, Integer[] channels) {
-        setName(Objects.isNull(name) ? device.getDeviceInfo().getName() : name);
-        setDevice(device);
-        setDeviceName(device.getDeviceInfo().getName());
-        setReceivedChannels(channels);
-
-        // Try to get a receiver from the device
-        try {
-            if (device != null && !device.isOpen()) {
-                device.open();
-            }
-            if (device != null) {
-                this.receiver = device.getReceiver();
-            }
-        } catch (MidiUnavailableException e) {
-            logger.warn("Could not get receiver from device: {}", e.getMessage());
-        }
-
-        logger.info("Created instrument {} with channels: {}", getName(), Arrays.toString(channels));
-    }
-
-    /**
-     * Shutdown the scheduler when needed
-     */
     public static void shutdownScheduler() {
-        if (NOTE_OFF_SCHEDULER != null) {
-            NOTE_OFF_SCHEDULER.shutdown();
+        if (noteOffScheduler != null && !noteOffScheduler.isShutdown()) {
+            noteOffScheduler.shutdown();
             try {
-                if (!NOTE_OFF_SCHEDULER.awaitTermination(500, TimeUnit.MILLISECONDS)) {
-                    NOTE_OFF_SCHEDULER.shutdownNow();
+                if (!noteOffScheduler.awaitTermination(5, TimeUnit.SECONDS)) {
+                    noteOffScheduler.shutdownNow();
+                    if (logger.isWarnEnabled()) {
+                        logger.warn("NoteOffScheduler did not terminate gracefully, forcing shutdown.");
+                    }
                 }
-            } catch (InterruptedException e) {
-                NOTE_OFF_SCHEDULER.shutdownNow();
+            } catch (InterruptedException ie) {
+                noteOffScheduler.shutdownNow();
                 Thread.currentThread().interrupt();
-            }
-        }
-    }
-
-    public void setName(String name) {
-        this.name = name;
-        if (name != null) {
-            if (name.toLowerCase().contains(SequencerConstants.GERVILL) ||
-                    name.toLowerCase().contains("synth") ||
-                    name.toLowerCase().contains("drum")) {
-                this.internal = true;
-            }
-        }
-    }
-
-    @JsonIgnore
-    public boolean isMultiTimbral() {
-        return receivedChannels != null && receivedChannels.length > 1;
-    }
-
-    /**
-     * Check if this instrument receives on the specified channel
-     */
-    @JsonIgnore
-    public boolean receivesOn(int channel) {
-        // Handle null receivedChannels
-        if (receivedChannels == null) {
-            // If no channels specified, check the main channel
-            return this.channel != null && this.channel == channel;
-        }
-
-        // Check if the instrument receives on multiple channels
-        try {
-            return Arrays.asList(receivedChannels).contains(channel) ||
-                    (this.channel != null && this.channel == channel);
-        } catch (NullPointerException e) {
-            // Fallback to main channel if there's an issue with receivedChannels
-            return this.channel != null && this.channel == channel;
-        }
-    }
-
-    // Convenience method for single-channel devices
-    @JsonIgnore
-    public int getDefaultChannel() {
-        return receivedChannels != null && receivedChannels.length > 0 ? receivedChannels[0] : DEFAULT_CHANNEL;
-    }
-
-    public String assignedControl(int cc) {
-        return assignments.getOrDefault(cc, "NONE");
-    }
-
-    /**
-     * Send MIDI message directly to the receiver
-     *
-     * @param message The MIDI message to send
-     */
-    public void sendMessage(MidiMessage message) {
-        try {
-            // First try the direct receiver
-//            if (receiver != null) {
-//                receiver.send(message, -1);
-//                return;
-//            }
-
-            // If receiver is null but we have a device, try to get a receiver
-            if (device != null) {
-                ensureDeviceOpen();
-                Receiver deviceReceiver = device.getReceiver();
-                if (deviceReceiver != null) {
-                    deviceReceiver.send(message, -1);
-                    return;
+                if (logger.isErrorEnabled()) {
+                    logger.error("NoteOffScheduler shutdown interrupted.", ie);
                 }
             }
-
-            // Last resort: try ReceiverManager
-            if (deviceName != null) {
-                Receiver managedReceiver = ReceiverManager.getInstance()
-                        .getOrCreateReceiver(deviceName, device);
-                if (managedReceiver != null) {
-                    managedReceiver.send(message, -1);
-                    // Save for future use
-                    this.receiver = managedReceiver;
-                    return;
-                }
+            if (logger.isInfoEnabled()) {
+                logger.info("NoteOffScheduler has been shut down.");
             }
-
-            // If we get here, we couldn't send the message
-            logger.warn("Could not send MIDI message - no receiver available");
-        } catch (Exception e) {
-            logger.error("Error sending MIDI message: {}", e.getMessage());
-
-            // Try recovery if needed
-            tryRecoverReceiver();
         }
     }
 
-    /**
-     * Try to recover a working receiver if our current one has failed
-     */
-    private void tryRecoverReceiver() {
-        try {
-            // Try to get a new receiver from the device
-            if (device != null) {
-                ensureDeviceOpen();
-                this.receiver = device.getReceiver();
-                logger.info("Recovered receiver from device");
-                return;
-            }
-
-            // If we have a device name, try ReceiverManager
-            if (deviceName != null) {
-                this.receiver = ReceiverManager.getInstance()
-                        .getOrCreateReceiver(deviceName, device);
-                logger.info("Recovered receiver from ReceiverManager");
-            }
-        } catch (Exception e) {
-            logger.error("Failed to recover receiver: {}", e.getMessage());
-        }
+    public boolean isInternalSynth() {
+        return (Objects.nonNull(getDeviceName()) && getDeviceName().equals(SequencerConstants.GERVILL) ||
+                (Objects.nonNull(getDevice()) && getDevice() instanceof Synthesizer));
     }
 
-    /**
-     * Ensure device is open if it exists
-     */
-    private void ensureDeviceOpen() {
-        if (device != null && !device.isOpen()) {
+    public void setDevice(MidiDevice device) {
+        this.device = device;
+        if (device != null) {
+            this.deviceName = device.getDeviceInfo().getName();
             try {
-                device.open();
+                this.receiver = device.getReceiver();
             } catch (MidiUnavailableException e) {
-                logger.error("Failed to open device: {}", e.getMessage());
+                throw new RuntimeException(e);
+            }
+        }
+
+        if (this.receiver == null) {
+            if (logger.isInfoEnabled()) {
+                logger.info("Device name changed to '{}'. Attempting to acquire new receiver.", deviceName);
+            }
+            if (logger.isWarnEnabled()) {
+                logger.warn("ReceiverManager interaction for new deviceName '{}' is not fully implemented. Receiver is currently null.", deviceName);
             }
         }
     }
 
-    public void channelPressure(int data1, int data2) {
-        try {
-            ShortMessage message = new ShortMessage(ShortMessage.CHANNEL_PRESSURE, channel, data1, data2);
-            sendMessage(message);
-        } catch (InvalidMidiDataException e) {
-            logger.error("Invalid MIDI data for channel pressure: {}", e.getMessage());
+    @JsonIgnore
+    public boolean isAvailable() {
+        return Objects.nonNull(getDevice()) && getDevice().isOpen();
+    }
+
+
+    public void setDeviceName(String deviceName) {
+        this.deviceName = deviceName;
+        if (this.receiver == null) {
+            if (logger.isInfoEnabled()) {
+                logger.info("Device name changed to '{}'. Attempting to acquire new receiver.", deviceName);
+            }
+            if (logger.isWarnEnabled()) {
+                logger.warn("ReceiverManager interaction for new deviceName '{}' is not fully implemented. Receiver is currently null.", deviceName);
+            }
         }
+    }
+
+    public void setChannel(Integer channelInput) {
+        if (channelInput != null && channelInput >= 0 && channelInput <= 15) {
+            this.channel = channelInput;
+        } else {
+            this.channel = DEFAULT_CHANNEL;
+        }
+        if (logger.isDebugEnabled()) {
+            logger.debug("Set channel to: {} for instrument {}", this.channel, getName());
+        }
+    }
+
+    public void setChannel(int channelInput) {
+        if (channelInput >= 0 && channelInput <= 15) {
+            this.channel = channelInput;
+        } else {
+            this.channel = DEFAULT_CHANNEL;
+        }
+        if (logger.isDebugEnabled()) {
+            logger.debug("Set channel to: {} for instrument {}", this.channel, getName());
+        }
+    }
+
+    public Map<Integer, Integer> getCachedControlChanges() {
+        return cachedControlChange;
+    }
+
+    // MIDI sending methods
+    public void sendMessage(ShortMessage msg) {
+        Receiver currentReceiver = getReceiver();
+        if (currentReceiver != null) {
+            currentReceiver.send(msg, -1);
+            if (logger.isTraceEnabled()) {
+                logger.trace("Sent MIDI message: status={}, data1={}, data2={} on channel {} for instrument {}",
+                        msg.getStatus(), msg.getData1(), msg.getData2(), msg.getChannel(), getName());
+            }
+        }
+        // No explicit else block needed here as getReceiver() already logs a warning if receiver is null.
+    }
+
+    public void noteOn(int noteNumber, int velocity) {
+        try {
+            ShortMessage msg = new ShortMessage();
+            msg.setMessage(ShortMessage.NOTE_ON, this.channel, noteNumber, velocity);
+            sendMessage(msg);
+            if (logger.isDebugEnabled()) {
+                logger.debug("Note ON: note={}, velocity={}, channel={} for {}", noteNumber, velocity, this.channel, getName());
+            }
+        } catch (InvalidMidiDataException e) {
+            if (logger.isErrorEnabled()) {
+                logger.error("Invalid MIDI data for NOTE_ON, instrument " + getName() + LOG_MSG_CHANNEL_PART + this.channel, e);
+            }
+        } catch (Exception e) {
+            if (logger.isErrorEnabled()) {
+                logger.error("Error sending NOTE_ON for instrument " + getName(), e);
+            }
+        }
+    }
+
+    public void noteOff(int noteNumber, int velocity) {
+        try {
+            ShortMessage msg = new ShortMessage();
+            msg.setMessage(ShortMessage.NOTE_OFF, this.channel, noteNumber, velocity);
+            sendMessage(msg);
+            if (logger.isDebugEnabled()) {
+                logger.debug("Note OFF: note={}, velocity={}, channel={} for {}", noteNumber, velocity, this.channel, getName());
+            }
+        } catch (InvalidMidiDataException e) {
+            if (logger.isErrorEnabled()) {
+                logger.error("Invalid MIDI data for NOTE_OFF, instrument " + getName() + LOG_MSG_CHANNEL_PART + this.channel, e);
+            }
+        } catch (Exception e) {
+            if (logger.isErrorEnabled()) {
+                logger.error("Error sending NOTE_OFF for instrument " + getName(), e);
+            }
+        }
+    }
+
+    public void noteOff(int noteNumber) {
+        noteOff(noteNumber, 0);
+    }
+
+    public void scheduleNoteOff(final int noteNumber, final int velocity, long delayMs) {
+        initializeScheduler();
+        try {
+            noteOffScheduler.schedule(() -> noteOff(noteNumber, velocity), delayMs, TimeUnit.MILLISECONDS);
+            if (logger.isDebugEnabled()) {
+                logger.debug("Scheduled Note OFF: note={}, velocity={}, delay={}ms for {}", noteNumber, velocity, delayMs, getName());
+            }
+        } catch (RejectedExecutionException e) {
+            if (logger.isErrorEnabled()) {
+                logger.error("Note OFF scheduling rejected for instrument " + getName() + ". Executing immediately.", e);
+            }
+            noteOff(noteNumber, velocity);
+        } catch (Exception e) {
+            if (logger.isErrorEnabled()) {
+                logger.error("Error scheduling NOTE_OFF for instrument " + getName() + ". Executing immediately.", e);
+            }
+            noteOff(noteNumber, velocity);
+        }
+    }
+
+    public void scheduleNoteOff(final int noteNumber, long delayMs) {
+        scheduleNoteOff(noteNumber, 0, delayMs);
+    }
+
+    public void playNote(int noteNumber, int velocity, int durationMs) {
+        noteOn(noteNumber, velocity);
+        if (durationMs > 0) {
+            scheduleNoteOff(noteNumber, velocity, durationMs);
+        }
+    }
+
+    public void playNote(int noteNumber, int durationMs) {
+        playNote(noteNumber, DEFAULT_VELOCITY, durationMs);
+    }
+
+    public void playNote(int noteNumber) {
+        playNote(noteNumber, DEFAULT_VELOCITY, DEFAULT_NOTE_DURATION_MS);
     }
 
     public void controlChange(int controller, int value) {
         try {
-            cachedControlChange.setMessage(ShortMessage.CONTROL_CHANGE, channel, controller, value);
-            sendMessage(cachedControlChange);
-        } catch (InvalidMidiDataException e) {
-            logger.error("Invalid MIDI data for control change: {}", e.getMessage());
-        }
-    }
-
-    public void noteOn(int note, int velocity) {
-        try {
-            synchronized (cachedNoteOn) {
-                cachedNoteOn.setMessage(ShortMessage.NOTE_ON, channel, note, velocity);
-                sendMessage(cachedNoteOn);
+            ShortMessage msg = new ShortMessage();
+            msg.setMessage(ShortMessage.CONTROL_CHANGE, this.channel, controller, value);
+            sendMessage(msg);
+            cachedControlChange.put(controller, value);
+            if (logger.isDebugEnabled()) {
+                logger.debug("Control Change: controller={}, value={}, channel={} for {}", controller, value, this.channel, getName());
             }
         } catch (InvalidMidiDataException e) {
-            logger.error("Invalid MIDI data for note on: {}", e.getMessage());
-        }
-    }
-
-    public void noteOff(int note, int velocity) {
-        try {
-            synchronized (cachedNoteOff) {
-                cachedNoteOff.setMessage(ShortMessage.NOTE_OFF, channel, note, velocity);
-                sendMessage(cachedNoteOff);
-            }
-        } catch (InvalidMidiDataException e) {
-            logger.error("Invalid MIDI data for note off: {}", e.getMessage());
-        }
-    }
-
-    public void polyPressure(int data1, int data2) {
-        try {
-            ShortMessage message = new ShortMessage(ShortMessage.POLY_PRESSURE, channel, data1, data2);
-            sendMessage(message);
-        } catch (InvalidMidiDataException e) {
-            logger.error("Invalid MIDI data for poly pressure: {}", e.getMessage());
-        }
-    }
-
-    public void programChange(int program, int data2) {
-        try {
-            ShortMessage message = new ShortMessage(ShortMessage.PROGRAM_CHANGE, channel, program, data2);
-            sendMessage(message);
-        } catch (InvalidMidiDataException e) {
-            logger.error("Invalid MIDI data for program change: {}", e.getMessage());
-        }
-    }
-
-    public void start() {
-        try {
-            ShortMessage message = new ShortMessage(ShortMessage.START, 0, 0, 0);
-            sendMessage(message);
-        } catch (InvalidMidiDataException e) {
-            logger.error("Invalid MIDI data for start: {}", e.getMessage());
-        }
-    }
-
-    public void stop() {
-        try {
-            ShortMessage message = new ShortMessage(ShortMessage.STOP, 0, 0, 0);
-            sendMessage(message);
-        } catch (InvalidMidiDataException e) {
-            logger.error("Invalid MIDI data for stop: {}", e.getMessage());
-        }
-    }
-
-    /**
-     * Play a note with specified decay time
-     */
-    public void playMidiNote(int note, int velocity, int decay) {
-        // Send note on
-        noteOn(note, velocity);
-
-        // Schedule note off
-        scheduleNoteOff(note, 0, decay);
-    }
-
-    /**
-     * Schedule a noteOff command after specified delay
-     */
-    private void scheduleNoteOff(int note, int velocity, int delayMs) {
-        // Initialize scheduler if needed
-        if (NOTE_OFF_SCHEDULER == null) {
-            NOTE_OFF_SCHEDULER = Executors.newScheduledThreadPool(1, r -> {
-                Thread t = new Thread(r, "NoteOffScheduler");
-                t.setDaemon(true);
-                return t;
-            });
-        }
-
-        // Schedule the note-off message
-        NOTE_OFF_SCHEDULER.schedule(() -> {
-            noteOff(note, velocity);
-        }, delayMs, TimeUnit.MILLISECONDS);
-    }
-
-    /**
-     * Clean up resources
-     */
-    public void cleanup() {
-        logger.info("Cleaning up instrument: {}", getName());
-
-        // Close receiver if we have one
-        if (receiver != null) {
-            try {
-                receiver.close();
-                receiver = null;
-            } catch (Exception e) {
-                logger.warn("Error closing receiver: {}", e.getMessage());
-            }
-        }
-
-        // Close device if we have one
-        if (device != null && device.isOpen()) {
-            try {
-                device.close();
-            } catch (Exception e) {
-                logger.warn("Error closing device: {}", e.getMessage());
-            }
-        }
-
-        // Also tell the ReceiverManager to clean up
-        if (deviceName != null) {
-            ReceiverManager.getInstance().closeReceiver(deviceName);
-        }
-    }
-
-    /**
-     * Set the device and update receiver accordingly
-     */
-    public void setDevice(MidiDevice device) {
-        // Clean up existing resources
-        cleanup();
-
-        // Update device reference
-        this.device = device;
-
-        if (device != null) {
-            setDeviceName(device.getDeviceInfo().getName());
-
-            // Get a new receiver from the device
-            try {
-                if (!device.isOpen()) {
-                    device.open();
-                }
-                this.receiver = device.getReceiver();
-                logger.info("Device {} initialized with receiver", getName());
-            } catch (MidiUnavailableException e) {
-                logger.error("Failed to get receiver from device: {}", e.getMessage());
-            }
-        }
-    }
-
-    /**
-     * Apply current bank and program settings
-     */
-    public void applyBankAndProgram() {
-        try {
-            // Send bank select MSB (CC 0)
-            controlChange(0, bankMSB);
-
-            // Send bank select LSB (CC 32)
-            controlChange(32, bankLSB);
-
-            // Send program change
-            if (preset != null) {
-                programChange(preset, 0);
-                logger.info("Applied bank={}/{}, program={}", bankMSB, bankLSB, preset);
+            if (logger.isErrorEnabled()) {
+                logger.error("Invalid MIDI data for CONTROL_CHANGE, instrument " + getName() + LOG_MSG_CHANNEL_PART + this.channel, e);
             }
         } catch (Exception e) {
-            logger.error("Failed to apply bank and program: {}", e.getMessage());
+            if (logger.isErrorEnabled()) {
+                logger.error("Error sending CONTROL_CHANGE for instrument " + getName(), e);
+            }
         }
     }
 
-    /**
-     * Get a receiver for this instrument, creating one if needed
-     *
-     * @return The instrument's receiver
-     */
-    public Receiver getReceiver() {
-        // If we already have a working receiver, use it
+    public void pitchBend(int value) {
+        try {
+            ShortMessage msg = new ShortMessage();
+            int lsb = value & 0x7F;
+            int msb = (value >> 7) & 0x7F;
+            msg.setMessage(ShortMessage.PITCH_BEND, this.channel, lsb, msb);
+            sendMessage(msg);
+            if (logger.isDebugEnabled()) {
+                logger.debug("Pitch Bend: value={}, channel={} for {}", value, this.channel, getName());
+            }
+        } catch (InvalidMidiDataException e) {
+            if (logger.isErrorEnabled()) {
+                logger.error("Invalid MIDI data for PITCH_BEND, instrument " + getName() + LOG_MSG_CHANNEL_PART + this.channel, e);
+            }
+        } catch (Exception e) {
+            if (logger.isErrorEnabled()) {
+                logger.error("Error sending PITCH_BEND for instrument " + getName(), e);
+            }
+        }
+    }
+
+    public void programChange(int programNumber, int data2) {
+        try {
+            ShortMessage msg = new ShortMessage();
+            msg.setMessage(ShortMessage.PROGRAM_CHANGE, this.channel, programNumber, data2);
+            sendMessage(msg);
+            if (logger.isDebugEnabled()) {
+                logger.debug("Program Change: program={}, channel={} for {}", programNumber, this.channel, getName());
+            }
+        } catch (InvalidMidiDataException e) {
+            if (logger.isErrorEnabled()) {
+                logger.error("Invalid MIDI data for PROGRAM_CHANGE, instrument " + getName() + LOG_MSG_CHANNEL_PART + this.channel, e);
+            }
+        } catch (Exception e) {
+            if (logger.isErrorEnabled()) {
+                logger.error("Error sending PROGRAM_CHANGE for instrument " + getName(), e);
+            }
+        }
+    }
+
+    public void allNotesOff() {
+        controlChange(123, 0);
+        if (logger.isInfoEnabled()) {
+            logger.info("Sent All Notes Off for instrument {} on channel {}", getName(), this.channel);
+        }
+    }
+
+    public void resetAllControllers() {
+        controlChange(121, 0);
+        if (logger.isInfoEnabled()) {
+            logger.info("Sent Reset All Controllers for instrument {} on channel {}", getName(), this.channel);
+        }
+    }
+
+    // New method
+    public boolean receivesOn(int queryChannel) {
+        return this.channel == queryChannel;
+    }
+
+    @Override
+    public String toString() {
+        StringBuilder sb = new StringBuilder();
+        sb.append("InstrumentWrapper{");
+        sb.append("id=").append(id);
+        sb.append(", name='").append(name).append("'}");
+        sb.append(", deviceName='").append(deviceName).append("'}");
+        sb.append(", channel=").append(channel);
+        sb.append(", internalSynth=").append(isInternalSynth());
+        sb.append(", isDefault=").append(defaultInstrument);
+        sb.append(", assignedToPlayer=").append(assignedToPlayer);
+        sb.append(", bankIndex=").append(bankIndex);
+        sb.append(", preset=").append(preset);
+        sb.append(", soundbankName='").append(soundBank).append("'}");
         if (receiver != null) {
-            return receiver;
+            sb.append(receiver.getClass().getSimpleName());
+        } else {
+            sb.append("null");
         }
-
-        // If we have a device, try to get a receiver from it
-        if (device != null) {
-            try {
-                ensureDeviceOpen();
-                receiver = device.getReceiver();
-                if (receiver != null) {
-                    return receiver;
-                }
-            } catch (MidiUnavailableException e) {
-                logger.warn("Could not get receiver from device: {}", e.getMessage());
-            }
-        }
-
-        // Last resort: try ReceiverManager
-        if (deviceName != null) {
-            try {
-                receiver = ReceiverManager.getInstance()
-                        .getOrCreateReceiver(deviceName, device);
-                if (receiver != null) {
-                    return receiver;
-                }
-            } catch (Exception e) {
-                logger.warn("Could not get receiver from ReceiverManager: {}", e.getMessage());
-            }
-        }
-
-        logger.error("Failed to get a receiver for instrument: {}", getName());
-        return null;
+        sb.append('}');
+        return sb.toString();
     }
 
-    /**
-     * Set the receiver directly (preferred approach)
-     */
-    public void setReceiver(Receiver receiver) {
-        // Clean up old receiver if exists
-        if (this.receiver != null && this.receiver != receiver) {
-            try {
-                this.receiver.close();
-            } catch (Exception e) {
-                logger.warn("Error closing old receiver: {}", e.getMessage());
-            }
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        InstrumentWrapper that = (InstrumentWrapper) o;
+
+        // Primary comparison based on ID if both are non-null
+        if (id != null && that.id != null) {
+            return id.equals(that.id);
         }
 
-        this.receiver = receiver;
-        logger.debug("Set receiver for instrument: {}", getName());
+        // If one ID is null and the other isn't, they are not equal
+        if ((id == null && that.id != null) || (id != null && that.id == null)) {
+            return false;
+        }
+
+        // If both IDs are null, compare based on other significant fields
+        // (name, deviceName, channel)
+        if (channel != that.channel) return false;
+        if (!Objects.equals(name, that.name)) return false;
+        return Objects.equals(deviceName, that.deviceName);
     }
 
-    /**
-     * Send multiple MIDI CC messages efficiently in bulk
-     */
+    @Override
+    public int hashCode() {
+        // If ID is available, use its hash code primarily
+        if (this.id != null) {
+            return this.id.hashCode();
+        }
+        // Fallback hashcode if id is null, using other significant fields
+        int result = this.name != null ? this.name.hashCode() : 0;
+        result = 31 * result + (this.deviceName != null ? this.deviceName.hashCode() : 0);
+        result = 31 * result + this.channel; // channel is primitive int
+        return result;
+    }
+
     public void sendBulkCC(int[] controllers, int[] values) {
         if (controllers.length != values.length) {
             throw new IllegalArgumentException("Controller and value arrays must be same length");
@@ -574,52 +453,15 @@ public final class InstrumentWrapper implements Serializable {
         }
     }
 
-    // Helper methods for data management
-    public void assign(int cc, String control) {
-        getAssignments().put(cc, control);
-    }
 
-    public void setBounds(int cc, int lowerBound, int upperBound) {
-        getBoundaries().put(cc, new Integer[]{lowerBound, upperBound});
-    }
-
-    @JsonIgnore
-    public Integer getAssignmentCount() {
-        return getAssignments().size();
-    }
-
-    /**
-     * Get the bank index from MSB/LSB
-     */
-    public Integer getBankIndex() {
-        // If we have MSB/LSB values set, calculate the combined index
-        if (bankMSB != 0 || bankLSB != 0) {
-            return (bankMSB << 7) | bankLSB;
-        }
-        // Otherwise return the stored bankIndex field
-        return bankIndex;
-    }
-
-    /**
-     * Set the bank index (combined MSB/LSB)
-     */
-    public void setBankIndex(Integer bankIndex) {
-        this.bankIndex = bankIndex;
-
-        if (bankIndex == null) {
-            this.bankMSB = 0;
-            this.bankLSB = 0;
-        } else {
-            // Use upper/lower bytes of the integer for MSB/LSB
-            this.bankMSB = (bankIndex >> 7) & MidiControlMessageEnum.POLY_MODE_ON; // Upper 7 bits
-            this.bankLSB = bankIndex & MidiControlMessageEnum.POLY_MODE_ON; // Lower 7 bits
-        }
-
-        logger.info("Set bank index to: {} (MSB: {}, LSB: {})",
-                bankIndex, bankMSB, bankLSB);
-    }
-
-    public Map<String, Object> getProperties() {
-        return properties;
-    }
+//    private void readObject(ObjectInputStream inStream)
+//            throws IOException, ClassNotFoundException {
+//        inStream.defaultReadObject();
+//        this.receiver = null;
+//        // transient cachedControlChange is already re-initialized by its declaration
+//        initializeScheduler(); // Ensure scheduler is ready
+//        if (InstrumentWrapper.logger.isInfoEnabled()) {
+//            InstrumentWrapper.logger.info("InstrumentWrapper deserialized: {}. Receiver needs to be re-injected.", this.name);
+//        }
+//    }
 }

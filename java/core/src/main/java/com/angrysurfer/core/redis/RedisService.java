@@ -337,7 +337,7 @@ public class RedisService implements IBusListener {
         }
 
         // Skip saving default instruments
-        if (Boolean.TRUE.equals(instrument.getIsDefault())) {
+        if (Boolean.TRUE.equals(instrument.getDefaultInstrument())) {
             logger.debug("Skipping Redis save for default instrument: {}", instrument.getName());
             return;
         }
@@ -420,11 +420,11 @@ public class RedisService implements IBusListener {
         return playerHelper.findPlayersForSession(sessionId, Player.class.getSimpleName().toLowerCase());
     }
 
-    public Player newNote() {
+    public Note newNote() {
         return playerHelper.newNote();
     }
 
-    public Player newStrike() {
+    public Strike newStrike() {
         return playerHelper.newStrike();
     }
 
@@ -624,5 +624,9 @@ public class RedisService implements IBusListener {
 
     public void deleteAllDrumSequences() {
         drumSequenceHelper.deleteAllDrumSequences();
+    }
+
+    public Long getNextInstrumentId() {
+        return instrumentHelper.getNextInstrumentId();
     }
 }

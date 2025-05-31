@@ -9,6 +9,7 @@ import com.angrysurfer.core.sequencer.DrumSequencer;
 import com.angrysurfer.core.sequencer.SequencerConstants;
 import com.angrysurfer.core.service.InstrumentManager;
 import com.angrysurfer.core.service.PlayerManager;
+import com.angrysurfer.core.service.SoundbankManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -234,7 +235,7 @@ public class DrumPresetPanel extends JPanel {
         for (int i = 0; i < SequencerConstants.DRUM_PAD_COUNT; i++) {
             Player player = sequencer.getPlayers()[i];
             PlayerManager.getInstance().savePlayerProperties(player);
-            PlayerManager.getInstance().applyInstrumentPreset(player);
+            SoundbankManager.getInstance().applyInstrumentPreset(player);
         }
 
         // Notify that player instruments were changed

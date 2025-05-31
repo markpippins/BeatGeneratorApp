@@ -6,9 +6,9 @@ import com.angrysurfer.core.event.MelodicSequencerEvent;
 import com.angrysurfer.core.model.InstrumentWrapper;
 import com.angrysurfer.core.model.Player;
 import com.angrysurfer.core.sequencer.*;
-import com.angrysurfer.core.service.DeviceManager;
 import com.angrysurfer.core.service.InstrumentManager;
 import com.angrysurfer.core.service.PlayerManager;
+import com.angrysurfer.core.service.SoundbankManager;
 import com.angrysurfer.core.util.MelodicSequenceDataDeserializer;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.DeserializationFeature;
@@ -21,7 +21,6 @@ import org.slf4j.LoggerFactory;
 import redis.clients.jedis.Jedis;
 import redis.clients.jedis.JedisPool;
 
-import javax.sound.midi.MidiDevice;
 import java.util.*;
 
 @Getter
@@ -229,7 +228,7 @@ public class MelodicSequenceDataHelper {
 
                     // Log the before state
                     logger.info("Before applying - Instrument settings: soundbank='{}', bank={}, preset={}",
-                            instrument.getSoundbankName(), instrument.getBankIndex(), instrument.getPreset());
+                            instrument.getSoundBank(), instrument.getBankIndex(), instrument.getPreset());
 
                     // Log what we're loading from saved data
                     logger.info("Loaded values from data: soundbank='{}', bank={}, preset={}",
@@ -239,7 +238,7 @@ public class MelodicSequenceDataHelper {
                     boolean settingsChanged = false;
 
                     if (data.getSoundbankName() != null && !data.getSoundbankName().isEmpty()) {
-                        instrument.setSoundbankName(data.getSoundbankName());
+                        instrument.setSoundBank(data.getSoundbankName());
                         settingsChanged = true;
                     }
 
@@ -263,17 +262,17 @@ public class MelodicSequenceDataHelper {
                     }
 
                     logger.info("After applying - Instrument settings: soundbank='{}', bank={}, preset={}",
-                            instrument.getSoundbankName(), instrument.getBankIndex(), instrument.getPreset());
+                            instrument.getSoundBank(), instrument.getBankIndex(), instrument.getPreset());
 
                     // Only send MIDI program changes if settings actually changed
                     if (settingsChanged) {
                         try {
                             logger.info("Applying instrument preset changes to MIDI device");
-                            PlayerManager.getInstance().applyInstrumentPreset(player);
+                            SoundbankManager.getInstance().applyInstrumentPreset(player);
 
                             // Verify the changes were applied
                             logger.info("Verified final settings: soundbank='{}', bank={}, preset={}",
-                                    player.getInstrument().getSoundbankName(),
+                                    player.getInstrument().getSoundBank(),
                                     player.getInstrument().getBankIndex(),
                                     player.getInstrument().getPreset());
 
@@ -311,9 +310,6 @@ public class MelodicSequenceDataHelper {
         }
 
         try {
-            // Store current playback state
-            boolean wasPlaying = sequencer.isPlaying();
-
             // Apply the sequence data
             sequencer.setSequenceData(data);
 
@@ -326,62 +322,23 @@ public class MelodicSequenceDataHelper {
                 InstrumentWrapper instrument = player.getInstrument();
 
                 // If no instrument, try to get by ID
-                if (instrument == null && data.getInstrumentId() != null) {
-                    instrument = InstrumentManager.getInstance().getInstrumentById(data.getInstrumentId());
-                    if (instrument != null) {
-                        player.setInstrument(instrument);
-                        player.setInstrumentId(instrument.getId());
-                    }
-                }
-
-                // If we have an instrument, apply the saved settings
+                instrument = InstrumentManager.getInstance().getInstrumentById(data.getInstrumentId());
                 if (instrument != null) {
+                    player.setInstrument(instrument);
+                    player.setInstrumentId(instrument.getId());
+
                     // Update from saved data
-                    if (data.getPreset() != null) {
+                    if (data.getPreset() != null)
                         instrument.setPreset(data.getPreset());
-                    }
 
-                    if (data.getBankIndex() != null) {
+                    if (data.getBankIndex() != null)
                         instrument.setBankIndex(data.getBankIndex());
-                    }
 
-                    if (data.getSoundbankName() != null) {
-                        instrument.setSoundbankName(data.getSoundbankName());
-                    }
+                    if (data.getSoundbankName() != null)
+                        instrument.setSoundBank(data.getSoundbankName());
 
-                    if (data.getDeviceName() != null) {
-
-                        // Try to reconnect to saved device
-                        MidiDevice device = DeviceManager.getMidiDevice(data.getDeviceName());
-                        if (device != null) {
-                            try {
-                                if (!device.isOpen()) {
-                                    device.open();
-                                }
-
-                                instrument.setDevice(device);
-//
-//                                // Get a receiver
-//                                if (instrument.getReceiver() == null) {
-//                                    instrument.setReceiver(ReceiverManager.getInstance()
-//                                            .getOrCreateReceiver(data.getDeviceName(), device));
-//                                }
-                            } catch (Exception e) {
-                                logger.warn("Could not connect to device {}: {}",
-                                        data.getDeviceName(), e.getMessage());
-                            }
-                        }
-                    }
-
-                    // Apply the instrument settings
-                    PlayerManager.getInstance().applyInstrumentPreset(player);
-
+                    SoundbankManager.getInstance().applyInstrumentPreset(player);
                 }
-            }
-
-            // Restore playback state
-            if (wasPlaying) {
-                sequencer.start();
             }
 
             // Notify that pattern has been updated
@@ -419,7 +376,7 @@ public class MelodicSequenceDataHelper {
                     InstrumentWrapper instrument = player.getInstrument();
 
                     // Store all instrument information
-                    data.setSoundbankName(instrument.getSoundbankName());
+                    data.setSoundbankName(instrument.getSoundBank());
                     data.setPreset(instrument.getPreset());
                     data.setBankIndex(instrument.getBankIndex());
                     data.setDeviceName(instrument.getDeviceName());

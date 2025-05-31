@@ -7,6 +7,7 @@ import com.angrysurfer.core.redis.InstrumentHelper;
 import com.angrysurfer.core.redis.PlayerHelper;
 import com.angrysurfer.core.redis.RedisService;
 import com.angrysurfer.core.sequencer.SequencerConstants;
+import com.angrysurfer.core.service.InstrumentManager;
 
 import java.util.Arrays;
 import java.util.List;
@@ -162,10 +163,7 @@ public class InstrumentDiagnostics {
             // Test creating a new instrument
             log.addSection("1. Creating test instrument");
 
-            InstrumentWrapper testInstrument = new InstrumentWrapper();
-            testInstrument.setName("Test Instrument " + System.currentTimeMillis());
-            testInstrument.setDeviceName("Test Device");
-            testInstrument.setChannel(SequencerConstants.MIDI_DRUM_CHANNEL); // drum channel
+            InstrumentWrapper testInstrument = InstrumentManager.getInstance().createInstrumentWrapper(SequencerConstants.MIDI_DRUM_CHANNEL, "Test Drums " + System.currentTimeMillis());
 
             log.addIndentedLine("Creating instrument: " + testInstrument.getName(), 1);
             instrumentHelper.saveInstrument(testInstrument);

@@ -3,6 +3,7 @@ package com.angrysurfer.core.sequencer;
 public class SequencerConstants {
 
     public static final String GERVILL = "Gervill";
+    public static final String MSWAVE = "Microsoft GS Wavetable Synth";
 
     public static final double DEFAULT_BEAT_OFFSET = 1.0;
     public static final int DEFAULT_LOOP_COUNT = 0;
@@ -34,6 +35,7 @@ public class SequencerConstants {
 
     public static final int[] MELODIC_CHANNELS = {2, 3, 4, 5, 6, 7, 8, 10}; //, 11, 12, 13, 14, 15};
     public static final int MAX_BAR_COUNT = 64;
+    public static final Integer[] ALL_CHANNELS = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15};
 
     public static int DEFAULT_PPQ = 48; // Update the default PPQ to 48 to work with both sequencers
     public static int DEFAULT_BAR_COUNT = 4;

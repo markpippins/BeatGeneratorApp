@@ -50,7 +50,7 @@ public class ReceiverManagerDiagnostics {
 
                     if (device != null) {
                         // Test getting a receiver
-                        Receiver receiver = manager.getOrCreateReceiver(deviceName, device);
+                        Receiver receiver = manager.getOrCreateReceiver(deviceName);
 
                         if (receiver != null) {
                             log.addIndentedLine("Successfully got receiver", 2);
@@ -106,8 +106,8 @@ public class ReceiverManagerDiagnostics {
 
                 if (device != null) {
                     // Get a receiver twice and check if they're the same
-                    Receiver receiver1 = manager.getOrCreateReceiver(testDevice, device);
-                    Receiver receiver2 = manager.getOrCreateReceiver(testDevice, device);
+                    Receiver receiver1 = manager.getOrCreateReceiver(testDevice);
+                    Receiver receiver2 = manager.getOrCreateReceiver(testDevice);
 
                     boolean same = (receiver1 == receiver2);
                     log.addLine("Cached receiver test - same instance: " + same);
@@ -126,7 +126,7 @@ public class ReceiverManagerDiagnostics {
             log.addLine("Testing with non-existent device");
 
             // Try with a non-existent device
-            Receiver receiver = manager.getOrCreateReceiver("NonExistentDevice", null);
+            Receiver receiver = manager.getOrCreateReceiver("NonExistentDevice");
             log.addLine("Result for non-existent device: " + (receiver == null ? "Null (correct)" : "Not null (unexpected)"));
 
             if (receiver != null) {
@@ -162,7 +162,7 @@ public class ReceiverManagerDiagnostics {
             log.addIndentedLine("Gervill device found", 1);
 
             // Get receiver
-            Receiver receiver = manager.getOrCreateReceiver(SequencerConstants.GERVILL, gervill);
+            Receiver receiver = manager.getOrCreateReceiver(SequencerConstants.GERVILL);
 
             if (receiver == null) {
                 log.addWarning("Failed to get receiver for Gervill");
@@ -246,7 +246,7 @@ public class ReceiverManagerDiagnostics {
             }
 
             // Get the receiver from Gervill
-            Receiver receiver = manager.getOrCreateReceiver(SequencerConstants.GERVILL, gervill);
+            Receiver receiver = manager.getOrCreateReceiver(SequencerConstants.GERVILL);
 
             if (receiver == null) {
                 log.addError("Failed to get Gervill receiver");

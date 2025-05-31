@@ -395,16 +395,16 @@ public class DialogManager implements IBusListener {
 
                 // Load and validate the config
                 UserConfig config = RedisService.getInstance().loadConfigFromJSON(filePath);
-                if (config == null || config.getInstruments() == null || config.getInstruments().isEmpty()) {
+                if (config == null || config.getDefaultInstruments() == null || config.getDefaultInstruments().isEmpty()) {
                     // setStatus("Error: No instruments found in config file");
                     return;
                 }
 
                 // Log what we're about to save
-                logger.info("Loaded {} instruments from file", config.getInstruments().size());
+                logger.info("Loaded {} instruments from file", config.getDefaultInstruments().size());
 
                 // Save instruments to Redis
-                for (InstrumentWrapper instrument : config.getInstruments()) {
+                for (InstrumentWrapper instrument : config.getDefaultInstruments()) {
                     logger.info("Saving instrument: {}", instrument.getName());
                     RedisService.getInstance().saveInstrument(instrument);
                 }
@@ -453,7 +453,7 @@ public class DialogManager implements IBusListener {
 
                 // Get instruments from Redis
                 List<InstrumentWrapper> instruments = RedisService.getInstance().findAllInstruments();
-                config.setInstruments(instruments);
+                config.setDefaultInstruments(instruments);
                 logger.info("Found {} instruments to save", instruments.size());
 
                 // Save based on selected format
@@ -665,10 +665,10 @@ public class DialogManager implements IBusListener {
                         }
 
                         // If still null, create a default one
-                        if (player.getInstrument() == null) {
-                            player.setInstrument(
-                                    InstrumentManager.getInstance().getOrCreateInternalSynthInstrument(9, true, i + 1));
-                        }
+//                        if (player.getInstrument() == null) {
+//                            player.setInstrument(
+//                                    InstrumentManager.getInstance(). getOrCreateInternalSynthInstrument(9, true, i + 1));
+//                        }
                     }
 
                     // Ensure instrument has channel set

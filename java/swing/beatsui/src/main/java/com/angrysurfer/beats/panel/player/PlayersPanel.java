@@ -496,8 +496,8 @@ public class PlayersPanel extends JPanel {
                         case Commands.NEW_VALUE_SPARSE:
                         case Commands.PLAYER_UPDATE_EVENT: {
                             if (action.getSender() instanceof PlayerUpdateEvent event) {
-                                logger.info("Updating player row due to " + cmd + " for: " + event.getPlayer().getName());
-                                updatePlayerRow(event.getPlayer());
+                                logger.info("Updating player row due to " + cmd + " for: " + event.player().getName());
+                                updatePlayerRow(event.player());
                             }
                             break;
                         }

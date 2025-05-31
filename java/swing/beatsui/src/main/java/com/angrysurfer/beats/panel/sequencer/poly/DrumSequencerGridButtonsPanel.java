@@ -506,7 +506,7 @@ public class DrumSequencerGridButtonsPanel extends JPanel implements IBusListene
 
             case Commands.DRUM_STEP_UPDATED:
                 if (action.getData() instanceof DrumStepUpdateEvent event) {
-                    updateStepHighlighting(event.getDrumIndex(), event.getOldStep(), event.getNewStep());
+                    updateStepHighlighting(event.drumIndex(), event.oldStep(), event.newStep());
                 }
                 break;
 

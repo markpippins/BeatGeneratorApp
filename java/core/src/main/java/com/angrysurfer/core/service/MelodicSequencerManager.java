@@ -575,7 +575,7 @@ public class MelodicSequencerManager extends DefaultBusListener {
                 }
                 instrument.setDevice(device);
 
-                Receiver receiver = ReceiverManager.getInstance().getOrCreateReceiver(deviceName, device);
+                Receiver receiver = ReceiverManager.getInstance().getOrCreateReceiver(deviceName);
                 if (receiver != null) {
                     logger.info("Successfully reconnected sequencer {} to device {}", id, deviceName);
 
@@ -671,7 +671,7 @@ public class MelodicSequencerManager extends DefaultBusListener {
         if (!player.getInstrument().isInternalSynth() && player.getInstrument().getChannel() != SequencerConstants.MIDI_DRUM_CHANNEL) {
 
             if (sequenceData.getSoundbankName() != null) {
-                player.getInstrument().setSoundbankName(sequenceData.getSoundbankName());
+                player.getInstrument().setSoundBank(sequenceData.getSoundbankName());
             }
 
             if (sequenceData.getBankIndex() != null) {
@@ -685,7 +685,7 @@ public class MelodicSequencerManager extends DefaultBusListener {
         }
 
         logger.debug("Applied sequence data settings to instrument: preset:{}, bank:{}, soundbank:{}",
-                player.getInstrument().getPreset(), player.getInstrument().getBankIndex(), player.getInstrument().getSoundbankName());
+                player.getInstrument().getPreset(), player.getInstrument().getBankIndex(), player.getInstrument().getSoundBank());
     }
 
     private void handleSaveAll(Command cmd) {

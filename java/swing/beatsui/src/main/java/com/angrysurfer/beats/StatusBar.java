@@ -56,7 +56,7 @@ public class StatusBar extends JPanel implements IBusListener {
 
     public StatusBar() {
         super();
-        setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
+        setBorder(BorderFactory.createEmptyBorder(2, 5, 2, 5));
         setup();
         registerForEvents();
         startPerformanceMonitoring();

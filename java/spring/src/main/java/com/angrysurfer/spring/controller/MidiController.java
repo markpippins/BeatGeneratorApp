@@ -1,26 +1,16 @@
 package com.angrysurfer.spring.controller;
 
-import java.util.List;
-import java.util.Objects;
-
-import javax.sound.midi.MidiDevice;
-import javax.sound.midi.MidiUnavailableException;
-
+import com.angrysurfer.core.Constants;
+import com.angrysurfer.core.service.DeviceManager;
+import com.angrysurfer.spring.service.InstrumentService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Controller;
-import org.springframework.web.bind.annotation.CrossOrigin;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.ResponseBody;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
-import com.angrysurfer.core.Constants;
-import com.angrysurfer.core.model.InstrumentWrapper;
-import com.angrysurfer.core.service.DeviceManager;
-import com.angrysurfer.spring.service.InstrumentService;
+import javax.sound.midi.MidiDevice;
+import javax.sound.midi.MidiUnavailableException;
+import java.util.List;
 
 @CrossOrigin("*")
 @RequestMapping(path = "/api")
@@ -69,20 +59,20 @@ public class MidiController {
 
     @GetMapping(Constants.SEND_MESSAGE)
     public void sendMessage(@RequestParam int instrumentId, @RequestParam int channel, @RequestParam int messageType,
-            @RequestParam int data1,
-            @RequestParam int data2) {
-        logger.info(
-                "GET " + Constants.SEND_MESSAGE
-                        + " - instrumentId: {}, channel: {}, messageType: {}, data1: {}, data2: {}",
-                instrumentId, channel, messageType, data1, data2);
-        InstrumentWrapper instrument = instrumentService.getInstrumentById((long) instrumentId);
-        if (Objects.nonNull(instrument)) {
-            instrument.setDevice(DeviceManager.getMidiDevice(instrument.getDeviceName()));
-            if (Objects.nonNull(instrument.getDevice())) {
-                // instrument.setChannel(channel);
-                DeviceManager.sendMessage(instrument, channel, messageType, data1, data2);
-            }
-        }
-
+                            @RequestParam int data1,
+                            @RequestParam int data2) {
+//        logger.info(
+//                "GET " + Constants.SEND_MESSAGE
+//                        + " - instrumentId: {}, channel: {}, messageType: {}, data1: {}, data2: {}",
+//                instrumentId, channel, messageType, data1, data2);
+//        InstrumentWrapper instrument = instrumentService.getInstrumentById((long) instrumentId);
+//        if (Objects.nonNull(instrument)) {
+//            instrument.setDevice(DeviceManager.getMidiDevice(instrument.getDeviceName()));
+//            if (Objects.nonNull(instrument.getDevice())) {
+//                // instrument.setChannel(channel);
+//                instrument.sendMessage(new channel, messageType, data1, data2);
+//            }
+//        }
+//
     }
 }

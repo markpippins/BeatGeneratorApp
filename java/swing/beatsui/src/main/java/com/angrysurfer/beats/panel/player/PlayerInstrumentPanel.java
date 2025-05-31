@@ -7,6 +7,7 @@ import com.angrysurfer.core.event.PlayerUpdateEvent;
 import com.angrysurfer.core.model.InstrumentWrapper;
 import com.angrysurfer.core.model.Player;
 import com.angrysurfer.core.redis.RedisService;
+import com.angrysurfer.core.sequencer.SequencerConstants;
 import com.angrysurfer.core.service.DeviceManager;
 import com.angrysurfer.core.service.InstrumentManager;
 import com.angrysurfer.core.service.PlayerManager;
@@ -43,7 +44,7 @@ public class PlayerInstrumentPanel extends JPanel {
         this.player = player;
 
         // Create a new instrument (defaults will be set in initComponents)
-        this.newInstrument = new InstrumentWrapper();
+        this.newInstrument = InstrumentManager.getInstance().createInstrumentWrapper(0, player.getName());
 
         initComponents();
         layoutComponents();
@@ -240,10 +241,8 @@ public class PlayerInstrumentPanel extends JPanel {
 
             // Set properties based on UI
             if (internalCheckbox.isSelected()) {
-                newInstrument.setInternal(true);
-                newInstrument.setDeviceName("Java Sound Synthesizer");
+                newInstrument.setDeviceName(SequencerConstants.GERVILL);
             } else {
-                newInstrument.setInternal(false);
                 newInstrument.setDeviceName((String) deviceCombo.getSelectedItem());
             }
 
@@ -258,7 +257,6 @@ public class PlayerInstrumentPanel extends JPanel {
             }
 
             // Set default values
-            newInstrument.setAvailable(true);
             newInstrument.setInitialized(true);
 
             // Save the instrument

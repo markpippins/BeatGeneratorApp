@@ -208,7 +208,7 @@ class SystemsPanel extends JPanel {
             String deviceName = (String) devicesTable.getValueAt(row, 0);
 
             // Create a new InstrumentWrapper pre-configured with the device
-            InstrumentWrapper newInstrument = new InstrumentWrapper();
+            InstrumentWrapper newInstrument = InstrumentManager.getInstance().createInstrumentWrapper(0, deviceName);
             newInstrument.setDeviceName(deviceName);
             newInstrument.setName(deviceName); // Default name to device name
             newInstrument.setLowestNote(0);    // Default range

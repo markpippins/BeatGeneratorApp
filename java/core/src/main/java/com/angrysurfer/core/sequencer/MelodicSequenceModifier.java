@@ -135,7 +135,7 @@ public class MelodicSequenceModifier {
         String prevSoundbankName = sequenceData.getSoundbankName();
 
         // Update with current instrument data
-        sequenceData.setSoundbankName(instrument.getSoundbankName());
+        sequenceData.setSoundbankName(instrument.getSoundBank());
         sequenceData.setBankIndex(instrument.getBankIndex());
         sequenceData.setPreset(instrument.getPreset());
         sequenceData.setDeviceName(instrument.getDeviceName());
@@ -145,12 +145,12 @@ public class MelodicSequenceModifier {
         // Log only if there were actual changes
         if (!Objects.equals(prevBankIndex, instrument.getBankIndex()) ||
                 !Objects.equals(prevPreset, instrument.getPreset()) ||
-                !Objects.equals(prevSoundbankName, instrument.getSoundbankName())) {
+                !Objects.equals(prevSoundbankName, instrument.getSoundBank())) {
 
             logger.info("Updated sequence data for {} with instrument settings changed from {}/{}/{} to {}/{}/{}",
                     player.getName(),
                     prevBankIndex, prevPreset, prevSoundbankName,
-                    instrument.getBankIndex(), instrument.getPreset(), instrument.getSoundbankName());
+                    instrument.getBankIndex(), instrument.getPreset(), instrument.getSoundBank());
         }
     }
 }

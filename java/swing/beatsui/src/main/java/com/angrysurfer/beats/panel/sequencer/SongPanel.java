@@ -422,10 +422,10 @@ public class SongPanel extends JPanel implements IBusListener {
             }
 
             case Commands.DRUM_PATTERN_SWITCHED, Commands.MELODIC_PATTERN_SWITCHED -> {
-                if (action.getData() instanceof PatternSwitchEvent event) {
+                if (action.getData() instanceof PatternSwitchEvent(Long previousPatternId, Long newPatternId)) {
                     String type = action.getCommand() == Commands.DRUM_PATTERN_SWITCHED ? "Drum" : "Melodic";
                     logger.info("{} pattern switched from {} to {}",
-                            type, event.getPreviousPatternId(), event.getNewPatternId());
+                            type, previousPatternId, newPatternId);
                 }
             }
         }

@@ -67,16 +67,25 @@ public class UserConfigHelper {
                 UserConfig config = objectMapper.readValue(json, UserConfig.class);
                 logger.debug("Loaded UserConfig with ID {}", id);
                 logger.info(json);
-                config.getInstruments().forEach(instrument -> {
+                config.getDefaultInstruments().forEach(instrument -> {
                     logger.info("Loaded {} [device: {}, isDefault: {}]", instrument.getName(), instrument.getDeviceName(),
-                            instrument.getIsDefault());
+                            instrument.getDefaultInstrument());
                 });
 
                 if (Constants.RESET_USER_CONFIG) {
                     config.setDefaultStrikes(new ArrayList<>());
                     config.setDefaultNotes(new ArrayList<>());
-                    config.setInstruments(new ArrayList<>());
+                    config.setDefaultInstruments(new ArrayList<>());
+                    //vconfig.setDefaultSamplers(new ArrayList<>());
                     config.setHasDefaults(false);
+
+//                    RedisService.getInstance().getInstrumentHelper().findAllInstruments().forEach(instrument -> {
+//                        RedisService.getInstance().deleteInstrument(instrument);
+//                    });
+//
+//                    for (Player player : RedisService.getInstance().getPlayerHelper().findAllPlayers()) {
+//                        RedisService.getInstance().deletePlayer(player);
+//                    }
                 }
 
                 return config;
@@ -296,8 +305,8 @@ public class UserConfigHelper {
             for (Player player : config.getDefaultNotes())
                 player.setIsDefault(true);
 
-            for (InstrumentWrapper wrapper : config.getInstruments())
-                wrapper.setIsDefault(true);
+            for (InstrumentWrapper wrapper : config.getDefaultInstruments())
+                wrapper.setDefaultInstrument(true);
 
             // Perform validation or migration if needed
             config = validateAndMigrate(config);
@@ -315,8 +324,8 @@ public class UserConfigHelper {
      */
     private UserConfig validateAndMigrate(UserConfig config) {
         // Initialize any null fields
-        if (config.getInstruments() == null) {
-            config.setInstruments(new ArrayList<>());
+        if (config.getDefaultInstruments() == null) {
+            config.setDefaultInstruments(new ArrayList<>());
         }
 
         if (config.getDefaultStrikes() == null) {

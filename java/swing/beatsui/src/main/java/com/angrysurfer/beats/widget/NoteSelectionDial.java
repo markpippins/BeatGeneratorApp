@@ -48,8 +48,8 @@ public class NoteSelectionDial extends Dial implements IBusListener {
         setMaximum(127); // Full MIDI range
         setValue(60, false); // Default to middle C (MIDI note 60)
 
-        setPreferredSize(new Dimension(100, 100));
-        setMinimumSize(new Dimension(100, 100));
+        setPreferredSize(new Dimension(80, 80));
+        setMinimumSize(new Dimension(80, 80));
 
         // Initialize rotated note names
         rotatedNoteNames = NOTE_NAMES.clone();

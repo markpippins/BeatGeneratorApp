@@ -30,11 +30,11 @@ public class PlayerRowRenderer extends DefaultTableCellRenderer implements IBusL
         this.table = table;
 
         // Register for specific command bus events
-        CommandBus.getInstance().register(this, new String[] {
-            Commands.SESSION_UPDATED,
-            Commands.SESSION_SELECTED,
-            Commands.TRANSPOSE_UP,
-            Commands.TRANSPOSE_DOWN
+        CommandBus.getInstance().register(this, new String[]{
+                Commands.SESSION_UPDATED,
+                Commands.SESSION_SELECTED,
+                Commands.TRANSPOSE_UP,
+                Commands.TRANSPOSE_DOWN
         });
 
         // Initialize with current session's offset if available
@@ -116,7 +116,7 @@ public class PlayerRowRenderer extends DefaultTableCellRenderer implements IBusL
                     label.setHorizontalAlignment(JLabel.LEFT); // Left-align drum names as they can be long
                 }
                 // For instruments with loaded soundbanks, show preset names from that soundbank
-                else if (player.getInstrument() != null && player.getInstrument().getSoundbankName() != null) {
+                else if (player.getInstrument() != null && player.getInstrument().getSoundBank() != null) {
                     // Get preset value
                     long presetValue = value instanceof Number ? ((Number) value).longValue() : 0;
 
@@ -126,7 +126,7 @@ public class PlayerRowRenderer extends DefaultTableCellRenderer implements IBusL
 
                     // Get preset name using soundbank name and bank
                     String presetName = InternalSynthManager.getInstance().getPresetNames(
-                                    player.getInstrument().getSoundbankName(), bankIndex)
+                                    player.getInstrument().getSoundBank(), bankIndex)
                             .stream()
                             .skip(presetValue)
                             .findFirst()
@@ -141,7 +141,7 @@ public class PlayerRowRenderer extends DefaultTableCellRenderer implements IBusL
                                     "<b>Bank:</b> %d<br>" +
                                     "<b>Preset %d:</b> %s" +
                                     "</html>",
-                            player.getInstrument().getSoundbankName(),
+                            player.getInstrument().getSoundBank(),
                             bankIndex,
                             presetValue,
                             presetName);

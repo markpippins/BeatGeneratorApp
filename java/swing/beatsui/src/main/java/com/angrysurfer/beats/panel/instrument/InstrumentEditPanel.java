@@ -1,31 +1,15 @@
 package com.angrysurfer.beats.panel.instrument;
 
-import java.awt.Color;
-import java.awt.Dimension;
-import java.awt.GridBagConstraints;
-import java.awt.GridBagLayout;
-import java.awt.Insets;
-import java.util.ArrayList;
-import java.util.List;
+import com.angrysurfer.core.model.InstrumentWrapper;
+import com.angrysurfer.core.service.InstrumentManager;
+import lombok.Getter;
 
 import javax.sound.midi.MidiDevice;
 import javax.sound.midi.MidiSystem;
-import javax.swing.BorderFactory;
-import javax.swing.JCheckBox;
-import javax.swing.JComboBox;
-import javax.swing.JComponent;
-import javax.swing.JLabel;
-import javax.swing.JPanel;
-import javax.swing.JScrollPane;
-import javax.swing.JSpinner;
-import javax.swing.JTextArea;
-import javax.swing.JTextField;
-import javax.swing.SpinnerNumberModel;
-
-import com.angrysurfer.core.model.InstrumentWrapper;
-import com.angrysurfer.core.service.InstrumentManager;
-
-import lombok.Getter;
+import javax.swing.*;
+import java.awt.*;
+import java.util.ArrayList;
+import java.util.List;
 
 @Getter
 public class InstrumentEditPanel extends JPanel {
@@ -44,7 +28,7 @@ public class InstrumentEditPanel extends JPanel {
         super(new GridBagLayout());
         this.instrument = instrument;
         this.deviceInfos = new ArrayList<>();
-        
+
         setMinimumSize(new Dimension(300, 350)); // Increase size for new field
         setMaximumSize(new Dimension(300, 350));
         setPreferredSize(new Dimension(300, 350));
@@ -97,7 +81,7 @@ public class InstrumentEditPanel extends JPanel {
         ownerTextArea.setWrapStyleWord(true);
         ownerTextArea.setBackground(new Color(245, 245, 245));
         ownerTextArea.setBorder(BorderFactory.createEmptyBorder(2, 5, 2, 5));
-        
+
         // Populate owner information
         populateOwnerInfo();
 
@@ -127,14 +111,14 @@ public class InstrumentEditPanel extends JPanel {
             ownerTextArea.setText("New instrument - not owned by any players");
             return;
         }
-        
+
         String ownerInfo = InstrumentManager.getInstance().determineInstrumentOwner(instrument);
-        
+
         if (ownerInfo == null || ownerInfo.isEmpty() || "None".equals(ownerInfo)) {
             ownerTextArea.setText("This instrument is not currently assigned to any players");
         } else {
             ownerTextArea.setText("Currently used by: " + ownerInfo);
-            
+
             // Set background to light yellow to highlight that it's in use
             ownerTextArea.setBackground(new Color(255, 255, 220));
         }
@@ -152,13 +136,13 @@ public class InstrumentEditPanel extends JPanel {
         addFormField("Highest Note:", highestNoteSpinner, gbc, 4);
         addFormField("", availableCheckBox, gbc, 5);
         addFormField("", initializedCheckBox, gbc, 6);
-        
+
         // Add ownership information field with a title
         gbc.gridx = 0;
         gbc.gridy = 7;
         gbc.gridwidth = 2;
         add(new JLabel("Ownership:"), gbc);
-        
+
         // Add the text area in a scroll pane
         gbc.gridx = 0;
         gbc.gridy = 8;
@@ -183,31 +167,10 @@ public class InstrumentEditPanel extends JPanel {
     }
 
     public InstrumentWrapper getUpdatedInstrument() {
-        // Either create a new instrument or use the original as a base
-        InstrumentWrapper updatedInstrument = new InstrumentWrapper();
-        updatedInstrument.setId(instrument.getId());
-        
-        // Set properties from UI components
-        updatedInstrument.setName(nameField.getText().trim());
-        
-        // Fix: Use deviceCombo instead of device/deviceField
-        updatedInstrument.setDeviceName((String) deviceCombo.getSelectedItem());
-        
-        // Set channel (convert from 1-based UI to 0-based model)
+        instrument.setName(nameField.getText().trim());
+        instrument.setDeviceName((String) deviceCombo.getSelectedItem());
         int selectedIndex = channelCombo.getSelectedIndex();
-        updatedInstrument.setChannel(selectedIndex);
-        
-        // Copy other properties that aren't editable in this dialog
-        updatedInstrument.setControlCodes(instrument.getControlCodes());
-        updatedInstrument.setAvailable(instrument.getAvailable());
-        updatedInstrument.setInternal(instrument.getInternal());
-        updatedInstrument.setInitialized(instrument.isInitialized());
-        updatedInstrument.setHighestNote(instrument.getHighestNote());
-        updatedInstrument.setLowestNote(instrument.getLowestNote());
-        updatedInstrument.setSoundbankName(instrument.getSoundbankName());
-        updatedInstrument.setBankIndex(instrument.getBankIndex());
-        updatedInstrument.setPreset(instrument.getPreset());
-        
-        return updatedInstrument;
+        instrument.setChannel(selectedIndex);
+        return instrument;
     }
 }

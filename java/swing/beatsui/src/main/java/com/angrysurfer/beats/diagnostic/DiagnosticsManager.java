@@ -575,7 +575,7 @@ public class DiagnosticsManager {
                 log.addLine("Got default device: " + device.getDeviceInfo().getName());
                 try {
                     Receiver receiver = receiverManager.getOrCreateReceiver(
-                            device.getDeviceInfo().getName(), device);
+                            device.getDeviceInfo().getName());
                     if (receiver != null) {
                         log.addLine("Successfully created receiver");
 

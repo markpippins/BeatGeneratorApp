@@ -754,8 +754,8 @@ public class PlayerTimelinePanel extends LivePanel implements IBusListener {
                 // }
                 case Commands.PLAYER_UPDATE_EVENT -> {
                     if (player != null && action.getData() instanceof PlayerUpdateEvent event &&
-                            event.getPlayer().getId().equals(player.getId())) {
-                        player = event.getPlayer();
+                            event.player().getId().equals(player.getId())) {
+                        player = event.player();
                         updateTimelineWithFixedRowHeights();
                     }
                 }
@@ -800,7 +800,7 @@ public class PlayerTimelinePanel extends LivePanel implements IBusListener {
             }
 
             // Add soundbank name if available
-            String soundbankName = player.getInstrument().getSoundbankName();
+            String soundbankName = player.getInstrument().getSoundBank();
             if (soundbankName != null && !soundbankName.isEmpty()) {
                 playerInfo.append(" [").append(soundbankName).append("]");
             }

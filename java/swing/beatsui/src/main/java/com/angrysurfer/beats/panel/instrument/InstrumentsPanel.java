@@ -93,7 +93,7 @@ public class InstrumentsPanel extends JPanel {
             if (Commands.LOAD_CONFIG.equals(command.getCommand())) {
                 // SwingUtilities.invokeLater(() -> showConfigFileChooserDialog());
             }
-        }, new String[] { Commands.LOAD_CONFIG });
+        }, new String[]{Commands.LOAD_CONFIG});
     }
 
     private JPanel createOptionsPanel() {
@@ -363,7 +363,7 @@ public class InstrumentsPanel extends JPanel {
 
         try {
             // Check if the instrument is available
-            if (!selectedInstrument.getAvailable()) {
+            if (!selectedInstrument.isAvailable()) {
                 CommandBus.getInstance().publish(
                         Commands.STATUS_UPDATE,
                         this,
@@ -406,7 +406,7 @@ public class InstrumentsPanel extends JPanel {
 
         try {
             // Check if the instrument is available
-            if (!selectedInstrument.getAvailable()) {
+            if (!selectedInstrument.isAvailable()) {
                 CommandBus.getInstance().publish(
                         Commands.STATUS_UPDATE,
                         this,
@@ -514,7 +514,7 @@ public class InstrumentsPanel extends JPanel {
                     instrument.getName(),
                     instrument.getDeviceName(),
                     instrument.getChannel() != null ? instrument.getChannel() + 1 : null, // Convert to 1-based
-                    instrument.getAvailable(),
+                    instrument.isAvailable(),
                     instrument.getLowestNote(),
                     instrument.getHighestNote(),
                     instrument.isInitialized(),
@@ -891,34 +891,11 @@ public class InstrumentsPanel extends JPanel {
             boolean isNew = (instrument == null);
             logger.info("Showing instrument dialog: {}", isNew ? "new instrument" : instrument.getName());
 
-            // Create a deep copy to avoid modifying original until save is confirmed
-            InstrumentWrapper instrumentCopy;
-            if (isNew) {
-                instrumentCopy = new InstrumentWrapper();
-                // Initialize required fields for new instruments
-                instrumentCopy.setInternal(Boolean.FALSE);
-                instrumentCopy.setAvailable(Boolean.FALSE);
-            } else {
-                // Create a deep copy to preserve original until save is confirmed
-                instrumentCopy = new InstrumentWrapper();
-                instrumentCopy.setId(instrument.getId());
-                instrumentCopy.setName(instrument.getName());
-                instrumentCopy.setDeviceName(instrument.getDeviceName());
-                instrumentCopy.setChannel(instrument.getChannel());
-                instrumentCopy.setLowestNote(instrument.getLowestNote());
-                instrumentCopy.setHighestNote(instrument.getHighestNote());
-                instrumentCopy.setInternal(instrument.getInternal() != null ? instrument.getInternal() : Boolean.FALSE);
-                instrumentCopy.setAvailable(instrument.getAvailable() != null ? instrument.getAvailable() : Boolean.FALSE);
-                instrumentCopy.setControlCodes(instrument.getControlCodes()); // Shallow copy of control codes is OK
-                instrumentCopy.setDescription(instrument.getDescription());
-                instrumentCopy.setReceivedChannels(instrument.getReceivedChannels());
-                // Copy any other fields you need to preserve
-            }
 
             // Create and configure dialog
-            InstrumentEditPanel editorPanel = new InstrumentEditPanel(instrumentCopy);
-            Dialog<InstrumentWrapper> dialog = new Dialog<>(instrumentCopy, editorPanel);
-            dialog.setTitle(isNew ? "Add Instrument" : "Edit Instrument: " + instrumentCopy.getName());
+            InstrumentEditPanel editorPanel = new InstrumentEditPanel(instrument);
+            Dialog<InstrumentWrapper> dialog = new Dialog<>(instrument, editorPanel);
+            dialog.setTitle(isNew ? "Add Instrument" : "Edit Instrument: " + instrument.getName());
             dialog.setLocationRelativeTo(this);
 
             logger.info("Showing dialog for instrument...");
@@ -1181,7 +1158,7 @@ public class InstrumentsPanel extends JPanel {
                         instrument.getName(),
                         instrument.getDeviceName(),
                         instrument.getChannel() != null ? instrument.getChannel() + 1 : null, // Convert to 1-based
-                        instrument.getAvailable() != null ? instrument.getAvailable() : false,
+                        instrument.isAvailable(),
                         instrument.getLowestNote(),
                         instrument.getHighestNote(),
                         instrument.isInitialized(),
@@ -1434,18 +1411,18 @@ public class InstrumentsPanel extends JPanel {
 
         // Update existing or add new
         boolean found = false;
-        if (config.getInstruments() != null) {
-            for (int i = 0; i < config.getInstruments().size(); i++) {
-                if (config.getInstruments().get(i).getId().equals(instrument.getId())) {
-                    config.getInstruments().set(i, instrument);
+        if (config.getDefaultInstruments() != null) {
+            for (int i = 0; i < config.getDefaultInstruments().size(); i++) {
+                if (config.getDefaultInstruments().get(i).getId().equals(instrument.getId())) {
+                    config.getDefaultInstruments().set(i, instrument);
                     found = true;
                     break;
                 }
             }
         }
 
-        if (!found && config.getInstruments() != null) {
-            config.getInstruments().add(instrument);
+        if (!found && config.getDefaultInstruments() != null) {
+            config.getDefaultInstruments().add(instrument);
         }
 
         // Save updated config
@@ -1500,7 +1477,6 @@ public class InstrumentsPanel extends JPanel {
 
                 if (connected) {
                     instrument.setDevice(device);
-                    instrument.setAvailable(true);
                     // Update in cache/config
                     InstrumentManager.getInstance().updateInstrument(instrument);
 

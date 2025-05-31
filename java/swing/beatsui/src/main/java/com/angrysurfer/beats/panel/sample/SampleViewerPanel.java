@@ -5,6 +5,7 @@ import com.angrysurfer.core.api.Commands;
 import com.angrysurfer.core.model.InstrumentWrapper;
 import com.angrysurfer.core.model.Sample;
 import com.angrysurfer.core.model.Strike;
+import com.angrysurfer.core.service.InstrumentManager;
 import com.angrysurfer.core.service.SessionManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -615,9 +616,7 @@ public class SampleViewerPanel extends JPanel implements
      */
     private InstrumentWrapper createSampleInstrument(Sample sample) {
         // Create a new instrument wrapper specifically for sample playback
-        InstrumentWrapper instrument = new InstrumentWrapper();
-        instrument.setName("Sample: " + sample.getAudioFile().getName());
-        instrument.setInternal(true);
+        InstrumentWrapper instrument = InstrumentManager.getInstance().createInstrumentWrapper(-1, "Sampler");
 
         // Store sample data in the instrument
         instrument.getProperties().put("sampleFile", sample.getAudioFile().getAbsolutePath());
@@ -637,6 +636,7 @@ public class SampleViewerPanel extends JPanel implements
 
     /**
      * Get the waveform controls panel
+     *
      * @return The WaveformControlsPanel instance
      */
     public WaveformControlsPanel getControlsPanel() {

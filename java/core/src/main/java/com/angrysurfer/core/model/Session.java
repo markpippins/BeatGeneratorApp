@@ -443,7 +443,7 @@ public class Session implements Serializable, IBusListener {
                 // Only initialize enabled players
                 if (player.getEnabled()) {
                     initializePlayerDevice(player, availableDevices);
-                    initializePlayerPreset(player);
+                    // initializePlayerPreset(player);
                 }
             } catch (Exception e) {
                 logger.error("Error initializing player {}: {}",
@@ -472,7 +472,7 @@ public class Session implements Serializable, IBusListener {
             // Check if device is already connected
             if (instrument.getDevice() != null && instrument.getDevice().isOpen()) {
                 logger.info("Device for player {} is already open: {}",
-                        player.getName(), instrument.getDeviceInfo().getName());
+                        player.getName(), instrument.getDevice().getDeviceInfo().getName());
                 return;
             }
 
@@ -521,9 +521,8 @@ public class Session implements Serializable, IBusListener {
                 }
 
                 // Mark instrument as available if device is open
-                instrument.setAvailable(device.isOpen());
                 logger.info("Connected player {} to device: {}, available: {}",
-                        player.getName(), device.getDeviceInfo().getName(), instrument.getAvailable());
+                        player.getName(), device.getDeviceInfo().getName(), instrument.isAvailable());
             } else {
                 logger.error("Could not find MIDI device '{}' for player {}",
                         deviceName, player.getName());
@@ -825,7 +824,7 @@ public class Session implements Serializable, IBusListener {
         players.add(player);
 
         // Also store the player's instrument if it exists and is not default
-        if (player.getInstrument() != null && !Boolean.TRUE.equals(player.getInstrument().getIsDefault())) {
+        if (player.getInstrument() != null && !Boolean.TRUE.equals(player.getInstrument().getDefaultInstrument())) {
             InstrumentManager.getInstance().updateInstrument(player.getInstrument());
         }
 

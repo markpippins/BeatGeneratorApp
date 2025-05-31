@@ -56,11 +56,6 @@ public abstract class DrumSequencerPanel extends JPanel implements IBusListener 
     private DrumSequencer sequencer;
     private Consumer<NoteEvent> noteEventConsumer;
 
-    public DrumSequencerPanel() {
-        super();
-        setup();
-    }
-
     public DrumSequencerPanel(LayoutManager layout) {
         super(layout);
         setup();
@@ -191,9 +186,9 @@ public abstract class DrumSequencerPanel extends JPanel implements IBusListener 
 
             case Commands.STEP_UPDATED, Commands.DRUM_STEP_UPDATED -> {
                 // Handle step updates coming from sequencer
-                if (action.getData() instanceof DrumStepUpdateEvent event
-                        && event.getDrumIndex() == selectedPadIndex) {
-                    updateStep(event.getOldStep(), event.getNewStep());
+                if (action.getData() instanceof DrumStepUpdateEvent(int drumIndex, int oldStep, int newStep)
+                        && drumIndex == selectedPadIndex) {
+                    updateStep(oldStep, newStep);
                 }
             }
 
@@ -205,7 +200,7 @@ public abstract class DrumSequencerPanel extends JPanel implements IBusListener 
     private void handleDrumPadSelected(Command action) {
         // Only respond to events from other panels to avoid loops
         if (action.getData() instanceof DrumPadSelectionEvent event && action.getSender() != this) {
-            int newSelection = event.getNewSelection();
+            int newSelection = event.newSelection();
 
             // Check if index is valid and different
             if (newSelection != selectedPadIndex

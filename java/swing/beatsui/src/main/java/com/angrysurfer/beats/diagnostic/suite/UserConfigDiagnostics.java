@@ -16,13 +16,13 @@ import javax.sound.midi.Receiver;
  * Helper class for UserConfig diagnostics using direct model objects
  */
 public class UserConfigDiagnostics {
-    
+
     private final RedisService redisService;
     private final UserConfigHelper configHelper;
     private final InstrumentManager instrumentManager;
     private final PlayerManager playerManager;
     private final SessionManager sessionManager;
-    
+
     /**
      * Constructor
      */
@@ -33,7 +33,7 @@ public class UserConfigDiagnostics {
         this.playerManager = PlayerManager.getInstance();
         this.sessionManager = SessionManager.getInstance();
     }
-    
+
     /**
      * Run diagnostic tests for user configuration
      */
@@ -133,40 +133,38 @@ public class UserConfigDiagnostics {
 //            log.addError("Error during instrument test: " + e.getMessage());
 //        }
 //    }
-    
-    /**
-     * Helper method to create a test instrument
-     */
-    private InstrumentWrapper createTestInstrument(String name) {
-        try {
-            // Create a basic InstrumentWrapper with Java Sound Synthesizer
-            InstrumentWrapper instrument = new InstrumentWrapper();
-            instrument.setName(name);
-            instrument.setChannel(0);
-            instrument.setPreset(0);
-            instrument.setSoundbankName("Default");
-            instrument.setInternal(true);
-            instrument.setDeviceName("Test Device");
-            instrument.setAvailable(true);
-            
-            // Try to get a real device or create with null device
-            try {
-                MidiDevice device = MidiSystem.getSynthesizer();
-                if (!device.isOpen()) {
-                    device.open();
-                }
-                Receiver receiver = device.getReceiver();
-                instrument.setReceiver(receiver);
-            } catch (MidiUnavailableException e) {
-                // Just create without a device
-                instrument.setInternal(true);
-            }
-            
-            return instrument;
-        } catch (Exception e) {
-            return null;
-        }
-    }
+//
+//    /**
+//     * Helper method to create a test instrument
+//     */
+//    private InstrumentWrapper createTestInstrument(String name) {
+//        try {
+//            // Create a basic InstrumentWrapper with Java Sound Synthesizer
+//            InstrumentWrapper instrument = new InstrumentWrapper();
+//            instrument.setName(name);
+//            instrument.setChannel(0);
+//            instrument.setPreset(0);
+//            instrument.setSoundBank("Default");
+//            instrument.setDeviceName("Test Device");
+//
+//            // Try to get a real device or create with null device
+//            try {
+//                MidiDevice device = MidiSystem.getSynthesizer();
+//                if (!device.isOpen()) {
+//                    device.open();
+//                }
+//                Receiver receiver = device.getReceiver();
+//                instrument.setReceiver(receiver);
+//            } catch (MidiUnavailableException e) {
+//                // Just create without a device
+//                instrument.setInternal(true);
+//            }
+//
+//            return instrument;
+//        } catch (Exception e) {
+//            return null;
+//        }
+//    }
 
     /**
      * Test player operations using Player subclasses directly
@@ -288,7 +286,7 @@ public class UserConfigDiagnostics {
 //            log.addError("Error during player test: " + e.getMessage());
 //        }
 //    }
-    
+
     /**
      * Test integrated workflow between instruments and players
      */

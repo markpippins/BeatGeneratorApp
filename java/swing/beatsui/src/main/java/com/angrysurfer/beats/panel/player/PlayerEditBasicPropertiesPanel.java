@@ -393,7 +393,7 @@ public class PlayerEditBasicPropertiesPanel extends JPanel {
                 soundbankCombo.getSelectedItem() != null) {
 
             String soundbank = soundbankCombo.getSelectedItem().toString();
-            player.getInstrument().setSoundbankName(soundbank);
+            player.getInstrument().setSoundBank(soundbank);
 
             // Update available banks for this soundbank
             initializing.set(true);
@@ -506,7 +506,7 @@ public class PlayerEditBasicPropertiesPanel extends JPanel {
             if (isInternalSynth && player.getInstrument() != null) {
                 soundbankManager.updatePlayerSound(
                         player,
-                        player.getInstrument().getSoundbankName(),
+                        player.getInstrument().getSoundBank(),
                         player.getInstrument().getBankIndex(),
                         player.getInstrument().getPreset()
                 );

@@ -339,18 +339,20 @@ public class RulesPanel extends LivePanel {
             switch (action.getCommand()) {
                 // Add case for new rule update event
                 case Commands.PLAYER_RULE_UPDATE_EVENT -> {
-                    if (action.getData() instanceof PlayerRuleUpdateEvent event) {
+                    if (action.getData() instanceof PlayerRuleUpdateEvent(
+                            Player player, Rule rule, com.angrysurfer.core.event.RuleUpdateType updateType
+                    )) {
                         // Only process if this event affects our current player
-                        if (getPlayer() != null && getPlayer().getId().equals(event.getPlayer().getId())) {
-                            logger.info("Rule update event received: {}", event.getUpdateType());
+                        if (getPlayer() != null && getPlayer().getId().equals(player.getId())) {
+                            logger.info("Rule update event received: {}", updateType);
 
                             // Store the updated rule ID before refreshing
-                            Long updatedRuleId = event.getUpdatedRule() != null ? event.getUpdatedRule().getId() : null;
+                            Long updatedRuleId = rule != null ? rule.getId() : null;
 
                             // Refresh table based on update type
-                            switch (event.getUpdateType()) {
+                            switch (updateType) {
                                 case RULE_ADDED -> {
-                                    refreshRules(event.getPlayer().getRules());
+                                    refreshRules(player.getRules());
                                     // Select the newly added rule
                                     if (updatedRuleId != null) {
                                         selectRuleById(updatedRuleId);
@@ -359,14 +361,14 @@ public class RulesPanel extends LivePanel {
                                     }
                                 }
                                 case RULE_EDITED -> {
-                                    refreshRules(event.getPlayer().getRules());
+                                    refreshRules(player.getRules());
                                     // Re-select the edited rule
                                     if (updatedRuleId != null) {
                                         selectRuleById(updatedRuleId);
                                     }
                                 }
                                 case RULE_DELETED, ALL_RULES_DELETED -> {
-                                    refreshRules(event.getPlayer().getRules());
+                                    refreshRules(player.getRules());
                                     // Try to maintain selection position
                                     if (table.getRowCount() > 0) {
                                         int rowToSelect = Math.min(lastSelectedRow, table.getRowCount() - 1);
@@ -376,7 +378,7 @@ public class RulesPanel extends LivePanel {
                                         }
                                     }
                                 }
-                                default -> refreshRules(event.getPlayer().getRules());
+                                default -> refreshRules(player.getRules());
                             }
                         }
                     }

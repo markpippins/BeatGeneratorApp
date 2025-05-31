@@ -67,7 +67,7 @@ public class SessionPanel extends JPanel implements IBusListener {
         tablesPanel.add(playerTablePanel, BorderLayout.CENTER);
 
         // Make the rules panel skinny with preferred width
-        ruleTablePanel.setPreferredSize(new Dimension(220, ruleTablePanel.getPreferredSize().height));
+        ruleTablePanel.setPreferredSize(new Dimension(250, ruleTablePanel.getPreferredSize().height));
 
         // Add rule table to EAST (will take minimum space needed)
         tablesPanel.add(ruleTablePanel, BorderLayout.EAST);

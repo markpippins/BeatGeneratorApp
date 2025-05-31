@@ -59,6 +59,7 @@ public class MelodicSequenceData {
     private int[] nudgeValues = new int[MAX_STEPS];
     private int[] tiltValues = new int[MAX_BARS];
     private int[] muteValues = new int[MAX_BARS];
+    private int[] lengthModifierValues = new int[MAX_BARS];
     private int[] muteBarsValues = new int[MAX_BARS];
 
     private int[] mutesBarCountValues = new int[MAX_BARS];
@@ -83,8 +84,10 @@ public class MelodicSequenceData {
         Arrays.fill(nudgeValues, 0);
         Arrays.fill(tiltValues, 0);
         Arrays.fill(muteValues, 0); // Initialize mute values to 0 (unmuted)
+        Arrays.fill(lengthModifierValues, 0); // Initialize mute values to 0 (unmuted)
         Arrays.fill(muteBarsValues, 1); // Initialize mute values to 0 (unmuted)
         Arrays.fill(mutesBarCountValues, 0); // Initialize mute values to 0 (unmuted)
+
     }
 
     /**
@@ -588,14 +591,25 @@ public class MelodicSequenceData {
     }
 
     /**
-     * Get mute value for step
+     * Get mute value for bar
      */
-    public int getMuteValue(int step) {
-        if (step >= 0 && step < MAX_BARS) {
-            return muteValues[step];
+    public int getMuteValue(int bar) {
+        if (bar >= 0 && bar < MAX_BARS) {
+            return muteValues[bar];
         }
         return 0;
     }
+
+    /**
+     * Get length modifier value for bar
+     */
+    public int getLengthModifierValue(int bar) {
+        if (bar >= 0 && bar < MAX_BARS) {
+            return lengthModifierValues[bar];
+        }
+        return 0;
+    }
+
 
     /**
      * Set mute value for step

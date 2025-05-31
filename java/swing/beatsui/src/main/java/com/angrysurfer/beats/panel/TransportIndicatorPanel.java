@@ -245,8 +245,8 @@ public class TransportIndicatorPanel extends JPanel implements IBusListener {
                 case Commands.PLAYER_RULE_UPDATE_EVENT -> {
                     if (action.getData() instanceof PlayerUpdateEvent event &&
                             currentPlayer != null &&
-                            event.getPlayer().getId().equals(currentPlayer.getId())) {
-                        updatePlayerInfo(event.getPlayer());
+                            event.player().getId().equals(currentPlayer.getId())) {
+                        updatePlayerInfo(event.player());
                     }
                 }
                 case Commands.TIMING_UPDATE -> {

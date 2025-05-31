@@ -10,7 +10,6 @@ import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.MouseWheelEvent;
 import java.util.Random;
 
 /**
@@ -31,12 +30,13 @@ public class MelodicSequencerGeneratorPanel extends JPanel {
      * Constructor
      *
      * @param sequencer The melodic sequencer to generate patterns for
-     */    public MelodicSequencerGeneratorPanel(MelodicSequencer sequencer) {
+     */
+    public MelodicSequencerGeneratorPanel(MelodicSequencer sequencer) {
         this.sequencer = sequencer;
-        
-        // Add mouse wheel listener to the entire panel
-        addMouseWheelListener(this::handleMouseWheelEvent);
-        
+
+        // Add mouse wheel listener using the utility class
+        // MouseWheelUtil.installWheelListener(this);
+
         initializeUI();
         // registerForEvents();
     }
@@ -232,7 +232,9 @@ public class MelodicSequencerGeneratorPanel extends JPanel {
             logger.error("Error generating pattern data: {}", e.getMessage(), e);
             return false;
         }
-    }    /**
+    }
+
+    /**
      * Update UI controls to match current sequencer state
      */
     public void syncWithSequencer() {
@@ -240,29 +242,5 @@ public class MelodicSequencerGeneratorPanel extends JPanel {
             // Use the direct field access for latch enabled state
             latchToggleButton.setSelected(sequencer.isLatchEnabled());
         }
-    }
-
-    /**
-     * Handles mouse wheel events for the panel's components
-     *
-     * @param e The mouse wheel event
-     */
-    private void handleMouseWheelEvent(java.awt.event.MouseWheelEvent e) {
-        // Determine scroll direction (-1 for up, 1 for down)
-        int scrollDirection = e.getWheelRotation() > 0 ? -1 : 1;
-        
-        // Get the current focused component
-        Component focusOwner = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
-        
-        // Handle range combo box
-        if (focusOwner == rangeCombo || !(focusOwner instanceof JComponent)) {
-            int currentIndex = rangeCombo.getSelectedIndex();
-            int newIndex = currentIndex + scrollDirection;
-            newIndex = Math.max(0, Math.min(newIndex, rangeCombo.getItemCount() - 1));
-            
-            if (newIndex != currentIndex) {
-                rangeCombo.setSelectedIndex(newIndex);
-            }
-        }
-    }
+    }    // MouseWheelUtil provides the mousewheel handling functionality
 }

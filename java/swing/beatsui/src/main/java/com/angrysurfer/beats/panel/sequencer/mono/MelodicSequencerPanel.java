@@ -3,6 +3,7 @@ package com.angrysurfer.beats.panel.sequencer.mono;
 import com.angrysurfer.beats.Symbols;
 import com.angrysurfer.beats.panel.player.SoundParametersPanel;
 import com.angrysurfer.beats.panel.sequencer.MuteSequencerPanel;
+import com.angrysurfer.beats.panel.sequencer.OffsetSequencerPanel2;
 import com.angrysurfer.beats.panel.sequencer.TiltSequencerPanel;
 import com.angrysurfer.beats.panel.session.SessionControlPanel;
 import com.angrysurfer.beats.util.UIHelper;
@@ -16,7 +17,7 @@ import com.angrysurfer.core.sequencer.MelodicSequenceData;
 import com.angrysurfer.core.sequencer.MelodicSequencer;
 import com.angrysurfer.core.sequencer.TimingDivision;
 import com.angrysurfer.core.service.MelodicSequencerManager;
-import com.angrysurfer.core.service.PlayerManager;
+import com.angrysurfer.core.service.SoundbankManager;
 import lombok.Getter;
 import lombok.Setter;
 import org.slf4j.Logger;
@@ -78,10 +79,10 @@ public class MelodicSequencerPanel extends JPanel implements IBusListener {
         sequencer.setNoteEventListener(noteEventConsumer);
 
         // Set up step update listener with DIRECT callback (no CommandBus)
-        sequencer.setStepUpdateListener(event -> updateStepHighlighting(event.getOldStep(), event.getNewStep()));
+        sequencer.setStepUpdateListener(event -> updateStepHighlighting(event.oldStep(), event.newStep()));
 
         // Apply instrument preset immediately to ensure correct sound
-        PlayerManager.getInstance().applyInstrumentPreset(sequencer.getPlayer());
+        SoundbankManager.getInstance().applyInstrumentPreset(sequencer.getPlayer());
 
         // Initialize the UI
         initialize();
@@ -224,8 +225,10 @@ public class MelodicSequencerPanel extends JPanel implements IBusListener {
 
         JPanel eastPanel = new JPanel(new BorderLayout(2, 2));
 
-        JPanel topPanel = new JPanel(new BorderLayout(2, 2));
+        JPanel header = new JPanel();
+        header.setLayout(new BoxLayout(header, BoxLayout.Y_AXIS));
 
+        JPanel topPanel = new JPanel(new BorderLayout(2, 2));
         // Create sequence navigation panel
         navigationPanel = new MelodicSequenceNavigationPanel(sequencer);
 
@@ -264,7 +267,8 @@ public class MelodicSequencerPanel extends JPanel implements IBusListener {
         topPanel.add(eastPanel, BorderLayout.WEST);
 
         // Add top panel to main layout
-        add(topPanel, BorderLayout.NORTH);
+        header.add(topPanel);
+        add(header, BorderLayout.NORTH);
 
         // Create the grid panel and add to center
         gridPanel = new MelodicSequencerGridPanel(sequencer);
@@ -279,9 +283,12 @@ public class MelodicSequencerPanel extends JPanel implements IBusListener {
         // Create the tilt panel and add it to the NORTH of bottom panel
 
         tiltSequencerPanel = new TiltSequencerPanel(sequencer);
-        topPanel.add(tiltSequencerPanel, BorderLayout.SOUTH);
+        header.add(tiltSequencerPanel);
         muteSequencerPanel = new MuteSequencerPanel(sequencer);
-        sequencersPanel.add(muteSequencerPanel, BorderLayout.NORTH);
+        header.add(muteSequencerPanel);
+
+        header.add(new OffsetSequencerPanel2(getSequencer()));
+
         // Create bottom panel with BorderLayout for proper positioning
         JPanel bottomPanel = new JPanel(new BorderLayout(2, 1));
 
@@ -308,7 +315,8 @@ public class MelodicSequencerPanel extends JPanel implements IBusListener {
         bottomPanel.add(rightPanel, BorderLayout.EAST);
 
         // Add the bottom panel to the SOUTH region of the main panel
-        add(bottomPanel, BorderLayout.SOUTH);
+        // add(bottomPanel, BorderLayout.SOUTH);
+        header.add(bottomPanel);
 
         JPanel buttonPanel = new JPanel();
         UIHelper.setWidgetPanelBorder(buttonPanel, "Debug");
@@ -338,7 +346,7 @@ public class MelodicSequencerPanel extends JPanel implements IBusListener {
             for (MelodicSequencer seq : MelodicSequencerManager
                     .getInstance().getAllSequencers()) {
                 if (seq.getPlayer() != null && seq.getPlayer().getInstrument() != null) {
-                    com.angrysurfer.core.service.PlayerManager.getInstance().applyInstrumentPreset(seq.getPlayer());
+                    SoundbankManager.getInstance().applyInstrumentPreset(seq.getPlayer());
                 }
             }
 
@@ -347,7 +355,7 @@ public class MelodicSequencerPanel extends JPanel implements IBusListener {
                     .getInstance().getAllSequencers()) {
                 for (com.angrysurfer.core.model.Player player : seq.getPlayers()) {
                     if (player != null && player.getInstrument() != null) {
-                        com.angrysurfer.core.service.PlayerManager.getInstance().applyInstrumentPreset(player);
+                        SoundbankManager.getInstance().applyInstrumentPreset(player);
                     }
                 }
                 seq.ensureDeviceConnections();
@@ -489,19 +497,19 @@ public class MelodicSequencerPanel extends JPanel implements IBusListener {
             case Commands.SCALE_SELECTED -> {
                 // Only update if this event is for our specific sequencer or from the global
                 // controller
-                if (action.getData() instanceof MelodicScaleSelectionEvent event) {
+                if (action.getData() instanceof MelodicScaleSelectionEvent(Integer sequencerId, String scale)) {
                     // Check if this event is for our sequencer
-                    if (event.getSequencerId() != null && event.getSequencerId().equals(sequencer.getId())) {
+                    if (sequencerId != null && sequencerId.equals(sequencer.getId())) {
                         // Update the scale in the sequencer
-                        sequencer.getSequenceData().setScale(event.getScale());
+                        sequencer.getSequenceData().setScale(scale);
 
                         // Update the UI without publishing new events
                         if (scalePanel != null) {
-                            scalePanel.setSelectedScale(event.getScale());
+                            scalePanel.setSelectedScale(scale);
                         }
 
                         // Log the specific change
-                        logger.debug("Set scale to {} for sequencer {}", event.getScale(), sequencer.getId());
+                        logger.debug("Set scale to {} for sequencer {}", scale, sequencer.getId());
                     }
                 }
                 // Handle global scale changes from session panel (separate implementation)

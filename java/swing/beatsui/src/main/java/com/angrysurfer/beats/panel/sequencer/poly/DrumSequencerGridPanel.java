@@ -12,6 +12,7 @@ import com.angrysurfer.core.sequencer.DrumSequencer;
 import com.angrysurfer.core.sequencer.SequencerConstants;
 import com.angrysurfer.core.sequencer.TimingDivision;
 import com.angrysurfer.core.service.DrumSequencerManager;
+import com.angrysurfer.core.service.SoundbankManager;
 import lombok.Getter;
 import lombok.Setter;
 import org.slf4j.Logger;
@@ -86,8 +87,8 @@ public class DrumSequencerGridPanel extends JPanel implements IBusListener {
         // Create the sequencer
         sequencer = DrumSequencerManager.getInstance().newSequencer(
                 noteEventConsumer,
-                event -> gridPanel.updateStepHighlighting(event.getDrumIndex(), event.getOldStep(),
-                        event.getNewStep()));
+                event -> gridPanel.updateStepHighlighting(event.drumIndex(), event.oldStep(),
+                        event.newStep()));
 
 
         // Initialize UI components
@@ -223,7 +224,7 @@ public class DrumSequencerGridPanel extends JPanel implements IBusListener {
                     com.angrysurfer.core.model.Player player = sequencer.getPlayers()[i];
                     if (player != null && player.getInstrument() != null) {
                         // Apply preset through PlayerManager
-                        com.angrysurfer.core.service.PlayerManager.getInstance().applyInstrumentPreset(player);
+                        SoundbankManager.getInstance().applyInstrumentPreset(player);
 
                         // Log instrument details
                         logger.info("Refreshed drum {}: {} (bank={}, program={})",
@@ -386,7 +387,7 @@ public class DrumSequencerGridPanel extends JPanel implements IBusListener {
 
             case Commands.DRUM_PAD_SELECTED -> {
                 if (action.getData() instanceof DrumPadSelectionEvent event) {
-                    selectDrumPad(event.getNewSelection());
+                    selectDrumPad(event.newSelection());
                 }
             }
 

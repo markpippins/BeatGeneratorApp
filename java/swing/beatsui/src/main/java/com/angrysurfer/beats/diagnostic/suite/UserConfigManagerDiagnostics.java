@@ -450,7 +450,7 @@ public class UserConfigManagerDiagnostics {
                 "Last updated: " + (config.getLastUpdated() != null ? config.getLastUpdated().toString() : "Not set"));
 
         // Test instrument configuration
-        List<InstrumentWrapper> instruments = config.getInstruments();
+        List<InstrumentWrapper> instruments = config.getDefaultInstruments();
         log.addLine("Instruments: " + (instruments != null ? instruments.size() : "None"));
 
         if (instruments != null && !instruments.isEmpty()) {
@@ -568,9 +568,9 @@ public class UserConfigManagerDiagnostics {
                     if (!sameConfig) {
                         // Compare basic attributes
                         boolean sameVersion = redisConfig.getConfigVersion() == config.getConfigVersion();
-                        boolean sameInstrumentCount = redisConfig.getInstruments() != null &&
-                                config.getInstruments() != null &&
-                                redisConfig.getInstruments().size() == config.getInstruments().size();
+                        boolean sameInstrumentCount = redisConfig.getDefaultInstruments() != null &&
+                                config.getDefaultInstruments() != null &&
+                                redisConfig.getDefaultInstruments().size() == config.getDefaultInstruments().size();
 
                         log.addLine("Same version: " + sameVersion);
                         log.addLine("Same instrument count: " + sameInstrumentCount);

@@ -164,36 +164,6 @@ public class DeviceManager implements IBusListener {
         return device != null && select(device);
     }
 
-    // Improved message sending with validation
-    @SuppressWarnings("unused")
-    public static void sendMessage(InstrumentWrapper instrument, int channel, int messageType, int data1, int data2) {
-        logger.info("sendMessage() - instrument: {}, channel: {}, messageType: {}, data1: {}, data2: {}",
-                instrument.getName(), channel, messageType, data1, data2);
-
-        if (Objects.isNull(instrument)) {
-            logger.warn("Instrument cannot be null");
-            return;
-        }
-
-        try {
-            ShortMessage message = new ShortMessage(messageType,
-                    channel,
-                    validateData(data1),
-                    validateData(data2));
-            instrument.sendMessage(message);
-        } catch (InvalidMidiDataException ex) {
-            throw new MidiDeviceException("Failed to send MIDI message", ex);
-        }
-
-    }
-
-    static int validateData(int data) {
-        if (data < 0 || data > 126) {
-            throw new IllegalArgumentException("MIDI data must be between 0 and 126");
-        }
-        return data;
-    }
-
     // CommandListener implementation
     @Override
     public void onAction(Command action) {

@@ -7,6 +7,7 @@ import com.angrysurfer.beats.widget.SoundbankComboRenderer;
 import com.angrysurfer.core.api.CommandBus;
 import com.angrysurfer.core.api.Commands;
 import com.angrysurfer.core.event.PlayerPresetChangeEvent;
+import com.angrysurfer.core.model.InstrumentWrapper;
 import com.angrysurfer.core.model.Player;
 import com.angrysurfer.core.model.preset.BankItem;
 import com.angrysurfer.core.model.preset.PresetItem;
@@ -263,25 +264,85 @@ public class SoundParametersPanel extends LivePanel {
         Player currentPlayer = getPlayer();
         if (currentPlayer != null && currentPlayer.getInstrument() != null) {
             SoundbankItem item = (SoundbankItem) soundbankCombo.getSelectedItem();
-            String soundbankName = item.getName();
+            if (item == null) {
+                logger.warn("No soundbank selected in UI");
+                return;
+            }
 
-            logger.info("Soundbank selected: {}", soundbankName);
+            String soundbankName = item.getName();
+            logger.info("Soundbank selected in UI: {}", soundbankName);
 
             // Update the instrument property
-            currentPlayer.getInstrument().setSoundbankName(soundbankName);
+            InstrumentWrapper instrument = currentPlayer.getInstrument();
+            String oldSoundbankName = instrument.getSoundBank();
+            instrument.setSoundBank(soundbankName);
 
-            // IMPORTANT: Actively apply the soundbank using SoundbankManager
-            boolean applied = SoundbankManager.getInstance().applySoundbank(
-                    currentPlayer.getInstrument(), soundbankName);
+            logger.info("Updated player {} instrument soundbank from {} to: {}",
+                    currentPlayer.getName(), oldSoundbankName, soundbankName);            // Apply the soundbank to the instrument using the centralized approach
+            boolean isInternalSynth = InternalSynthManager.getInstance().isInternalSynthInstrument(instrument);
+            boolean applied = false;
 
-            logger.info("Applied soundbank {} to instrument: {}",
-                    soundbankName, applied ? "SUCCESS" : "FAILED");
+            if (isInternalSynth) {
+                // For internal instruments, apply directly via InternalSynthManager
+                applied = SoundbankManager.getInstance().applySoundbank(instrument, soundbankName);
+                logger.info("Applied soundbank via InternalSynthManager: {} to internal instrument: {} (result: {})",
+                        soundbankName, instrument.getName(), applied ? "SUCCESS" : "FAILED");
+            } else {
+                // For external instruments, go through SoundbankManager
+                applied = SoundbankManager.getInstance().applySoundbank(instrument, soundbankName);
+                logger.info("Applied soundbank via SoundbankManager: {} to external instrument: {} (result: {})",
+                        soundbankName, instrument.getName(), applied ? "SUCCESS" : "FAILED");
+            }
 
-            // Update bank and preset UI
+            logger.info("Applied soundbank {} to instrument: {} (Channel: {}, Bank: {}, Preset: {})",
+                    soundbankName,
+                    applied ? "SUCCESS" : "FAILED",
+                    currentPlayer.getChannel(),
+                    instrument.getBankIndex(),
+                    instrument.getPreset());
+
+//            if (!applied) {
+//                logger.warn("Failed to apply soundbank {}. Attempting a more direct approach...", soundbankName);
+//                // If first method failed, try to ensure the synthesizer is reinitialized
+//                InternalSynthManager.getInstance().initializeSynthesizer();
+//
+//                // Try applying soundbank again - use the same approach as before
+//                if (isInternalSynth) {
+//                    applied = SoundbankManager.getInstance().applySoundbank(instrument, soundbankName);
+//                } else {
+//                    applied = SoundbankManager.getInstance().applySoundbank(instrument, soundbankName);
+//                }
+//                logger.info("Second attempt to apply soundbank: {}", applied ? "SUCCESS" : "STILL FAILED");
+//            }
+
+            // Update bank and preset UI 
             updateBankCombo();
 
-            // Create and publish a PresetChangeEvent to ensure the change is applied
-            publishPresetChange(currentPlayer, currentPlayer.getInstrument().getSoundbankName(), currentPlayer.getInstrument().getBankIndex(), currentPlayer.getInstrument().getPreset());
+            // Ensure preset is properly applied with the new soundbank
+            if (applied) {
+                // Wait a bit to ensure soundbank is fully loaded
+                SwingUtilities.invokeLater(() -> {
+                    // Make sure changes are fully applied via both SoundbankManager and PlayerManager
+                    publishPresetChange(currentPlayer, soundbankName,
+                            instrument.getBankIndex(), instrument.getPreset());
+                    // Force direct application of preset changes, essential after soundbank change
+                    SoundbankManager.getInstance().applyInstrumentPreset(currentPlayer);
+
+                    // This is important! Play a test note to ensure sound is properly configured
+                    // Use the appropriate manager based on the instrument type
+                    if (InternalSynthManager.getInstance().isInternalSynthInstrument(instrument)) {
+                        // For internal instruments, use InternalSynthManager
+                        SoundbankManager.getInstance().playPreviewNote(currentPlayer, 100);
+                    } else {
+                        // For external instruments, use SoundbankManager
+                        SoundbankManager.getInstance().playPreviewNote(currentPlayer, 100);
+                    }
+                });
+            } else {
+                // Even if soundbank application failed, still try to update UI and apply preset
+                publishPresetChange(currentPlayer, soundbankName,
+                        instrument.getBankIndex(), instrument.getPreset());
+            }
         }
     }
 
@@ -433,10 +494,10 @@ public class SoundParametersPanel extends LivePanel {
             }
 
             // Select current soundbank if possible
-            if (player.getInstrument() != null && player.getInstrument().getSoundbankName() != null) {
+            if (player.getInstrument() != null && player.getInstrument().getSoundBank() != null) {
                 for (int i = 0; i < soundbankCombo.getItemCount(); i++) {
                     SoundbankItem item = soundbankCombo.getItemAt(i);
-                    if (item.getName().equals(player.getInstrument().getSoundbankName())) {
+                    if (item.getName().equals(player.getInstrument().getSoundBank())) {
                         soundbankCombo.setSelectedItem(item);
                         break;
                     }

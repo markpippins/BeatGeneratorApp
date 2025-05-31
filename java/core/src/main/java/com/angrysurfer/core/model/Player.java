@@ -204,11 +204,9 @@ public abstract class Player implements Serializable, IBusListener {
             return;
         }
         this.instrument = instrument;
-        if (!instrument.getIsDefault())
+        if (!instrument.getDefaultInstrument())
             this.instrument.setChannel(getDefaultChannel());
         this.instrumentId = instrument.getId();
-        if (this.getInstrument().getDeviceName().contains(SequencerConstants.GERVILL))
-            getInstrument().setInternal(true);
     }
 
     public String getPlayerClassName() {
@@ -336,7 +334,7 @@ public abstract class Player implements Serializable, IBusListener {
         try {
             // Delegate to instrument wrapper
             if (instrument != null) {
-                instrument.playMidiNote(note, velocity, decay);
+                instrument.playNote(note, velocity, decay);
             }
         } catch (Exception e) {
             logger.error("Error in noteOn with decay: {}", e.getMessage(), e);

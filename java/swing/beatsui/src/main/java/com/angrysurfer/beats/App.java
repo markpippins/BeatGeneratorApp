@@ -143,18 +143,20 @@ public class App implements IBusListener {
             // Initialize MIDI device manager
             DeviceManager deviceManager = DeviceManager.getInstance();
             deviceManager.refreshDeviceList();
-            splash.completeTask("Detected MIDI devices");
+            splash.completeTask("Detected MIDI devices");            // STEP 1: Initialize the synthesizer first - this just gets the Synthesizer instance
+            InternalSynthManager synthManager = InternalSynthManager.getInstance();
+            synthManager.initialize();
+            splash.completeTask("Initialized synthesizer");
 
-            // Initialize SoundbankManager BEFORE InternalSynthManager
-            SoundbankManager.getInstance().initializeSoundbanks();
-            SoundbankManager.getInstance().ensureSoundbanksLoaded();
+            // STEP 2: Initialize synth data after synthesizer is ready
+            //synthManager.initializeSynthData();
+            splash.completeTask("Initialized synthesizer data");
+
+            // STEP 3: Now initialize and load soundbanks
+            //SoundbankManager soundbankManager = SoundbankManager.getInstance();
+            //boolean soundbanksLoaded = soundbankManager.initializeSoundbanks();
+            //logger.info("Soundbanks initialized: {}", soundbanksLoaded);
             splash.completeTask("Loaded soundbanks");
-
-            // Initialize synth engine - now using InternalSynthManager
-            InternalSynthManager.getInstance().initializeSynthesizer();
-            SoundbankManager.getInstance().ensureSoundbanksLoaded();
-            // InternalSynthManager.getInstance().loadDefaultSoundbank();
-            splash.completeTask("Loaded internal synthesizer");
 
             // Initialize instrument management
             InstrumentHelper instrumentHelper = redisService.getInstrumentHelper();

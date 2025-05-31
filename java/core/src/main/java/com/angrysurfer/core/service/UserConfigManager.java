@@ -3,10 +3,7 @@ package com.angrysurfer.core.service;
 import com.angrysurfer.core.api.CommandBus;
 import com.angrysurfer.core.api.Commands;
 import com.angrysurfer.core.config.UserConfig;
-import com.angrysurfer.core.model.InstrumentWrapper;
-import com.angrysurfer.core.model.Note;
-import com.angrysurfer.core.model.Player;
-import com.angrysurfer.core.model.Strike;
+import com.angrysurfer.core.model.*;
 import com.angrysurfer.core.redis.RedisService;
 import com.angrysurfer.core.redis.UserConfigHelper;
 import com.angrysurfer.core.sequencer.SequencerConstants;
@@ -17,9 +14,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.sound.midi.InvalidMidiDataException;
+import javax.sound.midi.MidiDevice;
 import javax.sound.midi.MidiUnavailableException;
 import javax.sound.midi.ShortMessage;
-import javax.sound.midi.Synthesizer;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -51,22 +48,15 @@ public class UserConfigManager {
         return instance;
     }
 
-    private static InstrumentWrapper createMelodicInstrument(int i) throws MidiUnavailableException {
-        InstrumentWrapper meloInst = new InstrumentWrapper();
+    private static InstrumentWrapper createMelodicInstrument(int i, InstrumentInfo info) throws MidiUnavailableException {
 
+        InstrumentWrapper meloInst = new InstrumentWrapper(info);
         // Basic properties
         String name = "Default Melo " + (i + 1);
         meloInst.setName(name);
         meloInst.setId(RedisService.getInstance().getPlayerHelper().getNextPlayerId());
         meloInst.setChannel(SequencerConstants.MELODIC_CHANNELS[i % SequencerConstants.MELODIC_CHANNELS.length]);
-        meloInst.setInternal(true);
-        meloInst.setInternalSynth(true);
-        meloInst.setIsDefault(true);
-
-        // Set up with InternalSynthManager - get device info and receiver
-        meloInst.setDeviceInfo(InternalSynthManager.getInstance().getSynthesizer().getDeviceInfo());
-        meloInst.setDeviceName(SequencerConstants.GERVILL);
-        meloInst.setReceiver(InternalSynthManager.getInstance().getSynthesizer().getReceiver());
+        meloInst.setDefaultInstrument(true);
 
         // Set melodic-specific properties
         meloInst.setBankIndex(0); // Standard melodic bank
@@ -78,25 +68,22 @@ public class UserConfigManager {
 
         // Additional properties
         meloInst.setDescription("Default melodic instrument " + (i + 1));
-        meloInst.setAvailable(true);
 
         return meloInst;
     }
 
-    private static InstrumentWrapper createDrumInstrument() throws MidiUnavailableException {
-        InstrumentWrapper drumInst = new InstrumentWrapper();
+    private static InstrumentWrapper createDrumInstrument(InstrumentInfo info) throws MidiUnavailableException {
+        InstrumentWrapper drumInst = new InstrumentWrapper(info);
 
         // Basic properties
         String name = "Gervill Drums";
         drumInst.setName(name);
         drumInst.setId(RedisService.getInstance().getInstrumentHelper().getNextInstrumentId());
         drumInst.setChannel(9);  // MIDI channel 10 (indexed from 0)
-        drumInst.setInternal(true);
-        drumInst.setInternalSynth(true);
-        drumInst.setIsDefault(true);
+        drumInst.setDefaultInstrument(true);
 
         // Set up with InternalSynthManager - get device info and receiver
-        drumInst.setDeviceInfo(InternalSynthManager.getInstance().getSynthesizer().getDeviceInfo());
+        // drumInst.setDeviceInfo(InternalSynthManager.getInstance().getSynthesizer().getDeviceInfo());
         drumInst.setDeviceName(SequencerConstants.GERVILL);
         drumInst.setReceiver(InternalSynthManager.getInstance().getSynthesizer().getReceiver());
 
@@ -110,13 +97,11 @@ public class UserConfigManager {
 
         // Additional properties
         drumInst.setDescription("Default drum instrument.");
-        drumInst.setAvailable(true);
         return drumInst;
     }
 
     private static Strike createStrike(int rootNote, InstrumentWrapper instrument) {
-        Strike player = new Strike();
-        player.setId(RedisService.getInstance().getNextPlayerId());
+        Strike player = RedisService.getInstance().newStrike();
         player.setName("Strike " + (rootNote - SequencerConstants.MIDI_DRUM_NOTE_OFFSET) + 1);
         player.setIsDefault(true);
         player.setDrumPlayer(true);
@@ -187,12 +172,11 @@ public class UserConfigManager {
             this.currentConfig.setLastUpdated(new Date());
             configHelper.saveConfig(this.currentConfig);
 
-            initialized = true;
             logger.info("Created new default configuration with ID: 1");
 
             // Ensure defaults exist in the new configuration
             ensureDefaultsExist();
-
+            initialized = true;
         } catch (Exception e) {
             logger.error("Error loading user configuration: {}", e.getMessage());
             // Clean up resources
@@ -289,8 +273,8 @@ public class UserConfigManager {
         }
 
         // Ensure all instruments have IDs
-        if (config.getInstruments() != null) {
-            for (InstrumentWrapper instrument : config.getInstruments()) {
+        if (config.getDefaultInstruments() != null) {
+            for (InstrumentWrapper instrument : config.getDefaultInstruments()) {
                 if (instrument.getId() == null) {
                     instrument.setId(System.currentTimeMillis());
                 }
@@ -299,20 +283,17 @@ public class UserConfigManager {
     }
 
     public List<InstrumentWrapper> getInstruments() {
-        return currentConfig.getInstruments();
+        return currentConfig.getDefaultInstruments();
     }
 
     private void initializeInstruments() {
 
-        if (this.currentConfig.getInstruments() == null || getCurrentConfig().getInstruments().isEmpty()) {
+        if (this.currentConfig.getDefaultInstruments() == null || getCurrentConfig().getDefaultInstruments().isEmpty()) {
             // Load instruments from Redis if config doesn't have them
             try {
                 List<InstrumentWrapper> instruments = RedisService.getInstance().findAllInstruments();
                 if (instruments != null && !instruments.isEmpty()) {
-                    instruments.forEach(inst ->
-                            inst.setAvailable(Objects.nonNull(DeviceManager.getMidiDevice(inst.getDeviceName()))));
-
-                    getCurrentConfig().setInstruments(instruments);
+                    getCurrentConfig().setDefaultInstruments(instruments.stream().filter(InstrumentWrapper::getDefaultInstrument).toList());
                     saveConfiguration(getCurrentConfig());
                     logger.info("Loaded {} instruments from Redis", instruments.size());
                 }
@@ -328,8 +309,8 @@ public class UserConfigManager {
             boolean hasGervill = false;
 
             // Check if Gervill is already in the config
-            if (currentConfig.getInstruments() != null) {
-                for (InstrumentWrapper instrument : currentConfig.getInstruments()) {
+            if (currentConfig.getDefaultInstruments() != null) {
+                for (InstrumentWrapper instrument : currentConfig.getDefaultInstruments()) {
                     if (instrument.getDeviceName() != null &&
                             instrument.getDeviceName().contains(SequencerConstants.GERVILL)) {
                         hasGervill = true;
@@ -339,26 +320,23 @@ public class UserConfigManager {
             }
 
             // If Gervill is not in config, add it
-            if (!hasGervill) {
-                logger.info("Adding Gervill instrument to configuration");
-
-                // Get Gervill from InternalSynthManager
-                Synthesizer synth = InternalSynthManager.getInstance().getSynthesizer();
-                if (synth != null) {
-                    InstrumentWrapper gervillInstrument = new InstrumentWrapper(
-                            SequencerConstants.GERVILL,
-                            synth,
-                            InstrumentWrapper.ALL_CHANNELS // Make it available on all channels
-                    );
-                    gervillInstrument.setId(System.currentTimeMillis());
-
-                    // Add to config
-                    currentConfig.getInstruments().add(gervillInstrument);
-                    saveConfiguration(currentConfig);
-
-                    logger.info("Gervill instrument added to configuration");
-                }
-            }
+//            if (!hasGervill) {
+//                logger.info("Adding Gervill instrument to configuration");
+//
+//                // Get Gervill from InternalSynthManager
+//                Synthesizer synth = InternalSynthManager.getInstance().getSynthesizer();
+//                if (synth != null) {
+//
+//                     InstrumentWrapper gervillInstrument = InternalSynthManager.getInstance().createInternalInstrument();
+//                    gervillInstrument.setId(System.currentTimeMillis());
+//
+//                    // Add to config
+//                    currentConfig.getDefaultInstruments().add(gervillInstrument);
+//                    saveConfiguration(currentConfig);
+//
+//                    logger.info("Gervill instrument added to configuration");
+//                }
+//            }
         } catch (Exception e) {
             logger.error("Error registering Gervill instrument: {}", e.getMessage());
         }
@@ -366,7 +344,7 @@ public class UserConfigManager {
 
     // Add a method to remove an instrument from the config
     public void removeInstrument(Long instrumentId) {
-        List<InstrumentWrapper> instruments = currentConfig.getInstruments();
+        List<InstrumentWrapper> instruments = currentConfig.getDefaultInstruments();
 
         try {
             if (instruments != null) {
@@ -457,7 +435,7 @@ public class UserConfigManager {
      * @return true if successful, false otherwise
      */
     public boolean updateDefaultInstrument(InstrumentWrapper instrument) {
-        if (instrument == null || !Boolean.TRUE.equals(instrument.getIsDefault())) {
+        if (instrument == null || !Boolean.TRUE.equals(instrument.getDefaultInstrument())) {
             logger.warn("Cannot update non-default instrument in UserConfig");
             return false;
         }
@@ -466,10 +444,10 @@ public class UserConfigManager {
 
         try {
             // Find and update in instruments list
-            for (int i = 0; i < currentConfig.getInstruments().size(); i++) {
-                InstrumentWrapper existing = currentConfig.getInstruments().get(i);
+            for (int i = 0; i < currentConfig.getDefaultInstruments().size(); i++) {
+                InstrumentWrapper existing = currentConfig.getDefaultInstruments().get(i);
                 if (existing.getId().equals(instrument.getId())) {
-                    currentConfig.getInstruments().set(i, instrument);
+                    currentConfig.getDefaultInstruments().set(i, instrument);
                     updated = true;
                     break;
                 }
@@ -477,7 +455,7 @@ public class UserConfigManager {
 
             // Add if not found
             if (!updated) {
-                currentConfig.getInstruments().add(instrument);
+                currentConfig.getDefaultInstruments().add(instrument);
                 updated = true;
             }
 
@@ -555,14 +533,14 @@ public class UserConfigManager {
         }
 
         // Validate instruments
-        if (config.getInstruments() == null) {
+        if (config.getDefaultInstruments() == null) {
             logger.warn("Instruments list is null, initializing empty list");
-            config.setInstruments(new ArrayList<>());
+            config.setDefaultInstruments(new ArrayList<>());
         }
 
         // Validate instruments have required fields
         boolean allValid = true;
-        for (InstrumentWrapper instrument : config.getInstruments()) {
+        for (InstrumentWrapper instrument : config.getDefaultInstruments()) {
             if (instrument.getId() == null) {
                 logger.warn("Instrument missing ID: {}", instrument.getName());
                 instrument.setId(generateUniqueId());
@@ -692,6 +670,7 @@ public class UserConfigManager {
             // Track created players for batch save
             List<Strike> defaultDrumPlayers = new ArrayList<>();
             List<Note> defaultMelodicPlayers = new ArrayList<>();
+            List<Sample> defaultSamplePlayers = new ArrayList<>();
 
             // Create 16 Strike (drum) players with specific root notes
             createDefaultDrumPlayers(defaultDrumPlayers);
@@ -700,6 +679,8 @@ public class UserConfigManager {
             // Create 12 Note (melodic) players with different presets
             createDefaultMelodicPlayers(defaultMelodicPlayers);
             defaultMelodicPlayers.forEach(player -> getInstruments().add(player.getInstrument()));
+
+            createDefaultSamplePlayers(defaultMelodicPlayers);
 
             // Add all created players to the UserConfig
             currentConfig.setDefaultNotes(defaultMelodicPlayers);
@@ -719,6 +700,9 @@ public class UserConfigManager {
         }
     }
 
+    private void createDefaultSamplePlayers(List<Note> defaultMelodicPlayers) {
+    }
+
     /**
      * Create default Strike (drum) players
      *
@@ -731,7 +715,9 @@ public class UserConfigManager {
 
         // Standard GM drum kit starts at note 35/36
         try {
-            InstrumentWrapper drums = createDrumInstrument();
+            MidiDevice gervill = DeviceManager.getMidiDevice(SequencerConstants.GERVILL);
+            InstrumentWrapper drums = InternalSynthManager.getInstance().
+                    createInternalInstrument("Gervill Drums", SequencerConstants.MIDI_DRUM_CHANNEL, gervill);
             getInstruments().add(drums);
 
             for (int i = 0; i < 16; i++) {
@@ -741,28 +727,24 @@ public class UserConfigManager {
 //                        "Drum " + rootNote;
 
                 Strike player = createStrike(rootNote, drums);
-                if (i == 0)
-                    initializeDrumPlayerInstrument(player);
                 playerList.add(player);
-
+                if (i == 0)
+                    initializeDrumPlayerInstrument(player.getInstrument());
                 logger.debug("Created default drum player: {} (note: {})", player.getName(), rootNote);
             }
-        } catch (MidiUnavailableException | InvalidMidiDataException e) {
+        } catch (InvalidMidiDataException e) {
             throw new RuntimeException(e);
         }
     }
 
-    private void initializeDrumPlayerInstrument(Player player) throws InvalidMidiDataException {
-        if (player.getInstrument().getReceiver() != null) {
+    private void initializeDrumPlayerInstrument(InstrumentWrapper instrument) throws InvalidMidiDataException {
+        if (instrument.getReceiver() != null) {
             ShortMessage msg = new ShortMessage();
-            msg.setMessage(ShortMessage.PROGRAM_CHANGE,
-                    player.getInstrument().getChannel(),
-                    player.getInstrument().getPreset(), 0);
-            player.getInstrument().getReceiver().send(msg, -1);
+            msg.setMessage(ShortMessage.PROGRAM_CHANGE, instrument.getChannel(), instrument.getPreset(), 0);
+            instrument.getReceiver().send(msg, -1);
 
             logger.debug("Sent program change for {}: channel {}, program {}",
-                    player.getInstrument().getName(), player.getInstrument().getChannel(),
-                    player.getInstrument().getPreset());
+                    instrument.getName(), instrument.getChannel(), instrument.getPreset());
         }
     }
 
@@ -788,8 +770,8 @@ public class UserConfigManager {
             String name = InternalSynthManager.getInstance().getGeneralMIDIPresetNames().get(preset);
 
             // Create the melodic player
-            Note player = new Note();
-            player.setId(RedisService.getInstance().getNextPlayerId());
+            Note player = RedisService.getInstance().newNote();
+            // player.setId(RedisService.getInstance().getNextPlayerId());
             player.setName("Note " + (i + 1));
             player.setIsDefault(true);
             player.setMelodicPlayer(true);
@@ -816,7 +798,9 @@ public class UserConfigManager {
 
 
             try {
-                player.setInstrument(createMelodicInstrument(i));
+                player.setInstrument(InternalSynthManager.getInstance().createInternalInstrument("Gervill Note " + (i + 1), channel,
+                        DeviceManager.getMidiDevice(SequencerConstants.GERVILL)));
+
                 logger.info("Assigned instrument {} to player {}", player.getInstrument().getName(), player.getName());
                 if (player.getInstrument().getReceiver() != null) {
                     ShortMessage msg = new ShortMessage();
@@ -826,7 +810,7 @@ public class UserConfigManager {
                             i, channel, preset);
                     // instrument.setName(name);
                 }
-            } catch (MidiUnavailableException | InvalidMidiDataException e) {
+            } catch (InvalidMidiDataException e) {
                 throw new RuntimeException(e);
             }
 
@@ -859,11 +843,11 @@ public class UserConfigManager {
      * @return The instrument or null if not found
      */
     public InstrumentWrapper findInstrumentById(Long id) {
-        if (id == null || currentConfig == null || currentConfig.getInstruments() == null) {
+        if (id == null || currentConfig == null || currentConfig.getDefaultInstruments() == null) {
             return null;
         }
 
-        return currentConfig.getInstruments().stream()
+        return currentConfig.getDefaultInstruments().stream()
                 .filter(i -> id.equals(i.getId()))
                 .findFirst()
                 .orElse(null);
@@ -876,11 +860,11 @@ public class UserConfigManager {
      * @return List of matching instruments
      */
     public List<InstrumentWrapper> findInstrumentsByName(String nameFragment) {
-        if (nameFragment == null || currentConfig == null || currentConfig.getInstruments() == null) {
+        if (nameFragment == null || currentConfig == null || currentConfig.getDefaultInstruments() == null) {
             return new ArrayList<>();
         }
 
-        return currentConfig.getInstruments().stream()
+        return currentConfig.getDefaultInstruments().stream()
                 .filter(i -> i.getName() != null && i.getName().toLowerCase().contains(nameFragment.toLowerCase()))
                 .collect(Collectors.toList());
     }
@@ -954,7 +938,7 @@ public class UserConfigManager {
         newConfig.setName(name);
         newConfig.setLastUpdated(new Date());
         newConfig.setConfigVersion(1);
-        newConfig.setInstruments(new ArrayList<>());
+        newConfig.setDefaultInstruments(new ArrayList<>());
         newConfig.setDefaultNotes(new ArrayList<>());
         newConfig.setDefaultStrikes(new ArrayList<>());
 
@@ -1085,21 +1069,21 @@ public class UserConfigManager {
 
         boolean result = false;
 
-        boolean hasInstruments = config.getInstruments() != null && !config.getInstruments().isEmpty();
+        boolean hasInstruments = config.getDefaultInstruments() != null && !config.getDefaultInstruments().isEmpty();
 
         if (hasInstruments) {
             // Check for default instruments
-            List<InstrumentWrapper> defaultInstruments = config.getInstruments().stream()
-                    .filter(i -> Boolean.TRUE.equals(i.getIsDefault()))
+            List<InstrumentWrapper> defaultInstruments = config.getDefaultInstruments().stream()
+                    .filter(i -> Boolean.TRUE.equals(i.getDefaultInstrument()))
                     .toList();
 
             // Test for specific instrument types
             long drumInstrumentCount = defaultInstruments.stream()
-                    .filter(i -> i.getIsDefault() && i.getName() != null && Objects.equals(i.getChannel(), SequencerConstants.MIDI_DRUM_CHANNEL))
+                    .filter(i -> i.getDefaultInstrument() && i.getName() != null && Objects.equals(i.getChannel(), SequencerConstants.MIDI_DRUM_CHANNEL))
                     .count();
 
             long melodicInstrumentCount = defaultInstruments.stream()
-                    .filter(i -> i.getIsDefault() && i.getName() != null && !Objects.equals(i.getChannel(), SequencerConstants.MIDI_DRUM_CHANNEL))
+                    .filter(i -> i.getDefaultInstrument() && i.getName() != null && !Objects.equals(i.getChannel(), SequencerConstants.MIDI_DRUM_CHANNEL))
                     .count();
 
             result = drumInstrumentCount == 16 && melodicInstrumentCount == SequencerConstants.MELODIC_CHANNELS.length;
@@ -1138,7 +1122,7 @@ public class UserConfigManager {
                 logger.info("Saving configuration with newly created defaults");
                 try {
                     saveConfiguration(currentConfig);
-                    InstrumentManager.getInstance().refreshCache(currentConfig.getInstruments());
+                    InstrumentManager.getInstance().refreshCache(currentConfig.getDefaultInstruments());
                 } catch (Exception e) {
                     logger.error("Error saving configuration with defaults: {}", e.getMessage(), e);
                     return false;
@@ -1155,6 +1139,7 @@ public class UserConfigManager {
      * @return List of Strike objects sorted by ID
      */
     public List<Strike> getStrikesOrderedById() {
+
         if (currentConfig == null || currentConfig.getDefaultStrikes() == null) {
             return new ArrayList<>();
         }
@@ -1185,11 +1170,11 @@ public class UserConfigManager {
      * @return List of InstrumentWrapper objects sorted by ID
      */
     public List<InstrumentWrapper> getInstrumentsOrderedById() {
-        if (currentConfig == null || currentConfig.getInstruments() == null) {
+        if (currentConfig == null || currentConfig.getDefaultInstruments() == null) {
             return new ArrayList<>();
         }
 
-        return currentConfig.getInstruments().stream()
+        return currentConfig.getDefaultInstruments().stream()
                 .sorted(Comparator.comparing(InstrumentWrapper::getId, Comparator.nullsLast(Comparator.naturalOrder())))
                 .collect(Collectors.toList());
     }

@@ -77,7 +77,7 @@ public class InstrumentHelper {
     public void saveInstrument(InstrumentWrapper instrument) {
         try (Jedis jedis = jedisPool.getResource()) {
             // Skip saving default instruments
-            if (Boolean.TRUE.equals(instrument.getIsDefault())) {
+            if (Boolean.TRUE.equals(instrument.getDefaultInstrument())) {
                 logger.debug("Skipping Redis save for default instrument: {}", instrument.getName());
                 return;
             }

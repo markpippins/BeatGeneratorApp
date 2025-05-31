@@ -9,6 +9,7 @@ import com.angrysurfer.core.model.Player;
 import com.angrysurfer.core.model.preset.DrumItem;
 import com.angrysurfer.core.model.preset.PresetItem;
 import com.angrysurfer.core.sequencer.SequencerConstants;
+import com.angrysurfer.core.service.InstrumentManager;
 import com.angrysurfer.core.service.InternalSynthManager;
 import com.angrysurfer.core.service.SoundbankManager;
 import com.angrysurfer.core.service.UserConfigManager;
@@ -176,7 +177,7 @@ public class InternalSynthPresetPanel extends JPanel {
         if (instruments == null || instruments.isEmpty()) {
             logger.error("No instruments found");
             // Add a default instrument to prevent null selections
-            InstrumentWrapper defaultInstrument = new InstrumentWrapper();
+            InstrumentWrapper defaultInstrument = InstrumentManager.getInstance().createInstrumentWrapper(0, "Internal Synth");
             defaultInstrument.setId(0L);
             defaultInstrument.setName("Default Instrument");
             instrumentCombo.addItem(defaultInstrument);
@@ -185,7 +186,7 @@ public class InternalSynthPresetPanel extends JPanel {
             instruments.sort((a, b) -> a.getName().compareToIgnoreCase(b.getName()));
 
             for (InstrumentWrapper inst : instruments) {
-                if (inst.getAvailable() && Objects.nonNull(inst.getDevice())) {
+                if (inst.isAvailable() && Objects.nonNull(inst.getDevice())) {
                     instrumentCombo.addItem(inst);
                 }
             }
@@ -253,13 +254,13 @@ public class InternalSynthPresetPanel extends JPanel {
                     // Check if it's a synthesizer
                     if (device instanceof Synthesizer) {
                         // Create an instrument wrapper for this synth
-                        InstrumentWrapper wrapper = new InstrumentWrapper();
+                        InstrumentWrapper wrapper = InstrumentManager.getInstance().createInstrumentWrapper(0,
+                                device.getDeviceInfo().getName());
                         wrapper.setId(System.currentTimeMillis()); // Unique ID
                         wrapper.setName(info.getName());
                         wrapper.setDeviceName(info.getName());
                         wrapper.setDevice(device);
                         wrapper.setDescription(info.getDescription());
-                        wrapper.setInternalSynth(true);
 
                         // Add to the list
                         internalSynths.add(wrapper);
@@ -444,8 +445,8 @@ public class InternalSynthPresetPanel extends JPanel {
 
             // First try player's instrument settings
             InstrumentWrapper instrument = player.getInstrument();
-            if (instrument != null && instrument.getSoundbankName() != null) {
-                String storedName = instrument.getSoundbankName();
+            if (instrument != null && instrument.getSoundBank() != null) {
+                String storedName = instrument.getSoundBank();
                 for (int i = 0; i < soundbankCombo.getItemCount(); i++) {
                     if (soundbankCombo.getItemAt(i).equals(storedName)) {
                         soundbankCombo.setSelectedIndex(i);
@@ -909,7 +910,7 @@ public class InternalSynthPresetPanel extends JPanel {
             // Update instrument with new soundbank
             InstrumentWrapper instrument = player.getInstrument();
             if (instrument != null) {
-                instrument.setSoundbankName(soundbankName);
+                instrument.setSoundBank(soundbankName);
 
                 // Get the actual Soundbank object if needed for direct operations
                 Soundbank soundbank = SoundbankManager.getInstance().getSoundbankByName(soundbankName);
@@ -968,7 +969,7 @@ public class InternalSynthPresetPanel extends JPanel {
                 // Update soundbank name
                 if (soundbankCombo.getSelectedItem() != null) {
                     String soundbankName = (String) soundbankCombo.getSelectedItem();
-                    instrument.setSoundbankName(soundbankName);
+                    instrument.setSoundBank(soundbankName);
                 }
 
                 // Update bank
@@ -995,9 +996,9 @@ public class InternalSynthPresetPanel extends JPanel {
                 }
 
                 // Apply changes to the physical MIDI device
-                if (instrument.getBankIndex() != null && instrument.getPreset() != null) {
-                    instrument.applyBankAndProgram();
-                }
+//                if (instrument.getBankIndex() != null && instrument.getPreset() != null) {
+//                    instrument.applyBankAndProgram();
+//                }
             } else {
                 // For external instruments, use spinner value
                 int preset = ((Number) presetSpinner.getValue()).intValue();
@@ -1104,7 +1105,7 @@ public class InternalSynthPresetPanel extends JPanel {
                             instruments.sort((a, b) -> a.getName().compareToIgnoreCase(b.getName()));
 
                             for (InstrumentWrapper inst : instruments) {
-                                if (inst.getAvailable() && Objects.nonNull(inst.getDevice())) {
+                                if (inst.isAvailable() && Objects.nonNull(inst.getDevice())) {
                                     instrumentCombo.addItem(inst);
                                 }
                             }

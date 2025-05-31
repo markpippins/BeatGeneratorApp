@@ -245,7 +245,7 @@ public class DrumSelectorButton extends JButton implements IBusListener {
         if (Commands.DRUM_PAD_SELECTED.equals(action.getCommand())) {
             if (action.getData() instanceof DrumPadSelectionEvent event) {
                 // Update our appearance if this is the newly selected pad
-                boolean isNowSelected = (event.getNewSelection() == drumPadIndex);
+                boolean isNowSelected = (event.newSelection() == drumPadIndex);
                 if (isSelected != isNowSelected) {
                     setSelected(isNowSelected);
                 }

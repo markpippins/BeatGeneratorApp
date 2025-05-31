@@ -690,7 +690,7 @@ public class MainPanel extends LivePanel implements AutoCloseable, IBusListener 
 
             case Commands.SEQUENCER_STEP_UPDATE -> {
                 if (action.getData() instanceof StepUpdateEvent stepUpdateEvent) {
-                    int step = stepUpdateEvent.getNewStep();
+                    int step = stepUpdateEvent.newStep();
                     // Handle step update if needed
                 }
             }
