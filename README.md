@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 # 🎶 MIDI Sequencer
 
 A lightweight MIDI sequencer built for real-time performance and automation. Powered by Redis for messaging and state management.
