@@ -1,10 +1,18 @@
 package com.angrysurfer.core.api;
 
+<<<<<<< HEAD
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+=======
+import java.util.Iterator;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+>>>>>>> main
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 
@@ -19,7 +27,10 @@ public abstract class AbstractBus {
     public static String WILDCARD = "*";
     static Logger logger = LoggerFactory.getLogger(Player.class.getCanonicalName());
     private final Map<String, List<IBusListener>> listenerMap = new ConcurrentHashMap<>();
+<<<<<<< HEAD
     private final List<IBusListener> listeners = new CopyOnWriteArrayList<>();
+=======
+>>>>>>> main
     private final LogManager logManager = LogManager.getInstance();
 
     protected AbstractBus() {}
@@ -29,7 +40,7 @@ public abstract class AbstractBus {
     public void register(IBusListener listener, String[] commands) {
         for (String action : commands) {
             listenerMap
-                    .computeIfAbsent(action, k -> new ArrayList<>())
+                    .computeIfAbsent(action, k -> new CopyOnWriteArrayList<>())
                     .add(listener);
         }
     }
@@ -55,6 +66,7 @@ public abstract class AbstractBus {
     }
 
     public void publish(String command, Object sender, Object data) {
+<<<<<<< HEAD
         Command cmd = new Command(command, sender, data);
 
         List<IBusListener> cmdListeners = listenerMap.get(command);
@@ -72,6 +84,9 @@ public abstract class AbstractBus {
                     listener.onAction(cmd);
             }
         }
+=======
+        publish(new Command(command, sender, data));
+>>>>>>> main
     }
 
     /**
@@ -104,62 +119,38 @@ public abstract class AbstractBus {
     /**
      * Process the command by notifying all listeners
      */
-    private void processCommand(Command action) {
+    protected void processCommand(Command action) {
         if (action == null || action.getCommand() == null) {
             logManager.error("CommandBus", "Attempted to process null action or command");
             return;
         }
 
-        // Get listeners for this specific command
-        List<IBusListener> listeners = new ArrayList<>();
+        Set<IBusListener> toNotify = new LinkedHashSet<>();
 
         List<IBusListener> commandListeners = listenerMap.get(action.getCommand());
-        if (Objects.nonNull(commandListeners))
-            listeners.addAll(commandListeners);
-
-        // Get listeners registered for all commands (wildcard)
-        List<IBusListener> wildcardListeners = listenerMap.get(WILDCARD);
-        if (Objects.nonNull(wildcardListeners))
-            listeners.addAll(wildcardListeners);
-
-        // Process specific command listeners
         if (commandListeners != null) {
-            for (IBusListener listener : listeners) {
-                try {
-                    if (listener != action.getSender()) {
-                        listener.onAction(action);
-                    }
-                } catch (Exception e) {
-                    logManager.error("CommandBus",
-                            String.format("Error in listener %s handling command %s: %s",
-                                    listener.getClass().getSimpleName(),
-                                    action.getCommand(),
-                                    e.getMessage()));
-                    e.printStackTrace();
-                }
-            }
+            toNotify.addAll(commandListeners);
         }
 
-        // Process wildcard listeners
+        List<IBusListener> wildcardListeners = listenerMap.get(WILDCARD);
         if (wildcardListeners != null) {
-            for (IBusListener listener : wildcardListeners) {
-                try {
-                    if (listener != action.getSender()) {
-                        listener.onAction(action);
-                    }
-                } catch (Exception e) {
-                    logManager.error("CommandBus",
-                            String.format("Error in wildcard listener %s handling command %s: %s",
-                                    listener.getClass().getSimpleName(),
-                                    action.getCommand(),
-                                    e.getMessage()));
-                    e.printStackTrace();
-                }
-            }
+            toNotify.addAll(wildcardListeners);
         }
 
-        // Remove debug log that was causing console spam
-        // System.out.println("CommandBus: processing " + action.toString() + ", listeners: " + listeners.size());
+        for (IBusListener listener : toNotify) {
+            try {
+                if (listener != action.getSender()) {
+                    listener.onAction(action);
+                }
+            } catch (Exception e) {
+                logManager.error("CommandBus",
+                        String.format("Error in listener %s handling command %s: %s",
+                                listener.getClass().getSimpleName(),
+                                action.getCommand(),
+                                e.getMessage()));
+                e.printStackTrace();
+            }
+        }
     }
 
     /**
