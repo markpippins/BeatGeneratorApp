@@ -66,6 +66,11 @@ public class Rule implements Serializable {
         setPart(part);
     }
 
+    // Compatibility shim: allow setting operator without relying on Lombok-generated subset
+    public void setOperatorSafely(int operator) {
+        this.operator = operator;
+    }
+
     public Rule(int operator, int comparison, Double value, int part, boolean unsaved) {
         this(operator, comparison, value, part);
         setUnsaved(unsaved);

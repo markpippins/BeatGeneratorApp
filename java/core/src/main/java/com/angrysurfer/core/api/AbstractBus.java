@@ -1,10 +1,18 @@
 package com.angrysurfer.core.api;
 
+<<<<<<< HEAD
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+=======
 import java.util.Iterator;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+>>>>>>> main
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 
@@ -19,6 +27,10 @@ public abstract class AbstractBus {
     public static String WILDCARD = "*";
     static Logger logger = LoggerFactory.getLogger(Player.class.getCanonicalName());
     private final Map<String, List<IBusListener>> listenerMap = new ConcurrentHashMap<>();
+<<<<<<< HEAD
+    private final List<IBusListener> listeners = new CopyOnWriteArrayList<>();
+=======
+>>>>>>> main
     private final LogManager logManager = LogManager.getInstance();
 
     protected AbstractBus() {}
@@ -54,7 +66,27 @@ public abstract class AbstractBus {
     }
 
     public void publish(String command, Object sender, Object data) {
+<<<<<<< HEAD
+        Command cmd = new Command(command, sender, data);
+
+        List<IBusListener> cmdListeners = listenerMap.get(command);
+        if (cmdListeners != null) {
+            for (IBusListener listener : cmdListeners) {
+                if (!listener.equals(sender))
+                    listener.onAction(cmd);
+            }
+        }
+
+        List<IBusListener> wildcardListeners = listenerMap.get("*");
+        if (wildcardListeners != null) {
+            for (IBusListener listener : wildcardListeners) {
+                if (!listener.equals(sender))
+                    listener.onAction(cmd);
+            }
+        }
+=======
         publish(new Command(command, sender, data));
+>>>>>>> main
     }
 
     /**

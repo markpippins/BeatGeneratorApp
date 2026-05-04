@@ -1,0 +1,1 @@
+package com.angrysurfer.core.util;\n\nimport org.junit.jupiter.api.Test;\nimport static org.junit.jupiter.api.Assertions.assertDoesNotThrow;\n\npublic class SmokeTestHelperTestPilot {\n    @Test\n    void smokeHelloDoesNotThrow() {\n        assertDoesNotThrow(() -> SmokeTestHelper.hello());\n    }\n}\n
