@@ -186,6 +186,12 @@ public final class InstrumentWrapper implements Serializable {
         }
     }
 
+    // Compatibility helper: provide a conventional boolean flag accessor
+    // to assist tooling that expects a boolean getter named isDefault or similar.
+    public boolean isDefaultInstrument() {
+        return Boolean.TRUE.equals(isDefault);
+    }
+
     @JsonIgnore
     public boolean isMultiTimbral() {
         return receivedChannels != null && receivedChannels.length > 1;

@@ -9056,11 +9056,11 @@
 2025-02-20 14:24:04.540 [main] DEBUG com.angrysurfer.core.util.Cycler - notifyAll() - notifying 0 listeners of position: 2
 2025-02-20 14:24:04.541 [main] DEBUG com.angrysurfer.core.util.Cycler - advance() - current position: 57, length: 0
 2025-02-20 14:24:04.541 [main] DEBUG com.angrysurfer.core.util.Cycler - incrementPosition() - new position: 58
-2025-02-20 14:24:04.542 [main] DEBUG com.angrysurfer.core.util.Cycler - notifyAll() - notifying 0 listeners of position: 58
-2025-02-20 14:24:04.542 [main] DEBUG com.angrysurfer.core.model.Ticker - afterTick() - granularBeat: 0.25
-2025-02-20 14:24:04.543 [main] DEBUG com.angrysurfer.core.util.Cycler - advance() - current position: 2, length: 4
+2025-02-20 14:24:04.542 [main] DEButil.Cycler - advance() - current position: 2, length: 4
 2025-02-20 14:24:04.543 [main] DEBUG com.angrysurfer.core.util.Cycler - incrementPosition() - new position: 3
-2025-02-20 14:24:04.544 [main] DEBUG com.angrysurfer.core.util.Cycler - notifyAll() - notifying 0 listeners of position: 3
+2025-02-20 14:24:04.544 [main] DEBUG com.angrysurfer.core.util.Cycler - notifyAll() - nUG com.angrysurfer.core.util.Cycler - notifyAll() - notifying 0 listeners of position: 58
+2025-02-20 14:24:04.542 [main] DEBUG com.angrysurfer.core.model.Ticker - afterTick() - granularBeat: 0.25
+2025-02-20 14:24:04.543 [main] DEBUG com.angrysurfer.core.otifying 0 listeners of position: 3
 2025-02-20 14:24:04.544 [main] DEBUG com.angrysurfer.core.util.Cycler - advance() - current position: 58, length: 0
 2025-02-20 14:24:04.544 [main] DEBUG com.angrysurfer.core.util.Cycler - incrementPosition() - new position: 59
 2025-02-20 14:24:04.545 [main] DEBUG com.angrysurfer.core.util.Cycler - notifyAll() - notifying 0 listeners of position: 59
